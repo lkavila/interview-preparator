@@ -1,0 +1,2260 @@
+{
+  "slug": "networking",
+  "order": 11,
+  "icon": "globe",
+  "title": {
+    "en": "Networking",
+    "es": "Redes"
+  },
+  "description": {
+    "en": "How the web actually works: DNS, TCP/TLS, HTTP versions, load balancers, timeouts, error codes, CORS and WebSockets — the networking questions every interview asks.",
+    "es": "Cómo funciona la web realmente: DNS, TCP/TLS, versiones de HTTP, balanceadores, timeouts, códigos de error, CORS y WebSockets — las preguntas de redes de toda entrevista."
+  },
+  "lessons": [
+    {
+      "slug": "url-to-page",
+      "question": {
+        "en": "What happens when you type a URL into a browser and press Enter?",
+        "es": "¿Qué pasa cuando escribes una URL en el navegador y presionas Enter?"
+      },
+      "definition": {
+        "en": "The browser first **resolves the domain name via DNS** to get an IP address (checking its own cache, the OS cache, then asking a resolver). With the IP in hand, it opens a **TCP connection** (three-way handshake) and, for HTTPS, negotiates **TLS** on top to encrypt the channel.\n\nOnly then does it send the **HTTP request** (`GET / HTTP/1.1` plus headers). The server processes it and returns a **response** (status code, headers, body). Finally the browser **renders**: it parses HTML, discovers CSS/JS/images, fires more requests for them, builds the DOM, and paints the page.\n\nInterviewers love this question because it touches every layer — a strong answer names each step in order and can zoom into any of them.",
+        "es": "El navegador primero **resuelve el dominio vía DNS** para obtener una dirección IP (revisa su propia caché, la del sistema operativo y luego pregunta a un resolver). Con la IP, abre una **conexión TCP** (handshake de tres pasos) y, si es HTTPS, negocia **TLS** encima para cifrar el canal.\n\nSolo entonces envía la **petición HTTP** (`GET / HTTP/1.1` más headers). El servidor la procesa y devuelve una **respuesta** (código de estado, headers, cuerpo). Finalmente el navegador **renderiza**: parsea el HTML, descubre CSS/JS/imágenes, lanza más peticiones por ellas, construye el DOM y pinta la página.\n\nA los entrevistadores les encanta esta pregunta porque toca todas las capas — una buena respuesta nombra cada paso en orden y puede profundizar en cualquiera."
+      },
+      "examples": [
+        {
+          "en": "Chrome DevTools' Network tab breaks a request into exactly these phases: DNS lookup, initial connection (TCP), SSL (TLS), waiting (TTFB), and content download.",
+          "es": "La pestaña Network de Chrome DevTools divide una petición exactamente en estas fases: DNS lookup, conexión inicial (TCP), SSL (TLS), espera (TTFB) y descarga de contenido."
+        },
+        {
+          "en": "CDNs like Cloudflare speed up the first steps: DNS resolves to a nearby edge server and TLS terminates there, cutting round-trip latency before your origin is ever contacted.",
+          "es": "CDNs como Cloudflare aceleran los primeros pasos: el DNS resuelve a un servidor edge cercano y TLS termina ahí, reduciendo la latencia de ida y vuelta antes de tocar tu origen."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the full sequence from typing a URL to seeing the page.",
+              "es": "Ordena la secuencia completa desde escribir la URL hasta ver la página."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "dns",
+                "label": {
+                  "en": "DNS resolution (domain → IP)",
+                  "es": "Resolución DNS (dominio → IP)"
+                }
+              },
+              {
+                "id": "tcp",
+                "label": {
+                  "en": "TCP connection (three-way handshake)",
+                  "es": "Conexión TCP (handshake de tres pasos)"
+                }
+              },
+              {
+                "id": "tls",
+                "label": {
+                  "en": "TLS handshake (encrypt the channel)",
+                  "es": "Handshake TLS (cifrar el canal)"
+                }
+              },
+              {
+                "id": "req",
+                "label": {
+                  "en": "Browser sends HTTP request",
+                  "es": "El navegador envía la petición HTTP"
+                }
+              },
+              {
+                "id": "res",
+                "label": {
+                  "en": "Server returns HTTP response",
+                  "es": "El servidor devuelve la respuesta HTTP"
+                }
+              },
+              {
+                "id": "render",
+                "label": {
+                  "en": "Browser parses HTML and renders",
+                  "es": "El navegador parsea el HTML y renderiza"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "dns",
+              "tcp",
+              "tls",
+              "req",
+              "res",
+              "render"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can't the browser send the HTTP request immediately after DNS resolution on an HTTPS site?",
+              "es": "¿Por qué el navegador no puede enviar la petición HTTP inmediatamente después de la resolución DNS en un sitio HTTPS?"
+            },
+            "options": [
+              {
+                "en": "HTTP requests can only be sent after the page renders",
+                "es": "Las peticiones HTTP solo pueden enviarse después de renderizar"
+              },
+              {
+                "en": "It must wait for the server to send the HTML first",
+                "es": "Debe esperar a que el servidor envíe primero el HTML"
+              },
+              {
+                "en": "It must first establish TCP and negotiate TLS so the request travels encrypted",
+                "es": "Primero debe establecer TCP y negociar TLS para que la petición viaje cifrada"
+              },
+              {
+                "en": "DNS returns the page content, so no request is needed",
+                "es": "DNS devuelve el contenido de la página, así que no hace falta petición"
+              }
+            ],
+            "explanation": {
+              "en": "DNS only gives you an IP. You still need a TCP connection to that IP, and for HTTPS a TLS session on top, before any application data (the HTTP request) can flow.",
+              "es": "DNS solo te da una IP. Aún necesitas una conexión TCP a esa IP y, para HTTPS, una sesión TLS encima, antes de que fluya cualquier dato de aplicación (la petición HTTP)."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The page finished loading and, seconds later, JavaScript fetches `/api/data` from the same origin over an existing keep-alive connection. Which steps of the original sequence are skipped?",
+              "es": "La página terminó de cargar y, segundos después, JavaScript pide `/api/data` al mismo origen sobre una conexión keep-alive existente. ¿Qué pasos de la secuencia original se saltan?"
+            },
+            "options": [
+              {
+                "en": "DNS, TCP and TLS — the cached IP and the already-established encrypted connection are reused",
+                "es": "DNS, TCP y TLS — se reutilizan la IP cacheada y la conexión cifrada ya establecida"
+              },
+              {
+                "en": "Only DNS is skipped; TCP and TLS must be renegotiated for each request",
+                "es": "Solo se salta DNS; TCP y TLS deben renegociarse en cada petición"
+              },
+              {
+                "en": "The HTTP request itself — same-origin responses are always served from cache",
+                "es": "La propia petición HTTP — las respuestas del mismo origen siempre se sirven desde caché"
+              },
+              {
+                "en": "None — every request repeats DNS, TCP and TLS from scratch",
+                "es": "Ninguno — cada petición repite DNS, TCP y TLS desde cero"
+              }
+            ],
+            "explanation": {
+              "en": "DNS answers are cached and a keep-alive connection already has TCP and TLS established, so only the HTTP request/response happens. This is exactly why connection reuse (keep-alive, pools) is such a big latency win: the expensive setup phases run once, not per request.",
+              "es": "Las respuestas DNS se cachean y una conexión keep-alive ya tiene TCP y TLS establecidos, así que solo ocurre la petición/respuesta HTTP. Justo por eso reutilizar conexiones (keep-alive, pools) es una gran ganancia de latencia: las fases caras de establecimiento corren una vez, no por petición."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "dns-resolution",
+      "question": {
+        "en": "How does DNS resolution work, and what role do caching and TTL play?",
+        "es": "¿Cómo funciona la resolución DNS y qué papel juegan la caché y el TTL?"
+      },
+      "definition": {
+        "en": "DNS translates names like `api.example.com` into IP addresses. If no cache has the answer, a **recursive resolver** (your ISP's or a public one like `8.8.8.8`) walks the hierarchy: it asks a **root server** (which points to the `.com` TLD servers), then the **TLD server** (which points to `example.com`'s authoritative servers), then the **authoritative server**, which returns the actual record (e.g. an `A` record with the IP).\n\nEvery answer carries a **TTL** (time to live, in seconds): how long resolvers, operating systems and browsers may cache it. Caching makes most lookups instant, but it also means changes propagate slowly — a record with TTL 3600 can keep serving the old IP for up to an hour after you change it.\n\nA common ops trick: lower the TTL (e.g. to 60s) *before* a planned migration, switch the record, then raise it again.",
+        "es": "DNS traduce nombres como `api.example.com` a direcciones IP. Si ninguna caché tiene la respuesta, un **resolver recursivo** (el de tu ISP o uno público como `8.8.8.8`) recorre la jerarquía: pregunta a un **servidor raíz** (que apunta a los servidores del TLD `.com`), luego al **servidor TLD** (que apunta a los servidores autoritativos de `example.com`), y luego al **servidor autoritativo**, que devuelve el registro real (p. ej. un registro `A` con la IP).\n\nCada respuesta lleva un **TTL** (tiempo de vida, en segundos): cuánto pueden cachearla resolvers, sistemas operativos y navegadores. La caché hace que la mayoría de las consultas sean instantáneas, pero también significa que los cambios se propagan lento — un registro con TTL 3600 puede seguir sirviendo la IP vieja hasta una hora después de cambiarlo.\n\nUn truco común de operaciones: bajar el TTL (p. ej. a 60s) *antes* de una migración planificada, cambiar el registro y luego subirlo de nuevo."
+      },
+      "examples": [
+        {
+          "en": "When a company migrates its API to a new provider, users keep hitting the old servers for minutes or hours — that's cached DNS records expiring at different times across resolvers worldwide.",
+          "es": "Cuando una empresa migra su API a un nuevo proveedor, los usuarios siguen llegando a los servidores viejos durante minutos u horas — son los registros DNS cacheados expirando en momentos distintos en resolvers de todo el mundo."
+        },
+        {
+          "en": "Kubernetes services rely heavily on internal DNS (CoreDNS); a misconfigured `ndots` option can add several extra DNS queries per request and visibly slow a microservice down.",
+          "es": "Los servicios de Kubernetes dependen mucho del DNS interno (CoreDNS); una opción `ndots` mal configurada puede agregar varias consultas DNS extra por petición y ralentizar visiblemente un microservicio."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of an uncached DNS lookup for `api.example.com`.",
+              "es": "Ordena los pasos de una consulta DNS sin caché para `api.example.com`."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "stub",
+                "label": {
+                  "en": "OS asks the configured recursive resolver",
+                  "es": "El SO pregunta al resolver recursivo configurado"
+                }
+              },
+              {
+                "id": "root",
+                "label": {
+                  "en": "Resolver asks a root server → referred to .com TLD",
+                  "es": "El resolver pregunta a un servidor raíz → lo refiere al TLD .com"
+                }
+              },
+              {
+                "id": "tld",
+                "label": {
+                  "en": "Resolver asks the .com TLD server → referred to example.com's nameservers",
+                  "es": "El resolver pregunta al servidor TLD .com → lo refiere a los nameservers de example.com"
+                }
+              },
+              {
+                "id": "auth",
+                "label": {
+                  "en": "Resolver asks the authoritative server → gets the A record",
+                  "es": "El resolver pregunta al servidor autoritativo → obtiene el registro A"
+                }
+              },
+              {
+                "id": "cache",
+                "label": {
+                  "en": "Resolver caches the answer (per TTL) and returns the IP",
+                  "es": "El resolver cachea la respuesta (según TTL) y devuelve la IP"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "stub",
+              "root",
+              "tld",
+              "auth",
+              "cache"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You need to migrate `api.example.com` to a new IP with minimal user impact. Explain how you would use the DNS TTL, and what trade-off a very low TTL has.",
+              "es": "Necesitas migrar `api.example.com` a una nueva IP con el mínimo impacto para los usuarios. Explica cómo usarías el TTL de DNS y qué desventaja tiene un TTL muy bajo."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain lowering the TTL in advance (waiting at least the old TTL before switching) so caches expire quickly, then changing the record, then optionally raising the TTL back. Must mention the trade-off: a low TTL means more DNS queries hit the resolvers/authoritative servers (more load and slightly higher latency for uncached lookups).",
+              "es": "Debe explicar bajar el TTL con anticipación (esperando al menos el TTL viejo antes de cambiar) para que las cachés expiren rápido, luego cambiar el registro y opcionalmente subir el TTL de nuevo. Debe mencionar la desventaja: un TTL bajo implica más consultas DNS a los resolvers/servidores autoritativos (más carga y algo más de latencia en consultas sin caché)."
+            },
+            "reference": "Days before the migration, lower the TTL from e.g. 3600s to 60s and wait for the old TTL to expire everywhere. Then switch the A record: within ~60s all caches pick up the new IP. Afterwards raise the TTL back. Trade-off: while the TTL is low, caches expire constantly, so resolvers and authoritative servers receive far more queries and uncached lookups add latency."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In the DNS hierarchy, which server actually stores the definitive A record for `api.example.com`?",
+              "es": "En la jerarquía DNS, ¿qué servidor almacena realmente el registro A definitivo de `api.example.com`?"
+            },
+            "options": [
+              {
+                "en": "The .com TLD server — it stores the records of every .com domain",
+                "es": "El servidor TLD .com — almacena los registros de todos los dominios .com"
+              },
+              {
+                "en": "A root server — it holds the records for every domain on the internet",
+                "es": "Un servidor raíz — guarda los registros de todos los dominios de internet"
+              },
+              {
+                "en": "The authoritative nameserver for example.com — the source of truth for that zone",
+                "es": "El servidor autoritativo de example.com — la fuente de verdad de esa zona"
+              },
+              {
+                "en": "The recursive resolver (e.g. 8.8.8.8) — it owns the records it serves",
+                "es": "El resolver recursivo (p. ej. 8.8.8.8) — es dueño de los registros que sirve"
+              }
+            ],
+            "explanation": {
+              "en": "Root and TLD servers only hand out referrals (root → .com servers → example.com's nameservers), and a recursive resolver merely caches answers on behalf of clients. The authoritative nameserver for the zone is where the record actually lives — it's what you edit when you change the IP.",
+              "es": "Los servidores raíz y TLD solo dan referencias (raíz → servidores .com → nameservers de example.com), y un resolver recursivo solo cachea respuestas en nombre de los clientes. El servidor autoritativo de la zona es donde vive realmente el registro — es lo que editas cuando cambias la IP."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "tcp-vs-udp",
+      "question": {
+        "en": "What is the difference between TCP and UDP, and when do you choose each?",
+        "es": "¿Cuál es la diferencia entre TCP y UDP, y cuándo eliges cada uno?"
+      },
+      "definition": {
+        "en": "**TCP** is connection-oriented and reliable: it guarantees delivery (retransmissions), **ordering** (sequence numbers), and integrity (checksums), plus flow and congestion control. The cost is latency: a handshake before data, and a lost packet stalls everything behind it until it's retransmitted.\n\n**UDP** is connectionless: it just fires datagrams. No delivery guarantee, no ordering, no built-in congestion control — but also no handshake and no retransmission delays. Applications that care more about *freshness* than completeness (live video, game state, DNS queries) build exactly the reliability they need on top.\n\nThe interview answer: TCP when you need every byte in order (APIs, file transfer, databases); UDP when losing a packet is better than waiting for it (real-time media, telemetry) or when the exchange is one tiny request/response (DNS).",
+        "es": "**TCP** es orientado a conexión y confiable: garantiza entrega (retransmisiones), **orden** (números de secuencia) e integridad (checksums), además de control de flujo y de congestión. El costo es latencia: un handshake antes de los datos, y un paquete perdido frena todo lo que viene detrás hasta que se retransmite.\n\n**UDP** es sin conexión: simplemente dispara datagramas. Sin garantía de entrega, sin orden, sin control de congestión integrado — pero tampoco hay handshake ni esperas por retransmisión. Las aplicaciones que valoran más la *frescura* que la completitud (video en vivo, estado de juegos, consultas DNS) construyen encima exactamente la confiabilidad que necesitan.\n\nLa respuesta de entrevista: TCP cuando necesitas cada byte en orden (APIs, transferencia de archivos, bases de datos); UDP cuando perder un paquete es mejor que esperarlo (medios en tiempo real, telemetría) o cuando el intercambio es una petición/respuesta diminuta (DNS)."
+      },
+      "examples": [
+        {
+          "en": "A Zoom call uses UDP-based transport: if a video frame is lost, showing the next frame beats freezing the call to retransmit an already-stale one.",
+          "es": "Una llamada de Zoom usa transporte basado en UDP: si se pierde un frame de video, mostrar el siguiente es mejor que congelar la llamada para retransmitir uno ya obsoleto."
+        },
+        {
+          "en": "HTTP/3 runs over QUIC, which is built on UDP precisely to escape TCP's head-of-line blocking while re-implementing reliability per-stream in user space.",
+          "es": "HTTP/3 corre sobre QUIC, que se construye sobre UDP precisamente para escapar del head-of-line blocking de TCP, re-implementando la confiabilidad por stream en espacio de usuario."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each property or use case with the right protocol.",
+              "es": "Conecta cada propiedad o caso de uso con el protocolo correcto."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Guaranteed in-order delivery with retransmissions",
+                  "es": "Entrega garantizada en orden con retransmisiones"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "No handshake — datagrams sent immediately",
+                  "es": "Sin handshake — datagramas enviados de inmediato"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Live video where a late packet is useless",
+                  "es": "Video en vivo donde un paquete tardío es inútil"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Downloading a file that must arrive byte-perfect",
+                  "es": "Descargar un archivo que debe llegar byte a byte"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "TCP — reliability guarantee",
+                  "es": "TCP — garantía de confiabilidad"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "UDP — connectionless",
+                  "es": "UDP — sin conexión"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "UDP — freshness over completeness",
+                  "es": "UDP — frescura sobre completitud"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "TCP — integrity and ordering matter",
+                  "es": "TCP — importan integridad y orden"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does classic DNS use UDP for queries instead of TCP?",
+              "es": "¿Por qué el DNS clásico usa UDP para las consultas en lugar de TCP?"
+            },
+            "options": [
+              {
+                "en": "UDP guarantees faster delivery than TCP at the network layer",
+                "es": "UDP garantiza entrega más rápida que TCP en la capa de red"
+              },
+              {
+                "en": "UDP encrypts queries by default",
+                "es": "UDP cifra las consultas por defecto"
+              },
+              {
+                "en": "TCP cannot carry DNS payloads",
+                "es": "TCP no puede transportar payloads de DNS"
+              },
+              {
+                "en": "A query fits in one small datagram, so a TCP handshake would add a round trip for nothing",
+                "es": "Una consulta cabe en un datagrama pequeño, así que un handshake TCP agregaría un viaje de ida y vuelta para nada"
+              }
+            ],
+            "explanation": {
+              "en": "A DNS query/response is a tiny one-shot exchange. TCP's handshake would double the latency. (DNS does fall back to TCP for large responses like zone transfers.)",
+              "es": "Una consulta/respuesta DNS es un intercambio diminuto de un solo paso. El handshake de TCP duplicaría la latencia. (DNS sí recurre a TCP para respuestas grandes como transferencias de zona.)"
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A service emits thousands of small telemetry datapoints per second. Losing a few is acceptable, but per-message overhead must stay minimal. Which transport fits best, and why?",
+              "es": "Un servicio emite miles de pequeños datos de telemetría por segundo. Perder algunos es aceptable, pero el overhead por mensaje debe ser mínimo. ¿Qué transporte encaja mejor y por qué?"
+            },
+            "options": [
+              {
+                "en": "TCP — telemetry is useless unless every datapoint arrives in order",
+                "es": "TCP — la telemetría es inútil si no llega cada dato en orden"
+              },
+              {
+                "en": "UDP — no handshake, ACKs or retransmission state; occasional loss is an acceptable trade for minimal overhead",
+                "es": "UDP — sin handshake, ACKs ni estado de retransmisión; una pérdida ocasional es un intercambio aceptable por el mínimo overhead"
+              },
+              {
+                "en": "UDP — it retransmits lost datagrams faster than TCP does",
+                "es": "UDP — retransmite los datagramas perdidos más rápido que TCP"
+              },
+              {
+                "en": "TCP — guaranteed delivery is always worth the extra cost",
+                "es": "TCP — la entrega garantizada siempre justifica el costo extra"
+              }
+            ],
+            "explanation": {
+              "en": "This workload values cheapness and freshness over completeness — the profile UDP was made for (it's how StatsD-style metrics work). TCP would add connection state, ACKs and retransmissions to protect data you explicitly don't mind losing. And UDP never retransmits anything: that's precisely what it omits.",
+              "es": "Esta carga valora el bajo costo y la frescura sobre la completitud — el perfil para el que se hizo UDP (así funcionan las métricas estilo StatsD). TCP agregaría estado de conexión, ACKs y retransmisiones para proteger datos que explícitamente no te importa perder. Y UDP nunca retransmite nada: eso es precisamente lo que omite."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "tcp-three-way-handshake",
+      "question": {
+        "en": "How does the TCP three-way handshake establish a connection?",
+        "es": "¿Cómo establece una conexión el handshake de tres pasos de TCP?"
+      },
+      "definition": {
+        "en": "Before any data flows, both sides must agree they can talk and synchronize **sequence numbers** (which make ordering and retransmission possible). Three segments do it:\n\n1. **SYN** — the client sends a segment with the SYN flag and its initial sequence number `x`.\n2. **SYN/ACK** — the server replies with its own SYN (sequence number `y`) and an ACK of `x+1`.\n3. **ACK** — the client acknowledges `y+1`. The connection is now ESTABLISHED and data can flow.\n\nThis costs one full round trip before the first byte of application data — which is why connection reuse (keep-alive, connection pools) matters so much for latency. A server flooded with SYNs that never complete (a **SYN flood**) can exhaust its half-open connection queue, which is what SYN cookies mitigate.",
+        "es": "Antes de que fluyan datos, ambos lados deben acordar que pueden hablar y sincronizar **números de secuencia** (que hacen posible el orden y la retransmisión). Tres segmentos lo logran:\n\n1. **SYN** — el cliente envía un segmento con la bandera SYN y su número de secuencia inicial `x`.\n2. **SYN/ACK** — el servidor responde con su propio SYN (número de secuencia `y`) y un ACK de `x+1`.\n3. **ACK** — el cliente confirma `y+1`. La conexión queda ESTABLISHED y los datos pueden fluir.\n\nEsto cuesta un viaje completo de ida y vuelta antes del primer byte de datos de aplicación — por eso reutilizar conexiones (keep-alive, pools de conexiones) importa tanto para la latencia. Un servidor inundado de SYNs que nunca se completan (un **SYN flood**) puede agotar su cola de conexiones semiabiertas, que es lo que mitigan las SYN cookies."
+      },
+      "examples": [
+        {
+          "en": "In a packet capture (Wireshark/tcpdump) every new connection starts with the same three lines: SYN, SYN/ACK, ACK — it's the first thing engineers check when 'the service is unreachable'.",
+          "es": "En una captura de paquetes (Wireshark/tcpdump) toda conexión nueva empieza con las mismas tres líneas: SYN, SYN/ACK, ACK — es lo primero que revisan los ingenieros cuando 'el servicio no responde'."
+        },
+        {
+          "en": "For a user in Sydney talking to a server in Virginia (~200ms RTT), the handshake alone adds 200ms — one reason CDNs terminate connections at nearby edges and keep warm connections to origin.",
+          "es": "Para un usuario en Sídney hablando con un servidor en Virginia (~200ms RTT), solo el handshake agrega 200ms — una razón por la que los CDNs terminan conexiones en edges cercanos y mantienen conexiones calientes al origen."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the segments of the TCP three-way handshake, ending with data transfer.",
+              "es": "Ordena los segmentos del handshake de tres pasos de TCP, terminando con la transferencia de datos."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "syn",
+                "label": {
+                  "en": "Client → Server: SYN (seq = x)",
+                  "es": "Cliente → Servidor: SYN (seq = x)"
+                }
+              },
+              {
+                "id": "synack",
+                "label": {
+                  "en": "Server → Client: SYN/ACK (seq = y, ack = x+1)",
+                  "es": "Servidor → Cliente: SYN/ACK (seq = y, ack = x+1)"
+                }
+              },
+              {
+                "id": "ack",
+                "label": {
+                  "en": "Client → Server: ACK (ack = y+1)",
+                  "es": "Cliente → Servidor: ACK (ack = y+1)"
+                }
+              },
+              {
+                "id": "data",
+                "label": {
+                  "en": "Connection ESTABLISHED — application data flows",
+                  "es": "Conexión ESTABLISHED — fluyen datos de aplicación"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "syn",
+              "synack",
+              "ack",
+              "data"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Besides confirming both sides are reachable, what does the handshake fundamentally exchange?",
+              "es": "Además de confirmar que ambos lados son alcanzables, ¿qué intercambia fundamentalmente el handshake?"
+            },
+            "options": [
+              {
+                "en": "The TLS certificates of client and server",
+                "es": "Los certificados TLS del cliente y el servidor"
+              },
+              {
+                "en": "Initial sequence numbers, so both sides can order bytes and detect loss",
+                "es": "Números de secuencia iniciales, para que ambos lados ordenen bytes y detecten pérdidas"
+              },
+              {
+                "en": "The HTTP headers of the first request",
+                "es": "Los headers HTTP de la primera petición"
+              },
+              {
+                "en": "The DNS records of both hosts",
+                "es": "Los registros DNS de ambos hosts"
+              }
+            ],
+            "explanation": {
+              "en": "SYN segments carry each side's initial sequence number. All reliability machinery (ordering, ACKs, retransmission) is built on those numbers. TLS and HTTP happen later, on top of the established connection.",
+              "es": "Los segmentos SYN llevan el número de secuencia inicial de cada lado. Toda la maquinaria de confiabilidad (orden, ACKs, retransmisión) se construye sobre esos números. TLS y HTTP ocurren después, sobre la conexión establecida."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In a SYN flood attack, which server resource does the attacker actually exhaust?",
+              "es": "En un ataque de SYN flood, ¿qué recurso del servidor agota realmente el atacante?"
+            },
+            "options": [
+              {
+                "en": "The server's TLS session cache, forcing full handshakes",
+                "es": "La caché de sesiones TLS del servidor, forzando handshakes completos"
+              },
+              {
+                "en": "The application's database connection pool",
+                "es": "El pool de conexiones a la base de datos de la aplicación"
+              },
+              {
+                "en": "The bandwidth of the server's DNS resolver",
+                "es": "El ancho de banda del resolver DNS del servidor"
+              },
+              {
+                "en": "The queue of half-open connections waiting for the final ACK that never arrives — which SYN cookies mitigate",
+                "es": "La cola de conexiones semiabiertas esperando el ACK final que nunca llega — lo que mitigan las SYN cookies"
+              }
+            ],
+            "explanation": {
+              "en": "Each spoofed SYN makes the server allocate state and reply SYN/ACK, leaving a half-open connection in its backlog until it times out. Fill that backlog and legitimate SYNs get dropped. SYN cookies encode the connection state in the sequence number of the SYN/ACK, so nothing is stored until the final ACK proves the client is real.",
+              "es": "Cada SYN falsificado hace que el servidor reserve estado y responda SYN/ACK, dejando una conexión semiabierta en su backlog hasta que expira. Si ese backlog se llena, los SYN legítimos se descartan. Las SYN cookies codifican el estado de la conexión en el número de secuencia del SYN/ACK, así no se almacena nada hasta que el ACK final prueba que el cliente es real."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "https-and-tls",
+      "question": {
+        "en": "What is the difference between HTTP and HTTPS, and what does TLS actually do?",
+        "es": "¿Cuál es la diferencia entre HTTP y HTTPS, y qué hace realmente TLS?"
+      },
+      "definition": {
+        "en": "**HTTPS is HTTP running over TLS**. TLS gives three guarantees: **confidentiality** (traffic is encrypted, nobody on the path can read it), **authentication** (a certificate proves you're talking to the real server), and **integrity** (tampering is detected).\n\nThe **TLS handshake** (TLS 1.3): the client sends supported cipher suites and a key share; the server replies with its choice, its own key share, and its **certificate**. The client verifies the certificate chain up to a trusted **Certificate Authority (CA)** and checks the name matches the domain. Both sides then derive the same symmetric session keys via an ephemeral Diffie-Hellman exchange — the asymmetric crypto only bootstraps trust; the actual traffic uses fast symmetric encryption.\n\nWithout the certificate step, encryption alone would be useless: you could be having a perfectly private conversation with an attacker (man-in-the-middle).",
+        "es": "**HTTPS es HTTP corriendo sobre TLS**. TLS da tres garantías: **confidencialidad** (el tráfico va cifrado, nadie en el camino puede leerlo), **autenticación** (un certificado prueba que hablas con el servidor real) e **integridad** (se detecta cualquier manipulación).\n\nEl **handshake TLS** (TLS 1.3): el cliente envía sus cipher suites soportadas y un key share; el servidor responde con su elección, su propio key share y su **certificado**. El cliente verifica la cadena de certificados hasta una **Autoridad Certificadora (CA)** confiable y comprueba que el nombre coincida con el dominio. Ambos lados derivan entonces las mismas claves simétricas de sesión mediante un intercambio Diffie-Hellman efímero — la criptografía asimétrica solo arranca la confianza; el tráfico real usa cifrado simétrico rápido.\n\nSin el paso del certificado, cifrar solo no serviría: podrías tener una conversación perfectamente privada con un atacante (man-in-the-middle)."
+      },
+      "examples": [
+        {
+          "en": "Let's Encrypt issues free certificates and automated renewal (ACME protocol), which is why virtually every site is HTTPS today; browsers mark plain HTTP as 'Not secure'.",
+          "es": "Let's Encrypt emite certificados gratis con renovación automatizada (protocolo ACME), por eso prácticamente todo sitio es HTTPS hoy; los navegadores marcan HTTP plano como 'No seguro'."
+        },
+        {
+          "en": "When a certificate expires in production, clients suddenly fail with TLS errors even though the server is healthy — a classic outage (it famously hit Microsoft Teams in 2020).",
+          "es": "Cuando un certificado expira en producción, los clientes fallan de repente con errores TLS aunque el servidor esté sano — una caída clásica (le pasó célebremente a Microsoft Teams en 2020)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the role of the server's certificate in the TLS handshake?",
+              "es": "¿Cuál es el papel del certificado del servidor en el handshake TLS?"
+            },
+            "options": [
+              {
+                "en": "It proves the server's identity via a chain of trust to a CA the client already trusts",
+                "es": "Prueba la identidad del servidor mediante una cadena de confianza hasta una CA en la que el cliente ya confía"
+              },
+              {
+                "en": "It compresses the HTTP payload",
+                "es": "Comprime el payload HTTP"
+              },
+              {
+                "en": "It contains the symmetric key used to encrypt all traffic",
+                "es": "Contiene la clave simétrica usada para cifrar todo el tráfico"
+              },
+              {
+                "en": "It replaces the need for DNS resolution",
+                "es": "Reemplaza la necesidad de resolución DNS"
+              }
+            ],
+            "explanation": {
+              "en": "The certificate binds the domain name to a public key, signed by a CA. Without it, encryption could be established with anyone — including a man-in-the-middle. Session keys are derived via key exchange, never shipped inside the certificate.",
+              "es": "El certificado vincula el nombre de dominio a una clave pública, firmado por una CA. Sin él, el cifrado podría establecerse con cualquiera — incluido un man-in-the-middle. Las claves de sesión se derivan por intercambio de claves, nunca viajan dentro del certificado."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A teammate says: 'TLS just encrypts the traffic.' Explain what is incomplete about that statement — what are the three guarantees TLS provides and why each matters?",
+              "es": "Un compañero dice: 'TLS solo cifra el tráfico.' Explica qué le falta a esa afirmación — ¿cuáles son las tres garantías que da TLS y por qué importa cada una?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must name the three guarantees: confidentiality (encryption — eavesdroppers can't read), authentication (certificates/CA chain — you're talking to the real server, prevents man-in-the-middle), and integrity (tampering with data in transit is detected). Bonus: noting that encryption without authentication is useless against an active MITM.",
+              "es": "Debe nombrar las tres garantías: confidencialidad (cifrado — nadie puede leer el tráfico), autenticación (certificados/cadena de CA — hablas con el servidor real, previene man-in-the-middle) e integridad (se detecta la manipulación de datos en tránsito). Bonus: notar que cifrar sin autenticar es inútil contra un MITM activo."
+            },
+            "reference": "Encryption is only one of three guarantees. TLS also provides authentication: the server presents a certificate signed by a trusted CA proving it owns the domain — without this you could establish a perfectly encrypted channel with an attacker performing a man-in-the-middle. And it provides integrity: MACs/AEAD detect any modification of data in transit. Confidentiality + authentication + integrity together make the channel trustworthy."
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a TLS 1.3 handshake, from the first message to encrypted application traffic.",
+              "es": "Ordena los pasos de un handshake TLS 1.3, desde el primer mensaje hasta el tráfico de aplicación cifrado."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "chello",
+                "label": {
+                  "en": "ClientHello: supported cipher suites + client key share",
+                  "es": "ClientHello: cipher suites soportadas + key share del cliente"
+                }
+              },
+              {
+                "id": "shello",
+                "label": {
+                  "en": "ServerHello: chosen suite, server key share + certificate",
+                  "es": "ServerHello: suite elegida, key share del servidor + certificado"
+                }
+              },
+              {
+                "id": "verify",
+                "label": {
+                  "en": "Client validates the certificate chain up to a trusted CA and checks the domain name",
+                  "es": "El cliente valida la cadena de certificados hasta una CA confiable y comprueba el nombre de dominio"
+                }
+              },
+              {
+                "id": "keys",
+                "label": {
+                  "en": "Both sides derive the same symmetric session keys (ephemeral Diffie-Hellman)",
+                  "es": "Ambos lados derivan las mismas claves simétricas de sesión (Diffie-Hellman efímero)"
+                }
+              },
+              {
+                "id": "appdata",
+                "label": {
+                  "en": "Application data (HTTP) flows under fast symmetric encryption",
+                  "es": "Los datos de aplicación (HTTP) fluyen bajo cifrado simétrico rápido"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "chello",
+              "shello",
+              "verify",
+              "keys",
+              "appdata"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "http1-vs-http2",
+      "question": {
+        "en": "What does HTTP/2 improve over HTTP/1.1?",
+        "es": "¿Qué mejora HTTP/2 respecto a HTTP/1.1?"
+      },
+      "definition": {
+        "en": "In **HTTP/1.1**, a connection handles one request at a time: response N must finish before response N+1 starts. Browsers work around this by opening ~6 parallel connections per host, and developers used hacks like sprite sheets and domain sharding. A slow response blocking the ones behind it is **head-of-line (HOL) blocking** at the application layer.\n\n**HTTP/2** multiplexes many concurrent **streams** over a single TCP connection: requests and responses are broken into interleaved binary frames, so one slow response no longer blocks others. It adds **header compression (HPACK)** and stream prioritization.\n\nCaveat worth mentioning in interviews: HTTP/2 still runs over one TCP connection, so a single *lost packet* stalls all streams (TCP-level HOL blocking). HTTP/3 (QUIC over UDP) fixes that by making streams independent at the transport layer.",
+        "es": "En **HTTP/1.1**, una conexión maneja una petición a la vez: la respuesta N debe terminar antes de que empiece la N+1. Los navegadores lo evaden abriendo ~6 conexiones paralelas por host, y los desarrolladores usaban trucos como sprite sheets y domain sharding. Que una respuesta lenta bloquee a las que vienen detrás es **head-of-line (HOL) blocking** en la capa de aplicación.\n\n**HTTP/2** multiplexa muchos **streams** concurrentes sobre una sola conexión TCP: peticiones y respuestas se dividen en frames binarios intercalados, así una respuesta lenta ya no bloquea a las demás. Agrega **compresión de headers (HPACK)** y priorización de streams.\n\nMatiz que vale la pena mencionar en entrevistas: HTTP/2 sigue corriendo sobre una conexión TCP, así que un solo *paquete perdido* frena todos los streams (HOL blocking a nivel TCP). HTTP/3 (QUIC sobre UDP) lo arregla haciendo los streams independientes en la capa de transporte."
+      },
+      "examples": [
+        {
+          "en": "A page loading 50 small assets: over HTTP/1.1 they queue up on 6 connections; over HTTP/2 all 50 load concurrently on one connection — this killed the old 'bundle everything into one file' advice.",
+          "es": "Una página que carga 50 assets pequeños: sobre HTTP/1.1 hacen fila en 6 conexiones; sobre HTTP/2 los 50 cargan concurrentemente en una conexión — esto mató el viejo consejo de 'empaqueta todo en un archivo'."
+        },
+        {
+          "en": "gRPC is built on HTTP/2 specifically to multiplex many RPC streams (including bidirectional streaming) over one long-lived connection between services.",
+          "es": "gRPC se construye sobre HTTP/2 específicamente para multiplexar muchos streams RPC (incluyendo streaming bidireccional) sobre una conexión de larga vida entre servicios."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each behavior or feature with the HTTP version it belongs to.",
+              "es": "Conecta cada comportamiento o característica con la versión de HTTP a la que pertenece."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "One request at a time per connection",
+                  "es": "Una petición a la vez por conexión"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Many streams multiplexed over one connection",
+                  "es": "Muchos streams multiplexados sobre una conexión"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "HPACK header compression",
+                  "es": "Compresión de headers HPACK"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Browsers open ~6 connections per host as a workaround",
+                  "es": "Los navegadores abren ~6 conexiones por host como paliativo"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "HTTP/1.1 — serial responses",
+                  "es": "HTTP/1.1 — respuestas en serie"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "HTTP/2 — multiplexing",
+                  "es": "HTTP/2 — multiplexación"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "HTTP/2 — binary framing extra",
+                  "es": "HTTP/2 — extra del framing binario"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "HTTP/1.1 — parallelism hack",
+                  "es": "HTTP/1.1 — truco de paralelismo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does head-of-line blocking still exist in HTTP/2, and what fixes it?",
+              "es": "¿Por qué el head-of-line blocking sigue existiendo en HTTP/2, y qué lo arregla?"
+            },
+            "options": [
+              {
+                "en": "All streams share one TCP connection, so a lost packet stalls everything; HTTP/3 (QUIC over UDP) makes streams independent",
+                "es": "Todos los streams comparten una conexión TCP, así que un paquete perdido frena todo; HTTP/3 (QUIC sobre UDP) hace los streams independientes"
+              },
+              {
+                "en": "HTTP/2 forbids more than one request per connection",
+                "es": "HTTP/2 prohíbe más de una petición por conexión"
+              },
+              {
+                "en": "It doesn't exist — HTTP/2 eliminated all blocking",
+                "es": "No existe — HTTP/2 eliminó todo bloqueo"
+              },
+              {
+                "en": "HPACK compression forces responses to arrive in order",
+                "es": "La compresión HPACK obliga a que las respuestas lleguen en orden"
+              }
+            ],
+            "explanation": {
+              "en": "HTTP/2 removed application-layer HOL blocking, but TCP delivers bytes strictly in order: one lost packet blocks all multiplexed streams until retransmission. QUIC (HTTP/3) runs streams independently over UDP, so loss on one stream doesn't stall the others.",
+              "es": "HTTP/2 eliminó el HOL blocking de la capa de aplicación, pero TCP entrega bytes estrictamente en orden: un paquete perdido bloquea todos los streams multiplexados hasta la retransmisión. QUIC (HTTP/3) corre streams independientes sobre UDP, así que una pérdida en un stream no frena a los demás."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In the HTTP/1.1 era, frontends concatenated all JavaScript into one bundle and merged icons into sprite sheets. Why did HTTP/2 make these tricks largely unnecessary?",
+              "es": "En la era de HTTP/1.1, los frontends concatenaban todo el JavaScript en un solo bundle y unían los íconos en sprite sheets. ¿Por qué HTTP/2 hizo estos trucos mayormente innecesarios?"
+            },
+            "options": [
+              {
+                "en": "HTTP/2 compresses response bodies much better than HTTP/1.1",
+                "es": "HTTP/2 comprime los cuerpos de respuesta mucho mejor que HTTP/1.1"
+              },
+              {
+                "en": "HTTP/2 removes the need for caching, so the number of files no longer matters",
+                "es": "HTTP/2 elimina la necesidad de caché, así que la cantidad de archivos ya no importa"
+              },
+              {
+                "en": "Multiplexing makes many small requests cheap on one connection, so requests are no longer a scarce resource",
+                "es": "La multiplexación hace baratas muchas peticiones pequeñas sobre una conexión, así que las peticiones ya no son un recurso escaso"
+              },
+              {
+                "en": "HTTP/2 servers automatically inline every resource into the HTML",
+                "es": "Los servidores HTTP/2 incrustan automáticamente cada recurso en el HTML"
+              }
+            ],
+            "explanation": {
+              "en": "Bundling and sprites existed to reduce the request count, because HTTP/1.1 served one response at a time per connection (~6 connections per host). With HTTP/2, 50 small files load concurrently over one connection — and small separate files even cache better, since one changed module doesn't invalidate the whole bundle. Body compression (gzip/brotli) is independent of the HTTP version.",
+              "es": "Los bundles y sprites existían para reducir el número de peticiones, porque HTTP/1.1 servía una respuesta a la vez por conexión (~6 conexiones por host). Con HTTP/2, 50 archivos pequeños cargan concurrentemente sobre una conexión — y los archivos pequeños separados incluso cachean mejor, porque un módulo cambiado no invalida todo el bundle. La compresión del cuerpo (gzip/brotli) es independiente de la versión de HTTP."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "load-balancers-and-proxies",
+      "question": {
+        "en": "What do load balancers and reverse proxies do, and what's the difference between L4 and L7?",
+        "es": "¿Qué hacen los balanceadores de carga y los reverse proxies, y cuál es la diferencia entre L4 y L7?"
+      },
+      "definition": {
+        "en": "A **reverse proxy** sits in front of your servers and receives client traffic on their behalf: it can terminate TLS, cache responses, compress, and route. A **load balancer** is a reverse proxy whose main job is spreading traffic across many backend instances (round-robin, least-connections, etc.) and taking unhealthy ones out of rotation via **health checks**.\n\nAn **L4 (transport layer) balancer** looks only at IPs and TCP/UDP ports: it forwards packets or connections without understanding their content. Very fast, protocol-agnostic — but it can't make decisions based on the request. An **L7 (application layer) balancer** terminates the connection, parses HTTP, and can route by path or host (`/api` → API pool, `/static` → CDN), inject headers, do sticky sessions via cookies, and retry failed requests.\n\nRule of thumb: L4 for raw throughput and non-HTTP protocols; L7 when routing logic depends on the request itself.",
+        "es": "Un **reverse proxy** se pone delante de tus servidores y recibe el tráfico de los clientes en su nombre: puede terminar TLS, cachear respuestas, comprimir y enrutar. Un **balanceador de carga** es un reverse proxy cuyo trabajo principal es repartir tráfico entre muchas instancias backend (round-robin, least-connections, etc.) y sacar de rotación las no saludables mediante **health checks**.\n\nUn balanceador **L4 (capa de transporte)** solo mira IPs y puertos TCP/UDP: reenvía paquetes o conexiones sin entender su contenido. Muy rápido, agnóstico al protocolo — pero no puede decidir según la petición. Un balanceador **L7 (capa de aplicación)** termina la conexión, parsea HTTP y puede enrutar por ruta o host (`/api` → pool de API, `/static` → CDN), inyectar headers, hacer sticky sessions con cookies y reintentar peticiones fallidas.\n\nRegla práctica: L4 para throughput puro y protocolos no HTTP; L7 cuando la lógica de enrutamiento depende de la petición misma."
+      },
+      "examples": [
+        {
+          "en": "NGINX as an L7 reverse proxy: terminates TLS, serves `/static/*` from disk, and proxies `/api/*` to a pool of app servers with health checks — the standard single-box production setup.",
+          "es": "NGINX como reverse proxy L7: termina TLS, sirve `/static/*` desde disco y hace proxy de `/api/*` a un pool de servidores de aplicación con health checks — el setup de producción estándar en una sola caja."
+        },
+        {
+          "en": "AWS offers both flavors: the Network Load Balancer (L4) for millions of TCP connections at ultra-low latency, and the Application Load Balancer (L7) for path-based routing between microservices.",
+          "es": "AWS ofrece ambos sabores: el Network Load Balancer (L4) para millones de conexiones TCP con latencia ultrabaja, y el Application Load Balancer (L7) para enrutamiento por ruta entre microservicios."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each capability with the load balancer layer it requires.",
+              "es": "Conecta cada capacidad con la capa de balanceador que requiere."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Route `/api/*` and `/static/*` to different pools",
+                  "es": "Enrutar `/api/*` y `/static/*` a pools distintos"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Forward raw TCP for a PostgreSQL cluster",
+                  "es": "Reenviar TCP crudo para un clúster PostgreSQL"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Sticky sessions using a cookie",
+                  "es": "Sticky sessions usando una cookie"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Balance millions of connections without parsing them",
+                  "es": "Balancear millones de conexiones sin parsearlas"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "L7 — needs to read the HTTP path",
+                  "es": "L7 — necesita leer la ruta HTTP"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "L4 — non-HTTP protocol, ports suffice",
+                  "es": "L4 — protocolo no HTTP, bastan los puertos"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "L7 — needs to read/set cookies",
+                  "es": "L7 — necesita leer/escribir cookies"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "L4 — maximum throughput, no inspection",
+                  "es": "L4 — máximo throughput, sin inspección"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A backend instance starts failing health checks. What does a properly configured load balancer do?",
+              "es": "Una instancia backend empieza a fallar los health checks. ¿Qué hace un balanceador bien configurado?"
+            },
+            "options": [
+              {
+                "en": "Restarts the instance's operating system",
+                "es": "Reinicia el sistema operativo de la instancia"
+              },
+              {
+                "en": "Stops routing new traffic to it until it passes health checks again",
+                "es": "Deja de enviarle tráfico nuevo hasta que vuelva a pasar los health checks"
+              },
+              {
+                "en": "Buffers requests indefinitely until the instance recovers",
+                "es": "Almacena las peticiones indefinidamente hasta que la instancia se recupere"
+              },
+              {
+                "en": "Returns 404 for all requests to the service",
+                "es": "Devuelve 404 para todas las peticiones al servicio"
+              }
+            ],
+            "explanation": {
+              "en": "Health checks let the balancer take failing instances out of rotation so traffic only reaches healthy backends. It doesn't manage the instance itself — that's an orchestrator's job (e.g. Kubernetes restarting the pod).",
+              "es": "Los health checks permiten al balanceador sacar de rotación las instancias que fallan, de modo que el tráfico solo llegue a backends sanos. No administra la instancia en sí — eso es trabajo del orquestador (p. ej. Kubernetes reiniciando el pod)."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your backend requests vary wildly in duration (some take 50ms, some 30s). With round-robin, some instances pile up slow requests while others sit idle. Which balancing algorithm addresses this directly?",
+              "es": "Las peticiones de tu backend varían muchísimo en duración (algunas tardan 50ms, otras 30s). Con round-robin, algunas instancias acumulan peticiones lentas mientras otras quedan ociosas. ¿Qué algoritmo de balanceo ataca esto directamente?"
+            },
+            "options": [
+              {
+                "en": "Least-connections — route each new request to the instance with the fewest in-flight requests",
+                "es": "Least-connections — enviar cada petición nueva a la instancia con menos peticiones en curso"
+              },
+              {
+                "en": "Pure random selection — chance will even the load out over time",
+                "es": "Selección puramente aleatoria — el azar nivelará la carga con el tiempo"
+              },
+              {
+                "en": "DNS round-robin — let clients rotate through the instance IPs themselves",
+                "es": "DNS round-robin — dejar que los clientes roten ellos mismos entre las IPs de las instancias"
+              },
+              {
+                "en": "Sticky sessions — pin each client to a single instance via cookie",
+                "es": "Sticky sessions — fijar cada cliente a una sola instancia mediante cookie"
+              }
+            ],
+            "explanation": {
+              "en": "Round-robin (and random) only equalize the *count* of requests sent, not the work in progress. Least-connections uses in-flight requests as a live proxy for load, so an instance stuck with several 30s requests naturally stops receiving new ones. Sticky sessions solve state affinity, not load skew, and DNS round-robin is even blinder than the balancer.",
+              "es": "Round-robin (y aleatorio) solo igualan la *cantidad* de peticiones enviadas, no el trabajo en curso. Least-connections usa las peticiones en vuelo como indicador vivo de carga, así que una instancia atascada con varias peticiones de 30s deja naturalmente de recibir nuevas. Las sticky sessions resuelven afinidad de estado, no desbalance de carga, y el DNS round-robin es aún más ciego que el balanceador."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "timeouts",
+      "question": {
+        "en": "What is the difference between a connection timeout and a request timeout, and what are sensible defaults?",
+        "es": "¿Cuál es la diferencia entre un timeout de conexión y un timeout de petición, y qué valores por defecto son sensatos?"
+      },
+      "definition": {
+        "en": "A **connection timeout** limits how long you wait to *establish* the connection (TCP handshake, and often TLS). If the host is down or a firewall silently drops packets, this is what saves you. Since a healthy handshake takes one round trip, it should be short: **1–5 seconds** is typical.\n\nA **request (read) timeout** limits how long you wait for the *response* after the connection is up. It must cover the server's real work, so it's longer and endpoint-dependent: a few seconds for a typical API call, more for known-heavy operations. The cardinal sin is **no timeout at all**: a hung server then holds your threads/connections forever and the failure cascades through your system.\n\nRelated ideas worth naming in interviews: total deadline (cap across retries), idle timeout for pooled connections, and making timeouts slightly *shorter* than your caller's so you fail first and return a clean error.",
+        "es": "Un **timeout de conexión** limita cuánto esperas para *establecer* la conexión (handshake TCP, y a menudo TLS). Si el host está caído o un firewall descarta paquetes silenciosamente, esto es lo que te salva. Como un handshake sano toma un viaje de ida y vuelta, debe ser corto: **1–5 segundos** es lo típico.\n\nUn **timeout de petición (lectura)** limita cuánto esperas la *respuesta* una vez establecida la conexión. Debe cubrir el trabajo real del servidor, así que es más largo y depende del endpoint: unos pocos segundos para una llamada de API típica, más para operaciones pesadas conocidas. El pecado capital es **no tener timeout**: un servidor colgado retiene tus threads/conexiones para siempre y la falla se propaga en cascada por tu sistema.\n\nIdeas relacionadas que vale la pena nombrar en entrevistas: deadline total (tope incluyendo reintentos), idle timeout para conexiones en pool, y poner tus timeouts un poco *más cortos* que los de quien te llama, para fallar primero y devolver un error limpio."
+      },
+      "examples": [
+        {
+          "en": "Python's `requests` library has NO timeout by default — `requests.get(url)` can hang forever. Production code always passes `timeout=(3.05, 10)`: ~3s to connect, 10s to read.",
+          "es": "La librería `requests` de Python NO tiene timeout por defecto — `requests.get(url)` puede colgarse para siempre. El código de producción siempre pasa `timeout=(3.05, 10)`: ~3s para conectar, 10s para leer."
+        },
+        {
+          "en": "A payment service with no request timeout once piled up thousands of threads waiting on a slow downstream, exhausted its thread pool, and took down checkout — the classic cascading failure that timeouts plus circuit breakers prevent.",
+          "es": "Un servicio de pagos sin timeout de petición acumuló miles de threads esperando a un downstream lento, agotó su thread pool y tumbó el checkout — la clásica falla en cascada que previenen los timeouts junto con circuit breakers."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your HTTP client is configured with connect timeout = 3s, read timeout = 10s. The target host's IP is unreachable (packets silently dropped). When does the call fail?",
+              "es": "Tu cliente HTTP tiene connect timeout = 3s y read timeout = 10s. La IP del host destino es inalcanzable (los paquetes se descartan en silencio). ¿Cuándo falla la llamada?"
+            },
+            "options": [
+              {
+                "en": "Never — unreachable hosts return an instant error",
+                "es": "Nunca — los hosts inalcanzables devuelven error instantáneo"
+              },
+              {
+                "en": "After ~10s — the read timeout always governs",
+                "es": "Tras ~10s — siempre manda el timeout de lectura"
+              },
+              {
+                "en": "After ~13s — both timeouts add up",
+                "es": "Tras ~13s — ambos timeouts se suman"
+              },
+              {
+                "en": "After ~3s — the TCP handshake never completes, so the connection timeout fires",
+                "es": "Tras ~3s — el handshake TCP nunca se completa, así que dispara el timeout de conexión"
+              }
+            ],
+            "explanation": {
+              "en": "The failure happens during connection establishment, so the connect timeout (3s) applies. The read timeout only starts counting once the connection exists. Silently dropped packets do NOT produce an instant error — that's exactly why connect timeouts exist.",
+              "es": "La falla ocurre durante el establecimiento de la conexión, así que aplica el connect timeout (3s). El read timeout solo empieza a contar cuando la conexión existe. Los paquetes descartados en silencio NO producen error instantáneo — justo por eso existen los connect timeouts."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You're adding an HTTP call from service A to service B, whose p99 latency is 800ms. Propose connection and request timeouts with a brief justification, and explain what happens if you set no timeout at all.",
+              "es": "Vas a agregar una llamada HTTP del servicio A al servicio B, cuya latencia p99 es 800ms. Propón timeouts de conexión y de petición con una breve justificación, y explica qué pasa si no pones ningún timeout."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose a short connection timeout (roughly 1-5s, since a handshake is one round trip) and a request timeout above the p99 with headroom (roughly 2-5s for an 800ms p99; anything reasoned relative to p99 is acceptable). Must explain the no-timeout danger: calls can hang indefinitely, tying up threads/connections and causing resource exhaustion and cascading failures.",
+              "es": "Debe proponer un timeout de conexión corto (aprox. 1-5s, pues el handshake es un viaje de ida y vuelta) y un timeout de petición por encima del p99 con margen (aprox. 2-5s para un p99 de 800ms; cualquier valor razonado respecto al p99 es aceptable). Debe explicar el peligro de no tener timeout: las llamadas pueden colgarse indefinidamente, reteniendo threads/conexiones y causando agotamiento de recursos y fallas en cascada."
+            },
+            "reference": "Connect timeout ~2s: establishing a connection is a single round trip, so anything beyond a couple of seconds means the host is down or unreachable. Request timeout ~3s: comfortably above the 800ms p99, so legitimate slow requests succeed, but a hung B fails fast. With no timeout, a hung or very slow B leaves A's threads and pooled connections waiting forever; under load they run out, A itself stops responding, and the failure cascades upstream."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Service A calls B with a 2s timeout. Internally, B calls C with a 5s timeout. Why is this configuration problematic?",
+              "es": "El servicio A llama a B con un timeout de 2s. Internamente, B llama a C con un timeout de 5s. ¿Por qué es problemática esta configuración?"
+            },
+            "options": [
+              {
+                "en": "B's timeout is ignored, because A's timeout applies to the whole call chain automatically",
+                "es": "El timeout de B se ignora, porque el de A aplica automáticamente a toda la cadena de llamadas"
+              },
+              {
+                "en": "The timeouts add up, so A actually waits 7 seconds in total",
+                "es": "Los timeouts se suman, así que A en realidad espera 7 segundos en total"
+              },
+              {
+                "en": "It isn't — inner timeouts should always be longer, as a safety margin",
+                "es": "No lo es — los timeouts internos siempre deben ser más largos, como margen de seguridad"
+              },
+              {
+                "en": "If C is slow, A gives up at 2s while B keeps waiting up to 5s doing useless work; a callee's timeout should be shorter than its caller's",
+                "es": "Si C está lento, A se rinde a los 2s mientras B sigue esperando hasta 5s haciendo trabajo inútil; el timeout de quien es llamado debe ser más corto que el de quien llama"
+              }
+            ],
+            "explanation": {
+              "en": "Timeouts should shrink as you go downstream (or propagate a shared deadline). Here A abandons the call at 2s, but B stays blocked on C for up to 3 more seconds, holding threads and connections for a response nobody will read — under load, that wasted capacity is what turns one slow dependency into a cascading failure. Timeouts are per-hop: they neither add up nor propagate automatically.",
+              "es": "Los timeouts deben encogerse hacia downstream (o propagar un deadline compartido). Aquí A abandona la llamada a los 2s, pero B sigue bloqueado en C hasta 3 segundos más, reteniendo threads y conexiones por una respuesta que nadie leerá — bajo carga, esa capacidad desperdiciada es lo que convierte una dependencia lenta en una falla en cascada. Los timeouts son por salto: ni se suman ni se propagan automáticamente."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "502-vs-503-vs-504",
+      "question": {
+        "en": "What is the difference between 502, 503 and 504, and what typically causes each?",
+        "es": "¿Cuál es la diferencia entre 502, 503 y 504, y qué causa típicamente cada uno?"
+      },
+      "definition": {
+        "en": "All three are 5xx errors usually emitted by a **proxy or load balancer** in front of your app, and each points to a different failure mode:\n\n- **502 Bad Gateway** — the proxy reached the upstream but got a *broken* answer: connection refused or reset, the process crashed mid-response, or malformed output. Typical cause: the app is down or crashing.\n- **503 Service Unavailable** — the service *deliberately* can't take the request right now: no healthy backends in the pool, overload protection shedding load, or maintenance mode. It may include `Retry-After`.\n- **504 Gateway Timeout** — the proxy reached the upstream, the upstream accepted the request... and never answered within the proxy's timeout. Typical cause: slow database queries, a hung downstream, or an undersized timeout.\n\nMemory hook: 502 = upstream answered *wrongly*, 503 = nobody *available* to answer, 504 = upstream answered *too late*.",
+        "es": "Los tres son errores 5xx normalmente emitidos por un **proxy o balanceador** delante de tu app, y cada uno apunta a un modo de falla distinto:\n\n- **502 Bad Gateway** — el proxy alcanzó al upstream pero recibió una respuesta *rota*: conexión rechazada o reseteada, el proceso murió a mitad de respuesta, o salida malformada. Causa típica: la app está caída o crasheando.\n- **503 Service Unavailable** — el servicio *deliberadamente* no puede atender ahora: no hay backends sanos en el pool, protección contra sobrecarga descartando peticiones, o modo mantenimiento. Puede incluir `Retry-After`.\n- **504 Gateway Timeout** — el proxy alcanzó al upstream, este aceptó la petición... y nunca respondió dentro del timeout del proxy. Causa típica: consultas lentas a la base de datos, un downstream colgado o un timeout mal dimensionado.\n\nTruco para recordar: 502 = el upstream respondió *mal*, 503 = no hay nadie *disponible* para responder, 504 = el upstream respondió *demasiado tarde*."
+      },
+      "examples": [
+        {
+          "en": "During a deploy that kills old pods before new ones are ready, NGINX briefly returns 502s: it tries to connect to backends that no longer exist. Rolling deploys with readiness probes fix this.",
+          "es": "Durante un deploy que mata pods viejos antes de que los nuevos estén listos, NGINX devuelve 502 brevemente: intenta conectarse a backends que ya no existen. Los deploys rolling con readiness probes lo arreglan."
+        },
+        {
+          "en": "A missing database index makes one endpoint take 90s while the load balancer's timeout is 60s: users see 504s even though the app 'works' — the answer just arrives after the proxy gave up.",
+          "es": "Un índice faltante en la base de datos hace que un endpoint tarde 90s mientras el timeout del balanceador es 60s: los usuarios ven 504 aunque la app 'funciona' — la respuesta simplemente llega después de que el proxy se rindió."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each scenario with the status code the proxy will most likely return.",
+              "es": "Conecta cada escenario con el código de estado que el proxy devolverá más probablemente."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "The app process crashed; the proxy gets 'connection refused'",
+                  "es": "El proceso de la app crasheó; el proxy recibe 'connection refused'"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "All backends are failing health checks; none are in rotation",
+                  "es": "Todos los backends fallan los health checks; ninguno está en rotación"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "A slow SQL query makes the app exceed the proxy's 60s timeout",
+                  "es": "Una consulta SQL lenta hace que la app exceda el timeout de 60s del proxy"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "The app handles the request but a bug throws an unhandled exception",
+                  "es": "La app atiende la petición pero un bug lanza una excepción no manejada"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "502 Bad Gateway",
+                  "es": "502 Bad Gateway"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "503 Service Unavailable",
+                  "es": "503 Service Unavailable"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "504 Gateway Timeout",
+                  "es": "504 Gateway Timeout"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "500 Internal Server Error (from the app itself)",
+                  "es": "500 Internal Server Error (de la propia app)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your monitoring shows a spike of 504s (not 502s or 503s) from the load balancer. Where do you look first?",
+              "es": "Tu monitoreo muestra un pico de 504 (no 502 ni 503) desde el balanceador. ¿Dónde miras primero?"
+            },
+            "options": [
+              {
+                "en": "TLS certificate expiration dates",
+                "es": "Las fechas de expiración del certificado TLS"
+              },
+              {
+                "en": "The DNS configuration of the domain",
+                "es": "La configuración DNS del dominio"
+              },
+              {
+                "en": "Upstream latency — something behind the proxy is responding too slowly (slow queries, hung downstream)",
+                "es": "La latencia del upstream — algo detrás del proxy responde demasiado lento (consultas lentas, downstream colgado)"
+              },
+              {
+                "en": "The client's browser cache",
+                "es": "La caché del navegador del cliente"
+              }
+            ],
+            "explanation": {
+              "en": "504 means the upstream accepted the request but didn't answer in time — a latency problem, not availability (503) or crashes (502). Check app latency dashboards, slow query logs, and downstream dependencies.",
+              "es": "504 significa que el upstream aceptó la petición pero no respondió a tiempo — un problema de latencia, no de disponibilidad (503) ni de crashes (502). Revisa dashboards de latencia de la app, logs de consultas lentas y dependencias downstream."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You're about to put your API into maintenance mode and want well-behaved clients to back off and retry later. Which status should the proxy return, and with which header?",
+              "es": "Vas a poner tu API en modo mantenimiento y quieres que los clientes bien portados se retiren y reintenten después. ¿Qué código debe devolver el proxy y con qué header?"
+            },
+            "options": [
+              {
+                "en": "502 with a Cache-Control header — clients will cache the error and stop calling",
+                "es": "502 con un header Cache-Control — los clientes cachearán el error y dejarán de llamar"
+              },
+              {
+                "en": "504 with a Keep-Alive header — it tells clients how long to hold the connection",
+                "es": "504 con un header Keep-Alive — les dice a los clientes cuánto mantener la conexión"
+              },
+              {
+                "en": "500 with an X-Maintenance header — the standard maintenance signal",
+                "es": "500 con un header X-Maintenance — la señal estándar de mantenimiento"
+              },
+              {
+                "en": "503 with a Retry-After header — it signals deliberate, temporary unavailability and when to come back",
+                "es": "503 con un header Retry-After — señala indisponibilidad deliberada y temporal, y cuándo volver"
+              }
+            ],
+            "explanation": {
+              "en": "503 Service Unavailable is the one 5xx that means 'deliberately not serving right now' — maintenance, overload shedding, or no healthy backends — and the spec pairs it with Retry-After so clients know when to retry. 502 and 504 describe broken or slow upstreams, not planned unavailability, and X-Maintenance is not a standard header.",
+              "es": "503 Service Unavailable es el único 5xx que significa 'deliberadamente sin atender ahora' — mantenimiento, descarte por sobrecarga o sin backends sanos — y el estándar lo empareja con Retry-After para que los clientes sepan cuándo reintentar. 502 y 504 describen upstreams rotos o lentos, no indisponibilidad planeada, y X-Maintenance no es un header estándar."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cors",
+      "question": {
+        "en": "Why does CORS exist, and what is a preflight request?",
+        "es": "¿Por qué existe CORS y qué es una petición preflight?"
+      },
+      "definition": {
+        "en": "Browsers enforce the **same-origin policy**: JavaScript on `https://app.com` cannot read responses from `https://api.other.com` by default. This protects users — without it, any malicious page you visit could call your bank's API *with your cookies* and read the response. **CORS (Cross-Origin Resource Sharing)** is the mechanism a server uses to *relax* this: it answers with headers like `Access-Control-Allow-Origin` declaring which origins may read its responses.\n\nFor requests that could have side effects and aren't 'simple' (e.g. `PUT`/`DELETE`, or a `Content-Type: application/json`, or custom headers like `Authorization`), the browser first sends a **preflight**: an `OPTIONS` request with `Origin`, `Access-Control-Request-Method` and `Access-Control-Request-Headers`. Only if the server approves does the real request go out. Preflight responses can be cached via `Access-Control-Max-Age`.\n\nKey insight for interviews: CORS is **browser-enforced protection for users** — it does nothing against curl, Postman or server-to-server calls. It is not authentication and it does not protect your API from abuse.",
+        "es": "Los navegadores aplican la **política de mismo origen**: el JavaScript de `https://app.com` no puede leer respuestas de `https://api.other.com` por defecto. Esto protege a los usuarios — sin ella, cualquier página maliciosa que visites podría llamar a la API de tu banco *con tus cookies* y leer la respuesta. **CORS (Cross-Origin Resource Sharing)** es el mecanismo con el que un servidor *relaja* esto: responde con headers como `Access-Control-Allow-Origin` declarando qué orígenes pueden leer sus respuestas.\n\nPara peticiones que podrían tener efectos secundarios y no son 'simples' (p. ej. `PUT`/`DELETE`, o `Content-Type: application/json`, o headers personalizados como `Authorization`), el navegador primero envía un **preflight**: una petición `OPTIONS` con `Origin`, `Access-Control-Request-Method` y `Access-Control-Request-Headers`. Solo si el servidor aprueba, sale la petición real. Las respuestas de preflight pueden cachearse con `Access-Control-Max-Age`.\n\nClave para entrevistas: CORS es **protección para usuarios aplicada por el navegador** — no hace nada contra curl, Postman o llamadas servidor a servidor. No es autenticación y no protege tu API del abuso."
+      },
+      "examples": [
+        {
+          "en": "The classic dev bug: your React app on `localhost:3000` calls the API on `localhost:8000` and the browser blocks it with a CORS error — fixed by the backend allowing that origin (e.g. FastAPI's CORSMiddleware), never by 'disabling CORS in the frontend'.",
+          "es": "El bug clásico de desarrollo: tu app React en `localhost:3000` llama a la API en `localhost:8000` y el navegador la bloquea con un error de CORS — se arregla permitiendo ese origen en el backend (p. ej. CORSMiddleware de FastAPI), nunca 'desactivando CORS en el frontend'."
+        },
+        {
+          "en": "An API that sends `Access-Control-Allow-Origin: *` with credentials enabled is a misconfiguration: browsers reject the wildcard+credentials combination precisely because it would expose authenticated responses to any site.",
+          "es": "Una API que envía `Access-Control-Allow-Origin: *` con credenciales habilitadas es una mala configuración: los navegadores rechazan la combinación comodín+credenciales precisamente porque expondría respuestas autenticadas a cualquier sitio."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your frontend sends `PUT /users/1` with `Content-Type: application/json` to a different origin. What does the browser do first?",
+              "es": "Tu frontend envía `PUT /users/1` con `Content-Type: application/json` a otro origen. ¿Qué hace primero el navegador?"
+            },
+            "options": [
+              {
+                "en": "Sends an OPTIONS preflight asking if PUT with that header is allowed, and only then the real request",
+                "es": "Envía un preflight OPTIONS preguntando si PUT con ese header está permitido, y solo entonces la petición real"
+              },
+              {
+                "en": "Converts the PUT into a POST automatically",
+                "es": "Convierte el PUT en POST automáticamente"
+              },
+              {
+                "en": "Sends the PUT directly — CORS only applies to GET",
+                "es": "Envía el PUT directamente — CORS solo aplica a GET"
+              },
+              {
+                "en": "Blocks the request permanently without contacting the server",
+                "es": "Bloquea la petición permanentemente sin contactar al servidor"
+              }
+            ],
+            "explanation": {
+              "en": "PUT with a JSON content type is not a 'simple request', so the browser preflights with OPTIONS. If the server's response allows the origin, method and headers, the browser proceeds with the actual PUT.",
+              "es": "Un PUT con content type JSON no es una 'petición simple', así que el navegador hace preflight con OPTIONS. Si la respuesta del servidor permite el origen, método y headers, el navegador procede con el PUT real."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A teammate says: 'CORS protects our API from attackers.' Is that right? Explain what CORS actually protects, who enforces it, and why it doesn't stop someone using curl.",
+              "es": "Un compañero dice: 'CORS protege nuestra API de atacantes.' ¿Es correcto? Explica qué protege realmente CORS, quién lo aplica y por qué no detiene a alguien usando curl."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that CORS is enforced by the browser, not the server, and protects users (their cookies/sessions) from malicious sites reading cross-origin responses — it is a relaxation of the same-origin policy. Must note that curl/Postman/server-to-server calls ignore it entirely, so it is not API security; authentication/authorization protect the API.",
+              "es": "Debe decir que CORS lo aplica el navegador, no el servidor, y protege a los usuarios (sus cookies/sesiones) de que sitios maliciosos lean respuestas cross-origin — es una relajación de la política de mismo origen. Debe notar que curl/Postman/llamadas servidor a servidor lo ignoran por completo, así que no es seguridad de API; la protegen la autenticación/autorización."
+            },
+            "reference": "Not right. CORS is enforced by browsers to protect users: it stops a malicious page from reading responses of cross-origin requests made with the victim's cookies. The server merely declares (via Access-Control-* headers) which origins browsers may allow. Tools like curl or another backend don't run a browser, so they never apply CORS — anyone can still call the API directly. Protecting the API itself is the job of authentication, authorization and rate limiting."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why do browsers refuse to honor `Access-Control-Allow-Origin: *` on responses to credentialed requests (those sent with cookies)?",
+              "es": "¿Por qué los navegadores se niegan a aceptar `Access-Control-Allow-Origin: *` en respuestas a peticiones con credenciales (las enviadas con cookies)?"
+            },
+            "options": [
+              {
+                "en": "The wildcard makes the response uncacheable, which would degrade performance",
+                "es": "El comodín hace la respuesta no cacheable, lo que degradaría el rendimiento"
+              },
+              {
+                "en": "The wildcard is only valid for simple GET requests without preflight",
+                "es": "El comodín solo es válido para peticiones GET simples sin preflight"
+              },
+              {
+                "en": "It would let any website read responses authenticated with the victim's session, gutting the same-origin protection",
+                "es": "Permitiría a cualquier sitio web leer respuestas autenticadas con la sesión de la víctima, destruyendo la protección de mismo origen"
+              },
+              {
+                "en": "Credentialed requests can never cross origins under any configuration",
+                "es": "Las peticiones con credenciales nunca pueden cruzar orígenes bajo ninguna configuración"
+              }
+            ],
+            "explanation": {
+              "en": "Wildcard + credentials would mean: any page on the internet may make requests carrying the user's cookies AND read the authenticated responses — exactly the attack the same-origin policy exists to prevent. That's why servers must echo a specific origin (plus Access-Control-Allow-Credentials: true) to share authenticated resources; credentialed cross-origin requests are possible, just never with the wildcard.",
+              "es": "Comodín + credenciales significaría: cualquier página de internet puede hacer peticiones llevando las cookies del usuario Y leer las respuestas autenticadas — exactamente el ataque que la política de mismo origen existe para prevenir. Por eso los servidores deben devolver un origen específico (más Access-Control-Allow-Credentials: true) para compartir recursos autenticados; las peticiones cross-origin con credenciales son posibles, solo que nunca con el comodín."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "websockets",
+      "question": {
+        "en": "How do WebSockets work, and when do you use them instead of polling or SSE?",
+        "es": "¿Cómo funcionan los WebSockets y cuándo usarlos en lugar de polling o SSE?"
+      },
+      "definition": {
+        "en": "A WebSocket starts life as a normal HTTP request with an **upgrade**: the client sends `GET` with `Upgrade: websocket`, `Connection: Upgrade` and a random `Sec-WebSocket-Key`. The server answers **`101 Switching Protocols`** with the corresponding `Sec-WebSocket-Accept`, and from that moment the same TCP connection stops speaking HTTP and becomes a **persistent, bidirectional, full-duplex** message channel — either side can push frames at any time.\n\nCompare the alternatives: **short polling** (ask every N seconds — simple, but wasteful and adds up to N seconds of delay), **long polling** (server holds the request until there's data — lower latency, still one request per message), and **SSE (Server-Sent Events)** — a regular HTTP response kept open for **server→client** streaming only, with automatic reconnection built in.\n\nRule of thumb: SSE when only the server pushes (notifications, live feeds, LLM token streaming); WebSockets when traffic is truly bidirectional and latency-sensitive (chat, multiplayer games, collaborative editing). WebSockets cost more operationally: stateful connections complicate load balancing and require heartbeats to detect dead peers.",
+        "es": "Un WebSocket nace como una petición HTTP normal con un **upgrade**: el cliente envía `GET` con `Upgrade: websocket`, `Connection: Upgrade` y una `Sec-WebSocket-Key` aleatoria. El servidor responde **`101 Switching Protocols`** con el `Sec-WebSocket-Accept` correspondiente, y desde ese momento la misma conexión TCP deja de hablar HTTP y se convierte en un canal de mensajes **persistente, bidireccional y full-duplex** — cualquiera de los dos lados puede enviar frames en cualquier momento.\n\nCompara las alternativas: **short polling** (preguntar cada N segundos — simple, pero derrochador y con hasta N segundos de retraso), **long polling** (el servidor retiene la petición hasta tener datos — menos latencia, pero sigue siendo una petición por mensaje), y **SSE (Server-Sent Events)** — una respuesta HTTP normal que se mantiene abierta para streaming solo **servidor→cliente**, con reconexión automática integrada.\n\nRegla práctica: SSE cuando solo el servidor empuja (notificaciones, feeds en vivo, streaming de tokens de LLM); WebSockets cuando el tráfico es realmente bidireccional y sensible a la latencia (chat, juegos multijugador, edición colaborativa). Los WebSockets cuestan más operacionalmente: las conexiones con estado complican el balanceo de carga y requieren heartbeats para detectar pares muertos."
+      },
+      "examples": [
+        {
+          "en": "Figma and Google Docs use WebSockets for collaborative editing: every keystroke and cursor move must flow both ways with minimal latency.",
+          "es": "Figma y Google Docs usan WebSockets para edición colaborativa: cada tecla y movimiento de cursor debe fluir en ambos sentidos con latencia mínima."
+        },
+        {
+          "en": "ChatGPT-style token streaming uses SSE, not WebSockets: the client sends one request and only the server streams data back — no bidirectional channel needed.",
+          "es": "El streaming de tokens estilo ChatGPT usa SSE, no WebSockets: el cliente envía una petición y solo el servidor devuelve datos en streaming — no se necesita canal bidireccional."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps that establish a WebSocket connection.",
+              "es": "Ordena los pasos que establecen una conexión WebSocket."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "tcp",
+                "label": {
+                  "en": "Client opens TCP (and TLS for wss://)",
+                  "es": "El cliente abre TCP (y TLS para wss://)"
+                }
+              },
+              {
+                "id": "upgrade",
+                "label": {
+                  "en": "Client sends HTTP GET with Upgrade: websocket + Sec-WebSocket-Key",
+                  "es": "El cliente envía HTTP GET con Upgrade: websocket + Sec-WebSocket-Key"
+                }
+              },
+              {
+                "id": "101",
+                "label": {
+                  "en": "Server replies 101 Switching Protocols + Sec-WebSocket-Accept",
+                  "es": "El servidor responde 101 Switching Protocols + Sec-WebSocket-Accept"
+                }
+              },
+              {
+                "id": "frames",
+                "label": {
+                  "en": "Both sides exchange frames bidirectionally over the same connection",
+                  "es": "Ambos lados intercambian frames bidireccionalmente sobre la misma conexión"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "tcp",
+              "upgrade",
+              "101",
+              "frames"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You're building a notifications feed: the server pushes updates, the client never sends real-time data. What's the most appropriate transport?",
+              "es": "Construyes un feed de notificaciones: el servidor empuja actualizaciones, el cliente nunca envía datos en tiempo real. ¿Cuál es el transporte más apropiado?"
+            },
+            "options": [
+              {
+                "en": "SSE — one-directional server push over plain HTTP, with automatic reconnection",
+                "es": "SSE — push unidireccional del servidor sobre HTTP plano, con reconexión automática"
+              },
+              {
+                "en": "Short polling every 100ms for low latency",
+                "es": "Short polling cada 100ms para baja latencia"
+              },
+              {
+                "en": "FTP file transfers on a schedule",
+                "es": "Transferencias FTP programadas"
+              },
+              {
+                "en": "WebSockets — bidirectionality is always better",
+                "es": "WebSockets — la bidireccionalidad siempre es mejor"
+              }
+            ],
+            "explanation": {
+              "en": "When data flows only server→client, SSE gives you streaming over ordinary HTTP with built-in reconnection and none of the stateful-connection complexity of WebSockets. Polling at 100ms would hammer the server pointlessly.",
+              "es": "Cuando los datos fluyen solo servidor→cliente, SSE te da streaming sobre HTTP normal con reconexión integrada y sin la complejidad de conexiones con estado de WebSockets. Polling cada 100ms machacaría el servidor sin sentido."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each real-time technique with its defining behavior.",
+              "es": "Conecta cada técnica de tiempo real con su comportamiento característico."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Client asks every N seconds whether there's new data, even when there isn't",
+                  "es": "El cliente pregunta cada N segundos si hay datos nuevos, incluso cuando no los hay"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Server holds each request open until data exists; the client immediately re-requests",
+                  "es": "El servidor retiene cada petición hasta tener datos; el cliente vuelve a pedir de inmediato"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "A single HTTP response kept open for server→client streaming, with automatic reconnection",
+                  "es": "Una sola respuesta HTTP mantenida abierta para streaming servidor→cliente, con reconexión automática"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "After a 101 upgrade, both sides push frames at any time over one TCP connection",
+                  "es": "Tras un upgrade 101, ambos lados envían frames en cualquier momento sobre una conexión TCP"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Short polling — simple but wasteful, up to N seconds of delay",
+                  "es": "Short polling — simple pero derrochador, hasta N segundos de retraso"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Long polling — lower latency, still one request per message",
+                  "es": "Long polling — menos latencia, sigue siendo una petición por mensaje"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "SSE — unidirectional server push over plain HTTP",
+                  "es": "SSE — push unidireccional del servidor sobre HTTP plano"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "WebSockets — persistent, bidirectional, full-duplex",
+                  "es": "WebSockets — persistente, bidireccional, full-duplex"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "slow-request-investigation",
+      "question": {
+        "en": "A request that normally takes 100ms sometimes takes 10 seconds — how do you investigate?",
+        "es": "Una petición que normalmente tarda 100ms a veces tarda 10 segundos — ¿cómo lo investigas?"
+      },
+      "definition": {
+        "en": "Intermittent latency spikes are a *localization* problem: first find **where** the time goes, then ask why. Break the request into phases — DNS, connect (TCP/TLS), server processing, download — using tracing, detailed client metrics or `curl -w`. A distributed trace that shows 9.8s inside one downstream span ends the mystery immediately.\n\nThe usual suspects each have a signature: **DNS** (spikes cluster on cache-miss lookups, often exactly ~5s = resolver retry timeout), **retries** (client silently retrying a failed call: total = timeout × attempts — check retry policies when spikes are near multiples of your timeout), **connection pool exhaustion** (requests queue *waiting for a connection*; pool wait-time metrics reveal it), **GC or CPU pauses** (the server-side gap appears in GC logs and affects unrelated endpoints at the same instant), and the **network path** (packet loss forcing TCP retransmissions — visible in retransmit counters).\n\nIn an interview, the winning structure is: measure and segment first (never guess), name several hypotheses with the signal that would confirm each, and mention the fixes (pre-resolved/cached DNS, bounded retries with jitter, right-sized pools, GC tuning).",
+        "es": "Los picos intermitentes de latencia son un problema de *localización*: primero encuentra **dónde** se va el tiempo, luego pregunta por qué. Divide la petición en fases — DNS, conexión (TCP/TLS), procesamiento en el servidor, descarga — usando tracing, métricas detalladas del cliente o `curl -w`. Una traza distribuida que muestra 9.8s dentro de un span de un downstream acaba el misterio de inmediato.\n\nLos sospechosos habituales tienen cada uno su firma: **DNS** (los picos se agrupan en lookups sin caché, a menudo exactamente ~5s = timeout de reintento del resolver), **reintentos** (el cliente reintenta en silencio una llamada fallida: total = timeout × intentos — revisa las políticas de retry cuando los picos rondan múltiplos de tu timeout), **agotamiento del pool de conexiones** (las peticiones hacen fila *esperando una conexión*; las métricas de espera del pool lo revelan), **pausas de GC o CPU** (el hueco aparece en los logs de GC del servidor y afecta endpoints no relacionados en el mismo instante), y la **ruta de red** (pérdida de paquetes forzando retransmisiones TCP — visible en contadores de retransmisión).\n\nEn una entrevista, la estructura ganadora es: medir y segmentar primero (nunca adivinar), nombrar varias hipótesis con la señal que confirmaría cada una, y mencionar los arreglos (DNS cacheado/pre-resuelto, reintentos acotados con jitter, pools bien dimensionados, tuning de GC)."
+      },
+      "examples": [
+        {
+          "en": "`curl -w` exposes the phase timings directly: `curl -w 'dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer}\\n' -o /dev/null -s https://api.example.com` — if `dns` is 5s on slow runs, you've found it.",
+          "es": "`curl -w` expone los tiempos por fase directamente: `curl -w 'dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} ttfb:%{time_starttransfer}\\n' -o /dev/null -s https://api.example.com` — si `dns` es 5s en las corridas lentas, ya lo encontraste."
+        },
+        {
+          "en": "A team saw exact 10s spikes on 1% of calls: their HTTP client had a 5s timeout with 1 silent retry (5s × 2 = 10s). The first attempt was hitting a pod being terminated during deploys — readiness probes plus connection draining fixed it.",
+          "es": "Un equipo veía picos exactos de 10s en el 1% de las llamadas: su cliente HTTP tenía timeout de 5s con 1 reintento silencioso (5s × 2 = 10s). El primer intento caía en un pod que estaba siendo terminado durante los deploys — readiness probes más connection draining lo arreglaron."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Latency spikes are almost exactly 10s, your HTTP client has a 5s timeout, and its default retry count is 1. What's the most likely explanation?",
+              "es": "Los picos de latencia son casi exactamente de 10s, tu cliente HTTP tiene timeout de 5s y su número de reintentos por defecto es 1. ¿Cuál es la explicación más probable?"
+            },
+            "options": [
+              {
+                "en": "The database always takes exactly 10s for some queries",
+                "es": "La base de datos siempre tarda exactamente 10s en algunas consultas"
+              },
+              {
+                "en": "The load balancer adds a fixed 10s delay under load",
+                "es": "El balanceador agrega un retraso fijo de 10s bajo carga"
+              },
+              {
+                "en": "The first attempt times out at 5s and a silent retry also times out: 5s × 2 = 10s",
+                "es": "El primer intento agota los 5s y un reintento silencioso también: 5s × 2 = 10s"
+              },
+              {
+                "en": "TLS handshakes take 10s by specification",
+                "es": "Los handshakes TLS tardan 10s por especificación"
+              }
+            ],
+            "explanation": {
+              "en": "A duration that equals timeout × (1 + retries) is the classic signature of silent retries. Suspiciously round, repeated latencies almost always trace back to a configured timeout somewhere, not to organic slowness.",
+              "es": "Una duración igual a timeout × (1 + reintentos) es la firma clásica de los reintentos silenciosos. Las latencias sospechosamente redondas y repetidas casi siempre llevan a un timeout configurado en algún lugar, no a lentitud orgánica."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Walk through your investigation plan for the 100ms→10s intermittent latency problem: how do you localize where the time goes, and name at least three distinct hypotheses with the signal that would confirm each.",
+              "es": "Describe tu plan de investigación para el problema de latencia intermitente de 100ms→10s: ¿cómo localizas dónde se va el tiempo?, y nombra al menos tres hipótesis distintas con la señal que confirmaría cada una."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must start by measuring/segmenting the request into phases (tracing, phase metrics, or curl -w) instead of guessing. Must give at least three distinct hypotheses among: slow DNS (cache misses / ~5s resolver retries), silent client retries (duration ≈ timeout × attempts), connection pool exhaustion (time waiting for a connection in pool metrics), GC/CPU pauses (server-side gaps in GC logs, correlated across endpoints), or network packet loss (TCP retransmission counters) — each paired with its confirming signal.",
+              "es": "Debe empezar midiendo/segmentando la petición en fases (tracing, métricas por fase o curl -w) en lugar de adivinar. Debe dar al menos tres hipótesis distintas entre: DNS lento (cache misses / reintentos del resolver de ~5s), reintentos silenciosos del cliente (duración ≈ timeout × intentos), agotamiento del pool de conexiones (tiempo esperando conexión en las métricas del pool), pausas de GC/CPU (huecos del lado servidor en logs de GC, correlacionados entre endpoints) o pérdida de paquetes en la red (contadores de retransmisión TCP) — cada una con su señal confirmatoria."
+            },
+            "reference": "First, localize: add or inspect distributed traces and per-phase client metrics (DNS, connect, TLS, TTFB), or reproduce with curl -w, and compare fast vs slow requests. Then test hypotheses: (1) DNS — slow runs show multi-second name lookup, often ~5s resolver retry; fix with caching/lower ndots. (2) Silent retries — spikes cluster at timeout × attempts; inspect client retry policy. (3) Pool exhaustion — pool wait-time metrics show requests queuing for a connection; grow the pool or fix leaks. (4) GC pauses — server GC logs show pauses aligned with the spikes across unrelated endpoints. (5) Network — TCP retransmit counters/packet captures show loss on the path. Fix whichever signal confirms."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each observed signature with the latency-spike hypothesis it confirms.",
+              "es": "Conecta cada firma observada con la hipótesis de picos de latencia que confirma."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Slow runs spend ~5s in the name-lookup phase, only on cache misses",
+                  "es": "Las corridas lentas pasan ~5s en la fase de resolución de nombre, solo en cache misses"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Spike durations sit at almost exact multiples of the client's configured timeout",
+                  "es": "Las duraciones de los picos caen en múltiplos casi exactos del timeout configurado del cliente"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Client metrics show requests queuing before a connection is even available",
+                  "es": "Las métricas del cliente muestran peticiones haciendo fila antes de que haya siquiera una conexión disponible"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Unrelated endpoints on the same server all stall at the same instant",
+                  "es": "Endpoints no relacionados del mismo servidor se frenan todos en el mismo instante"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "DNS — resolver retry timeout on uncached lookups",
+                  "es": "DNS — timeout de reintento del resolver en consultas sin caché"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Silent client retries — total ≈ timeout × attempts",
+                  "es": "Reintentos silenciosos del cliente — total ≈ timeout × intentos"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Connection pool exhaustion — waiting for a free connection",
+                  "es": "Agotamiento del pool de conexiones — esperando una conexión libre"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "GC or CPU pause — the whole process freezes briefly",
+                  "es": "Pausa de GC o CPU — todo el proceso se congela brevemente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Immediately after typing a URL and pressing Enter, what does the browser need before it can open a TCP connection?",
+          "es": "Justo después de escribir una URL y presionar Enter, ¿qué necesita el navegador antes de poder abrir una conexión TCP?"
+        },
+        "options": [
+          {
+            "en": "The full HTML of the page",
+            "es": "El HTML completo de la página"
+          },
+          {
+            "en": "The server's IP address, obtained via DNS",
+            "es": "La dirección IP del servidor, obtenida vía DNS"
+          },
+          {
+            "en": "The server's TLS certificate",
+            "es": "El certificado TLS del servidor"
+          },
+          {
+            "en": "A WebSocket upgrade approval",
+            "es": "Una aprobación de upgrade de WebSocket"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A DNS record has TTL 3600. You change its IP. What's the worst-case time a correctly behaving cache keeps returning the old IP?",
+          "es": "Un registro DNS tiene TTL 3600. Cambias su IP. ¿Cuál es el peor caso de tiempo que una caché que se comporta correctamente sigue devolviendo la IP vieja?"
+        },
+        "options": [
+          {
+            "en": "Exactly 24 hours by standard",
+            "es": "Exactamente 24 horas por estándar"
+          },
+          {
+            "en": "Until the browser is reinstalled",
+            "es": "Hasta que se reinstale el navegador"
+          },
+          {
+            "en": "Up to 1 hour after it cached the old record",
+            "es": "Hasta 1 hora después de haber cacheado el registro viejo"
+          },
+          {
+            "en": "Zero — DNS changes are instant everywhere",
+            "es": "Cero — los cambios DNS son instantáneos en todas partes"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which sequence correctly describes the TCP three-way handshake?",
+          "es": "¿Qué secuencia describe correctamente el handshake de tres pasos de TCP?"
+        },
+        "options": [
+          {
+            "en": "ACK → SYN → SYN/ACK",
+            "es": "ACK → SYN → SYN/ACK"
+          },
+          {
+            "en": "SYN → ACK → FIN",
+            "es": "SYN → ACK → FIN"
+          },
+          {
+            "en": "HELLO → CERT → FINISHED",
+            "es": "HELLO → CERT → FINISHED"
+          },
+          {
+            "en": "SYN → SYN/ACK → ACK",
+            "es": "SYN → SYN/ACK → ACK"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "For which workload is UDP a better fit than TCP?",
+          "es": "¿Para qué carga de trabajo encaja mejor UDP que TCP?"
+        },
+        "options": [
+          {
+            "en": "Live video conferencing, where a late packet is worthless",
+            "es": "Videoconferencia en vivo, donde un paquete tardío no vale nada"
+          },
+          {
+            "en": "Transferring a database backup that must arrive intact",
+            "es": "Transferir un backup de base de datos que debe llegar intacto"
+          },
+          {
+            "en": "Sending an email through SMTP",
+            "es": "Enviar un correo por SMTP"
+          },
+          {
+            "en": "A REST API returning JSON documents",
+            "es": "Una API REST que devuelve documentos JSON"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which of the three TLS guarantees specifically prevents a man-in-the-middle from impersonating the server?",
+          "es": "¿Cuál de las tres garantías de TLS previene específicamente que un man-in-the-middle suplante al servidor?"
+        },
+        "options": [
+          {
+            "en": "Confidentiality — the symmetric encryption of traffic",
+            "es": "Confidencialidad — el cifrado simétrico del tráfico"
+          },
+          {
+            "en": "Compression — reducing payload size",
+            "es": "Compresión — reducir el tamaño del payload"
+          },
+          {
+            "en": "Authentication — the certificate chain validated up to a trusted CA",
+            "es": "Autenticación — la cadena de certificados validada hasta una CA confiable"
+          },
+          {
+            "en": "Caching — reusing previous sessions",
+            "es": "Caché — reutilizar sesiones previas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is HTTP/2's key improvement over HTTP/1.1?",
+          "es": "¿Cuál es la mejora clave de HTTP/2 sobre HTTP/1.1?"
+        },
+        "options": [
+          {
+            "en": "Making all responses arrive strictly in request order",
+            "es": "Hacer que todas las respuestas lleguen estrictamente en orden de petición"
+          },
+          {
+            "en": "Multiplexing many concurrent streams over a single connection, removing application-layer head-of-line blocking",
+            "es": "Multiplexar muchos streams concurrentes sobre una sola conexión, eliminando el head-of-line blocking de la capa de aplicación"
+          },
+          {
+            "en": "Removing the need for TLS",
+            "es": "Eliminar la necesidad de TLS"
+          },
+          {
+            "en": "Running over UDP instead of TCP",
+            "es": "Correr sobre UDP en lugar de TCP"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "You need to route requests to different backend pools based on the URL path. What do you need?",
+          "es": "Necesitas enrutar peticiones a distintos pools de backend según la ruta de la URL. ¿Qué necesitas?"
+        },
+        "options": [
+          {
+            "en": "An L7 load balancer — it parses HTTP and can see the path",
+            "es": "Un balanceador L7 — parsea HTTP y puede ver la ruta"
+          },
+          {
+            "en": "A forward proxy on each client",
+            "es": "Un forward proxy en cada cliente"
+          },
+          {
+            "en": "A DNS round-robin record",
+            "es": "Un registro DNS round-robin"
+          },
+          {
+            "en": "An L4 load balancer — IPs and ports are enough",
+            "es": "Un balanceador L4 — bastan IPs y puertos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which timeout limits how long you wait for the TCP handshake to complete?",
+          "es": "¿Qué timeout limita cuánto esperas a que se complete el handshake TCP?"
+        },
+        "options": [
+          {
+            "en": "Keep-alive interval",
+            "es": "El intervalo de keep-alive"
+          },
+          {
+            "en": "Connection timeout",
+            "es": "El timeout de conexión"
+          },
+          {
+            "en": "DNS TTL",
+            "es": "El TTL de DNS"
+          },
+          {
+            "en": "Request (read) timeout",
+            "es": "El timeout de petición (lectura)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "The load balancer reached your app, the app accepted the request, but the response never arrived within the balancer's timeout. What status does the balancer return?",
+          "es": "El balanceador alcanzó tu app, la app aceptó la petición, pero la respuesta nunca llegó dentro del timeout del balanceador. ¿Qué código devuelve el balanceador?"
+        },
+        "options": [
+          {
+            "en": "502 Bad Gateway",
+            "es": "502 Bad Gateway"
+          },
+          {
+            "en": "404 Not Found",
+            "es": "404 Not Found"
+          },
+          {
+            "en": "503 Service Unavailable",
+            "es": "503 Service Unavailable"
+          },
+          {
+            "en": "504 Gateway Timeout",
+            "es": "504 Gateway Timeout"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which cross-origin request triggers a CORS preflight?",
+          "es": "¿Qué petición cross-origin dispara un preflight de CORS?"
+        },
+        "options": [
+          {
+            "en": "A plain GET with no custom headers",
+            "es": "Un GET simple sin headers personalizados"
+          },
+          {
+            "en": "A DELETE with an Authorization header",
+            "es": "Un DELETE con header Authorization"
+          },
+          {
+            "en": "Loading an image via an <img> tag",
+            "es": "Cargar una imagen con una etiqueta <img>"
+          },
+          {
+            "en": "A form POST with Content-Type: application/x-www-form-urlencoded",
+            "es": "Un POST de formulario con Content-Type: application/x-www-form-urlencoded"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What HTTP status code confirms a successful WebSocket upgrade?",
+          "es": "¿Qué código de estado HTTP confirma un upgrade de WebSocket exitoso?"
+        },
+        "options": [
+          {
+            "en": "426 Upgrade Required",
+            "es": "426 Upgrade Required"
+          },
+          {
+            "en": "101 Switching Protocols",
+            "es": "101 Switching Protocols"
+          },
+          {
+            "en": "301 Moved Permanently",
+            "es": "301 Moved Permanently"
+          },
+          {
+            "en": "200 OK",
+            "es": "200 OK"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain the difference between 502, 503 and 504, including what part of the system usually emits them and one typical cause of each.",
+          "es": "Explica la diferencia entre 502, 503 y 504, incluyendo qué parte del sistema suele emitirlos y una causa típica de cada uno."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must state they're usually emitted by a proxy/load balancer in front of the app, and distinguish: 502 = broken/invalid response from upstream (e.g. app crashed, connection refused), 503 = service unavailable/no healthy backends or overload/maintenance, 504 = upstream too slow, exceeded the proxy's timeout (e.g. slow queries).",
+          "es": "Debe decir que normalmente los emite un proxy/balanceador delante de la app, y distinguir: 502 = respuesta rota/inválida del upstream (p. ej. app crasheada, conexión rechazada), 503 = servicio no disponible/sin backends sanos o sobrecarga/mantenimiento, 504 = upstream demasiado lento, excedió el timeout del proxy (p. ej. consultas lentas)."
+        },
+        "reference": "All three usually come from the proxy or load balancer in front of the application. 502 Bad Gateway: the proxy contacted the upstream but got a broken answer — connection refused/reset or malformed response, typically because the app crashed. 503 Service Unavailable: no backend can take the request right now — all instances failing health checks, overload shedding, or maintenance. 504 Gateway Timeout: the upstream accepted the request but didn't respond within the proxy's timeout — typically slow database queries or a hung downstream dependency."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Describe end to end what happens between typing a URL into the browser and seeing the rendered page. Name each phase in order.",
+          "es": "Describe de principio a fin qué pasa entre escribir una URL en el navegador y ver la página renderizada. Nombra cada fase en orden."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must include, in order: DNS resolution (domain to IP, with caches), TCP connection (three-way handshake), TLS handshake for HTTPS (certificate validation, session keys), sending the HTTP request, receiving the HTTP response (status, headers, body), and rendering (parsing HTML, fetching subresources like CSS/JS, building the DOM, painting).",
+          "es": "Debe incluir, en orden: resolución DNS (dominio a IP, con cachés), conexión TCP (handshake de tres pasos), handshake TLS para HTTPS (validación de certificado, claves de sesión), envío de la petición HTTP, recepción de la respuesta HTTP (estado, headers, cuerpo) y renderizado (parseo del HTML, descarga de subrecursos como CSS/JS, construcción del DOM, pintado)."
+        },
+        "reference": "1) DNS: the browser resolves the domain to an IP, checking browser/OS/resolver caches and walking root → TLD → authoritative servers on a miss. 2) TCP: it opens a connection with the SYN, SYN/ACK, ACK handshake. 3) TLS (for HTTPS): it validates the server's certificate chain and derives symmetric session keys. 4) Request: it sends the HTTP request with method, path and headers. 5) Response: the server returns a status code, headers and the body. 6) Render: the browser parses the HTML, discovers and fetches CSS/JS/images (repeating these steps for each), builds the DOM/CSSOM, executes scripts, and paints the page."
+      }
+    }
+  ]
+}

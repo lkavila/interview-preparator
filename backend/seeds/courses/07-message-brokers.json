@@ -1,0 +1,1962 @@
+{
+  "slug": "message-brokers",
+  "order": 7,
+  "icon": "queue",
+  "title": {
+    "en": "Message Brokers & Event-Driven Architecture",
+    "es": "Message Brokers y Arquitectura Orientada a Eventos"
+  },
+  "description": {
+    "en": "Kafka, RabbitMQ and event-driven design: partitions, consumer groups, delivery guarantees, dead-letter queues, backpressure and scaling to millions of events.",
+    "es": "Kafka, RabbitMQ y diseño orientado a eventos: particiones, consumer groups, garantías de entrega, dead-letter queues, backpressure y escalar a millones de eventos."
+  },
+  "lessons": [
+    {
+      "slug": "why-message-broker",
+      "question": {
+        "en": "Why would you introduce a message broker between two services?",
+        "es": "¿Por qué introducirías un message broker entre dos servicios?"
+      },
+      "definition": {
+        "en": "A **message broker** (Kafka, RabbitMQ, SQS) sits between producers and consumers so they never call each other directly. This gives three big wins: **decoupling** (the producer doesn't know who consumes, services can be deployed and fail independently), **buffering** (traffic spikes are absorbed by the queue instead of overloading the consumer), and **fan-out** (one event can be delivered to many independent consumers).\n\nThe trade-off is **asynchrony**: the producer no longer gets an immediate response, so you accept eventual consistency, and you add a new piece of infrastructure to operate and monitor. A broker is worth it when work can happen later, when consumers scale differently than producers, or when multiple systems react to the same event.",
+        "es": "Un **message broker** (Kafka, RabbitMQ, SQS) se coloca entre productores y consumidores para que nunca se llamen directamente. Esto da tres grandes ventajas: **desacoplamiento** (el productor no sabe quién consume; los servicios se despliegan y fallan de forma independiente), **buffering** (los picos de tráfico los absorbe la cola en lugar de sobrecargar al consumidor) y **fan-out** (un evento puede entregarse a muchos consumidores independientes).\n\nEl costo es la **asincronía**: el productor ya no recibe respuesta inmediata, así que aceptas consistencia eventual, y agregas una pieza más de infraestructura que operar y monitorear. Un broker vale la pena cuando el trabajo puede ocurrir después, cuando los consumidores escalan distinto que los productores, o cuando varios sistemas reaccionan al mismo evento."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce checkout publishes an `order_placed` event; billing, inventory, email and analytics each consume it independently. If the email service is down, orders keep flowing.",
+          "es": "El checkout de un e-commerce publica un evento `order_placed`; facturación, inventario, email y analítica lo consumen de forma independiente. Si el servicio de email está caído, los pedidos siguen fluyendo."
+        },
+        {
+          "en": "A ticketing site during a flash sale: the API enqueues purchase requests and workers process them at a steady rate, so the database never sees the raw spike.",
+          "es": "Un sitio de venta de boletos durante una venta flash: la API encola las solicitudes de compra y los workers las procesan a un ritmo constante, así la base de datos nunca recibe el pico crudo."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API calls the notifications service synchronously and both crash together during spikes. What is the strongest argument for putting a broker between them?",
+              "es": "Tu API llama al servicio de notificaciones de forma síncrona y ambos caen juntos durante los picos. ¿Cuál es el argumento más fuerte para poner un broker entre ellos?"
+            },
+            "options": [
+              {
+                "en": "It removes the need to monitor the notifications service",
+                "es": "Elimina la necesidad de monitorear el servicio de notificaciones"
+              },
+              {
+                "en": "Brokers make every request faster because messages skip the network",
+                "es": "Los brokers hacen cada petición más rápida porque los mensajes se saltan la red"
+              },
+              {
+                "en": "The queue buffers spikes and decouples availability: the API keeps working even if notifications is down",
+                "es": "La cola amortigua los picos y desacopla la disponibilidad: la API sigue funcionando aunque notificaciones esté caído"
+              },
+              {
+                "en": "Brokers guarantee exactly-once delivery with no extra work",
+                "es": "Los brokers garantizan entrega exactly-once sin trabajo extra"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The core value is decoupling plus buffering: the producer's availability no longer depends on the consumer, and spikes wait in the queue. Brokers add latency (not remove it) and delivery guarantees still require work.",
+              "es": "El valor central es desacoplamiento más buffering: la disponibilidad del productor ya no depende del consumidor, y los picos esperan en la cola. Los brokers agregan latencia (no la quitan) y las garantías de entrega igual requieren trabajo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each broker benefit with the scenario it solves.",
+              "es": "Conecta cada beneficio del broker con el escenario que resuelve."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Decoupling",
+                  "es": "Desacoplamiento"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Buffering",
+                  "es": "Buffering"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Fan-out",
+                  "es": "Fan-out"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Asynchrony trade-off",
+                  "es": "Costo de la asincronía"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "The producer deploys and fails independently of its consumers",
+                  "es": "El productor se despliega y falla independientemente de sus consumidores"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "A 10x traffic spike waits in the queue instead of crashing workers",
+                  "es": "Un pico de tráfico 10x espera en la cola en lugar de tumbar a los workers"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Billing, email and analytics all react to the same event",
+                  "es": "Facturación, email y analítica reaccionan al mismo evento"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "The caller no longer gets an immediate result and must accept eventual consistency",
+                  "es": "El que llama ya no recibe un resultado inmediato y debe aceptar consistencia eventual"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these scenarios is a poor fit for a message broker, where a direct synchronous call is the better design?",
+              "es": "¿Cuál de estos escenarios encaja mal con un message broker, y es mejor diseño una llamada síncrona directa?"
+            },
+            "options": [
+              {
+                "en": "Thumbnail generation that can happen minutes after an image upload",
+                "es": "Generar miniaturas que pueden crearse minutos después de subir una imagen"
+              },
+              {
+                "en": "An order-placed event that billing, inventory and analytics all react to",
+                "es": "Un evento de pedido creado al que reaccionan facturación, inventario y analítica"
+              },
+              {
+                "en": "Nightly report exports enqueued by a scheduler",
+                "es": "Exportaciones nocturnas de reportes encoladas por un scheduler"
+              },
+              {
+                "en": "A card authorization whose approval result the checkout screen must display before confirming the purchase",
+                "es": "Una autorización de tarjeta cuyo resultado de aprobación la pantalla de checkout debe mostrar antes de confirmar la compra"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A broker imposes asynchrony: the caller gives up the immediate response. When the user is waiting on the result of the operation — like a card authorization at checkout — request/response is the right shape. Fan-out, deferrable work and scheduled jobs are exactly what brokers are for.",
+              "es": "Un broker impone asincronía: el que llama renuncia a la respuesta inmediata. Cuando el usuario está esperando el resultado de la operación — como una autorización de tarjeta en el checkout — request/response es la forma correcta. El fan-out, el trabajo aplazable y los jobs programados son exactamente para lo que sirven los brokers."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "kafka-vs-rabbitmq",
+      "question": {
+        "en": "Kafka vs RabbitMQ — when would you choose each?",
+        "es": "Kafka vs RabbitMQ — ¿cuándo elegirías cada uno?"
+      },
+      "definition": {
+        "en": "**Kafka** is a distributed, partitioned **log**: messages are appended and retained for a configured time, consumers pull and track their own offset, and old messages can be re-read (replay). It shines at very high throughput, event streaming, and feeding multiple independent consumer groups from the same data.\n\n**RabbitMQ** is a **smart broker with queues**: it pushes messages to consumers, removes them once acknowledged, and offers rich routing (exchanges, routing keys, priorities, per-message TTL). It shines at task/job distribution, complex routing, and lower-latency work queues.\n\nRule of thumb: choose **Kafka** for event streams, replay, and massive throughput; choose **RabbitMQ** for classic work queues and sophisticated routing where each message is a job to be done once.",
+        "es": "**Kafka** es un **log** distribuido y particionado: los mensajes se agregan al final y se retienen por un tiempo configurado, los consumidores hacen pull y llevan su propio offset, y los mensajes viejos se pueden releer (replay). Brilla en throughput muy alto, streaming de eventos y alimentar varios consumer groups independientes con los mismos datos.\n\n**RabbitMQ** es un **broker inteligente con colas**: empuja mensajes a los consumidores, los elimina al ser confirmados (ack), y ofrece enrutamiento rico (exchanges, routing keys, prioridades, TTL por mensaje). Brilla en distribución de tareas/jobs, enrutamiento complejo y colas de trabajo de baja latencia.\n\nRegla práctica: elige **Kafka** para streams de eventos, replay y throughput masivo; elige **RabbitMQ** para colas de trabajo clásicas y enrutamiento sofisticado donde cada mensaje es un job que se hace una vez."
+      },
+      "examples": [
+        {
+          "en": "Clickstream analytics: millions of page-view events per minute flow through Kafka, consumed both by a real-time dashboard and a batch job that replays the last 7 days.",
+          "es": "Analítica de clickstream: millones de eventos de página por minuto fluyen por Kafka, consumidos por un dashboard en tiempo real y por un job batch que hace replay de los últimos 7 días."
+        },
+        {
+          "en": "A video platform uses RabbitMQ to distribute transcoding jobs: each upload becomes a message routed by resolution to worker pools, acked when the job finishes.",
+          "es": "Una plataforma de video usa RabbitMQ para distribuir jobs de transcodificación: cada subida se vuelve un mensaje enrutado por resolución a pools de workers, confirmado (ack) al terminar el job."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each characteristic with the broker it describes best.",
+              "es": "Conecta cada característica con el broker que mejor describe."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Retains messages after consumption, enabling replay",
+                  "es": "Retiene mensajes tras el consumo, permitiendo replay"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Deletes each message once a consumer acks it",
+                  "es": "Elimina cada mensaje cuando un consumidor lo confirma (ack)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Rich routing with exchanges and routing keys",
+                  "es": "Enrutamiento rico con exchanges y routing keys"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Consumers pull and track their own offsets",
+                  "es": "Los consumidores hacen pull y llevan sus propios offsets"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Kafka (log-based)",
+                  "es": "Kafka (basado en log)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "RabbitMQ (queue-based)",
+                  "es": "RabbitMQ (basado en colas)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "RabbitMQ (smart broker)",
+                  "es": "RabbitMQ (broker inteligente)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Kafka (dumb broker, smart consumer)",
+                  "es": "Kafka (broker simple, consumidor inteligente)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need to feed the same stream of user events to a fraud detector today and to a new ML pipeline next quarter, which must reprocess history. Which fits best?",
+              "es": "Necesitas alimentar el mismo stream de eventos de usuario a un detector de fraude hoy y a un nuevo pipeline de ML el próximo trimestre, que debe reprocesar el histórico. ¿Qué encaja mejor?"
+            },
+            "options": [
+              {
+                "en": "Either one — replay works the same in both",
+                "es": "Cualquiera — el replay funciona igual en ambos"
+              },
+              {
+                "en": "RabbitMQ — routing keys can send old messages to new queues",
+                "es": "RabbitMQ — las routing keys pueden enviar mensajes viejos a colas nuevas"
+              },
+              {
+                "en": "RabbitMQ — acked messages stay available for future consumers",
+                "es": "RabbitMQ — los mensajes confirmados quedan disponibles para futuros consumidores"
+              },
+              {
+                "en": "Kafka — retention plus independent consumer groups allow new consumers to replay history",
+                "es": "Kafka — la retención más los consumer groups independientes permiten que nuevos consumidores hagan replay del histórico"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Kafka retains the log for its configured retention window, so a consumer group added months later can read from the earliest offset. RabbitMQ deletes messages after ack, so history is gone.",
+              "es": "Kafka retiene el log durante su ventana de retención configurada, así que un consumer group agregado meses después puede leer desde el offset más antiguo. RabbitMQ elimina los mensajes tras el ack, así que el histórico desaparece."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You are building a job system that distributes transcoding tasks to worker pools: each job must be routed by resolution, urgent jobs must jump ahead of batch jobs, and a finished job must disappear from the queue. Which broker fits best and why?",
+              "es": "Estás construyendo un sistema de jobs que distribuye tareas de transcodificación a pools de workers: cada job debe enrutarse por resolución, los urgentes deben adelantarse a los batch, y un job terminado debe desaparecer de la cola. ¿Qué broker encaja mejor y por qué?"
+            },
+            "options": [
+              {
+                "en": "Either — routing and priorities behave identically in both brokers",
+                "es": "Cualquiera — el enrutamiento y las prioridades se comportan igual en ambos brokers"
+              },
+              {
+                "en": "Kafka — consumer groups provide priority scheduling out of the box",
+                "es": "Kafka — los consumer groups proveen planificación por prioridades de fábrica"
+              },
+              {
+                "en": "Kafka — log retention guarantees each job executes exactly once",
+                "es": "Kafka — la retención del log garantiza que cada job se ejecute exactamente una vez"
+              },
+              {
+                "en": "RabbitMQ — routing keys, per-message priorities and delete-on-ack are exactly the work-queue features this needs",
+                "es": "RabbitMQ — las routing keys, las prioridades por mensaje y el borrado al hacer ack son exactamente las funciones de cola de trabajo que esto necesita"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "This is a classic task queue: rich routing (exchanges + routing keys), per-message priority and ack-based removal are native RabbitMQ features. Kafka has no per-message priorities, retains messages after consumption, and its strengths (replay, streaming throughput) are irrelevant to jobs done once.",
+              "es": "Es una cola de tareas clásica: el enrutamiento rico (exchanges + routing keys), la prioridad por mensaje y la eliminación por ack son funciones nativas de RabbitMQ. Kafka no tiene prioridades por mensaje, retiene los mensajes tras el consumo, y sus fortalezas (replay, throughput de streaming) son irrelevantes para jobs que se hacen una vez."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "kafka-partitions-ordering",
+      "question": {
+        "en": "What are Kafka partitions and how is message ordering preserved?",
+        "es": "¿Qué son las particiones de Kafka y cómo se preserva el orden de los mensajes?"
+      },
+      "definition": {
+        "en": "A Kafka **topic** is split into **partitions**, each an independent append-only log stored on a broker. Partitions are the unit of parallelism and distribution: more partitions means more consumers can read in parallel and data spreads across brokers.\n\nKafka guarantees ordering **only within a single partition**, never across the whole topic. The producer picks the partition, usually by hashing the **message key** (`hash(key) % partitions`), so all messages with the same key land in the same partition and are read in order. That's why you key by the entity whose order matters — e.g. `user_id` or `order_id` — and why messages with no key get spread round-robin with no ordering guarantee between them.",
+        "es": "Un **topic** de Kafka se divide en **particiones**, cada una un log append-only independiente almacenado en un broker. Las particiones son la unidad de paralelismo y distribución: más particiones significa más consumidores leyendo en paralelo y datos repartidos entre brokers.\n\nKafka garantiza el orden **solo dentro de una partición**, nunca en todo el topic. El productor elige la partición, normalmente haciendo hash de la **clave del mensaje** (`hash(clave) % particiones`), así todos los mensajes con la misma clave caen en la misma partición y se leen en orden. Por eso se usa como clave la entidad cuyo orden importa — p. ej. `user_id` u `order_id` — y por eso los mensajes sin clave se reparten round-robin sin garantía de orden entre ellos."
+      },
+      "examples": [
+        {
+          "en": "A banking ledger keys events by `account_id`: deposits and withdrawals for the same account always hit the same partition, so the balance is computed in the right order.",
+          "es": "Un ledger bancario usa `account_id` como clave: los depósitos y retiros de la misma cuenta siempre caen en la misma partición, así el saldo se calcula en el orden correcto."
+        },
+        {
+          "en": "An order-tracking topic keyed by `order_id` guarantees a consumer never sees `delivered` before `shipped` for the same order, even with 50 partitions.",
+          "es": "Un topic de tracking de pedidos con clave `order_id` garantiza que un consumidor nunca vea `delivered` antes que `shipped` para el mismo pedido, incluso con 50 particiones."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Events for the same order are being processed out of order across your 12-partition topic. What is the most likely cause?",
+              "es": "Los eventos del mismo pedido se están procesando fuera de orden en tu topic de 12 particiones. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "Kafka shuffles messages inside a partition under load",
+                "es": "Kafka mezcla los mensajes dentro de una partición bajo carga"
+              },
+              {
+                "en": "Twelve partitions is too many for ordering to work",
+                "es": "Doce particiones son demasiadas para que el orden funcione"
+              },
+              {
+                "en": "Consumers must be single-threaded across the whole topic for any ordering",
+                "es": "Los consumidores deben ser single-thread en todo el topic para tener orden"
+              },
+              {
+                "en": "Messages are produced without a key (or with the wrong key), so events for one order land in different partitions",
+                "es": "Los mensajes se producen sin clave (o con la clave equivocada), así que los eventos de un pedido caen en particiones distintas"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Ordering is guaranteed per partition. If events for one order interleave, they are almost certainly landing in different partitions — key the messages by `order_id` so they hash to the same one.",
+              "es": "El orden se garantiza por partición. Si los eventos de un pedido se intercalan, casi seguro están cayendo en particiones distintas — usa `order_id` como clave para que hagan hash a la misma."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the journey of a keyed message from producer to acknowledgment.",
+              "es": "Ordena el recorrido de un mensaje con clave desde el productor hasta la confirmación."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "produce",
+                "label": {
+                  "en": "Producer sends message with key order-42",
+                  "es": "El productor envía el mensaje con clave order-42"
+                }
+              },
+              {
+                "id": "hash",
+                "label": {
+                  "en": "Partitioner computes hash(key) % partitions",
+                  "es": "El particionador calcula hash(clave) % particiones"
+                }
+              },
+              {
+                "id": "append",
+                "label": {
+                  "en": "Message is appended to that partition's log",
+                  "es": "El mensaje se agrega al log de esa partición"
+                }
+              },
+              {
+                "id": "poll",
+                "label": {
+                  "en": "The consumer group member owning the partition polls it",
+                  "es": "El miembro del consumer group dueño de la partición hace poll"
+                }
+              },
+              {
+                "id": "commit",
+                "label": {
+                  "en": "Consumer processes it and commits the offset",
+                  "es": "El consumidor lo procesa y confirma (commit) el offset"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "produce",
+              "hash",
+              "append",
+              "poll",
+              "commit"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "To gain parallelism you expand a topic keyed by `user_id` from 12 to 24 partitions. What is the consequence for per-user ordering?",
+              "es": "Para ganar paralelismo amplías un topic con clave `user_id` de 12 a 24 particiones. ¿Cuál es la consecuencia para el orden por usuario?"
+            },
+            "options": [
+              {
+                "en": "Ordering is permanently lost for every user from then on",
+                "es": "El orden se pierde permanentemente para todos los usuarios de ahí en adelante"
+              },
+              {
+                "en": "Ordering strengthens because each partition now holds fewer keys",
+                "es": "El orden se fortalece porque cada partición ahora contiene menos claves"
+              },
+              {
+                "en": "New messages for a user can hash to a different partition than that user's older messages, so per-key order across the change is not guaranteed",
+                "es": "Los mensajes nuevos de un usuario pueden hacer hash a una partición distinta de la de sus mensajes viejos, así que el orden por clave a través del cambio no está garantizado"
+              },
+              {
+                "en": "None — Kafka migrates each key's existing messages to its newly assigned partition",
+                "es": "Ninguna — Kafka migra los mensajes existentes de cada clave a su nueva partición asignada"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The partitioner computes `hash(key) % partitions`, so changing the partition count re-maps keys. Old messages stay where they were written; new ones for the same key may land elsewhere, so a consumer can see them interleaved across the transition. After the change, ordering per key is again guaranteed going forward — which is why partition counts should be planned with headroom.",
+              "es": "El particionador calcula `hash(clave) % particiones`, así que cambiar el número de particiones remapea las claves. Los mensajes viejos se quedan donde se escribieron; los nuevos de la misma clave pueden caer en otra parte, y un consumidor puede verlos intercalados durante la transición. Tras el cambio, el orden por clave vuelve a garantizarse hacia adelante — por eso el número de particiones debe planearse con margen."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "consumer-groups-offsets",
+      "question": {
+        "en": "How do consumer groups and offsets work, and what happens when a consumer crashes?",
+        "es": "¿Cómo funcionan los consumer groups y los offsets, y qué pasa cuando un consumidor se cae?"
+      },
+      "definition": {
+        "en": "A **consumer group** is a set of consumers sharing a `group.id` that split a topic's partitions among themselves: each partition is read by exactly **one** consumer in the group. Different groups are independent — each gets the full stream. An **offset** is the position of the next message to read in a partition; consumers periodically **commit** offsets back to Kafka to record their progress.\n\nWhen a consumer **crashes** (or stops sending heartbeats), the group coordinator triggers a **rebalance**: its partitions are reassigned to the surviving consumers. The new owner resumes from the **last committed offset** — any messages processed but not yet committed will be delivered **again**. That gap between processing and committing is exactly why consumers must be idempotent under at-least-once delivery.",
+        "es": "Un **consumer group** es un conjunto de consumidores que comparten un `group.id` y se reparten las particiones de un topic: cada partición la lee exactamente **un** consumidor del grupo. Grupos distintos son independientes — cada uno recibe el stream completo. Un **offset** es la posición del siguiente mensaje a leer en una partición; los consumidores hacen **commit** de sus offsets periódicamente para registrar su progreso.\n\nCuando un consumidor **se cae** (o deja de enviar heartbeats), el coordinador del grupo dispara un **rebalance**: sus particiones se reasignan a los consumidores sobrevivientes. El nuevo dueño retoma desde el **último offset confirmado** — los mensajes procesados pero aún no confirmados se entregarán **de nuevo**. Esa brecha entre procesar y hacer commit es exactamente la razón por la que los consumidores deben ser idempotentes bajo entrega at-least-once."
+      },
+      "examples": [
+        {
+          "en": "A payments consumer crashes after charging a card but before committing the offset. After rebalancing, another consumer re-reads that message — without an idempotency check, the customer is charged twice.",
+          "es": "Un consumidor de pagos se cae después de cobrar una tarjeta pero antes de confirmar el offset. Tras el rebalance, otro consumidor relee ese mensaje — sin un chequeo de idempotencia, al cliente se le cobra dos veces."
+        },
+        {
+          "en": "During a rolling deploy of 6 consumers, each restart triggers a rebalance and processing briefly pauses; cooperative (incremental) rebalancing reduces these stop-the-world pauses.",
+          "es": "Durante un deploy rolling de 6 consumidores, cada reinicio dispara un rebalance y el procesamiento se pausa brevemente; el rebalanceo cooperativo (incremental) reduce estas pausas globales."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order what happens from the moment a consumer in a group dies until messages flow again.",
+              "es": "Ordena lo que ocurre desde que muere un consumidor de un grupo hasta que los mensajes fluyen de nuevo."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "crash",
+                "label": {
+                  "en": "Consumer C2 crashes mid-processing",
+                  "es": "El consumidor C2 se cae a mitad del procesamiento"
+                }
+              },
+              {
+                "id": "detect",
+                "label": {
+                  "en": "Coordinator misses its heartbeats and marks it dead",
+                  "es": "El coordinador deja de recibir sus heartbeats y lo marca como muerto"
+                }
+              },
+              {
+                "id": "rebalance",
+                "label": {
+                  "en": "Rebalance: C2's partitions are reassigned to survivors",
+                  "es": "Rebalance: las particiones de C2 se reasignan a los sobrevivientes"
+                }
+              },
+              {
+                "id": "resume",
+                "label": {
+                  "en": "New owner resumes from the last committed offset",
+                  "es": "El nuevo dueño retoma desde el último offset confirmado"
+                }
+              },
+              {
+                "id": "redeliver",
+                "label": {
+                  "en": "Uncommitted messages are processed again (duplicates possible)",
+                  "es": "Los mensajes sin commit se procesan de nuevo (posibles duplicados)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "crash",
+              "detect",
+              "rebalance",
+              "resume",
+              "redeliver"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A consumer processed messages 100-110 of its partition but had only committed offset 100 when it crashed. Explain what the consumer that takes over will do and what risk this creates.",
+              "es": "Un consumidor procesó los mensajes 100-110 de su partición pero solo había confirmado el offset 100 cuando se cayó. Explica qué hará el consumidor que tome el relevo y qué riesgo crea esto."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that after the rebalance the new consumer resumes from the last committed offset (100) and re-reads messages 100-110, causing duplicate processing (at-least-once), and mention that handlers must be idempotent (or use deduplication/transactions) to make this safe.",
+              "es": "Debe indicar que tras el rebalance el nuevo consumidor retoma desde el último offset confirmado (100) y relee los mensajes 100-110, causando procesamiento duplicado (at-least-once), y mencionar que los handlers deben ser idempotentes (o usar deduplicación/transacciones) para que sea seguro."
+            },
+            "reference": "After the crash, a rebalance reassigns the partition and the new consumer starts reading at the last committed offset, 100. Messages 100-110 were already processed but not committed, so they are delivered and processed a second time — classic at-least-once duplication. The handler must be idempotent (e.g. dedupe by event id, upserts, or transactional processing) so reprocessing has no visible side effects."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The billing service already consumes the `orders` topic with `group.id = billing`. The fraud team now needs to receive every order event too, without taking any messages away from billing. What should they do?",
+              "es": "El servicio de facturación ya consume el topic `orders` con `group.id = billing`. El equipo de fraude ahora necesita recibir todos los eventos de pedidos, sin quitarle ningún mensaje a facturación. ¿Qué deben hacer?"
+            },
+            "options": [
+              {
+                "en": "Poll from billing's committed offsets so both teams stay synchronized",
+                "es": "Hacer poll desde los offsets confirmados de facturación para que ambos equipos queden sincronizados"
+              },
+              {
+                "en": "Join the `billing` group so the partitions get shared between both teams",
+                "es": "Unirse al grupo `billing` para que las particiones se repartan entre ambos equipos"
+              },
+              {
+                "en": "Ask the producer to publish every order event twice, once per team",
+                "es": "Pedir al productor que publique cada evento de pedido dos veces, una por equipo"
+              },
+              {
+                "en": "Consume with their own distinct `group.id` — every group independently receives the full stream",
+                "es": "Consumir con su propio `group.id` distinto — cada grupo recibe el stream completo de forma independiente"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Consumer groups are independent: each group gets its own offsets and the complete stream. Joining the `billing` group would split partitions between the teams, so each event would reach only one of them — the opposite of what fraud needs. Double-publishing or sharing offsets misuses the model.",
+              "es": "Los consumer groups son independientes: cada grupo tiene sus propios offsets y el stream completo. Unirse al grupo `billing` repartiría las particiones entre los equipos, así que cada evento llegaría solo a uno de ellos — lo contrario de lo que fraude necesita. Publicar doble o compartir offsets es usar mal el modelo."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "delivery-semantics-duplicates",
+      "question": {
+        "en": "What is the difference between at-least-once and at-most-once delivery, and how do you handle duplicates?",
+        "es": "¿Cuál es la diferencia entre entrega at-least-once y at-most-once, y cómo se manejan los duplicados?"
+      },
+      "definition": {
+        "en": "**At-most-once**: acknowledge/commit *before* processing. If the consumer dies mid-work, the message is lost but never repeated — acceptable for metrics or logs where a gap is cheaper than a duplicate. **At-least-once**: acknowledge *after* processing. Nothing is lost, but any crash between processing and ack causes **redelivery**, so duplicates are guaranteed to happen eventually. This is the default choice for anything that matters.\n\nSince duplicates are inevitable under at-least-once, consumers must be **idempotent**: processing the same message twice must have the same effect as once. Common techniques: a unique **event/message ID** checked against a processed-IDs store, database **upserts** instead of inserts, conditional updates, or Kafka's transactions for exactly-once *within* Kafka pipelines. \"Exactly-once end-to-end\" across arbitrary external systems is really at-least-once plus idempotency.",
+        "es": "**At-most-once**: confirmar (ack/commit) *antes* de procesar. Si el consumidor muere a mitad del trabajo, el mensaje se pierde pero nunca se repite — aceptable para métricas o logs donde un hueco cuesta menos que un duplicado. **At-least-once**: confirmar *después* de procesar. No se pierde nada, pero cualquier caída entre procesar y confirmar causa **reentrega**, así que tarde o temprano habrá duplicados. Es la opción por defecto para todo lo importante.\n\nComo los duplicados son inevitables con at-least-once, los consumidores deben ser **idempotentes**: procesar el mismo mensaje dos veces debe tener el mismo efecto que una. Técnicas comunes: un **ID de evento/mensaje** único verificado contra un almacén de IDs procesados, **upserts** en la base de datos en lugar de inserts, updates condicionales, o las transacciones de Kafka para exactly-once *dentro* de pipelines de Kafka. El \"exactly-once de extremo a extremo\" con sistemas externos arbitrarios es en realidad at-least-once más idempotencia."
+      },
+      "examples": [
+        {
+          "en": "Stripe webhooks are delivered at-least-once: their docs tell you to store the event ID and skip events you've already handled, because retries will send the same event again.",
+          "es": "Los webhooks de Stripe se entregan at-least-once: su documentación te dice que guardes el ID del evento y saltes los ya manejados, porque los reintentos enviarán el mismo evento otra vez."
+        },
+        {
+          "en": "A telemetry pipeline for CPU metrics uses at-most-once (commit first, process after): losing one datapoint out of thousands is harmless, but double-counting would skew dashboards.",
+          "es": "Un pipeline de telemetría de métricas de CPU usa at-most-once (commit primero, procesar después): perder un datapoint entre miles es inofensivo, pero contarlo doble distorsionaría los dashboards."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A consumer commits the offset immediately after polling, then processes the message. Which semantics does it have and what is the failure mode?",
+              "es": "Un consumidor hace commit del offset inmediatamente después del poll y luego procesa el mensaje. ¿Qué semántica tiene y cuál es su modo de fallo?"
+            },
+            "options": [
+              {
+                "en": "At-most-once — a crash after commit but before processing loses the message",
+                "es": "At-most-once — una caída después del commit pero antes de procesar pierde el mensaje"
+              },
+              {
+                "en": "At-least-once — a crash always causes redelivery",
+                "es": "At-least-once — una caída siempre causa reentrega"
+              },
+              {
+                "en": "At-least-once — committing early creates duplicates",
+                "es": "At-least-once — hacer commit temprano crea duplicados"
+              },
+              {
+                "en": "Exactly-once — the commit makes processing atomic",
+                "es": "Exactly-once — el commit vuelve atómico el procesamiento"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Commit-then-process is at-most-once: once the offset is committed, a crash means the message is never re-read, so it can be lost. Process-then-commit is at-least-once and risks duplicates instead.",
+              "es": "Commit y luego procesar es at-most-once: una vez confirmado el offset, tras una caída el mensaje no se relee, así que puede perderse. Procesar y luego hacer commit es at-least-once y arriesga duplicados."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your at-least-once consumer inserts a row per `payment_completed` event, and duplicates are creating double rows. Describe two concrete ways to make it idempotent.",
+              "es": "Tu consumidor at-least-once inserta una fila por cada evento `payment_completed`, y los duplicados están creando filas dobles. Describe dos formas concretas de hacerlo idempotente."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must give at least two concrete idempotency techniques, e.g.: unique constraint on the event/payment ID plus insert-on-conflict-do-nothing (or upsert), a processed-events table/cache checked before handling, conditional updates, or transactional outbox/Kafka transactions. Explaining why duplicates still arrive is a bonus.",
+              "es": "Debe dar al menos dos técnicas concretas de idempotencia, p. ej.: constraint único sobre el ID del evento/pago más insert-on-conflict-do-nothing (o upsert), una tabla/caché de eventos procesados consultada antes de manejar, updates condicionales, o transactional outbox/transacciones de Kafka. Explicar por qué siguen llegando duplicados es un bonus."
+            },
+            "reference": "1) Add a unique constraint on the event ID (or payment ID) and use INSERT ... ON CONFLICT DO NOTHING / an upsert, so the second delivery is a no-op. 2) Keep a processed_events table (or Redis set) keyed by event ID inside the same transaction as the business write; skip events whose ID is already present. Both work because at-least-once redelivery reuses the same event ID."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each delivery concept with its defining behavior.",
+              "es": "Conecta cada concepto de entrega con el comportamiento que lo define."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "At-most-once",
+                  "es": "At-most-once"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "At-least-once",
+                  "es": "At-least-once"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Idempotent consumer",
+                  "es": "Consumidor idempotente"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Kafka transactions",
+                  "es": "Transacciones de Kafka"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Commits before processing: a crash can lose the message but never repeats it",
+                  "es": "Confirma antes de procesar: una caída puede perder el mensaje pero nunca lo repite"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Commits after processing: nothing is lost but redelivery produces duplicates",
+                  "es": "Confirma después de procesar: no se pierde nada pero la reentrega produce duplicados"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Processing the same message twice has the same effect as processing it once",
+                  "es": "Procesar el mismo mensaje dos veces tiene el mismo efecto que procesarlo una vez"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Exactly-once processing, but only within Kafka-to-Kafka pipelines",
+                  "es": "Procesamiento exactly-once, pero solo dentro de pipelines de Kafka a Kafka"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "retries-dead-letter-queues",
+      "question": {
+        "en": "How do you retry failed messages, and what is a dead-letter queue?",
+        "es": "¿Cómo se reintentan los mensajes fallidos y qué es una dead-letter queue?"
+      },
+      "definition": {
+        "en": "When processing fails, retrying **immediately and forever** is dangerous: a transient error (network blip, lock timeout) usually heals, but a persistent one just burns CPU and can block the partition. The standard pattern is a few in-process retries with **exponential backoff** (and jitter), then handing the message to a **retry topic/queue** with a delay, so the main flow keeps moving.\n\nAfter a bounded number of attempts, the message goes to a **dead-letter queue (DLQ)**: a separate topic/queue holding messages that could not be processed, together with failure metadata (error, attempt count, original topic). The DLQ protects throughput while preserving the message for **inspection, alerting, and replay** once the bug or downstream outage is fixed. A growing DLQ should always page someone — it's a symptom, not a trash can.",
+        "es": "Cuando el procesamiento falla, reintentar **inmediatamente y para siempre** es peligroso: un error transitorio (corte de red, timeout de lock) suele curarse solo, pero uno persistente solo quema CPU y puede bloquear la partición. El patrón estándar es unos pocos reintentos en proceso con **backoff exponencial** (y jitter), y luego pasar el mensaje a un **topic/cola de retry** con retraso, para que el flujo principal siga avanzando.\n\nTras un número acotado de intentos, el mensaje va a una **dead-letter queue (DLQ)**: un topic/cola separado que guarda los mensajes que no se pudieron procesar, junto con metadatos del fallo (error, número de intentos, topic original). La DLQ protege el throughput mientras preserva el mensaje para **inspección, alertas y replay** una vez corregido el bug o la caída del sistema downstream. Una DLQ creciendo siempre debe alertar a alguien — es un síntoma, no un basurero."
+      },
+      "examples": [
+        {
+          "en": "AWS SQS has native DLQ support: set `maxReceiveCount = 5` in the redrive policy and after 5 failed receives the message moves to the DLQ automatically; a CloudWatch alarm fires on DLQ depth > 0.",
+          "es": "AWS SQS tiene soporte nativo de DLQ: configuras `maxReceiveCount = 5` en la redrive policy y tras 5 recepciones fallidas el mensaje pasa a la DLQ automáticamente; una alarma de CloudWatch se dispara si la DLQ tiene profundidad > 0."
+        },
+        {
+          "en": "A Kafka email consumer uses retry topics `emails-retry-1m` and `emails-retry-10m`: failures hop through increasing delays, and after the last hop they land in `emails-dlq` where an on-call engineer can replay them.",
+          "es": "Un consumidor de emails en Kafka usa topics de retry `emails-retry-1m` y `emails-retry-10m`: los fallos saltan por retrasos crecientes, y tras el último salto caen en `emails-dlq` donde un ingeniero de guardia puede hacer replay."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the lifecycle of a message that keeps failing, from first attempt to resolution.",
+              "es": "Ordena el ciclo de vida de un mensaje que sigue fallando, desde el primer intento hasta la resolución."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "fail",
+                "label": {
+                  "en": "Processing fails on the main topic",
+                  "es": "El procesamiento falla en el topic principal"
+                }
+              },
+              {
+                "id": "backoff",
+                "label": {
+                  "en": "In-process retries with exponential backoff",
+                  "es": "Reintentos en proceso con backoff exponencial"
+                }
+              },
+              {
+                "id": "retryq",
+                "label": {
+                  "en": "Message moves to a delayed retry topic",
+                  "es": "El mensaje pasa a un topic de retry con retraso"
+                }
+              },
+              {
+                "id": "dlq",
+                "label": {
+                  "en": "Max attempts reached: message lands in the DLQ with error metadata",
+                  "es": "Se alcanza el máximo de intentos: el mensaje cae en la DLQ con metadatos del error"
+                }
+              },
+              {
+                "id": "replay",
+                "label": {
+                  "en": "Engineer fixes the cause and replays the DLQ",
+                  "es": "Un ingeniero corrige la causa y hace replay de la DLQ"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "fail",
+              "backoff",
+              "retryq",
+              "dlq",
+              "replay"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is exponential backoff with jitter preferred over fixed-interval retries against a struggling downstream service?",
+              "es": "¿Por qué se prefiere backoff exponencial con jitter sobre reintentos a intervalo fijo contra un servicio downstream con problemas?"
+            },
+            "options": [
+              {
+                "en": "Fixed intervals are not supported by most brokers",
+                "es": "Los intervalos fijos no están soportados por la mayoría de brokers"
+              },
+              {
+                "en": "It spaces retries out over time and desynchronizes clients, giving the service room to recover instead of a synchronized retry storm",
+                "es": "Espacia los reintentos en el tiempo y desincroniza a los clientes, dando espacio al servicio para recuperarse en lugar de una tormenta de reintentos sincronizada"
+              },
+              {
+                "en": "It makes retries free because they run in the background",
+                "es": "Hace los reintentos gratis porque corren en segundo plano"
+              },
+              {
+                "en": "It guarantees the retry will eventually succeed",
+                "es": "Garantiza que el reintento eventualmente tendrá éxito"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Growing delays reduce pressure on the failing service, and jitter prevents thousands of clients from retrying at the exact same instant (thundering herd). Nothing guarantees success — that's what the DLQ is for.",
+              "es": "Los retrasos crecientes reducen la presión sobre el servicio que falla, y el jitter evita que miles de clientes reintenten en el mismo instante exacto (thundering herd). Nada garantiza el éxito — para eso está la DLQ."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your `payments-dlq` normally sits at zero, but its depth has been climbing steadily for the last hour. How should you interpret this signal?",
+              "es": "Tu `payments-dlq` normalmente está en cero, pero su profundidad lleva una hora creciendo de forma sostenida. ¿Cómo debes interpretar esta señal?"
+            },
+            "options": [
+              {
+                "en": "The DLQ is misconfigured; exhausted messages should be discarded instead of stored",
+                "es": "La DLQ está mal configurada; los mensajes agotados deberían descartarse en lugar de guardarse"
+              },
+              {
+                "en": "Consumers are too fast and the surplus messages are overflowing into the DLQ",
+                "es": "Los consumidores son demasiado rápidos y los mensajes sobrantes se desbordan hacia la DLQ"
+              },
+              {
+                "en": "It is normal behavior — DLQs are expected to accumulate messages over time",
+                "es": "Es comportamiento normal — se espera que las DLQ acumulen mensajes con el tiempo"
+              },
+              {
+                "en": "Something systematic broke — a bad deploy, schema change or downstream outage — so inspect the failure metadata, alert, fix the cause, then replay",
+                "es": "Algo sistemático se rompió — un deploy malo, un cambio de esquema o una caída downstream — así que inspecciona los metadatos del fallo, alerta, corrige la causa y luego haz replay"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A DLQ is a symptom, not a trash can: messages only land there after exhausting bounded retries, so sustained growth means a persistent failure is hitting many messages. The error metadata (exception, attempt count, original topic) points at the cause, and once it is fixed the DLQ can be replayed. Speed of consumers never routes messages to a DLQ.",
+              "es": "Una DLQ es un síntoma, no un basurero: los mensajes solo llegan ahí tras agotar reintentos acotados, así que un crecimiento sostenido significa que un fallo persistente está afectando a muchos mensajes. Los metadatos del error (excepción, número de intentos, topic original) apuntan a la causa, y una vez corregida se puede hacer replay de la DLQ. La velocidad de los consumidores nunca enruta mensajes a una DLQ."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "poison-messages",
+      "question": {
+        "en": "What is a poison message and how do you detect and handle it?",
+        "es": "¿Qué es un poison message y cómo se detecta y maneja?"
+      },
+      "definition": {
+        "en": "A **poison message** is one that fails **every** processing attempt — malformed JSON, an unexpected schema version, data that triggers a bug, or even a payload that crashes the consumer. Under naive retry logic it is redelivered forever, blocking its partition/queue, wasting resources, and in the worst case crash-looping the whole consumer fleet.\n\n**Detection**: track an attempt counter per message (broker-provided like SQS `ApproximateReceiveCount`, a header you increment, or a store keyed by message ID) and alert on messages exceeding a threshold. **Handling**: cap retries and route the offender to a **DLQ** instead of retrying forever; validate/deserialize defensively at the consumer boundary (and use a schema registry to stop bad producers early); never let a single message's exception kill the consumer process. The key mindset: retries fix *transient* failures, but a poison message is *deterministic* — retrying cannot help, only isolation can.",
+        "es": "Un **poison message** es uno que falla en **todos** los intentos de procesamiento — JSON malformado, una versión de esquema inesperada, datos que disparan un bug, o incluso un payload que hace crashear al consumidor. Con lógica de reintentos ingenua se reentrega para siempre, bloqueando su partición/cola, desperdiciando recursos y, en el peor caso, haciendo crash-loop a toda la flota de consumidores.\n\n**Detección**: lleva un contador de intentos por mensaje (provisto por el broker como `ApproximateReceiveCount` de SQS, un header que incrementas, o un almacén por ID de mensaje) y alerta cuando un mensaje supera el umbral. **Manejo**: acota los reintentos y enruta al infractor a una **DLQ** en lugar de reintentar por siempre; valida/deserializa defensivamente en la frontera del consumidor (y usa un schema registry para frenar productores malos temprano); nunca dejes que la excepción de un solo mensaje mate el proceso consumidor. La idea clave: los reintentos arreglan fallos *transitorios*, pero un poison message es *determinista* — reintentar no ayuda, solo aislarlo."
+      },
+      "examples": [
+        {
+          "en": "A producer deploy starts emitting `amount` as a string instead of a number. Every consumer retry throws the same parse error; the retry counter hits 5 and the messages divert to the DLQ, keeping the partition flowing while the producer rolls back.",
+          "es": "Un deploy del productor empieza a emitir `amount` como string en lugar de número. Cada reintento del consumidor lanza el mismo error de parseo; el contador llega a 5 y los mensajes se desvían a la DLQ, manteniendo la partición fluyendo mientras el productor hace rollback."
+        },
+        {
+          "en": "A single 12 MB event exceeds the consumer's buffer and crashes it on every restart — a crash-loop caused by one message. The fix: catch the failure, ship the message to the DLQ, and add a size guard at the producer.",
+          "es": "Un solo evento de 12 MB supera el buffer del consumidor y lo crashea en cada reinicio — un crash-loop causado por un mensaje. La solución: capturar el fallo, mandar el mensaje a la DLQ y agregar un límite de tamaño en el productor."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "One malformed message is being redelivered infinitely and your consumer's partition has stalled. Which response addresses the root problem?",
+              "es": "Un mensaje malformado se reentrega infinitamente y la partición de tu consumidor se detuvo. ¿Qué respuesta ataca el problema de raíz?"
+            },
+            "options": [
+              {
+                "en": "Add more consumers to the group to share the failing message",
+                "es": "Agregar más consumidores al grupo para repartir el mensaje que falla"
+              },
+              {
+                "en": "Increase the retry interval so the failures happen less often",
+                "es": "Aumentar el intervalo de reintento para que los fallos ocurran menos seguido"
+              },
+              {
+                "en": "Restart the consumer so it re-reads the partition from the start",
+                "es": "Reiniciar el consumidor para que relea la partición desde el inicio"
+              },
+              {
+                "en": "Cap the retry count and route the message to a DLQ so the partition keeps flowing",
+                "es": "Acotar el número de reintentos y enrutar el mensaje a una DLQ para que la partición siga fluyendo"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A poison message fails deterministically, so slower retries or restarts change nothing, and only one group member can own the partition. Bounded retries plus a DLQ isolate the bad message and unblock the flow.",
+              "es": "Un poison message falla de forma determinista, así que reintentos más lentos o reinicios no cambian nada, y solo un miembro del grupo puede poseer la partición. Reintentos acotados más una DLQ aíslan el mensaje malo y desbloquean el flujo."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "How would you distinguish a poison message from a transient failure in a consumer, and why should they be handled differently?",
+              "es": "¿Cómo distinguirías un poison message de un fallo transitorio en un consumidor, y por qué deben manejarse distinto?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that transient failures (network, timeouts, downstream outage) succeed on retry while poison messages fail deterministically on every attempt (bad schema/data/bug), that an attempt counter or error type helps distinguish them, and that transient failures deserve backoff retries while poison messages need bounded retries and DLQ isolation.",
+              "es": "Debe explicar que los fallos transitorios (red, timeouts, caída downstream) se resuelven al reintentar mientras que los poison messages fallan de forma determinista en cada intento (esquema/datos malos/bug), que un contador de intentos o el tipo de error ayuda a distinguirlos, y que los transitorios merecen reintentos con backoff mientras que los poison messages requieren reintentos acotados y aislamiento en DLQ."
+            },
+            "reference": "A transient failure depends on external conditions — a network blip or a downstream outage — so a later retry succeeds. A poison message fails for a deterministic reason (malformed payload, incompatible schema, a bug it triggers), so every retry fails identically. In practice you distinguish them with the attempt count (transients clear within a few retries) and the error class (parse/validation errors are usually deterministic). Transients get exponential backoff; poison messages get a bounded retry cap and are moved to a DLQ, because retrying them forever blocks the partition and wastes resources."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which measure prevents a whole class of poison messages from ever being published, instead of merely containing them at the consumer side?",
+              "es": "¿Qué medida evita que toda una clase de poison messages llegue a publicarse, en lugar de solo contenerlos del lado del consumidor?"
+            },
+            "options": [
+              {
+                "en": "Raising the consumer retry limit from 5 to 50 attempts",
+                "es": "Subir el límite de reintentos del consumidor de 5 a 50 intentos"
+              },
+              {
+                "en": "Adding more partitions so each poison message blocks a smaller share of traffic",
+                "es": "Agregar más particiones para que cada poison message bloquee una fracción menor del tráfico"
+              },
+              {
+                "en": "Automatically restarting consumers whenever they crash",
+                "es": "Reiniciar automáticamente los consumidores cada vez que crasheen"
+              },
+              {
+                "en": "A schema registry with compatibility checks, so producers cannot publish events that break the agreed schema",
+                "es": "Un schema registry con verificaciones de compatibilidad, para que los productores no puedan publicar eventos que rompan el esquema acordado"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A schema registry validates at produce time: an incompatible schema is rejected before it ever reaches the topic, eliminating malformed-schema poison messages at the source. More retries or restarts cannot fix a deterministic failure, and more partitions only shrinks the blast radius without preventing anything.",
+              "es": "Un schema registry valida al producir: un esquema incompatible se rechaza antes de llegar al topic, eliminando en el origen los poison messages por esquema malformado. Más reintentos o reinicios no arreglan un fallo determinista, y más particiones solo reduce el radio de impacto sin prevenir nada."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "scaling-consumers-rebalancing",
+      "question": {
+        "en": "How do you scale consumers, and why is the partition count a parallelism limit?",
+        "es": "¿Cómo se escalan los consumidores y por qué el número de particiones limita el paralelismo?"
+      },
+      "definition": {
+        "en": "In Kafka, you scale consumption by adding consumers to a group — the group coordinator **rebalances** and spreads partitions across members. But each partition can be owned by **at most one** consumer per group, so a topic with 8 partitions supports at most **8 active consumers**: a 9th one sits **idle**. The partition count, chosen at topic creation, is therefore the ceiling on consumer parallelism.\n\nPlan partitions with headroom for future scale (repartitioning later is disruptive: keys re-map, per-key ordering across the change is affected). Every membership change (scale up/down, deploy, crash) triggers a **rebalance**, which historically paused all consumption (stop-the-world); **cooperative incremental rebalancing** and **static group membership** reduce those pauses. If one partition is a **hot partition** (skewed keys), adding consumers doesn't help — you must fix the key distribution or parallelize *within* the consumer.",
+        "es": "En Kafka, el consumo se escala agregando consumidores a un grupo — el coordinador hace **rebalance** y reparte las particiones entre los miembros. Pero cada partición puede pertenecer a **máximo un** consumidor por grupo, así que un topic con 8 particiones soporta como máximo **8 consumidores activos**: el noveno queda **ocioso**. El número de particiones, elegido al crear el topic, es por tanto el techo del paralelismo de consumo.\n\nPlanifica las particiones con margen para escalar (reparticionar después es disruptivo: las claves se remapean y el orden por clave se ve afectado durante el cambio). Cada cambio de membresía (escalar, deploy, caída) dispara un **rebalance**, que históricamente pausaba todo el consumo (stop-the-world); el **rebalanceo cooperativo incremental** y la **membresía estática** reducen esas pausas. Si una partición está **caliente** (claves sesgadas), agregar consumidores no ayuda — hay que arreglar la distribución de claves o paralelizar *dentro* del consumidor."
+      },
+      "examples": [
+        {
+          "en": "A team autoscaled their order consumers from 8 to 16 pods but throughput didn't move: the topic had 8 partitions, so 8 pods were idle. The real fix was creating the topic with 32 partitions.",
+          "es": "Un equipo autoescaló sus consumidores de pedidos de 8 a 16 pods pero el throughput no se movió: el topic tenía 8 particiones, así que 8 pods estaban ociosos. La solución real fue crear el topic con 32 particiones."
+        },
+        {
+          "en": "A multi-tenant events topic keyed by `tenant_id` had one giant tenant producing 60% of traffic — one hot partition lagged while the rest were idle. They re-keyed to `tenant_id + entity_id` to spread the load.",
+          "es": "Un topic multi-tenant con clave `tenant_id` tenía un tenant gigante generando el 60% del tráfico — una partición caliente acumulaba lag mientras las demás estaban ociosas. Cambiaron la clave a `tenant_id + entity_id` para repartir la carga."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each scaling situation with its outcome.",
+              "es": "Conecta cada situación de escalado con su resultado."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "12 partitions, group grows from 3 to 6 consumers",
+                  "es": "12 particiones, el grupo crece de 3 a 6 consumidores"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "8 partitions, group grows to 10 consumers",
+                  "es": "8 particiones, el grupo crece a 10 consumidores"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "One key produces 70% of all messages",
+                  "es": "Una clave produce el 70% de todos los mensajes"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "A consumer pod is redeployed",
+                  "es": "Se redespliega un pod consumidor"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Rebalance: each consumer now owns 2 partitions, throughput can double",
+                  "es": "Rebalance: cada consumidor pasa a tener 2 particiones, el throughput puede duplicarse"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Two consumers sit idle — partition count is the ceiling",
+                  "es": "Dos consumidores quedan ociosos — el número de particiones es el techo"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Hot partition: adding consumers won't help, fix the key distribution",
+                  "es": "Partición caliente: agregar consumidores no ayuda, arregla la distribución de claves"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "A rebalance is triggered; cooperative rebalancing shortens the pause",
+                  "es": "Se dispara un rebalance; el rebalanceo cooperativo acorta la pausa"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Consumer lag keeps growing on a 6-partition topic even though you scaled the group from 6 to 12 consumers. What should you check first?",
+              "es": "El lag del consumidor sigue creciendo en un topic de 6 particiones aunque escalaste el grupo de 6 a 12 consumidores. ¿Qué deberías revisar primero?"
+            },
+            "options": [
+              {
+                "en": "That the producers are using compression",
+                "es": "Que los productores estén usando compresión"
+              },
+              {
+                "en": "That only 6 consumers can be active — the other 6 are idle because parallelism is capped by partitions",
+                "es": "Que solo 6 consumidores pueden estar activos — los otros 6 están ociosos porque el paralelismo está limitado por las particiones"
+              },
+              {
+                "en": "That the brokers have enough disk for the extra consumers",
+                "es": "Que los brokers tengan suficiente disco para los consumidores extra"
+              },
+              {
+                "en": "That the consumer group ID is unique per pod",
+                "es": "Que el group ID del consumidor sea único por pod"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "With 6 partitions, at most 6 group members do work; the extras are assigned nothing. You need more partitions, faster per-message processing, or intra-consumer parallelism. (Unique group IDs per pod would actually make every pod re-read everything.)",
+              "es": "Con 6 particiones, máximo 6 miembros del grupo trabajan; a los extra no se les asigna nada. Necesitas más particiones, procesamiento más rápido por mensaje o paralelismo interno en el consumidor. (Un group ID único por pod haría que cada pod releyera todo.)"
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Every rolling deploy of your 12-pod consumer group triggers a cascade of rebalances and minutes of paused consumption. Which change attacks this problem most directly?",
+              "es": "Cada deploy rolling de tu consumer group de 12 pods dispara una cascada de rebalances y minutos de consumo pausado. ¿Qué cambio ataca este problema más directamente?"
+            },
+            "options": [
+              {
+                "en": "Static group membership (group.instance.id) combined with cooperative incremental rebalancing",
+                "es": "Membresía estática de grupo (group.instance.id) combinada con rebalanceo cooperativo incremental"
+              },
+              {
+                "en": "Committing offsets more frequently during the deploy",
+                "es": "Confirmar offsets con más frecuencia durante el deploy"
+              },
+              {
+                "en": "Giving each pod a unique group.id so no coordination is needed",
+                "es": "Dar a cada pod un group.id único para que no haga falta coordinación"
+              },
+              {
+                "en": "Adding more partitions so each rebalance finishes faster",
+                "es": "Agregar más particiones para que cada rebalance termine más rápido"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Static membership lets a restarted pod rejoin under the same identity and reclaim its partitions without triggering a rebalance, and cooperative rebalancing moves only the partitions that actually change hands instead of stopping the world. Unique group IDs would make every pod re-read the full topic, and more partitions or commit frequency don't reduce rebalance churn.",
+              "es": "La membresía estática permite que un pod reiniciado se reincorpore con la misma identidad y recupere sus particiones sin disparar un rebalance, y el rebalanceo cooperativo mueve solo las particiones que realmente cambian de dueño en lugar de detener todo. Los group IDs únicos harían que cada pod releyera el topic completo, y más particiones o mayor frecuencia de commit no reducen el vaivén de rebalances."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "backpressure-event-pipelines",
+      "question": {
+        "en": "What is backpressure in an event pipeline and how do you handle it?",
+        "es": "¿Qué es el backpressure en un pipeline de eventos y cómo se maneja?"
+      },
+      "definition": {
+        "en": "**Backpressure** is what happens when producers generate events faster than consumers can process them, and the mechanisms for coping with it. Without a strategy, queues grow without bound, memory or disk fills, latency explodes, and eventually messages are dropped or the system crashes. The first symptom is usually rising **consumer lag** (Kafka) or queue depth (RabbitMQ).\n\nStrategies, roughly in order of preference: **scale consumers** (up to the partition limit) or speed up processing (batching, async I/O); **buffer deliberately** — Kafka's retention absorbs bursts by design as long as consumers catch up before retention expires; **throttle or shed load** at the producer (rate limiting, sampling low-value events, rejecting requests early); RabbitMQ can apply **flow control** by blocking publishers when memory thresholds are hit, and pull-based consumers self-regulate by polling only what they can handle. The interview key: pick where the excess goes *deliberately* — into buffers, into slower producers, or into the trash — instead of letting the system decide by crashing.",
+        "es": "El **backpressure** es lo que ocurre cuando los productores generan eventos más rápido de lo que los consumidores pueden procesarlos, y los mecanismos para afrontarlo. Sin una estrategia, las colas crecen sin límite, la memoria o el disco se llenan, la latencia explota y al final se pierden mensajes o el sistema colapsa. El primer síntoma suele ser el **consumer lag** creciente (Kafka) o la profundidad de la cola (RabbitMQ).\n\nEstrategias, en orden aproximado de preferencia: **escalar consumidores** (hasta el límite de particiones) o acelerar el procesamiento (batching, I/O asíncrono); **bufferizar deliberadamente** — la retención de Kafka absorbe ráfagas por diseño siempre que los consumidores se pongan al día antes de que expire; **limitar o descartar carga** en el productor (rate limiting, muestreo de eventos de bajo valor, rechazar peticiones temprano); RabbitMQ puede aplicar **flow control** bloqueando a los publishers cuando se superan umbrales de memoria, y los consumidores pull se autorregulan al pedir solo lo que pueden manejar. La clave en entrevista: decidir *deliberadamente* a dónde va el exceso — a buffers, a productores más lentos o a la basura — en lugar de dejar que el sistema decida colapsando."
+      },
+      "examples": [
+        {
+          "en": "During Black Friday, an analytics pipeline lets Kafka lag grow to millions of messages on purpose: dashboards fall 10 minutes behind but nothing is lost, and consumers catch up overnight — buffering as a deliberate strategy.",
+          "es": "Durante el Black Friday, un pipeline de analítica deja crecer el lag de Kafka a millones de mensajes a propósito: los dashboards se atrasan 10 minutos pero no se pierde nada, y los consumidores se ponen al día en la noche — buffering como estrategia deliberada."
+        },
+        {
+          "en": "A logging agent samples debug-level events to 1% when the pipeline saturates: shedding low-value load so that errors and payments events keep flowing with low latency.",
+          "es": "Un agente de logging muestrea los eventos de nivel debug al 1% cuando el pipeline se satura: descarta carga de bajo valor para que los eventos de errores y pagos sigan fluyendo con baja latencia."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Consumer lag on your Kafka pipeline has grown steadily for 3 hours and consumers are already maxed out at the partition limit. Which option is a real mitigation?",
+              "es": "El consumer lag de tu pipeline de Kafka lleva 3 horas creciendo y los consumidores ya están al tope del límite de particiones. ¿Cuál opción es una mitigación real?"
+            },
+            "options": [
+              {
+                "en": "Reduce Kafka's retention so the lag number looks smaller",
+                "es": "Reducir la retención de Kafka para que el número de lag se vea más pequeño"
+              },
+              {
+                "en": "Throttle or sample producers (shed low-value events) while you work on faster processing or more partitions",
+                "es": "Limitar o muestrear a los productores (descartar eventos de bajo valor) mientras trabajas en procesamiento más rápido o más particiones"
+              },
+              {
+                "en": "Add more consumers to the same group beyond the partition count",
+                "es": "Agregar más consumidores al mismo grupo por encima del número de particiones"
+              },
+              {
+                "en": "Restart the consumer group to reset the offsets to latest",
+                "es": "Reiniciar el consumer group para resetear los offsets a latest"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Extra consumers beyond partitions idle; cutting retention or skipping to latest silently loses data. Slowing the inflow (throttling/sampling) is the honest lever when consumption can't grow.",
+              "es": "Los consumidores extra por encima de las particiones quedan ociosos; recortar la retención o saltar a latest pierde datos en silencio. Frenar la entrada (throttling/muestreo) es la palanca honesta cuando el consumo no puede crecer."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each backpressure strategy with its description.",
+              "es": "Conecta cada estrategia de backpressure con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Buffering",
+                  "es": "Buffering"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Load shedding",
+                  "es": "Descarte de carga (load shedding)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Producer flow control",
+                  "es": "Flow control del productor"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Scaling consumption",
+                  "es": "Escalar el consumo"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Let the broker absorb the burst and accept temporary lag",
+                  "es": "Dejar que el broker absorba la ráfaga y aceptar lag temporal"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Drop or sample low-value events to protect critical ones",
+                  "es": "Descartar o muestrear eventos de bajo valor para proteger los críticos"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Block or rate-limit publishers when the system saturates",
+                  "es": "Bloquear o limitar a los publishers cuando el sistema se satura"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Add consumers or speed up processing to raise drain rate",
+                  "es": "Agregar consumidores o acelerar el procesamiento para aumentar la tasa de drenado"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the escalation runbook for responding to a sustained backpressure alert on a Kafka pipeline.",
+              "es": "Ordena el runbook de escalamiento para responder a una alerta sostenida de backpressure en un pipeline de Kafka."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "alert",
+                "label": {
+                  "en": "Consumer lag alert fires: intake rate exceeds drain rate",
+                  "es": "Se dispara la alerta de consumer lag: la tasa de entrada supera la de drenado"
+                }
+              },
+              {
+                "id": "diagnose",
+                "label": {
+                  "en": "Diagnose consumers: errors, slow downstream calls or a hot partition",
+                  "es": "Diagnostica los consumidores: errores, llamadas downstream lentas o una partición caliente"
+                }
+              },
+              {
+                "id": "scale",
+                "label": {
+                  "en": "Scale the consumer group up to the partition limit",
+                  "es": "Escala el consumer group hasta el límite de particiones"
+                }
+              },
+              {
+                "id": "throttle",
+                "label": {
+                  "en": "Lag still growing: throttle or sample low-value producer traffic",
+                  "es": "El lag sigue creciendo: limita o muestrea el tráfico de bajo valor del productor"
+                }
+              },
+              {
+                "id": "headroom",
+                "label": {
+                  "en": "Post-incident: add partitions and speed up processing for future headroom",
+                  "es": "Post-incidente: agrega particiones y acelera el procesamiento para tener margen futuro"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "alert",
+              "diagnose",
+              "scale",
+              "throttle",
+              "headroom"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "millions-events-per-minute",
+      "question": {
+        "en": "How would you design a pipeline that processes millions of events per minute?",
+        "es": "¿Cómo diseñarías un pipeline que procese millones de eventos por minuto?"
+      },
+      "definition": {
+        "en": "Millions of events per minute is tens of thousands per second — well within Kafka's range if you use its levers. **Producers**: batch aggressively (`linger.ms`, `batch.size`) and enable **compression** (lz4/zstd) so each network round-trip and disk write carries thousands of events; use async sends with `acks=all` plus idempotence for safety without blocking. **Topic**: size partitions for target parallelism with headroom (e.g. 64-128), keyed to spread load evenly.\n\n**Consumers**: poll in large batches, process with async/parallel workers per partition where per-key order allows, and write downstream in **bulk operations** (batch inserts, bulk indexing) — per-event round-trips to a database are the most common bottleneck. **Monitoring**: the golden signal is **consumer lag** (how far behind consumers are) and its trend; alert on sustained growth, not absolute numbers, and track end-to-end latency (produce-to-process time), error/DLQ rates, and per-partition skew. Scale-out math should be boring: measure single-consumer throughput, divide, add headroom.",
+        "es": "Millones de eventos por minuto son decenas de miles por segundo — bien dentro del rango de Kafka si usas sus palancas. **Productores**: agrupa agresivamente (`linger.ms`, `batch.size`) y habilita **compresión** (lz4/zstd) para que cada viaje de red y escritura a disco lleve miles de eventos; usa envíos asíncronos con `acks=all` más idempotencia para tener seguridad sin bloquear. **Topic**: dimensiona las particiones para el paralelismo objetivo con margen (p. ej. 64-128), con claves que repartan la carga uniformemente.\n\n**Consumidores**: haz poll en lotes grandes, procesa con workers asíncronos/paralelos por partición donde el orden por clave lo permita, y escribe downstream en **operaciones bulk** (inserts por lote, indexado masivo) — los viajes por evento a una base de datos son el cuello de botella más común. **Monitoreo**: la señal dorada es el **consumer lag** (qué tan atrás van los consumidores) y su tendencia; alerta sobre crecimiento sostenido, no números absolutos, y mide la latencia extremo a extremo (tiempo de producir a procesar), tasas de error/DLQ y el sesgo por partición. La matemática de escalado debe ser aburrida: mide el throughput de un consumidor, divide y agrega margen."
+      },
+      "examples": [
+        {
+          "en": "An ad-tech pipeline ingests 5M impressions/minute: producers batch 10k events per request with zstd compression, 96 partitions keyed by campaign, and consumers bulk-insert into ClickHouse every 500 ms — lag alerting fires only if lag grows for 10 straight minutes.",
+          "es": "Un pipeline de ad-tech ingiere 5M de impresiones/minuto: los productores agrupan 10k eventos por request con compresión zstd, 96 particiones con clave por campaña, y los consumidores hacen bulk-insert en ClickHouse cada 500 ms — la alerta de lag se dispara solo si el lag crece por 10 minutos seguidos."
+        },
+        {
+          "en": "A team cut consumer CPU by 40% just by switching per-event `INSERT`s to batched writes of 1,000 rows: the database round-trip, not Kafka, was the bottleneck.",
+          "es": "Un equipo redujo el CPU de sus consumidores un 40% solo cambiando `INSERT`s por evento a escrituras por lote de 1,000 filas: el cuello de botella era el viaje a la base de datos, no Kafka."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the flow of an event through a high-throughput pipeline, from creation to bulk write.",
+              "es": "Ordena el flujo de un evento por un pipeline de alto throughput, desde su creación hasta la escritura bulk."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "batch",
+                "label": {
+                  "en": "Producer buffers events into a compressed batch",
+                  "es": "El productor agrupa eventos en un lote comprimido"
+                }
+              },
+              {
+                "id": "partition",
+                "label": {
+                  "en": "Batch is written to the keyed topic partition",
+                  "es": "El lote se escribe en la partición del topic según la clave"
+                }
+              },
+              {
+                "id": "poll",
+                "label": {
+                  "en": "Consumer group member polls a large batch from its partition",
+                  "es": "Un miembro del consumer group hace poll de un lote grande de su partición"
+                }
+              },
+              {
+                "id": "process",
+                "label": {
+                  "en": "Workers process the batch in parallel",
+                  "es": "Los workers procesan el lote en paralelo"
+                }
+              },
+              {
+                "id": "bulkwrite",
+                "label": {
+                  "en": "Results are bulk-written downstream and offsets committed",
+                  "es": "Los resultados se escriben en bulk downstream y se confirman los offsets"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "batch",
+              "partition",
+              "poll",
+              "process",
+              "bulkwrite"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You must scale a pipeline from 100k to 3M events per minute. Name at least three concrete techniques you would apply and the main metric you would watch.",
+              "es": "Debes escalar un pipeline de 100k a 3M de eventos por minuto. Nombra al menos tres técnicas concretas que aplicarías y la métrica principal que vigilarías."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must name at least three of: producer batching (linger.ms/batch.size), compression (lz4/zstd), more partitions plus more consumers, parallel/async processing inside consumers, bulk writes downstream, even key distribution. Must identify consumer lag (and its trend) as the key metric; end-to-end latency or DLQ rate as extras are a bonus.",
+              "es": "Debe nombrar al menos tres de: batching en el productor (linger.ms/batch.size), compresión (lz4/zstd), más particiones más consumidores, procesamiento paralelo/asíncrono dentro de los consumidores, escrituras bulk downstream, distribución uniforme de claves. Debe identificar el consumer lag (y su tendencia) como métrica clave; latencia extremo a extremo o tasa de DLQ como extras son un bonus."
+            },
+            "reference": "1) Enable producer batching and compression (linger.ms ~10-50 ms, larger batch.size, zstd) to amortize network and disk costs. 2) Increase partition count with headroom (e.g. 64+) and scale the consumer group to match. 3) Batch downstream writes (bulk inserts) and parallelize processing within each consumer where key ordering allows. Watch consumer lag and its trend above all: sustained growth means intake exceeds drain rate; also track end-to-end latency and DLQ rate."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your consumers show low CPU usage yet the pipeline tops out at 50k events per minute; tracing reveals one database INSERT per event. What is the highest-impact fix?",
+              "es": "Tus consumidores muestran uso de CPU bajo pero el pipeline se estanca en 50k eventos por minuto; el tracing revela un INSERT a la base de datos por evento. ¿Cuál es la mejora de mayor impacto?"
+            },
+            "options": [
+              {
+                "en": "Increase the topic's partition count and add more consumers",
+                "es": "Aumentar el número de particiones del topic y agregar más consumidores"
+              },
+              {
+                "en": "Raise the consumer poll timeout so each poll returns sooner",
+                "es": "Subir el poll timeout del consumidor para que cada poll retorne antes"
+              },
+              {
+                "en": "Buffer events and write downstream in bulk batches (e.g. 1,000 rows per insert)",
+                "es": "Agrupar eventos y escribir downstream en lotes bulk (p. ej. 1,000 filas por insert)"
+              },
+              {
+                "en": "Enable producer compression so the messages are smaller",
+                "es": "Habilitar compresión en el productor para que los mensajes sean más pequeños"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Low CPU plus per-event INSERTs means consumers spend their time waiting on database round-trips — the classic downstream bottleneck. Batching writes amortizes that round-trip across thousands of events. Compression helps network and disk, not the database; more partitions only multiply consumers that would still block on the same slow writes.",
+              "es": "CPU bajo más INSERTs por evento significa que los consumidores pasan el tiempo esperando viajes a la base de datos — el clásico cuello de botella downstream. Agrupar las escrituras amortiza ese viaje entre miles de eventos. La compresión ayuda a la red y al disco, no a la base de datos; más particiones solo multiplican consumidores que seguirían bloqueados en las mismas escrituras lentas."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which trio best summarizes why teams introduce a message broker?",
+          "es": "¿Qué trío resume mejor por qué los equipos introducen un message broker?"
+        },
+        "options": [
+          {
+            "en": "Stronger consistency, simpler infrastructure, and synchronous replies",
+            "es": "Consistencia más fuerte, infraestructura más simple y respuestas síncronas"
+          },
+          {
+            "en": "Lower latency, fewer servers, and free exactly-once delivery",
+            "es": "Menor latencia, menos servidores y exactly-once gratis"
+          },
+          {
+            "en": "Automatic schema migration, caching, and load balancing",
+            "es": "Migración automática de esquemas, caching y balanceo de carga"
+          },
+          {
+            "en": "Decoupling, buffering of spikes, and fan-out to many consumers",
+            "es": "Desacoplamiento, buffering de picos y fan-out a muchos consumidores"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which requirement points to Kafka rather than RabbitMQ?",
+          "es": "¿Qué requisito apunta a Kafka en lugar de RabbitMQ?"
+        },
+        "options": [
+          {
+            "en": "Per-message priorities in a job queue",
+            "es": "Prioridades por mensaje en una cola de jobs"
+          },
+          {
+            "en": "Deleting each message as soon as a worker acks it",
+            "es": "Eliminar cada mensaje apenas un worker lo confirma (ack)"
+          },
+          {
+            "en": "Replaying the last week of events for a new consumer",
+            "es": "Hacer replay de la última semana de eventos para un nuevo consumidor"
+          },
+          {
+            "en": "Routing each message to one queue by a routing key pattern",
+            "es": "Enrutar cada mensaje a una cola según un patrón de routing key"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does Kafka guarantee about message ordering?",
+          "es": "¿Qué garantiza Kafka sobre el orden de los mensajes?"
+        },
+        "options": [
+          {
+            "en": "Order is preserved across the whole topic",
+            "es": "El orden se preserva en todo el topic"
+          },
+          {
+            "en": "Order is preserved only within a single partition",
+            "es": "El orden se preserva solo dentro de una misma partición"
+          },
+          {
+            "en": "Kafka gives no ordering guarantees at all",
+            "es": "Kafka no da ninguna garantía de orden"
+          },
+          {
+            "en": "Order is preserved per consumer group regardless of partitions",
+            "es": "El orden se preserva por consumer group sin importar las particiones"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "All events for the same user must be processed in order. What do you do?",
+          "es": "Todos los eventos del mismo usuario deben procesarse en orden. ¿Qué haces?"
+        },
+        "options": [
+          {
+            "en": "Send them without a key so Kafka balances them",
+            "es": "Enviarlos sin clave para que Kafka los balancee"
+          },
+          {
+            "en": "Use a single partition for the entire topic",
+            "es": "Usar una sola partición para todo el topic"
+          },
+          {
+            "en": "Produce them with the user ID as the message key",
+            "es": "Producirlos con el ID del usuario como clave del mensaje"
+          },
+          {
+            "en": "Sort events by timestamp in each consumer",
+            "es": "Ordenar los eventos por timestamp en cada consumidor"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A consumer in a group crashes. What happens to its partitions?",
+          "es": "Un consumidor de un grupo se cae. ¿Qué pasa con sus particiones?"
+        },
+        "options": [
+          {
+            "en": "A rebalance reassigns them to surviving consumers, which resume from the last committed offsets",
+            "es": "Un rebalance las reasigna a los consumidores sobrevivientes, que retoman desde los últimos offsets confirmados"
+          },
+          {
+            "en": "The broker processes those partitions itself",
+            "es": "El broker procesa esas particiones por sí mismo"
+          },
+          {
+            "en": "The partitions are deleted and recreated empty",
+            "es": "Las particiones se eliminan y se recrean vacías"
+          },
+          {
+            "en": "Their messages are lost until the consumer restarts",
+            "es": "Sus mensajes se pierden hasta que el consumidor reinicie"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Under at-least-once delivery, what must every consumer be prepared for?",
+          "es": "Con entrega at-least-once, ¿para qué debe estar preparado todo consumidor?"
+        },
+        "options": [
+          {
+            "en": "Messages silently disappearing under load",
+            "es": "Mensajes desapareciendo silenciosamente bajo carga"
+          },
+          {
+            "en": "Messages arriving in random partitions each retry",
+            "es": "Mensajes llegando a particiones aleatorias en cada reintento"
+          },
+          {
+            "en": "Messages arriving exactly once but possibly late",
+            "es": "Mensajes llegando exactamente una vez pero quizá tarde"
+          },
+          {
+            "en": "Receiving the same message more than once — handlers must be idempotent",
+            "es": "Recibir el mismo mensaje más de una vez — los handlers deben ser idempotentes"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "When is at-most-once delivery an acceptable choice?",
+          "es": "¿Cuándo es aceptable la entrega at-most-once?"
+        },
+        "options": [
+          {
+            "en": "For low-value, high-volume data like metrics, where losing a message is cheaper than duplicating it",
+            "es": "Para datos de bajo valor y alto volumen como métricas, donde perder un mensaje cuesta menos que duplicarlo"
+          },
+          {
+            "en": "Never — at-least-once is always strictly better",
+            "es": "Nunca — at-least-once siempre es estrictamente mejor"
+          },
+          {
+            "en": "For payment events, since duplicates would be worse than losses",
+            "es": "Para eventos de pago, ya que los duplicados serían peores que las pérdidas"
+          },
+          {
+            "en": "Only when the broker supports transactions",
+            "es": "Solo cuando el broker soporta transacciones"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the purpose of a dead-letter queue (DLQ)?",
+          "es": "¿Cuál es el propósito de una dead-letter queue (DLQ)?"
+        },
+        "options": [
+          {
+            "en": "To permanently discard failed messages without a trace",
+            "es": "Descartar permanentemente los mensajes fallidos sin dejar rastro"
+          },
+          {
+            "en": "To isolate messages that exhausted their retries so the main flow continues and failures can be inspected and replayed",
+            "es": "Aislar los mensajes que agotaron sus reintentos para que el flujo principal continúe y los fallos puedan inspeccionarse y reprocesarse"
+          },
+          {
+            "en": "To store the offsets of every consumer group",
+            "es": "Guardar los offsets de todos los consumer groups"
+          },
+          {
+            "en": "To speed up processing by skipping validation",
+            "es": "Acelerar el procesamiento saltándose la validación"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A topic has 16 partitions and its consumer group has 20 members. How many consumers actively receive messages?",
+          "es": "Un topic tiene 16 particiones y su consumer group tiene 20 miembros. ¿Cuántos consumidores reciben mensajes activamente?"
+        },
+        "options": [
+          {
+            "en": "4 — the excess consumers take over the busiest partitions",
+            "es": "4 — los consumidores excedentes toman las particiones más ocupadas"
+          },
+          {
+            "en": "1 — only the group leader consumes",
+            "es": "1 — solo el líder del grupo consume"
+          },
+          {
+            "en": "20 — Kafka splits partitions fractionally among all members",
+            "es": "20 — Kafka reparte particiones fraccionalmente entre todos los miembros"
+          },
+          {
+            "en": "16 — the other 4 stay idle because each partition has at most one consumer per group",
+            "es": "16 — los otros 4 quedan ociosos porque cada partición tiene máximo un consumidor por grupo"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which metric is the primary health signal of an event pipeline's ability to keep up?",
+          "es": "¿Qué métrica es la señal primaria de que un pipeline de eventos logra mantenerse al día?"
+        },
+        "options": [
+          {
+            "en": "The count of consumer group rebalances per year",
+            "es": "La cantidad de rebalances del consumer group por año"
+          },
+          {
+            "en": "The number of topics in the cluster",
+            "es": "El número de topics en el clúster"
+          },
+          {
+            "en": "Consumer lag and its trend over time",
+            "es": "El consumer lag y su tendencia en el tiempo"
+          },
+          {
+            "en": "The average size of the DLQ payloads",
+            "es": "El tamaño promedio de los payloads en la DLQ"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A poison message is blocking one partition of your orders topic: it fails on every attempt and keeps being redelivered. Explain how you would detect this situation and the full handling strategy you would put in place.",
+          "es": "Un poison message está bloqueando una partición de tu topic de pedidos: falla en cada intento y se reentrega una y otra vez. Explica cómo detectarías esta situación y la estrategia completa de manejo que implementarías."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must cover detection (per-message attempt counter or receive count, alerting on threshold/stalled partition) and handling (cap retries with backoff, route to a DLQ with error metadata, keep the partition flowing, fix the root cause — e.g. schema validation at producer — then optionally replay). Distinguishing deterministic failures from transient ones is a plus.",
+          "es": "Debe cubrir la detección (contador de intentos por mensaje o receive count, alerta por umbral/partición detenida) y el manejo (acotar reintentos con backoff, enrutar a una DLQ con metadatos del error, mantener la partición fluyendo, corregir la causa raíz — p. ej. validación de esquema en el productor — y opcionalmente hacer replay). Distinguir fallos deterministas de transitorios es un plus."
+        },
+        "reference": "Detection: track attempts per message (a retry header or the broker's receive count) and alert when a message exceeds the threshold or when a partition's lag grows while throughput is zero. Handling: bound retries (e.g. 3-5 with exponential backoff), then publish the message plus error metadata to a DLQ so the partition unblocks. Because a poison message fails deterministically, more retries never help. Then fix the root cause — often schema validation or defensive deserialization — and replay the DLQ once fixed."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Design the key decisions for a pipeline that must process 3 million events per minute: producer settings, topic layout, consumer strategy, and what you monitor. Justify each choice briefly.",
+          "es": "Diseña las decisiones clave para un pipeline que debe procesar 3 millones de eventos por minuto: configuración de productores, diseño del topic, estrategia de consumidores y qué monitoreas. Justifica brevemente cada decisión."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must mention producer batching and compression, a partition count sized for parallelism with headroom and even key distribution, consumers scaled toward the partition limit with batch polling and bulk downstream writes (or parallel processing per partition), and monitoring centered on consumer lag trend plus end-to-end latency and error/DLQ rate. Backpressure awareness (throttling/shedding when consumers can't keep up) is a bonus.",
+          "es": "Debe mencionar batching y compresión en el productor, un número de particiones dimensionado para el paralelismo con margen y distribución uniforme de claves, consumidores escalados hacia el límite de particiones con poll por lotes y escrituras bulk downstream (o procesamiento paralelo por partición), y monitoreo centrado en la tendencia del consumer lag más latencia extremo a extremo y tasa de error/DLQ. Considerar backpressure (throttling/descarte cuando los consumidores no dan abasto) es un bonus."
+        },
+        "reference": "Producers: async sends with batching (linger.ms 10-50 ms, large batch.size) and zstd/lz4 compression to amortize network and disk cost; acks=all with idempotence for safety. Topic: 64-128 partitions for parallelism headroom, keyed by an evenly-distributed field (e.g. user or entity ID) to avoid hot partitions while preserving per-key order. Consumers: a group scaled toward the partition count, polling large batches, processing in parallel where ordering allows, and writing downstream with bulk operations since per-event round-trips are the usual bottleneck. Monitoring: consumer lag trend (sustained growth = falling behind), end-to-end produce-to-process latency, DLQ/error rate, and per-partition skew; if lag grows at max consumer scale, apply backpressure by throttling or sampling producers."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1953 @@
+{
+  "slug": "observability",
+  "order": 12,
+  "icon": "eye",
+  "title": {
+    "en": "Observability & Reliability",
+    "es": "Observabilidad y Confiabilidad"
+  },
+  "description": {
+    "en": "Logs, metrics, traces, SLOs, error budgets, alerting and incident response: how to understand and keep production systems healthy.",
+    "es": "Logs, métricas, trazas, SLOs, presupuestos de error, alertas y respuesta a incidentes: cómo entender y mantener sanos los sistemas en producción."
+  },
+  "lessons": [
+    {
+      "slug": "logs-metrics-traces",
+      "question": {
+        "en": "What is the difference between logs, metrics and traces?",
+        "es": "¿Cuál es la diferencia entre logs, métricas y trazas?"
+      },
+      "definition": {
+        "en": "The **three pillars of observability** answer different questions. **Logs** are timestamped records of discrete events — they tell you *what exactly happened* in one place, with rich detail. **Metrics** are numeric aggregates over time (counters, gauges, histograms) — cheap to store and query, they tell you *how the system is behaving overall*. **Traces** follow one request as it crosses services — they tell you *where time was spent* end to end.\n\nThey complement each other: a metric alert fires (something is slow), a trace shows *which* service in the chain is slow, and that service's logs show *why*. In interviews, emphasize that no single signal is enough — you pivot between them.",
+        "es": "Los **tres pilares de la observabilidad** responden preguntas distintas. Los **logs** son registros con timestamp de eventos discretos — te dicen *qué pasó exactamente* en un punto, con mucho detalle. Las **métricas** son agregados numéricos en el tiempo (contadores, gauges, histogramas) — baratas de almacenar y consultar, te dicen *cómo se comporta el sistema en general*. Las **trazas** siguen una petición mientras cruza servicios — te dicen *dónde se gastó el tiempo* de extremo a extremo.\n\nSe complementan: una alerta de métrica se dispara (algo está lento), una traza muestra *qué* servicio de la cadena es lento, y los logs de ese servicio muestran *por qué*. En una entrevista, enfatiza que ninguna señal basta por sí sola — se pivota entre ellas."
+      },
+      "examples": [
+        {
+          "en": "A checkout latency dashboard (metrics) spikes at 14:03; a trace shows the payment service span taking 4s; its logs reveal a third-party gateway returning 503s.",
+          "es": "Un dashboard de latencia del checkout (métricas) se dispara a las 14:03; una traza muestra el span del servicio de pagos tardando 4s; sus logs revelan que la pasarela de terceros devuelve 503."
+        },
+        {
+          "en": "Prometheus stores metrics, Elasticsearch/Loki store logs, and Jaeger/Tempo store traces — a typical open-source observability stack glued together by Grafana.",
+          "es": "Prometheus guarda métricas, Elasticsearch/Loki guardan logs y Jaeger/Tempo guardan trazas — un stack típico de observabilidad open source unido por Grafana."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each observability signal with the question it answers best.",
+              "es": "Conecta cada señal de observabilidad con la pregunta que mejor responde."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Metrics",
+                  "es": "Métricas"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Logs",
+                  "es": "Logs"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Traces",
+                  "es": "Trazas"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Alerts",
+                  "es": "Alertas"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "How is the system trending overall? (rates, latency, errors)",
+                  "es": "¿Cómo tiende el sistema en general? (tasas, latencia, errores)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "What exactly happened in this event, with full detail?",
+                  "es": "¿Qué pasó exactamente en este evento, con todo el detalle?"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Where did this request spend its time across services?",
+                  "es": "¿Dónde gastó su tiempo esta petición a través de los servicios?"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Does a human need to look at this right now?",
+                  "es": "¿Necesita un humano mirar esto ahora mismo?"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API's error rate jumped from 0.1% to 5% across all endpoints. Which signal do you check FIRST to see the system-wide picture?",
+              "es": "La tasa de errores de tu API saltó de 0.1% a 5% en todos los endpoints. ¿Qué señal revisas PRIMERO para ver el panorama global?"
+            },
+            "options": [
+              {
+                "en": "The CI pipeline history",
+                "es": "El historial del pipeline de CI"
+              },
+              {
+                "en": "A single trace from this morning",
+                "es": "Una sola traza de esta mañana"
+              },
+              {
+                "en": "Metrics dashboards — aggregates show scope and timing of the problem",
+                "es": "Dashboards de métricas — los agregados muestran alcance y momento del problema"
+              },
+              {
+                "en": "Individual log lines from one server",
+                "es": "Líneas de log individuales de un solo servidor"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Metrics give the cheapest, fastest system-wide view: when it started, which endpoints, how bad. Then you pivot to traces and logs to find the cause.",
+              "es": "Las métricas dan la vista global más rápida y barata: cuándo empezó, qué endpoints, qué tan grave. Luego pivotas a trazas y logs para hallar la causa."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "For capacity planning you need the 90-day trend of requests per second per endpoint. Why are metrics the right signal for this, instead of counting log lines?",
+              "es": "Para planificación de capacidad necesitas la tendencia a 90 días de peticiones por segundo por endpoint. ¿Por qué las métricas son la señal correcta para esto, en vez de contar líneas de log?"
+            },
+            "options": [
+              {
+                "en": "Logs cannot contain numeric values, so rates can't be derived from them",
+                "es": "Los logs no pueden contener valores numéricos, así que no se pueden derivar tasas de ellos"
+              },
+              {
+                "en": "Traces are the only signal that supports time-series queries",
+                "es": "Las trazas son la única señal que soporta consultas de series de tiempo"
+              },
+              {
+                "en": "Metrics are pre-aggregated time series with fixed cardinality: cheap to retain for months and fast to query over long ranges, while scanning raw logs for 90 days is slow and expensive",
+                "es": "Las métricas son series de tiempo pre-agregadas con cardinalidad fija: baratas de retener por meses y rápidas de consultar en rangos largos, mientras que escanear logs crudos de 90 días es lento y caro"
+              },
+              {
+                "en": "Metrics keep the full payload of every request, so nothing is lost",
+                "es": "Las métricas guardan el payload completo de cada petición, así que no se pierde nada"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Each signal has a cost profile. Metrics trade per-event detail for cheap aggregation: a counter per endpoint costs the same whether you serve 10 or 10 million requests. Deriving the same trend from raw logs means storing and scanning every event — technically possible, but orders of magnitude more expensive at long retention.",
+              "es": "Cada señal tiene un perfil de costo. Las métricas cambian detalle por evento por agregación barata: un contador por endpoint cuesta lo mismo si sirves 10 o 10 millones de peticiones. Derivar la misma tendencia desde logs crudos implica almacenar y escanear cada evento — técnicamente posible, pero órdenes de magnitud más caro con retención larga."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "red-use-metrics",
+      "question": {
+        "en": "What metrics would you monitor for an API? (RED and USE methods)",
+        "es": "¿Qué métricas monitorearías para una API? (métodos RED y USE)"
+      },
+      "definition": {
+        "en": "The **RED method** covers request-driven services: **Rate** (requests per second), **Errors** (failed requests per second), **Duration** (latency distribution, not just the average). If you only had three dashboards for an API, these are the three.\n\nThe **USE method** covers resources (CPU, memory, disk, connection pools): **Utilization** (% of time busy), **Saturation** (queued work waiting, e.g. run-queue length), **Errors** (hardware/driver errors). RED tells you users are suffering; USE tells you which resource is the bottleneck.\n\nIn an interview, name both and add business metrics on top (signups, checkouts) — technical health means little if the business signal is dropping.",
+        "es": "El **método RED** cubre servicios orientados a peticiones: **Rate** (peticiones por segundo), **Errors** (peticiones fallidas por segundo), **Duration** (distribución de latencia, no solo el promedio). Si solo pudieras tener tres dashboards para una API, serían estos.\n\nEl **método USE** cubre recursos (CPU, memoria, disco, pools de conexiones): **Utilization** (% del tiempo ocupado), **Saturation** (trabajo encolado esperando, p. ej. largo de la run-queue), **Errors** (errores de hardware/driver). RED te dice que los usuarios sufren; USE te dice qué recurso es el cuello de botella.\n\nEn una entrevista, menciona ambos y agrega métricas de negocio encima (registros, compras) — la salud técnica vale poco si la señal de negocio cae."
+      },
+      "examples": [
+        {
+          "en": "A Grafana row per service showing req/s, error %, and p50/p95/p99 latency is the standard RED dashboard at companies running microservices.",
+          "es": "Una fila de Grafana por servicio con req/s, % de errores y latencia p50/p95/p99 es el dashboard RED estándar en empresas con microservicios."
+        },
+        {
+          "en": "A database connection pool at 100% utilization with requests queuing (saturation) explains rising API latency even when CPU looks fine — a classic USE finding.",
+          "es": "Un pool de conexiones a la base de datos al 100% de utilización con peticiones encoladas (saturación) explica el aumento de latencia de la API aunque la CPU se vea bien — un hallazgo USE clásico."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each RED/USE signal with its meaning.",
+              "es": "Conecta cada señal RED/USE con su significado."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Rate (RED)",
+                  "es": "Rate (RED)"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Duration (RED)",
+                  "es": "Duration (RED)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Utilization (USE)",
+                  "es": "Utilization (USE)"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Saturation (USE)",
+                  "es": "Saturation (USE)"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Requests per second the service receives",
+                  "es": "Peticiones por segundo que recibe el servicio"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "How long requests take (latency distribution)",
+                  "es": "Cuánto tardan las peticiones (distribución de latencia)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Percentage of time a resource is busy",
+                  "es": "Porcentaje de tiempo que un recurso está ocupado"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Work queued up waiting for the resource",
+                  "es": "Trabajo encolado esperando por el recurso"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "API latency is rising but CPU utilization is only 40%. Which USE signal most likely explains it?",
+              "es": "La latencia de la API sube pero la utilización de CPU es solo 40%. ¿Qué señal USE lo explica más probablemente?"
+            },
+            "options": [
+              {
+                "en": "CPU errors",
+                "es": "Errores de CPU"
+              },
+              {
+                "en": "Saturation of another resource, e.g. a full DB connection pool queueing requests",
+                "es": "Saturación de otro recurso, p. ej. un pool de conexiones a la BD lleno encolando peticiones"
+              },
+              {
+                "en": "Low request rate",
+                "es": "Baja tasa de peticiones"
+              },
+              {
+                "en": "Too many dashboards",
+                "es": "Demasiados dashboards"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Latency with idle CPU usually means requests are waiting on something else: connection pools, disk I/O, locks, or a downstream service. Saturation metrics reveal the queueing.",
+              "es": "Latencia con CPU ociosa suele significar que las peticiones esperan otra cosa: pools de conexiones, I/O de disco, locks o un servicio downstream. Las métricas de saturación revelan el encolamiento."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You are instrumenting a database connection pool as a resource. Which set of metrics correctly applies the USE method to it?",
+              "es": "Estás instrumentando un pool de conexiones a la base de datos como recurso. ¿Qué conjunto de métricas aplica correctamente el método USE?"
+            },
+            "options": [
+              {
+                "en": "Fraction of connections in use, number of requests queued waiting for a connection, and connection acquisition failures",
+                "es": "Fracción de conexiones en uso, número de peticiones encoladas esperando una conexión, y fallas al adquirir una conexión"
+              },
+              {
+                "en": "Requests per second, error percentage, and p99 latency of API endpoints",
+                "es": "Peticiones por segundo, porcentaje de errores y latencia p99 de los endpoints de la API"
+              },
+              {
+                "en": "Deploy frequency, lead time for changes, and mean time to recovery",
+                "es": "Frecuencia de deploys, lead time de cambios y tiempo medio de recuperación"
+              },
+              {
+                "en": "Number of dashboards, alerts configured, and on-call rotations",
+                "es": "Número de dashboards, alertas configuradas y rotaciones de on-call"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "USE maps to resources: Utilization is the fraction of connections busy, Saturation is the queue of requests waiting for a free connection, and Errors are failed acquisitions/timeouts. The second option is the RED method (for request-driven services), and the third is DORA delivery metrics — a different domain entirely.",
+              "es": "USE se aplica a recursos: Utilization es la fracción de conexiones ocupadas, Saturation es la cola de peticiones esperando una conexión libre, y Errors son adquisiciones fallidas/timeouts. La segunda opción es el método RED (para servicios orientados a peticiones), y la tercera son las métricas DORA de delivery — un dominio totalmente distinto."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "latency-percentiles",
+      "question": {
+        "en": "Why does p99 latency matter more than the average?",
+        "es": "¿Por qué la latencia p99 importa más que el promedio?"
+      },
+      "definition": {
+        "en": "Latency distributions are **heavily skewed**: most requests are fast, but a long tail is very slow. The average hides that tail — a mean of 100ms can coexist with 1% of requests taking 5 seconds. **Percentiles** describe the real experience: p50 (median) is the typical request, **p95/p99** are the slow tail that users actually notice and complain about.\n\nThe tail matters more than it looks. If one page fans out to 20 backend calls, the chance that *at least one* hits the p99 is about 18% — tail latency **amplifies** in distributed systems. That's why SLOs are written against percentiles ('99% of requests under 300ms'), never against averages.",
+        "es": "Las distribuciones de latencia están **muy sesgadas**: la mayoría de las peticiones son rápidas, pero hay una cola larga muy lenta. El promedio esconde esa cola — una media de 100ms puede coexistir con 1% de peticiones tardando 5 segundos. Los **percentiles** describen la experiencia real: p50 (mediana) es la petición típica, **p95/p99** son la cola lenta que los usuarios sí notan y por la que se quejan.\n\nLa cola importa más de lo que parece. Si una página hace fan-out a 20 llamadas de backend, la probabilidad de que *al menos una* caiga en el p99 es de ~18% — la latencia de cola se **amplifica** en sistemas distribuidos. Por eso los SLOs se escriben contra percentiles ('99% de las peticiones bajo 300ms'), nunca contra promedios."
+      },
+      "examples": [
+        {
+          "en": "Amazon famously found that every 100ms of extra latency cost ~1% in sales — and heavy buyers with big carts are exactly the users most likely to hit slow tail requests.",
+          "es": "Amazon encontró que cada 100ms extra de latencia costaba ~1% en ventas — y los compradores frecuentes con carritos grandes son justo los usuarios con más probabilidad de caer en la cola lenta."
+        },
+        {
+          "en": "A GC pause of 2s every few minutes barely moves the average, but it dominates p99 — which is why JVM services often show a healthy mean and an ugly tail.",
+          "es": "Una pausa de GC de 2s cada pocos minutos apenas mueve el promedio, pero domina el p99 — por eso los servicios en JVM suelen mostrar una media sana y una cola fea."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A service reports average latency 80ms, p50 40ms, p99 3s. What does this tell you?",
+              "es": "Un servicio reporta latencia promedio 80ms, p50 40ms, p99 3s. ¿Qué te dice esto?"
+            },
+            "options": [
+              {
+                "en": "p99 only affects internal tools, not users",
+                "es": "El p99 solo afecta herramientas internas, no usuarios"
+              },
+              {
+                "en": "The metrics are contradictory and must be wrong",
+                "es": "Las métricas son contradictorias y deben estar mal"
+              },
+              {
+                "en": "The service is healthy because the average is under 100ms",
+                "es": "El servicio está sano porque el promedio está bajo 100ms"
+              },
+              {
+                "en": "Most requests are fast but 1% of users wait 3+ seconds — the tail needs investigation",
+                "es": "La mayoría de las peticiones son rápidas pero 1% de los usuarios espera 3+ segundos — hay que investigar la cola"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Skewed distributions make a low average and a terrible tail perfectly consistent. 1 in 100 requests taking 3s is a real user-facing problem, especially with fan-out.",
+              "es": "Las distribuciones sesgadas hacen que un promedio bajo y una cola terrible sean perfectamente consistentes. 1 de cada 100 peticiones tardando 3s es un problema real para usuarios, sobre todo con fan-out."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "An interviewer asks: 'Our dashboard shows 90ms average latency, so why are users complaining about slowness?' Explain what's likely happening and which metric you would look at instead.",
+              "es": "Un entrevistador pregunta: 'Nuestro dashboard muestra 90ms de latencia promedio, ¿por qué se quejan los usuarios de lentitud?' Explica qué probablemente pasa y qué métrica mirarías en su lugar."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that averages hide the tail of a skewed latency distribution, and propose looking at high percentiles (p95/p99). Bonus: mentions tail amplification with fan-out to multiple backend calls, or that a small fraction of slow requests can affect many real users.",
+              "es": "Debe explicar que los promedios esconden la cola de una distribución de latencia sesgada, y proponer mirar percentiles altos (p95/p99). Bonus: menciona la amplificación de cola con fan-out a múltiples llamadas de backend, o que una pequeña fracción de peticiones lentas puede afectar a muchos usuarios reales."
+            },
+            "reference": "Latency is skewed: most requests are fast but a slow tail drags. A 90ms average can hide 1% of requests taking seconds. I'd look at p95/p99 latency per endpoint. With fan-out, one page making 20 backend calls has ~18% chance of hitting at least one p99-slow call, so tail latency affects far more users than 1%."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A page issues 10 parallel backend calls and waits for all of them. Each backend individually has p99 = 200ms. What can you conclude about the page's latency?",
+              "es": "Una página lanza 10 llamadas de backend en paralelo y espera a todas. Cada backend individualmente tiene p99 = 200ms. ¿Qué puedes concluir sobre la latencia de la página?"
+            },
+            "options": [
+              {
+                "en": "Only 1% of page loads will be slower than 200ms",
+                "es": "Solo 1% de las cargas de página serán más lentas que 200ms"
+              },
+              {
+                "en": "Averaging the 10 backends' p99 values gives the page's p99",
+                "es": "Promediar los p99 de los 10 backends da el p99 de la página"
+              },
+              {
+                "en": "Roughly 1 in 10 page loads waits on at least one p99-slow call, so the page's tail is far worse than any single backend's",
+                "es": "Aproximadamente 1 de cada 10 cargas de página espera al menos una llamada lenta de p99, así que la cola de la página es mucho peor que la de cualquier backend individual"
+              },
+              {
+                "en": "The page's p99 is also 200ms, since the calls run in parallel",
+                "es": "El p99 de la página también es 200ms, ya que las llamadas corren en paralelo"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The page is as slow as its slowest call. The probability that all 10 calls avoid their p99 is 0.99^10 ≈ 90.4%, so about 9.6% of page loads hit at least one slow call — tail amplification. This is also why percentiles can't be averaged: they must be computed from the combined distribution.",
+              "es": "La página es tan lenta como su llamada más lenta. La probabilidad de que las 10 llamadas eviten su p99 es 0.99^10 ≈ 90.4%, así que ~9.6% de las cargas caen en al menos una llamada lenta — amplificación de cola. Por esto mismo los percentiles no se pueden promediar: deben calcularse sobre la distribución combinada."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "distributed-tracing-spans",
+      "question": {
+        "en": "How does distributed tracing work, and what is a span?",
+        "es": "¿Cómo funciona el tracing distribuido y qué es un span?"
+      },
+      "definition": {
+        "en": "**Distributed tracing** follows one request across service boundaries. A **trace** is the full journey, identified by a `trace_id`. A **span** is one timed unit of work within it (an HTTP handler, a DB query, a queue publish), with a start time, duration, attributes, and a `parent_span_id` linking it to its caller. Together the spans form a tree that renders as a waterfall.\n\nIt works through **context propagation**: when service A calls service B, it sends the trace context in headers (W3C `traceparent`). B creates child spans under the same trace. Each service exports its spans to a collector, which assembles the tree. Because storing every trace is expensive, systems **sample** — e.g. keep 1% of traces, or keep all slow/error traces (tail-based sampling).",
+        "es": "El **tracing distribuido** sigue una petición a través de los límites entre servicios. Una **traza** es el recorrido completo, identificado por un `trace_id`. Un **span** es una unidad de trabajo cronometrada dentro de ella (un handler HTTP, una query a la BD, un publish a una cola), con tiempo de inicio, duración, atributos y un `parent_span_id` que lo enlaza con su llamador. Juntos, los spans forman un árbol que se visualiza como cascada (waterfall).\n\nFunciona mediante **propagación de contexto**: cuando el servicio A llama al B, envía el contexto de la traza en headers (W3C `traceparent`). B crea spans hijos bajo la misma traza. Cada servicio exporta sus spans a un collector, que arma el árbol. Como guardar todas las trazas es caro, los sistemas **muestrean** — p. ej. conservar el 1% de las trazas, o todas las lentas/con error (tail-based sampling)."
+      },
+      "examples": [
+        {
+          "en": "In a Jaeger waterfall you see checkout took 2.1s: 100ms in the API gateway, 1.8s in a single `SELECT` span inside the orders service — the bottleneck is instantly visible.",
+          "es": "En una cascada de Jaeger ves que el checkout tardó 2.1s: 100ms en el API gateway y 1.8s en un solo span `SELECT` dentro del servicio de pedidos — el cuello de botella es visible al instante."
+        },
+        {
+          "en": "OpenTelemetry SDKs auto-instrument Express, FastAPI or Spring: they create server spans per request and inject `traceparent` headers into outgoing HTTP calls without custom code.",
+          "es": "Los SDKs de OpenTelemetry auto-instrumentan Express, FastAPI o Spring: crean spans de servidor por petición e inyectan headers `traceparent` en las llamadas HTTP salientes sin código propio."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the lifecycle of a distributed trace, from the user's request to viewing the waterfall.",
+              "es": "Ordena el ciclo de vida de una traza distribuida, desde la petición del usuario hasta ver la cascada."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "root",
+                "label": {
+                  "en": "Edge service receives the request and starts the root span (new trace_id)",
+                  "es": "El servicio de borde recibe la petición e inicia el span raíz (nuevo trace_id)"
+                }
+              },
+              {
+                "id": "propagate",
+                "label": {
+                  "en": "Trace context is propagated to downstream services via headers",
+                  "es": "El contexto de la traza se propaga a los servicios downstream vía headers"
+                }
+              },
+              {
+                "id": "children",
+                "label": {
+                  "en": "Each service creates child spans for its work (handlers, DB queries)",
+                  "es": "Cada servicio crea spans hijos para su trabajo (handlers, queries a la BD)"
+                }
+              },
+              {
+                "id": "export",
+                "label": {
+                  "en": "Services export finished spans to the collector",
+                  "es": "Los servicios exportan los spans terminados al collector"
+                }
+              },
+              {
+                "id": "assemble",
+                "label": {
+                  "en": "The backend assembles spans by trace_id and renders the waterfall",
+                  "es": "El backend arma los spans por trace_id y muestra la cascada"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "root",
+              "propagate",
+              "children",
+              "export",
+              "assemble"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Service B's spans appear as a separate trace instead of under service A's trace. What is the most likely cause?",
+              "es": "Los spans del servicio B aparecen como una traza separada en vez de bajo la traza del servicio A. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "The trace context header (traceparent) is not being propagated from A to B",
+                "es": "El header de contexto de traza (traceparent) no se está propagando de A a B"
+              },
+              {
+                "en": "Traces can never cross service boundaries",
+                "es": "Las trazas nunca pueden cruzar límites entre servicios"
+              },
+              {
+                "en": "Service B is too fast to be traced",
+                "es": "El servicio B es demasiado rápido para ser trazado"
+              },
+              {
+                "en": "The collector merges traces alphabetically",
+                "es": "El collector fusiona trazas alfabéticamente"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Without the propagated context, B has no parent to attach to, so its SDK starts a brand-new trace. Common culprits: a proxy stripping headers, or an HTTP client that isn't instrumented.",
+              "es": "Sin el contexto propagado, B no tiene padre al cual unirse, así que su SDK inicia una traza nueva. Culpables comunes: un proxy que elimina headers o un cliente HTTP sin instrumentar."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your tracing bill is too high, but the team insists on keeping every trace that is slow or contains an error. Which sampling strategy achieves this?",
+              "es": "Tu factura de tracing es demasiado alta, pero el equipo insiste en conservar todas las trazas lentas o con error. ¿Qué estrategia de muestreo lo logra?"
+            },
+            "options": [
+              {
+                "en": "Keep only the root span of each trace and drop all child spans",
+                "es": "Conservar solo el span raíz de cada traza y descartar todos los spans hijos"
+              },
+              {
+                "en": "Head-based sampling at 1%: the keep/drop decision is made randomly when the trace starts, before knowing its outcome",
+                "es": "Muestreo head-based al 1%: la decisión de conservar/descartar se toma al azar cuando la traza inicia, antes de conocer su resultado"
+              },
+              {
+                "en": "Tail-based sampling: buffer the spans and decide after the trace completes, keeping all slow or error traces and a small sample of the rest",
+                "es": "Muestreo tail-based: almacenar los spans en buffer y decidir cuando la traza termina, conservando todas las lentas o con error y una pequeña muestra del resto"
+              },
+              {
+                "en": "Disable tracing on the slowest services, since they generate the most spans",
+                "es": "Desactivar el tracing en los servicios más lentos, ya que generan más spans"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Head-based sampling decides before the outcome is known, so a random 1% keeps mostly boring traces and drops most of the interesting ones. Tail-based sampling defers the decision until the full trace is assembled, when latency and error status are known — at the cost of buffering spans in the collector.",
+              "es": "El muestreo head-based decide antes de conocer el resultado, así que un 1% aleatorio conserva mayormente trazas aburridas y descarta la mayoría de las interesantes. El tail-based pospone la decisión hasta que la traza completa está armada, cuando ya se conocen la latencia y el estado de error — al costo de mantener spans en buffer en el collector."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "correlation-ids",
+      "question": {
+        "en": "What is a correlation ID and how do you propagate request context?",
+        "es": "¿Qué es un correlation ID y cómo se propaga el contexto de una petición?"
+      },
+      "definition": {
+        "en": "A **correlation ID** is a unique identifier (usually a UUID) attached to a request at the edge and carried through every service, log line, and queue message that request touches. When a user reports 'my order failed', you take the ID from the response or support ticket and query logs across *all* services with one filter — instead of grepping timestamps on ten machines.\n\nPropagation follows a simple discipline: **generate** the ID at the entry point if the client didn't send one (`X-Request-ID` header), **store** it in request-scoped context (Node `AsyncLocalStorage`, Python `contextvars`, Go `context.Context`), **include** it in every structured log line automatically via the logger, and **forward** it in headers of outgoing HTTP calls and in message metadata for queues. Trace IDs from distributed tracing can serve the same role, but correlation IDs are the cheap version you can add in a day.",
+        "es": "Un **correlation ID** es un identificador único (normalmente un UUID) que se adjunta a la petición en el borde y viaja por cada servicio, línea de log y mensaje de cola que esa petición toca. Cuando un usuario reporta 'mi pedido falló', tomas el ID de la respuesta o del ticket de soporte y consultas los logs de *todos* los servicios con un solo filtro — en vez de grepear timestamps en diez máquinas.\n\nLa propagación sigue una disciplina simple: **generar** el ID en el punto de entrada si el cliente no lo envió (header `X-Request-ID`), **guardarlo** en contexto por petición (`AsyncLocalStorage` en Node, `contextvars` en Python, `context.Context` en Go), **incluirlo** automáticamente en cada línea de log estructurado vía el logger, y **reenviarlo** en los headers de las llamadas HTTP salientes y en la metadata de los mensajes de colas. Los trace IDs del tracing distribuido cumplen el mismo rol, pero los correlation IDs son la versión barata que puedes agregar en un día."
+      },
+      "examples": [
+        {
+          "en": "A support engineer pastes `req_9f3ab2` from an error page into Kibana and instantly sees the request's path: gateway → orders → payments, with the payment service logging a card-declined error.",
+          "es": "Un ingeniero de soporte pega `req_9f3ab2` desde una página de error en Kibana y ve al instante el camino de la petición: gateway → pedidos → pagos, con el servicio de pagos registrando un error de tarjeta rechazada."
+        },
+        {
+          "en": "An async pipeline stores the correlation ID in the Kafka message headers, so the consumer processing the event hours later still logs under the original request's ID.",
+          "es": "Un pipeline asíncrono guarda el correlation ID en los headers del mensaje de Kafka, así el consumidor que procesa el evento horas después sigue logueando bajo el ID de la petición original."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A request passes through gateway → orders → payments, but the correlation ID only appears in gateway logs. What most likely went wrong?",
+              "es": "Una petición pasa por gateway → pedidos → pagos, pero el correlation ID solo aparece en los logs del gateway. ¿Qué salió mal más probablemente?"
+            },
+            "options": [
+              {
+                "en": "Correlation IDs only work with monoliths",
+                "es": "Los correlation IDs solo funcionan con monolitos"
+              },
+              {
+                "en": "The log storage deletes IDs to save space",
+                "es": "El almacenamiento de logs borra los IDs para ahorrar espacio"
+              },
+              {
+                "en": "UUIDs expire after one network hop",
+                "es": "Los UUIDs expiran después de un salto de red"
+              },
+              {
+                "en": "Downstream services aren't reading the incoming header or forwarding it in their outgoing calls",
+                "es": "Los servicios downstream no leen el header entrante ni lo reenvían en sus llamadas salientes"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Propagation is a per-service responsibility: each hop must read the header, put it in request context, log it, and forward it. If any service skips this, the chain breaks there.",
+              "es": "La propagación es responsabilidad de cada servicio: cada salto debe leer el header, ponerlo en el contexto de la petición, loguearlo y reenviarlo. Si un servicio lo omite, la cadena se rompe ahí."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Describe how you would add correlation IDs to a microservices system: where the ID is created, how it travels between services, and how it ends up in the logs.",
+              "es": "Describe cómo agregarías correlation IDs a un sistema de microservicios: dónde se crea el ID, cómo viaja entre servicios y cómo termina en los logs."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must cover: generating the ID at the edge/entry point (or accepting a client-provided header like X-Request-ID), forwarding it via headers on outgoing calls (and ideally queue message metadata), and automatically including it in every structured log line via request-scoped context (middleware + AsyncLocalStorage/contextvars or similar). Bonus: returning it in responses so users/support can reference it.",
+              "es": "Debe cubrir: generar el ID en el borde/punto de entrada (o aceptar un header del cliente como X-Request-ID), reenviarlo vía headers en llamadas salientes (e idealmente en metadata de mensajes de colas), e incluirlo automáticamente en cada línea de log estructurado mediante contexto por petición (middleware + AsyncLocalStorage/contextvars o similar). Bonus: devolverlo en las respuestas para que usuarios/soporte puedan referenciarlo."
+            },
+            "reference": "Middleware at the API gateway generates a UUID (or accepts X-Request-ID from the client) and stores it in request-scoped context (AsyncLocalStorage in Node, contextvars in Python). The logger is configured to include the ID in every structured log line automatically. HTTP clients forward the header on all outgoing calls, and producers put it in message metadata so async consumers keep the chain. The API also returns the ID in the response so support tickets can reference it."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An order request publishes an event to Kafka, and a consumer processes it two hours later. How can the consumer's log lines still carry the original request's correlation ID?",
+              "es": "Una petición de pedido publica un evento en Kafka, y un consumidor lo procesa dos horas después. ¿Cómo pueden las líneas de log del consumidor seguir llevando el correlation ID de la petición original?"
+            },
+            "options": [
+              {
+                "en": "Kafka automatically merges the consumer's logs into the producer's log stream",
+                "es": "Kafka fusiona automáticamente los logs del consumidor con el stream de logs del productor"
+              },
+              {
+                "en": "The consumer generates a fresh UUID; timestamps let you join the two IDs later",
+                "es": "El consumidor genera un UUID nuevo; los timestamps permiten unir los dos IDs después"
+              },
+              {
+                "en": "The producer writes the ID into the message headers/metadata, and the consumer reads it and restores it into its logging context before processing",
+                "es": "El productor escribe el ID en los headers/metadata del mensaje, y el consumidor lo lee y lo restaura en su contexto de logging antes de procesar"
+              },
+              {
+                "en": "They can't — correlation IDs only survive synchronous HTTP calls within one request",
+                "es": "No pueden — los correlation IDs solo sobreviven llamadas HTTP síncronas dentro de una misma petición"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Async boundaries break implicit context, so the ID must travel with the message itself. The producer copies it from request context into message headers; the consumer's handler reads it and seeds its own request-scoped context, so every log line during processing carries the original ID. Correlating by timestamp is unreliable under any real throughput.",
+              "es": "Los límites asíncronos rompen el contexto implícito, así que el ID debe viajar con el mensaje mismo. El productor lo copia del contexto de la petición a los headers del mensaje; el handler del consumidor lo lee y siembra su propio contexto por petición, de modo que cada línea de log durante el procesamiento lleva el ID original. Correlacionar por timestamp es poco confiable con cualquier throughput real."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "incident-debugging",
+      "question": {
+        "en": "How would you debug a production incident? Walk me through your methodology.",
+        "es": "¿Cómo depurarías un incidente en producción? Explícame tu metodología."
+      },
+      "definition": {
+        "en": "Interviewers want a **calm, ordered process**, not heroics. The sequence: **acknowledge and assess impact** (who is affected, how badly — this sets severity), **communicate** (open an incident channel, assign an incident commander so someone owns coordination), **mitigate first, diagnose later** — check what changed (deploys, config, feature flags, traffic) and prefer fast reversals like rollback or disabling a flag. Restoring service beats understanding the bug.\n\nOnly after mitigation do you **diagnose deeply** using metrics → traces → logs, and finally hold a **blameless postmortem** with action items so the failure mode is eliminated. Saying 'rollback first, root-cause later' is a strong senior signal; so is asking 'what changed?' as the first diagnostic question, since most incidents follow a change.",
+        "es": "Los entrevistadores quieren un **proceso calmado y ordenado**, no heroísmo. La secuencia: **reconocer y evaluar el impacto** (quién está afectado y qué tan grave — esto define la severidad), **comunicar** (abrir un canal de incidente, asignar un incident commander para que alguien coordine), **mitigar primero, diagnosticar después** — revisar qué cambió (deploys, configuración, feature flags, tráfico) y preferir reversiones rápidas como rollback o desactivar un flag. Restaurar el servicio vale más que entender el bug.\n\nSolo después de mitigar se **diagnostica a fondo** usando métricas → trazas → logs, y finalmente se hace un **postmortem sin culpas** con acciones concretas para eliminar ese modo de falla. Decir 'primero rollback, luego la causa raíz' es una señal fuerte de seniority; también preguntar '¿qué cambió?' como primera pregunta diagnóstica, porque la mayoría de los incidentes siguen a un cambio."
+      },
+      "examples": [
+        {
+          "en": "Checkout errors spike at 14:03; the on-call sees a deploy went out at 14:01, rolls it back by 14:10, and service recovers — root cause analysis of the bad migration happens the next morning, not during the outage.",
+          "es": "Los errores del checkout se disparan a las 14:03; el on-call ve que hubo un deploy a las 14:01, hace rollback a las 14:10 y el servicio se recupera — el análisis de la migración defectuosa se hace a la mañana siguiente, no durante la caída."
+        },
+        {
+          "en": "Google and PagerDuty publish incident response guides built on the same skeleton: severity assessment, incident commander, mitigation before diagnosis, blameless postmortem.",
+          "es": "Google y PagerDuty publican guías de respuesta a incidentes con el mismo esqueleto: evaluación de severidad, incident commander, mitigación antes del diagnóstico, postmortem sin culpas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of responding to a production incident.",
+              "es": "Ordena los pasos de la respuesta a un incidente en producción."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "ack",
+                "label": {
+                  "en": "Acknowledge the alert and assess user impact / severity",
+                  "es": "Reconocer la alerta y evaluar impacto en usuarios / severidad"
+                }
+              },
+              {
+                "id": "comms",
+                "label": {
+                  "en": "Open an incident channel and assign an incident commander",
+                  "es": "Abrir un canal de incidente y asignar un incident commander"
+                }
+              },
+              {
+                "id": "changed",
+                "label": {
+                  "en": "Check what changed recently: deploys, config, feature flags, traffic",
+                  "es": "Revisar qué cambió recientemente: deploys, configuración, feature flags, tráfico"
+                }
+              },
+              {
+                "id": "mitigate",
+                "label": {
+                  "en": "Mitigate: roll back, disable the flag, or shift traffic to restore service",
+                  "es": "Mitigar: rollback, desactivar el flag o mover tráfico para restaurar el servicio"
+                }
+              },
+              {
+                "id": "diagnose",
+                "label": {
+                  "en": "Diagnose the root cause with metrics, traces and logs",
+                  "es": "Diagnosticar la causa raíz con métricas, trazas y logs"
+                }
+              },
+              {
+                "id": "postmortem",
+                "label": {
+                  "en": "Write a blameless postmortem with action items",
+                  "es": "Escribir un postmortem sin culpas con acciones concretas"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "ack",
+              "comms",
+              "changed",
+              "mitigate",
+              "diagnose",
+              "postmortem"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Errors spiked 5 minutes after a deploy. The engineer wants to keep debugging the code to find the exact bug while users see errors. What should happen instead?",
+              "es": "Los errores se dispararon 5 minutos después de un deploy. El ingeniero quiere seguir depurando el código para hallar el bug exacto mientras los usuarios ven errores. ¿Qué debería pasar en su lugar?"
+            },
+            "options": [
+              {
+                "en": "Restart all servers and hope it clears",
+                "es": "Reiniciar todos los servidores y esperar que se arregle"
+              },
+              {
+                "en": "Wait an hour to confirm the trend before acting",
+                "es": "Esperar una hora para confirmar la tendencia antes de actuar"
+              },
+              {
+                "en": "Roll back the deploy now; find the root cause afterwards without user impact",
+                "es": "Hacer rollback del deploy ya; buscar la causa raíz después sin impacto a usuarios"
+              },
+              {
+                "en": "Keep debugging — understanding the bug is always the priority",
+                "es": "Seguir depurando — entender el bug siempre es la prioridad"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Mitigation before diagnosis: a strongly correlated recent change plus a cheap reversal (rollback) means you restore service first. The bug will still be there to study afterwards.",
+              "es": "Mitigación antes que diagnóstico: un cambio reciente fuertemente correlacionado más una reversión barata (rollback) significa restaurar el servicio primero. El bug seguirá ahí para estudiarlo después."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each incident-response concept with its role during and after an incident.",
+              "es": "Conecta cada concepto de respuesta a incidentes con su rol durante y después de un incidente."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Incident commander",
+                  "es": "Incident commander"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Severity assessment",
+                  "es": "Evaluación de severidad"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Mitigation",
+                  "es": "Mitigación"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Blameless postmortem",
+                  "es": "Postmortem sin culpas"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Owns coordination and communication so responders can focus on fixing",
+                  "es": "Se encarga de la coordinación y comunicación para que los que responden se enfoquen en arreglar"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Sizes user impact to decide urgency, escalation and who gets involved",
+                  "es": "Dimensiona el impacto en usuarios para decidir urgencia, escalamiento y a quién involucrar"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A fast reversal (rollback, disable flag) that restores service before the bug is understood",
+                  "es": "Una reversión rápida (rollback, desactivar flag) que restaura el servicio antes de entender el bug"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "A written analysis focused on systemic fixes and action items, not individual fault",
+                  "es": "Un análisis escrito enfocado en correcciones sistémicas y acciones concretas, no en culpas individuales"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "slo-sla-sli",
+      "question": {
+        "en": "What is the difference between an SLI, an SLO and an SLA?",
+        "es": "¿Cuál es la diferencia entre un SLI, un SLO y un SLA?"
+      },
+      "definition": {
+        "en": "An **SLI** (Service Level *Indicator*) is a measurement — a number you compute from real traffic, like 'fraction of requests served under 300ms' or 'fraction of requests that succeed'. An **SLO** (Service Level *Objective*) is the internal target you set on that SLI: '99.9% of requests succeed, measured over 30 days'. An **SLA** (Service Level *Agreement*) is the external contract with customers, with **consequences** (usually money back) if you miss it.\n\nThe hierarchy: SLIs feed SLOs, and SLAs are looser promises built on top. SLAs are always more lenient than internal SLOs, so you breach your own target — and react — before you owe customers refunds. A memorable framing: SLI = what you *measure*, SLO = what you *aim for*, SLA = what you *promised and pay for*.",
+        "es": "Un **SLI** (Service Level *Indicator*) es una medición — un número calculado a partir de tráfico real, como 'fracción de peticiones servidas bajo 300ms' o 'fracción de peticiones exitosas'. Un **SLO** (Service Level *Objective*) es el objetivo interno que fijas sobre ese SLI: '99.9% de las peticiones exitosas, medido en 30 días'. Un **SLA** (Service Level *Agreement*) es el contrato externo con clientes, con **consecuencias** (normalmente devolución de dinero) si lo incumples.\n\nLa jerarquía: los SLIs alimentan los SLOs, y los SLAs son promesas más laxas construidas encima. Los SLAs siempre son más permisivos que los SLOs internos, para que incumplas tu propio objetivo — y reacciones — antes de deber reembolsos a clientes. Un marco memorable: SLI = lo que *mides*, SLO = a lo que *aspiras*, SLA = lo que *prometiste y pagas*."
+      },
+      "examples": [
+        {
+          "en": "AWS S3's SLA offers service credits if monthly uptime drops below 99.9% — but internally Amazon targets much stricter objectives so the SLA is almost never triggered.",
+          "es": "El SLA de AWS S3 ofrece créditos si el uptime mensual cae bajo 99.9% — pero internamente Amazon apunta a objetivos mucho más estrictos para que el SLA casi nunca se active."
+        },
+        {
+          "en": "A team defines availability SLI as `successful requests / total requests` from load-balancer metrics, sets a 99.95% SLO over 30 days, while sales signs a 99.9% SLA with enterprise customers.",
+          "es": "Un equipo define el SLI de disponibilidad como `peticiones exitosas / peticiones totales` desde métricas del balanceador, fija un SLO de 99.95% a 30 días, mientras ventas firma un SLA de 99.9% con clientes enterprise."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each term with its definition.",
+              "es": "Conecta cada término con su definición."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "SLI",
+                  "es": "SLI"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "SLO",
+                  "es": "SLO"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "SLA",
+                  "es": "SLA"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Error budget",
+                  "es": "Presupuesto de error"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "A measured indicator, e.g. fraction of requests under 300ms",
+                  "es": "Un indicador medido, p. ej. fracción de peticiones bajo 300ms"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The internal target set on an indicator, e.g. 99.9% over 30 days",
+                  "es": "El objetivo interno fijado sobre un indicador, p. ej. 99.9% en 30 días"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "The external contract with customers, with penalties if missed",
+                  "es": "El contrato externo con clientes, con penalizaciones si se incumple"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "The allowed amount of failure: 100% minus the objective",
+                  "es": "La cantidad de falla permitida: 100% menos el objetivo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why should the internal SLO be stricter than the customer-facing SLA?",
+              "es": "¿Por qué el SLO interno debe ser más estricto que el SLA de cara al cliente?"
+            },
+            "options": [
+              {
+                "en": "It creates a buffer: you detect and fix degradation before breaching the contract and owing penalties",
+                "es": "Crea un colchón: detectas y corriges la degradación antes de incumplir el contrato y deber penalizaciones"
+              },
+              {
+                "en": "SLAs are illegal to measure internally",
+                "es": "Es ilegal medir los SLAs internamente"
+              },
+              {
+                "en": "Stricter SLOs make dashboards look better",
+                "es": "SLOs más estrictos hacen que los dashboards se vean mejor"
+              },
+              {
+                "en": "SLOs and SLAs must always be identical",
+                "es": "Los SLOs y SLAs siempre deben ser idénticos"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The gap between SLO and SLA is your safety margin: breaching the internal target triggers action while you're still within the contractual promise.",
+              "es": "La brecha entre SLO y SLA es tu margen de seguridad: incumplir el objetivo interno dispara acciones mientras aún estás dentro de la promesa contractual."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of the following is a well-formed SLO?",
+              "es": "¿Cuál de las siguientes opciones es un SLO bien formulado?"
+            },
+            "options": [
+              {
+                "en": "\"The API should feel fast for most users\"",
+                "es": "\"La API debería sentirse rápida para la mayoría de los usuarios\""
+              },
+              {
+                "en": "\"Request latency\", tracked on a dashboard",
+                "es": "\"Latencia de las peticiones\", graficada en un dashboard"
+              },
+              {
+                "en": "\"We credit customers 10% of their bill if monthly uptime falls below 99.5%\"",
+                "es": "\"Acreditamos a los clientes el 10% de su factura si el uptime mensual cae bajo 99.5%\""
+              },
+              {
+                "en": "\"99.9% of requests complete successfully in under 300ms, measured over a rolling 30-day window\"",
+                "es": "\"99.9% de las peticiones se completan con éxito en menos de 300ms, medido en una ventana móvil de 30 días\""
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A well-formed SLO has three parts: a measurable SLI (fraction of requests successful and under 300ms), a target (99.9%), and a measurement window (30 days). The first option isn't measurable, the second is just an SLI with no target, and the third is an SLA clause — an external promise with financial consequences.",
+              "es": "Un SLO bien formulado tiene tres partes: un SLI medible (fracción de peticiones exitosas y bajo 300ms), un objetivo (99.9%) y una ventana de medición (30 días). La primera opción no es medible, la segunda es solo un SLI sin objetivo, y la tercera es una cláusula de SLA — una promesa externa con consecuencias financieras."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "error-budgets",
+      "question": {
+        "en": "What is an error budget and how does it guide releases?",
+        "es": "¿Qué es un presupuesto de error y cómo guía los lanzamientos?"
+      },
+      "definition": {
+        "en": "The **error budget** is the flip side of your SLO: if the objective is 99.9% availability over 30 days, the budget is the remaining **0.1%** — roughly 43 minutes of downtime you are *allowed* to spend. It reframes reliability from 'never fail' (impossible and paralyzing) to 'fail no more than this much', turning reliability into a resource you spend deliberately on velocity: deploys, experiments, risky migrations.\n\nThe policy is what makes it powerful. **Budget remaining** → ship freely, take risks. **Budget exhausted** → feature releases pause and the team prioritizes reliability work (fixing flaky deploys, adding tests, improving rollback) until the budget recovers. This resolves the classic dev-vs-ops conflict with a number instead of an argument: nobody debates whether to freeze; the budget decides.",
+        "es": "El **presupuesto de error** es el reverso de tu SLO: si el objetivo es 99.9% de disponibilidad en 30 días, el presupuesto es el **0.1%** restante — unos 43 minutos de caída que tienes *permitido* gastar. Replantea la confiabilidad de 'nunca fallar' (imposible y paralizante) a 'fallar como máximo esto', convirtiéndola en un recurso que se gasta deliberadamente en velocidad: deploys, experimentos, migraciones arriesgadas.\n\nLa política es lo que lo hace poderoso. **Presupuesto disponible** → se lanza con libertad, se toman riesgos. **Presupuesto agotado** → los lanzamientos de features se pausan y el equipo prioriza trabajo de confiabilidad (arreglar deploys frágiles, agregar tests, mejorar el rollback) hasta que el presupuesto se recupere. Esto resuelve el clásico conflicto dev-vs-ops con un número en vez de una discusión: nadie debate si congelar o no; el presupuesto decide."
+      },
+      "examples": [
+        {
+          "en": "Google SRE popularized the model: a product team that burned its quarterly budget on a botched migration froze launches and spent two weeks on reliability work before resuming.",
+          "es": "Google SRE popularizó el modelo: un equipo de producto que quemó su presupuesto trimestral en una migración fallida congeló lanzamientos y dedicó dos semanas a trabajo de confiabilidad antes de retomar."
+        },
+        {
+          "en": "A team with 80% of its monthly budget left approves a risky database migration on a weekday; the same request gets postponed when only 5% remains.",
+          "es": "Un equipo con 80% de su presupuesto mensual disponible aprueba una migración de base de datos arriesgada entre semana; la misma solicitud se pospone cuando solo queda el 5%."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "With a 99.9% availability SLO over 30 days, roughly how much downtime does the error budget allow?",
+              "es": "Con un SLO de disponibilidad de 99.9% en 30 días, ¿aproximadamente cuánto downtime permite el presupuesto de error?"
+            },
+            "options": [
+              {
+                "en": "About 4 minutes",
+                "es": "Unos 4 minutos"
+              },
+              {
+                "en": "Zero — 99.9% means no downtime allowed",
+                "es": "Cero — 99.9% significa que no se permite downtime"
+              },
+              {
+                "en": "About 43 minutes",
+                "es": "Unos 43 minutos"
+              },
+              {
+                "en": "About 7 hours",
+                "es": "Unas 7 horas"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "30 days ≈ 43,200 minutes; 0.1% of that is ~43.2 minutes. Knowing the 99.9% → ~43 min/month equivalence by heart is a nice interview flex.",
+              "es": "30 días ≈ 43,200 minutos; el 0.1% de eso es ~43.2 minutos. Saber de memoria la equivalencia 99.9% → ~43 min/mes queda muy bien en una entrevista."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your team exhausted its monthly error budget and product wants to ship a big feature this week. As the engineer, explain what the error budget policy says should happen and why the policy exists.",
+              "es": "Tu equipo agotó su presupuesto de error mensual y producto quiere lanzar una feature grande esta semana. Como ingeniero, explica qué dice la política del presupuesto de error que debe pasar y por qué existe esa política."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that feature releases should pause (or be heavily restricted) and the team should prioritize reliability work until the budget recovers. Must explain the rationale: the budget is an objective, pre-agreed mechanism balancing velocity and reliability, replacing ad-hoc arguments. Bonus: mentions exceptions require explicit stakeholder sign-off, or names concrete reliability work (rollback improvements, fixing the source of the burn).",
+              "es": "Debe indicar que los lanzamientos de features deben pausarse (o restringirse fuertemente) y que el equipo debe priorizar trabajo de confiabilidad hasta que el presupuesto se recupere. Debe explicar la razón: el presupuesto es un mecanismo objetivo y pre-acordado que equilibra velocidad y confiabilidad, reemplazando discusiones ad-hoc. Bonus: menciona que las excepciones requieren aprobación explícita de stakeholders, o nombra trabajo de confiabilidad concreto (mejorar el rollback, corregir la fuente del gasto)."
+            },
+            "reference": "The policy says we pause feature launches and spend the time on reliability: fixing whatever burned the budget, improving rollback and tests. The point of the policy is that it was agreed in advance by both engineering and product, so the decision is made by a number, not by whoever argues loudest during the crisis. If the business truly must ship, that's an explicit exception leadership signs off on, accepting the elevated risk."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your SLO is 99.9% availability over 30 days (~43 minutes of budget). On day 12, a single incident causes 30 minutes of downtime. What is the correct reading of the situation?",
+              "es": "Tu SLO es 99.9% de disponibilidad en 30 días (~43 minutos de presupuesto). El día 12, un solo incidente causa 30 minutos de caída. ¿Cuál es la lectura correcta de la situación?"
+            },
+            "options": [
+              {
+                "en": "The downtime doesn't count because it came from a single incident rather than many small ones",
+                "es": "La caída no cuenta porque vino de un solo incidente y no de muchos pequeños"
+              },
+              {
+                "en": "About 70% of the window's budget is spent with 18 days left, so the team should get more conservative about risky deploys and prioritize hardening",
+                "es": "Cerca del 70% del presupuesto de la ventana está gastado con 18 días restantes, así que el equipo debe volverse más conservador con deploys arriesgados y priorizar robustez"
+              },
+              {
+                "en": "The budget resets after every incident, so the team is back at 100%",
+                "es": "El presupuesto se reinicia después de cada incidente, así que el equipo vuelve al 100%"
+              },
+              {
+                "en": "The SLA has automatically been breached and refunds are owed",
+                "es": "El SLA se incumplió automáticamente y se deben reembolsos"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "30 of ~43 minutes is roughly 70% of the budget consumed, less than halfway through the window. The budget doesn't reset per incident, and the SLA (a looser external contract) isn't necessarily breached just because the internal SLO budget is burning. The right response is to slow down risk-taking so the remaining ~13 minutes last 18 more days.",
+              "es": "30 de ~43 minutos es aproximadamente el 70% del presupuesto consumido, sin llegar a la mitad de la ventana. El presupuesto no se reinicia por incidente, y el SLA (un contrato externo más laxo) no necesariamente se incumple solo porque el presupuesto del SLO interno se esté quemando. La respuesta correcta es reducir la toma de riesgos para que los ~13 minutos restantes duren 18 días más."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "alerting-symptoms-causes",
+      "question": {
+        "en": "How do you design good alerts? Symptoms vs causes and alert fatigue.",
+        "es": "¿Cómo diseñas buenas alertas? Síntomas vs causas y fatiga de alertas."
+      },
+      "definition": {
+        "en": "**Alert on symptoms, not causes.** A symptom is what users experience: error rate up, latency SLO burning, checkout conversion dropping. A cause is an internal condition: CPU at 90%, one pod restarting, disk at 80%. Cause-based alerts fire when nothing is wrong (high CPU with healthy latency is *fine*) and stay silent for failures you didn't predict. Symptom-based alerts catch **every** failure mode, because whatever the cause, users feel it — then you use dashboards to find the cause.\n\n**Alert fatigue** is what happens otherwise: pages that are noisy, not actionable, or auto-resolve teach on-call engineers to ignore alerts — and eventually a real one gets missed. Rules of thumb: every page must be **urgent and actionable** by a human; anything else becomes a ticket or a dashboard. Use SLO **burn-rate alerts** (how fast you're consuming error budget) instead of static thresholds, and review/prune the alert set regularly.",
+        "es": "**Alerta sobre síntomas, no causas.** Un síntoma es lo que experimentan los usuarios: tasa de errores alta, SLO de latencia quemándose, conversión del checkout cayendo. Una causa es una condición interna: CPU al 90%, un pod reiniciándose, disco al 80%. Las alertas por causas se disparan cuando no pasa nada malo (CPU alta con latencia sana está *bien*) y callan ante fallas que no predijiste. Las alertas por síntomas atrapan **todos** los modos de falla, porque sea cual sea la causa, los usuarios la sienten — luego usas dashboards para hallar la causa.\n\nLa **fatiga de alertas** es lo que pasa si no: páginas ruidosas, no accionables o que se auto-resuelven enseñan al on-call a ignorar alertas — y eventualmente una real se pierde. Reglas prácticas: cada page debe ser **urgente y accionable** por un humano; lo demás se vuelve ticket o dashboard. Usa alertas de **burn rate** del SLO (qué tan rápido consumes el presupuesto de error) en vez de umbrales estáticos, y revisa/poda el conjunto de alertas con regularidad."
+      },
+      "examples": [
+        {
+          "en": "A team paged on 'CPU > 80%' for months; every page was a false alarm during batch jobs. They replaced it with an SLO burn-rate alert on API latency and pages dropped 90% while catching a real outage the CPU alert would have missed.",
+          "es": "Un equipo recibía pages por 'CPU > 80%' durante meses; cada page era falsa alarma durante jobs batch. Lo reemplazaron con una alerta de burn rate sobre la latencia de la API: los pages cayeron 90% y atraparon una caída real que la alerta de CPU habría ignorado."
+        },
+        {
+          "en": "After an on-call review found 60% of pages were non-actionable, a team demoted them to Slack notifications and tickets — the next quarter, mean acknowledgement time for real pages improved 3x.",
+          "es": "Tras una revisión de on-call que encontró que 60% de los pages no eran accionables, un equipo los degradó a notificaciones de Slack y tickets — al trimestre siguiente, el tiempo medio de reconocimiento de pages reales mejoró 3x."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which alert is the best candidate to page a human at 3 AM?",
+              "es": "¿Qué alerta es la mejor candidata para despertar a un humano a las 3 AM?"
+            },
+            "options": [
+              {
+                "en": "CPU on one node exceeded 85% for 5 minutes",
+                "es": "La CPU de un nodo superó 85% por 5 minutos"
+              },
+              {
+                "en": "Disk usage on a replica reached 70%",
+                "es": "El uso de disco en una réplica llegó a 70%"
+              },
+              {
+                "en": "Checkout error rate is burning the monthly SLO budget 14x faster than sustainable",
+                "es": "La tasa de errores del checkout está quemando el presupuesto mensual del SLO 14 veces más rápido de lo sostenible"
+              },
+              {
+                "en": "A single pod restarted once",
+                "es": "Un solo pod se reinició una vez"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The burn-rate alert is a symptom tied directly to user impact and demands urgent action. The others are causes or capacity signals — dashboards and tickets, not 3 AM pages.",
+              "es": "La alerta de burn rate es un síntoma ligado directamente al impacto en usuarios y exige acción urgente. Las demás son causas o señales de capacidad — dashboards y tickets, no pages a las 3 AM."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your on-call gets ~20 pages per week; most auto-resolve in minutes and engineers have started muting notifications. What is the most effective fix?",
+              "es": "Tu on-call recibe ~20 pages por semana; la mayoría se auto-resuelven en minutos y los ingenieros empezaron a silenciar notificaciones. ¿Cuál es la solución más efectiva?"
+            },
+            "options": [
+              {
+                "en": "Require acknowledging every page within 1 minute",
+                "es": "Exigir reconocer cada page en menos de 1 minuto"
+              },
+              {
+                "en": "Add more engineers to the on-call rotation so the noise is shared",
+                "es": "Agregar más ingenieros a la rotación de on-call para repartir el ruido"
+              },
+              {
+                "en": "Raise all thresholds by 10%",
+                "es": "Subir todos los umbrales un 10%"
+              },
+              {
+                "en": "Audit every alert: keep only urgent + actionable ones as pages, demote the rest to tickets/dashboards",
+                "es": "Auditar cada alerta: dejar como pages solo las urgentes y accionables, degradar el resto a tickets/dashboards"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Alert fatigue is a signal-quality problem. Sharing noise or punishing slow acks doesn't fix it; pruning non-actionable pages restores trust in the ones that remain.",
+              "es": "La fatiga de alertas es un problema de calidad de señal. Repartir el ruido o castigar reconocimientos lentos no lo arregla; podar los pages no accionables restaura la confianza en los que quedan."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your only alert is 'error rate > 1% for 5 minutes'. It missed a slow leak that quietly burned the whole month's error budget, yet it also pages on short deploy blips that self-heal. What alerting approach fixes both problems?",
+              "es": "Tu única alerta es 'tasa de errores > 1% por 5 minutos'. No detectó una fuga lenta que quemó en silencio todo el presupuesto de error del mes, pero además pagea por picos breves de deploys que se auto-corrigen. ¿Qué enfoque de alertas arregla ambos problemas?"
+            },
+            "options": [
+              {
+                "en": "Add a second static threshold at 5% for a page and keep 1% as a ticket",
+                "es": "Agregar un segundo umbral estático de 5% para pagear y dejar 1% como ticket"
+              },
+              {
+                "en": "Page only when the entire monthly budget is already exhausted",
+                "es": "Pagear solo cuando el presupuesto mensual completo ya se agotó"
+              },
+              {
+                "en": "Lower the threshold to 0.5% so the slow leak is caught earlier",
+                "es": "Bajar el umbral a 0.5% para atrapar antes la fuga lenta"
+              },
+              {
+                "en": "Multi-window burn-rate alerts on the SLO: a fast-burn window pages on sudden spikes, and a slow-burn window catches gradual budget leaks without paging on short blips",
+                "es": "Alertas de burn rate multi-ventana sobre el SLO: una ventana de quema rápida pagea ante picos súbitos, y una de quema lenta atrapa fugas graduales de presupuesto sin pagear por picos breves"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Static thresholds force a bad trade-off: sensitive enough for slow leaks means noisy on blips. Burn-rate alerting measures how fast the error budget is being consumed over multiple windows — e.g. page if you'd exhaust the budget in hours (fast burn), ticket if it would take days (slow burn) — catching both failure shapes while ignoring self-healing spikes.",
+              "es": "Los umbrales estáticos fuerzan un mal intercambio: ser sensible a fugas lentas implica ruido ante picos. Las alertas de burn rate miden qué tan rápido se consume el presupuesto de error en múltiples ventanas — p. ej. pagear si agotarías el presupuesto en horas (quema rápida), ticket si tomaría días (quema lenta) — atrapando ambas formas de falla e ignorando picos que se auto-corrigen."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "high-availability-design",
+      "question": {
+        "en": "How would you design a highly available service?",
+        "es": "¿Cómo diseñarías un servicio altamente disponible?"
+      },
+      "definition": {
+        "en": "High availability means **eliminating single points of failure** and containing the blast radius when things do fail. The building blocks: **redundancy** — multiple instances behind a load balancer, spread across availability zones (and regions for the strictest SLOs), with database replicas and automated failover. **Health checks** — the load balancer probes each instance and ejects unhealthy ones; distinguish *liveness* (restart me) from *readiness* (don't send me traffic yet).\n\nThen resilience under partial failure: **graceful degradation** — when a dependency dies, serve something instead of nothing (cached data, disabled recommendations, a queue for writes), using timeouts, retries with backoff, and circuit breakers so one slow dependency doesn't exhaust your threads. Finally, **chaos testing** — deliberately injecting failures (killing instances, adding latency) in controlled experiments to verify the failover actually works before a real outage finds out for you.",
+        "es": "Alta disponibilidad significa **eliminar puntos únicos de falla** y contener el radio de impacto cuando algo falla. Los bloques: **redundancia** — múltiples instancias detrás de un balanceador, repartidas en zonas de disponibilidad (y regiones para los SLOs más estrictos), con réplicas de base de datos y failover automático. **Health checks** — el balanceador sondea cada instancia y expulsa las no sanas; distingue *liveness* (reiníciame) de *readiness* (no me mandes tráfico todavía).\n\nLuego, resiliencia ante fallas parciales: **degradación elegante** — cuando una dependencia muere, servir algo en vez de nada (datos cacheados, recomendaciones desactivadas, una cola para escrituras), usando timeouts, reintentos con backoff y circuit breakers para que una dependencia lenta no agote tus threads. Finalmente, **chaos testing** — inyectar fallas deliberadamente (matar instancias, agregar latencia) en experimentos controlados para verificar que el failover realmente funciona antes de que una caída real lo descubra por ti."
+      },
+      "examples": [
+        {
+          "en": "Netflix's Chaos Monkey randomly kills production instances during business hours; because teams know it's running, every service is built to survive instance loss — and real AZ outages barely register.",
+          "es": "El Chaos Monkey de Netflix mata instancias de producción al azar en horario laboral; como los equipos saben que corre, cada servicio se construye para sobrevivir la pérdida de instancias — y las caídas reales de AZ apenas se notan."
+        },
+        {
+          "en": "When a recommendations service times out, an e-commerce page renders with a generic 'popular products' list from cache instead of failing the whole page — customers barely notice, sales continue.",
+          "es": "Cuando el servicio de recomendaciones da timeout, una página de e-commerce se muestra con una lista genérica de 'productos populares' desde caché en vez de fallar completa — los clientes apenas lo notan y las ventas continúan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each high-availability technique with the problem it solves.",
+              "es": "Conecta cada técnica de alta disponibilidad con el problema que resuelve."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Multi-AZ redundancy",
+                  "es": "Redundancia multi-AZ"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Health checks",
+                  "es": "Health checks"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Circuit breaker",
+                  "es": "Circuit breaker"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Chaos testing",
+                  "es": "Chaos testing"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "A whole datacenter/zone failing takes the service down",
+                  "es": "La caída de un datacenter/zona completa tumba el servicio"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Traffic keeps being routed to a dead or broken instance",
+                  "es": "El tráfico sigue llegando a una instancia muerta o rota"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A slow dependency exhausts your threads and cascades the failure",
+                  "es": "Una dependencia lenta agota tus threads y la falla cae en cascada"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Failover paths that were never exercised fail during a real outage",
+                  "es": "Rutas de failover nunca ejercitadas fallan durante una caída real"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your product-detail page calls a recommendations service that is down. What does graceful degradation look like?",
+              "es": "Tu página de detalle de producto llama a un servicio de recomendaciones que está caído. ¿Cómo se ve la degradación elegante?"
+            },
+            "options": [
+              {
+                "en": "Retry the recommendations call indefinitely until it succeeds",
+                "es": "Reintentar la llamada a recomendaciones indefinidamente hasta que funcione"
+              },
+              {
+                "en": "Redirect users to the homepage",
+                "es": "Redirigir a los usuarios a la página de inicio"
+              },
+              {
+                "en": "Return a 500 for the whole page — partial data confuses users",
+                "es": "Devolver un 500 para toda la página — los datos parciales confunden a los usuarios"
+              },
+              {
+                "en": "Serve the page without recommendations (or with a cached/generic list) after a short timeout",
+                "es": "Servir la página sin recomendaciones (o con una lista cacheada/genérica) tras un timeout corto"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Non-critical features should fail independently: a short timeout plus a fallback keeps the core flow (viewing and buying the product) alive. Infinite retries make it worse by tying up resources.",
+              "es": "Las funciones no críticas deben fallar de forma independiente: un timeout corto más un fallback mantiene vivo el flujo principal (ver y comprar el producto). Los reintentos infinitos lo empeoran al atar recursos."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the lifecycle of a circuit breaker protecting calls to a dependency that starts failing and later recovers.",
+              "es": "Ordena el ciclo de vida de un circuit breaker que protege las llamadas a una dependencia que empieza a fallar y luego se recupera."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "failures",
+                "label": {
+                  "en": "Calls to the dependency time out and the failure count crosses the configured threshold",
+                  "es": "Las llamadas a la dependencia dan timeout y el conteo de fallas cruza el umbral configurado"
+                }
+              },
+              {
+                "id": "open",
+                "label": {
+                  "en": "The breaker opens: new calls fail fast without touching the dependency",
+                  "es": "El breaker se abre: las llamadas nuevas fallan rápido sin tocar la dependencia"
+                }
+              },
+              {
+                "id": "fallback",
+                "label": {
+                  "en": "The service serves fallbacks (cached or default data) instead of hanging on the dead dependency",
+                  "es": "El servicio sirve fallbacks (datos cacheados o por defecto) en vez de colgarse en la dependencia muerta"
+                }
+              },
+              {
+                "id": "halfopen",
+                "label": {
+                  "en": "After a cooldown, the breaker goes half-open and lets a few probe requests through",
+                  "es": "Tras un periodo de enfriamiento, el breaker pasa a semiabierto y deja pasar unas pocas peticiones de prueba"
+                }
+              },
+              {
+                "id": "close",
+                "label": {
+                  "en": "The probes succeed, the breaker closes and normal traffic resumes",
+                  "es": "Las pruebas tienen éxito, el breaker se cierra y el tráfico normal se reanuda"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "failures",
+              "open",
+              "fallback",
+              "halfopen",
+              "close"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which observability signal shows where a single request spent its time across multiple services?",
+          "es": "¿Qué señal de observabilidad muestra dónde gastó su tiempo una petición a través de múltiples servicios?"
+        },
+        "options": [
+          {
+            "en": "Uptime checks",
+            "es": "Chequeos de uptime"
+          },
+          {
+            "en": "Traces",
+            "es": "Trazas"
+          },
+          {
+            "en": "Logs",
+            "es": "Logs"
+          },
+          {
+            "en": "Metrics",
+            "es": "Métricas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What are the three signals of the RED method for monitoring a request-driven service?",
+          "es": "¿Cuáles son las tres señales del método RED para monitorear un servicio orientado a peticiones?"
+        },
+        "options": [
+          {
+            "en": "Reads, Edits, Deletes",
+            "es": "Reads (lecturas), Edits (ediciones), Deletes (borrados)"
+          },
+          {
+            "en": "Rate, Errors, Duration",
+            "es": "Rate (tasa), Errors (errores), Duration (duración)"
+          },
+          {
+            "en": "Requests, Exceptions, Downtime",
+            "es": "Requests (peticiones), Exceptions (excepciones), Downtime (caídas)"
+          },
+          {
+            "en": "Utilization, Saturation, Errors",
+            "es": "Utilization (utilización), Saturation (saturación), Errors (errores)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why do SLOs use percentiles like p99 instead of average latency?",
+          "es": "¿Por qué los SLOs usan percentiles como p99 en vez de la latencia promedio?"
+        },
+        "options": [
+          {
+            "en": "Averages hide the slow tail of the skewed latency distribution that real users experience",
+            "es": "Los promedios esconden la cola lenta de la distribución sesgada de latencia que los usuarios reales experimentan"
+          },
+          {
+            "en": "Percentiles are cheaper to compute than averages",
+            "es": "Los percentiles son más baratos de calcular que los promedios"
+          },
+          {
+            "en": "p99 always equals the median",
+            "es": "El p99 siempre es igual a la mediana"
+          },
+          {
+            "en": "Averages cannot be plotted on dashboards",
+            "es": "Los promedios no se pueden graficar en dashboards"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In distributed tracing, what is a span?",
+          "es": "En tracing distribuido, ¿qué es un span?"
+        },
+        "options": [
+          {
+            "en": "One timed unit of work within a trace, linked to its parent to form a tree",
+            "es": "Una unidad de trabajo cronometrada dentro de una traza, enlazada a su padre para formar un árbol"
+          },
+          {
+            "en": "The unique ID of the whole request journey",
+            "es": "El ID único del recorrido completo de la petición"
+          },
+          {
+            "en": "The time window of a metrics dashboard",
+            "es": "La ventana de tiempo de un dashboard de métricas"
+          },
+          {
+            "en": "A log line with a timestamp",
+            "es": "Una línea de log con timestamp"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How does trace context typically travel from service A to service B in an HTTP call?",
+          "es": "¿Cómo viaja típicamente el contexto de traza del servicio A al servicio B en una llamada HTTP?"
+        },
+        "options": [
+          {
+            "en": "In request headers such as W3C traceparent",
+            "es": "En headers de la petición como el traceparent del W3C"
+          },
+          {
+            "en": "It cannot cross service boundaries",
+            "es": "No puede cruzar límites entre servicios"
+          },
+          {
+            "en": "In the TLS certificate",
+            "es": "En el certificado TLS"
+          },
+          {
+            "en": "Through a shared database table",
+            "es": "A través de una tabla compartida en la base de datos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "During a production incident, what is the correct priority order?",
+          "es": "Durante un incidente en producción, ¿cuál es el orden de prioridades correcto?"
+        },
+        "options": [
+          {
+            "en": "Find the root cause first, then decide whether to mitigate",
+            "es": "Encontrar primero la causa raíz y luego decidir si mitigar"
+          },
+          {
+            "en": "Write the postmortem while the outage is ongoing",
+            "es": "Escribir el postmortem mientras la caída sigue ocurriendo"
+          },
+          {
+            "en": "Assess impact → mitigate (e.g. rollback) → then diagnose root cause",
+            "es": "Evaluar impacto → mitigar (p. ej. rollback) → luego diagnosticar la causa raíz"
+          },
+          {
+            "en": "Wait for users to report the issue before acting",
+            "es": "Esperar a que los usuarios reporten el problema antes de actuar"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which statement correctly distinguishes SLO from SLA?",
+          "es": "¿Qué afirmación distingue correctamente SLO de SLA?"
+        },
+        "options": [
+          {
+            "en": "An SLO is an internal target; an SLA is an external contract with penalties if missed",
+            "es": "Un SLO es un objetivo interno; un SLA es un contrato externo con penalizaciones si se incumple"
+          },
+          {
+            "en": "SLO and SLA are two names for the same document",
+            "es": "SLO y SLA son dos nombres para el mismo documento"
+          },
+          {
+            "en": "An SLA is always stricter than the internal SLO",
+            "es": "Un SLA siempre es más estricto que el SLO interno"
+          },
+          {
+            "en": "An SLO is measured; an SLA is just a measurement with no target",
+            "es": "Un SLO se mide; un SLA es solo una medición sin objetivo"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A team has exhausted its error budget for the month. According to a standard error budget policy, what happens?",
+          "es": "Un equipo agotó su presupuesto de error del mes. Según una política estándar de presupuesto de error, ¿qué pasa?"
+        },
+        "options": [
+          {
+            "en": "Nothing — the budget is only informational",
+            "es": "Nada — el presupuesto es solo informativo"
+          },
+          {
+            "en": "Feature releases pause and the team prioritizes reliability work until the budget recovers",
+            "es": "Los lanzamientos de features se pausan y el equipo prioriza trabajo de confiabilidad hasta que el presupuesto se recupere"
+          },
+          {
+            "en": "The SLO is lowered so the budget refills immediately",
+            "es": "Se baja el SLO para que el presupuesto se rellene de inmediato"
+          },
+          {
+            "en": "The team ships faster to compensate for lost time",
+            "es": "El equipo lanza más rápido para compensar el tiempo perdido"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is 'error rate burning the SLO budget' a better page than 'CPU above 80%'?",
+          "es": "¿Por qué 'la tasa de errores está quemando el presupuesto del SLO' es mejor page que 'CPU sobre 80%'?"
+        },
+        "options": [
+          {
+            "en": "It's a symptom tied to user impact; high CPU may be harmless and misses failures it didn't predict",
+            "es": "Es un síntoma ligado al impacto en usuarios; la CPU alta puede ser inofensiva y no detecta fallas que no predijo"
+          },
+          {
+            "en": "Error rates never produce false positives",
+            "es": "Las tasas de error nunca producen falsos positivos"
+          },
+          {
+            "en": "CPU metrics are impossible to collect reliably",
+            "es": "Las métricas de CPU son imposibles de recolectar de forma confiable"
+          },
+          {
+            "en": "Symptom alerts are cheaper to store",
+            "es": "Las alertas de síntomas son más baratas de almacenar"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the purpose of chaos testing in a highly available system?",
+          "es": "¿Cuál es el propósito del chaos testing en un sistema altamente disponible?"
+        },
+        "options": [
+          {
+            "en": "Generate random load to measure maximum throughput",
+            "es": "Generar carga aleatoria para medir el throughput máximo"
+          },
+          {
+            "en": "Deliberately inject failures in controlled experiments to verify failover works before a real outage",
+            "es": "Inyectar fallas deliberadamente en experimentos controlados para verificar que el failover funciona antes de una caída real"
+          },
+          {
+            "en": "Test the UI with random user clicks",
+            "es": "Probar la UI con clics aleatorios de usuarios"
+          },
+          {
+            "en": "Randomize deploy schedules to confuse attackers",
+            "es": "Aleatorizar los horarios de deploy para confundir a atacantes"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Users report intermittent slowness in your API. Describe how you would use metrics, traces and logs together to find the cause.",
+          "es": "Los usuarios reportan lentitud intermitente en tu API. Describe cómo usarías métricas, trazas y logs en conjunto para encontrar la causa."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe pivoting between the three signals in a sensible order: metrics (latency percentiles per endpoint, e.g. p95/p99) to confirm and scope the problem; traces of slow requests to locate which service/span consumes the time; logs of that service (ideally filtered by trace/correlation ID) to find the specific error or condition. Bonus: mentions percentiles over averages, or checking recent changes/deploys.",
+          "es": "Debe describir el pivoteo entre las tres señales en un orden razonable: métricas (percentiles de latencia por endpoint, p. ej. p95/p99) para confirmar y acotar el problema; trazas de peticiones lentas para ubicar qué servicio/span consume el tiempo; logs de ese servicio (idealmente filtrados por trace/correlation ID) para hallar el error o condición específica. Bonus: menciona percentiles sobre promedios, o revisar cambios/deploys recientes."
+        },
+        "reference": "Start with metrics: check p95/p99 latency per endpoint to confirm the slowness, see when it started and which endpoints are affected. Then pull traces of slow requests to see the waterfall and identify which span — service, DB query, external call — accounts for the time. Finally open that service's logs filtered by the trace or correlation ID of a slow request to find the concrete cause (lock contention, slow query, dependency timeouts). Also check whether a deploy or config change correlates with the onset."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Define SLI, SLO, SLA and error budget, and explain in one or two sentences how they relate to each other.",
+          "es": "Define SLI, SLO, SLA y presupuesto de error, y explica en una o dos frases cómo se relacionan entre sí."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must define all four: SLI as a measured indicator of service behavior; SLO as the internal target set on an SLI; SLA as the external customer contract with consequences/penalties; error budget as the allowed failure (100% minus the SLO). Must connect them: SLIs feed SLOs, SLAs are looser external promises than SLOs, and the error budget quantifies how much unreliability the SLO permits.",
+          "es": "Debe definir los cuatro: SLI como un indicador medido del comportamiento del servicio; SLO como el objetivo interno fijado sobre un SLI; SLA como el contrato externo con clientes con consecuencias/penalizaciones; presupuesto de error como la falla permitida (100% menos el SLO). Debe conectarlos: los SLIs alimentan los SLOs, los SLAs son promesas externas más laxas que los SLOs, y el presupuesto de error cuantifica cuánta falta de confiabilidad permite el SLO."
+        },
+        "reference": "An SLI is a measurement of service behavior, e.g. the fraction of requests served successfully under 300ms. An SLO is the internal target on that indicator, e.g. 99.9% over 30 days. An SLA is the external contract with customers, typically looser than the SLO and carrying penalties like refunds. The error budget is 100% minus the SLO — the amount of failure you're allowed. They stack: you measure SLIs, target them with SLOs, promise a weaker SLA externally, and spend the error budget deliberately on velocity."
+      }
+    }
+  ]
+}

@@ -1,0 +1,477 @@
+{
+  "api-gateway": [
+    {
+      "src": "/images/lessons/api-gateway/Wikimedia-API-Gateway-architecture-v1.png",
+      "title": "Wikimedia-API-Gateway-architecture-v1.png",
+      "author": "APaskulin (WMF)",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Wikimedia-API-Gateway-architecture-v1.png"
+    }
+  ],
+  "load-balancer": [
+    {
+      "src": "/images/lessons/load-balancer/Load-Balancing-Cluster-NAT-.svg.png",
+      "title": "Load Balancing Cluster (NAT).svg",
+      "author": "HFWMan",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Load_Balancing_Cluster_(NAT).svg"
+    },
+    {
+      "src": "/images/lessons/load-balancer/Load-Balancing-Cluster-NAT-pt.svg.png",
+      "title": "Load Balancing Cluster (NAT) pt.svg",
+      "author": "HFWMan",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Load_Balancing_Cluster_(NAT)_pt.svg"
+    }
+  ],
+  "microservices": [
+    {
+      "src": "/images/lessons/microservices/Microservices-app-example-v0.4.png",
+      "title": "Microservices app example v0.4.png",
+      "author": "Igabriel85",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Microservices_app_example_v0.4.png"
+    },
+    {
+      "src": "/images/lessons/microservices/Carbon-Icons-IBM-32-microservices--1.svg.png",
+      "title": "Carbon Icons (IBM) 32 microservices--1.svg",
+      "author": "IBM Corp./List of contributors",
+      "license": "Apache License 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Carbon_Icons_(IBM)_32_microservices--1.svg"
+    }
+  ],
+  "multithreading": [
+    {
+      "src": "/images/lessons/multithreading/Concepts--Program-vs.-Process-vs.-Thread.jpg",
+      "title": "Concepts- Program vs. Process vs. Thread.jpg",
+      "author": "Hooman Mallahzadeh",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Concepts-_Program_vs._Process_vs._Thread.jpg"
+    },
+    {
+      "src": "/images/lessons/multithreading/Multithreaded-process.svg.png",
+      "title": "Multithreaded process.svg",
+      "author": "Cburnett",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Multithreaded_process.svg"
+    }
+  ],
+  "concurrency": [
+    {
+      "src": "/images/lessons/concurrency/Parallel-concurrent.png",
+      "title": "Parallel-concurrent.png",
+      "author": "Ttd65",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Parallel-concurrent.png"
+    }
+  ],
+  "event-loop": [],
+  "hash-table": [
+    {
+      "src": "/images/lessons/hash-table/Hash-table-3-1-1-0-1-0-0-SP.svg.png",
+      "title": "Hash table 3 1 1 0 1 0 0 SP.svg",
+      "author": "Jorge Stolfi",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Hash_table_3_1_1_0_1_0_0_SP.svg"
+    },
+    {
+      "src": "/images/lessons/hash-table/Hash-table-5-0-1-1-1-1-1-LL.svg.png",
+      "title": "Hash table 5 0 1 1 1 1 1 LL.svg",
+      "author": "Jorge Stolfi",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Hash_table_5_0_1_1_1_1_1_LL.svg"
+    }
+  ],
+  "linked-list": [
+    {
+      "src": "/images/lessons/linked-list/Doubly-linked-list.svg.png",
+      "title": "Doubly-linked-list.svg",
+      "author": "Lasindi",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Doubly-linked-list.svg"
+    },
+    {
+      "src": "/images/lessons/linked-list/Singly-linked-list.svg.png",
+      "title": "Singly-linked-list.svg",
+      "author": "Vectorization:  Lasindi",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Singly-linked-list.svg"
+    }
+  ],
+  "binary-tree": [
+    {
+      "src": "/images/lessons/binary-tree/AVL-Tree-Example.gif",
+      "title": "AVL Tree Example.gif",
+      "author": "Bruno Schalch",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:AVL_Tree_Example.gif"
+    },
+    {
+      "src": "/images/lessons/binary-tree/Binary-search-tree.svg.png",
+      "title": "Binary search tree.svg",
+      "author": "No machine-readable author provided. Dcoetzee assumed (based on copyright claims).",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Binary_search_tree.svg"
+    }
+  ],
+  "big-o": [
+    {
+      "src": "/images/lessons/big-o/Comparison-computational-complexity.svg.png",
+      "title": "Comparison computational complexity.svg",
+      "author": "Cmglee",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Comparison_computational_complexity.svg"
+    }
+  ],
+  "sorting": [
+    {
+      "src": "/images/lessons/sorting/Merge-sort-algorithm-diagram.svg.png",
+      "title": "Merge sort algorithm diagram.svg",
+      "author": "VineetKumar at English Wikipedia",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Merge_sort_algorithm_diagram.svg"
+    },
+    {
+      "src": "/images/lessons/sorting/Quicksort-diagram.svg.png",
+      "title": "Quicksort-diagram.svg",
+      "author": "Znupi",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Quicksort-diagram.svg"
+    }
+  ],
+  "stack-heap": [
+    {
+      "src": "/images/lessons/stack-heap/Lifo-stack.svg.png",
+      "title": "Lifo stack.svg",
+      "author": "Vectorization:  Alhadis",
+      "license": "CC0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Lifo_stack.svg"
+    },
+    {
+      "src": "/images/lessons/stack-heap/ProgramCallStack2-en.svg.png",
+      "title": "ProgramCallStack2 en.svg",
+      "author": "Vectorization:  Alhadis",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:ProgramCallStack2_en.svg"
+    }
+  ],
+  "b-tree": [
+    {
+      "src": "/images/lessons/b-tree/B-tree.svg.png",
+      "title": "B-tree.svg",
+      "author": "CyHawk",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:B-tree.svg"
+    },
+    {
+      "src": "/images/lessons/b-tree/B-tree-insertion-example.png",
+      "title": "B tree insertion example.png",
+      "author": "User:Maxtremus",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:B_tree_insertion_example.png"
+    }
+  ],
+  "sql-joins": [
+    {
+      "src": "/images/lessons/sql-joins/SQL-Joins.svg.png",
+      "title": "SQL Joins.svg",
+      "author": "Arbeck",
+      "license": "CC BY 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:SQL_Joins.svg"
+    }
+  ],
+  "database-replication": [
+    {
+      "src": "/images/lessons/database-replication/Active-replication.png",
+      "title": "Active replication.png",
+      "author": "George, Coulouris; Jean, Dollimore; Tim, Kindbert; Gordon, Blair",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Active_replication.png"
+    },
+    {
+      "src": "/images/lessons/database-replication/Replicare-pasiva.png",
+      "title": "Replicare pasiva.png",
+      "author": "George, Coulouris; Jean, Dollimore; Tim, Kindbert; Gordon, Blair",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Replicare_pasiva.png"
+    }
+  ],
+  "cap-theorem": [
+    {
+      "src": "/images/lessons/cap-theorem/CAP-theorem.png",
+      "title": "CAP theorem.png",
+      "author": "Ashish.rana44",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:CAP_theorem.png"
+    },
+    {
+      "src": "/images/lessons/cap-theorem/CAP-Theorem.svg.png",
+      "title": "CAP Theorem.svg",
+      "author": "Mooond",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:CAP_Theorem.svg"
+    }
+  ],
+  "message-queue": [
+    {
+      "src": "/images/lessons/message-queue/VMS---2x12-Queue-Ahead.svg.png",
+      "title": "VMS - 2x12 Queue Ahead.svg",
+      "author": "The Navigators\nHighways England",
+      "license": "OGL v1.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:VMS_-_2x12_Queue_Ahead.svg"
+    },
+    {
+      "src": "/images/lessons/message-queue/AWS-Simple-Icons-Messaging-Amazon-SQS-Queue.svg.png",
+      "title": "AWS Simple Icons Messaging Amazon SQS Queue.svg",
+      "author": "Amazon Web Services LLC",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:AWS_Simple_Icons_Messaging_Amazon_SQS_Queue.svg"
+    }
+  ],
+  "kafka": [
+    {
+      "src": "/images/lessons/kafka/Apache-kafka-wordtype.svg.png",
+      "title": "Apache kafka wordtype.svg",
+      "author": "Apache Software Foundation",
+      "license": "Apache License 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Apache_kafka_wordtype.svg"
+    },
+    {
+      "src": "/images/lessons/kafka/Overview-of-Apache-Kafka.svg.png",
+      "title": "Overview of Apache Kafka.svg",
+      "author": "Ch.ko123",
+      "license": "CC BY 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Overview_of_Apache_Kafka.svg"
+    }
+  ],
+  "publish-subscribe": [
+    {
+      "src": "/images/lessons/publish-subscribe/Pub-sub-master-slave.png",
+      "title": "Pub-sub-master-slave.png",
+      "author": "Dmccreary",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Pub-sub-master-slave.png"
+    },
+    {
+      "src": "/images/lessons/publish-subscribe/DDS-pub-sub.svg.png",
+      "title": "DDS pub sub.svg",
+      "author": "Mathieu.clabaut",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:DDS_pub_sub.svg"
+    }
+  ],
+  "kubernetes": [
+    {
+      "src": "/images/lessons/kubernetes/Kubernetes.png",
+      "title": "Kubernetes.png",
+      "author": "Khtan66",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Kubernetes.png"
+    },
+    {
+      "src": "/images/lessons/kubernetes/Kubernetes-logo-without-workmark.svg.png",
+      "title": "Kubernetes logo without workmark.svg",
+      "author": "Google, Inc.",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Kubernetes_logo_without_workmark.svg"
+    }
+  ],
+  "containers": [
+    {
+      "src": "/images/lessons/containers/Docker-containerized-and-vm-transparent-bg.png",
+      "title": "Docker-containerized-and-vm-transparent-bg.png",
+      "author": "docker.com",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Docker-containerized-and-vm-transparent-bg.png"
+    },
+    {
+      "src": "/images/lessons/containers/Docker-container-engine-logo.svg.png",
+      "title": "Docker (container engine) logo.svg",
+      "author": "dotCloud, Inc.",
+      "license": "Apache License 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Docker_(container_engine)_logo.svg"
+    }
+  ],
+  "aws-cloud": [
+    {
+      "src": "/images/lessons/aws-cloud/AWS-Simple-Icons-AWS-Cloud.svg.png",
+      "title": "AWS Simple Icons AWS Cloud.svg",
+      "author": "Amazon Web Services LLC",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:AWS_Simple_Icons_AWS_Cloud.svg"
+    },
+    {
+      "src": "/images/lessons/aws-cloud/Cloud-computing.svg.png",
+      "title": "Cloud computing.svg",
+      "author": "Sam Johnston",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Cloud_computing.svg"
+    }
+  ],
+  "tcp-handshake": [
+    {
+      "src": "/images/lessons/tcp-handshake/TCP-CLOSE.svg.png",
+      "title": "TCP CLOSE.svg",
+      "author": "Clemente",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:TCP_CLOSE.svg"
+    },
+    {
+      "src": "/images/lessons/tcp-handshake/Tcp-state-diagram-fixed-new.svg.png",
+      "title": "Tcp state diagram fixed new.svg",
+      "author": "Sergiodc2, Marty Pauley, Scil100",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Tcp_state_diagram_fixed_new.svg"
+    }
+  ],
+  "osi-model": [
+    {
+      "src": "/images/lessons/osi-model/OSI-model-Communication.svg.png",
+      "title": "OSI-model-Communication.svg",
+      "author": "Runtux",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:OSI-model-Communication.svg"
+    },
+    {
+      "src": "/images/lessons/osi-model/OSI-Model-v1.svg.png",
+      "title": "OSI Model v1.svg",
+      "author": "Offnfopt",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:OSI_Model_v1.svg"
+    }
+  ],
+  "dns": [
+    {
+      "src": "/images/lessons/dns/DNS-Architecture.svg.png",
+      "title": "DNS Architecture.svg",
+      "author": "Aaron Filbert",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:DNS_Architecture.svg"
+    },
+    {
+      "src": "/images/lessons/dns/Domain-name-space.svg.png",
+      "title": "Domain name space.svg",
+      "author": "",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Domain_name_space.svg"
+    }
+  ],
+  "tls": [
+    {
+      "src": "/images/lessons/tls/Full-TLS-1.2-Handshake.svg.png",
+      "title": "Full TLS 1.2 Handshake.svg",
+      "author": "Fleshgrinder  and The People from The Tango! Desktop Project.",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Full_TLS_1.2_Handshake.svg"
+    }
+  ],
+  "http": [
+    {
+      "src": "/images/lessons/http/HTTP-cookie-exchange.svg.png",
+      "title": "HTTP cookie exchange.svg",
+      "author": "Tizio",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:HTTP_cookie_exchange.svg"
+    }
+  ],
+  "websocket": [
+    {
+      "src": "/images/lessons/websocket/Websocket-connection.png",
+      "title": "Websocket connection.png",
+      "author": "Brivadeneira",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Websocket_connection.png"
+    }
+  ],
+  "caching": [
+    {
+      "src": "/images/lessons/caching/Cache-basic.svg.png",
+      "title": "Cache,basic.svg",
+      "author": "Traced by Stannered",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Cache,basic.svg"
+    }
+  ],
+  "redis": [
+    {
+      "src": "/images/lessons/redis/Redis-logo.svg.png",
+      "title": "Redis logo.svg",
+      "author": "Redis Ltd",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Redis_logo.svg"
+    },
+    {
+      "src": "/images/lessons/redis/Logo-redis-old-.svg.png",
+      "title": "Logo-redis (old).svg",
+      "author": "Liran.amir",
+      "license": "CC BY-SA 4.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Logo-redis_(old).svg"
+    }
+  ],
+  "react": [
+    {
+      "src": "/images/lessons/react/React-icon.svg.png",
+      "title": "React-icon.svg",
+      "author": "Facebook",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:React-icon.svg"
+    }
+  ],
+  "nodejs": [
+    {
+      "src": "/images/lessons/nodejs/Node.js-logo.svg.png",
+      "title": "Node.js logo.svg",
+      "author": "Ryan Dahl",
+      "license": "MIT",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Node.js_logo.svg"
+    },
+    {
+      "src": "/images/lessons/nodejs/Unofficial-JavaScript-logo-2.svg.png",
+      "title": "Unofficial JavaScript logo 2.svg",
+      "author": "Chris Williams",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Unofficial_JavaScript_logo_2.svg"
+    }
+  ],
+  "typescript": [
+    {
+      "src": "/images/lessons/typescript/Typescript-logo-2020.svg.png",
+      "title": "Typescript logo 2020.svg",
+      "author": "™/®Microsoft",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Typescript_logo_2020.svg"
+    }
+  ],
+  "monitoring": [
+    {
+      "src": "/images/lessons/monitoring/Grafana-dashboard.png",
+      "title": "Grafana dashboard.png",
+      "author": "Linux Screenshots from USA",
+      "license": "CC BY 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Grafana_dashboard_(2016).png"
+    },
+    {
+      "src": "/images/lessons/monitoring/Prometheus-software-logo.svg.png",
+      "title": "Prometheus software logo.svg",
+      "author": "Alexander Schwartz (ahus1)[1][2]",
+      "license": "Apache License 2.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Prometheus_software_logo.svg"
+    }
+  ],
+  "distributed-systems": [
+    {
+      "src": "/images/lessons/distributed-systems/Distributed-parallel.svg.png",
+      "title": "Distributed-parallel.svg",
+      "author": "Miym",
+      "license": "CC BY-SA 3.0",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Distributed-parallel.svg"
+    },
+    {
+      "src": "/images/lessons/distributed-systems/NetworkTopologies.svg.png",
+      "title": "NetworkTopologies.svg",
+      "author": "NetworkTopologies.png: Maksim / derivative work: Malyszkz",
+      "license": "Public domain",
+      "source_url": "https://commons.wikimedia.org/wiki/File:NetworkTopologies.svg"
+    }
+  ]
+}

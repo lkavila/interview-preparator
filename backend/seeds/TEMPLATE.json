@@ -1,0 +1,179 @@
+{
+  "_readme": "Template for a new course. Copy to seeds/courses/<order>-<slug>.json and fill in. Every text is bilingual: {\"en\": ..., \"es\": ...}. Each lesson needs 2-4 exercises (3 recommended). Vary the correct index of multiple_choice answers (never always [0]). The test needs 10-15 questions (mostly multiple_choice). Run `python -m app.seed --check` to validate, then `python -m app.seed` to load.",
+  "slug": "my-course",
+  "order": 99,
+  "icon": "book",
+  "title": { "en": "My Course", "es": "Mi Curso" },
+  "description": {
+    "en": "One-line description of what this course covers.",
+    "es": "Descripción de una línea de lo que cubre este curso."
+  },
+  "lessons": [
+    {
+      "slug": "example-lesson",
+      "question": {
+        "en": "What is the difference between X and Y?",
+        "es": "¿Cuál es la diferencia entre X y Y?"
+      },
+      "definition": {
+        "en": "Short, clear markdown explanation (2-4 paragraphs max). Supports **bold**, `code`, lists and ```code blocks```.",
+        "es": "Explicación corta y clara en markdown (máx. 2-4 párrafos)."
+      },
+      "examples": [
+        {
+          "en": "A real-world example of this concept in production systems.",
+          "es": "Un ejemplo real de este concepto en sistemas en producción."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": { "en": "Which statement is true?", "es": "¿Qué afirmación es verdadera?" },
+            "options": [
+              { "en": "Option A", "es": "Opción A" },
+              { "en": "Option B", "es": "Opción B" },
+              { "en": "Option C", "es": "Opción C" },
+              { "en": "Option D", "es": "Opción D" }
+            ],
+            "multiple": false,
+            "explanation": { "en": "Why the answer is A.", "es": "Por qué la respuesta es A." }
+          },
+          "solution": { "correct": [0] }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain in your own words...",
+              "es": "Explica con tus propias palabras..."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "The answer must mention: point 1, point 2. Bonus: point 3.",
+              "es": "La respuesta debe mencionar: punto 1, punto 2. Bonus: punto 3."
+            },
+            "reference": "A model answer used by the grader as reference."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "exercise-type-examples",
+      "question": { "en": "(All other exercise type shapes)", "es": "(Formas de los demás tipos)" },
+      "definition": { "en": "See exercises below.", "es": "Ver ejercicios abajo." },
+      "examples": [{ "en": "-", "es": "-" }],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": { "en": "Match each term with its definition.", "es": "Conecta cada término con su definición." },
+            "left": [
+              { "id": "a", "label": { "en": "Term A", "es": "Término A" } },
+              { "id": "b", "label": { "en": "Term B", "es": "Término B" } }
+            ],
+            "right": [
+              { "id": "1", "label": { "en": "Definition of A", "es": "Definición de A" } },
+              { "id": "2", "label": { "en": "Definition of B", "es": "Definición de B" } }
+            ]
+          },
+          "solution": { "pairs": { "a": "1", "b": "2" } }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": { "en": "Order the flow of a request.", "es": "Ordena el flujo de una petición." },
+            "layout": "flow",
+            "items": [
+              { "id": "client", "label": { "en": "Client", "es": "Cliente" } },
+              { "id": "lb", "label": { "en": "Load balancer", "es": "Balanceador de carga" } },
+              { "id": "api", "label": { "en": "API service", "es": "Servicio API" } },
+              { "id": "db", "label": { "en": "Database", "es": "Base de datos" } }
+            ]
+          },
+          "solution": { "order": ["client", "lb", "api", "db"] }
+        }
+      ]
+    },
+    {
+      "slug": "sql-and-table-examples",
+      "question": { "en": "(SQL / table_builder / code shapes)", "es": "(Formas de sql / table_builder / code)" },
+      "definition": { "en": "See exercises below.", "es": "Ver ejercicios abajo." },
+      "examples": [{ "en": "-", "es": "-" }],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Add a NOT NULL column `email` of type TEXT to the `users` table using ALTER TABLE (use a DEFAULT so existing rows pass).",
+              "es": "Agrega una columna `email` NOT NULL de tipo TEXT a la tabla `users` usando ALTER TABLE (usa un DEFAULT para las filas existentes)."
+            },
+            "setup_sql": "CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT); INSERT INTO users (name) VALUES ('ana'), ('bob');",
+            "verification_query": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position;",
+            "hint": { "en": "ALTER TABLE users ADD COLUMN ...", "es": "ALTER TABLE users ADD COLUMN ..." }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              ["id", "integer", "NO"],
+              ["name", "text", "YES"],
+              ["email", "text", "NO"]
+            ]
+          }
+        },
+        {
+          "type": "table_builder",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Design a `sessions` table: integer auto id, user reference, and an expiry timestamp.",
+              "es": "Diseña una tabla `sessions`: id entero autoincremental, referencia al usuario y timestamp de expiración."
+            },
+            "type_options": ["SERIAL", "INTEGER", "TEXT", "TIMESTAMPTZ", "BOOLEAN", "JSONB"]
+          },
+          "solution": {
+            "columns": [
+              { "name": "id", "type": ["SERIAL", "INTEGER"] },
+              { "name": "user_id", "type": ["INTEGER"] },
+              { "name": "expires_at", "type": ["TIMESTAMPTZ"] }
+            ],
+            "allow_extra": false
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": { "en": "Question 1?", "es": "¿Pregunta 1?" },
+        "options": [
+          { "en": "A", "es": "A" },
+          { "en": "B", "es": "B" },
+          { "en": "C", "es": "C" },
+          { "en": "D", "es": "D" }
+        ]
+      },
+      "solution": { "correct": [1] }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": { "en": "Explain...", "es": "Explica..." }
+      },
+      "solution": {
+        "criteria": { "en": "Must mention...", "es": "Debe mencionar..." },
+        "reference": "Model answer."
+      }
+    }
+  ]
+}

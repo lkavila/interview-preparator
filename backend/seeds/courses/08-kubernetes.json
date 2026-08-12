@@ -1,0 +1,2337 @@
+{
+  "slug": "kubernetes",
+  "order": 8,
+  "icon": "kubernetes",
+  "title": {
+    "en": "Kubernetes",
+    "es": "Kubernetes"
+  },
+  "description": {
+    "en": "Kubernetes for interviews: Pods, Deployments, Services, probes, autoscaling, rolling updates, resource limits and real debugging scenarios.",
+    "es": "Kubernetes para entrevistas: Pods, Deployments, Services, probes, autoescalado, rolling updates, límites de recursos y escenarios reales de debugging."
+  },
+  "lessons": [
+    {
+      "slug": "pod-vs-container",
+      "question": {
+        "en": "What is a Pod, and how is it different from a container?",
+        "es": "¿Qué es un Pod y en qué se diferencia de un contenedor?"
+      },
+      "definition": {
+        "en": "A **Pod** is the smallest deployable unit in Kubernetes — a wrapper around **one or more containers** that always run together on the same node. Containers in a Pod share the same **network namespace** (one IP, they reach each other via `localhost`) and can share **volumes**.\n\nA container is just a running process with an isolated filesystem; the Pod adds the scheduling and shared-context layer Kubernetes needs. You almost never run bare containers in Kubernetes: the scheduler places Pods, probes check Pods, and Services route traffic to Pods.\n\nMost Pods hold a single app container, but the multi-container pattern enables **sidecars**: a log shipper or a service-mesh proxy running next to the app, sharing its network and volumes.",
+        "es": "Un **Pod** es la unidad desplegable más pequeña de Kubernetes — un envoltorio alrededor de **uno o más contenedores** que siempre corren juntos en el mismo nodo. Los contenedores de un Pod comparten el mismo **namespace de red** (una sola IP, se comunican vía `localhost`) y pueden compartir **volúmenes**.\n\nUn contenedor es solo un proceso en ejecución con un filesystem aislado; el Pod agrega la capa de scheduling y contexto compartido que Kubernetes necesita. Casi nunca ejecutas contenedores sueltos en Kubernetes: el scheduler ubica Pods, las probes revisan Pods y los Services enrutan tráfico a Pods.\n\nLa mayoría de los Pods tienen un solo contenedor de aplicación, pero el patrón multi-contenedor habilita **sidecars**: un recolector de logs o un proxy de service mesh corriendo junto a la app, compartiendo su red y volúmenes."
+      },
+      "examples": [
+        {
+          "en": "Istio injects an Envoy proxy sidecar into each Pod: because both containers share `localhost`, the proxy can intercept all app traffic without code changes.",
+          "es": "Istio inyecta un sidecar de proxy Envoy en cada Pod: como ambos contenedores comparten `localhost`, el proxy intercepta todo el tráfico de la app sin cambiar código."
+        },
+        {
+          "en": "A web app Pod with a log-shipper sidecar: the app writes logs to a shared `emptyDir` volume and the sidecar tails the files and forwards them to Elasticsearch.",
+          "es": "Un Pod de app web con un sidecar recolector de logs: la app escribe logs a un volumen `emptyDir` compartido y el sidecar lee los archivos y los envía a Elasticsearch."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Two containers run in the same Pod. How does container A reach an HTTP server listening on port 8080 in container B?",
+              "es": "Dos contenedores corren en el mismo Pod. ¿Cómo alcanza el contenedor A un servidor HTTP escuchando en el puerto 8080 del contenedor B?"
+            },
+            "options": [
+              {
+                "en": "Via `localhost:8080`, because they share the network namespace",
+                "es": "Vía `localhost:8080`, porque comparten el namespace de red"
+              },
+              {
+                "en": "Using the other container's separate Pod IP",
+                "es": "Usando la IP de Pod separada del otro contenedor"
+              },
+              {
+                "en": "Through a Service that selects the Pod",
+                "es": "A través de un Service que seleccione el Pod"
+              },
+              {
+                "en": "They cannot communicate directly",
+                "es": "No pueden comunicarse directamente"
+              }
+            ],
+            "explanation": {
+              "en": "Containers in one Pod share a single network namespace and IP, so they talk over `localhost` — that's what makes sidecars work.",
+              "es": "Los contenedores de un Pod comparten un solo namespace de red y una IP, así que se comunican por `localhost` — eso es lo que hace funcionar a los sidecars."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each concept with what it provides.",
+              "es": "Conecta cada concepto con lo que proporciona."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Container",
+                  "es": "Contenedor"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Pod",
+                  "es": "Pod"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Sidecar",
+                  "es": "Sidecar"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Shared volume",
+                  "es": "Volumen compartido"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "An isolated process with its own filesystem",
+                  "es": "Un proceso aislado con su propio filesystem"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The smallest schedulable unit; shared IP and volumes",
+                  "es": "La unidad más pequeña que se agenda; IP y volúmenes compartidos"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A helper container running next to the app in the same Pod",
+                  "es": "Un contenedor auxiliar que corre junto a la app en el mismo Pod"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Lets containers in a Pod exchange files",
+                  "es": "Permite a los contenedores de un Pod intercambiar archivos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A team packages their frontend and their backend API as two containers in the same Pod. Why is this usually a design mistake?",
+              "es": "Un equipo empaqueta su frontend y su API de backend como dos contenedores en el mismo Pod. ¿Por qué suele ser un error de diseño?"
+            },
+            "options": [
+              {
+                "en": "The Pod would need two IPs, which Kubernetes forbids",
+                "es": "El Pod necesitaría dos IPs, lo cual Kubernetes prohíbe"
+              },
+              {
+                "en": "A Pod only supports one container",
+                "es": "Un Pod solo soporta un contenedor"
+              },
+              {
+                "en": "They are forced to scale, deploy and fail together; independent services belong in separate Pods",
+                "es": "Quedan forzados a escalar, desplegarse y fallar juntos; los servicios independientes van en Pods separados"
+              },
+              {
+                "en": "Containers in the same Pod cannot talk to each other",
+                "es": "Los contenedores del mismo Pod no pueden comunicarse entre sí"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The Pod is the unit of scheduling and scaling. Multi-container Pods are for tightly coupled helpers (sidecars), not for independent services that need their own replica counts and release cycles.",
+              "es": "El Pod es la unidad de scheduling y escalado. Los Pods multi-contenedor son para auxiliares fuertemente acoplados (sidecars), no para servicios independientes que necesitan su propio número de réplicas y ciclos de release."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "deployments-replicasets",
+      "question": {
+        "en": "What do Deployments and ReplicaSets do, and what happens when a Pod crashes?",
+        "es": "¿Qué hacen los Deployments y ReplicaSets, y qué pasa cuando un Pod se cae?"
+      },
+      "definition": {
+        "en": "A **ReplicaSet** guarantees that N replicas of a Pod are running at all times. A **Deployment** manages ReplicaSets for you and adds declarative updates: when you change the Pod template (e.g. a new image), the Deployment creates a *new* ReplicaSet and shifts replicas over gradually.\n\nKubernetes works by **reconciliation**: controllers constantly compare *desired state* (`replicas: 3`) with *actual state*. If a Pod crashes or is deleted, the ReplicaSet controller notices the count dropped to 2 and creates a replacement Pod, which the scheduler places on a healthy node.\n\nThis is why you never create bare Pods in production: a bare Pod that dies stays dead, while a Deployment self-heals.",
+        "es": "Un **ReplicaSet** garantiza que N réplicas de un Pod estén corriendo en todo momento. Un **Deployment** gestiona ReplicaSets por ti y agrega actualizaciones declarativas: cuando cambias la plantilla del Pod (p. ej. una imagen nueva), el Deployment crea un ReplicaSet *nuevo* y traslada las réplicas gradualmente.\n\nKubernetes funciona por **reconciliación**: los controladores comparan constantemente el *estado deseado* (`replicas: 3`) con el *estado real*. Si un Pod se cae o es eliminado, el controlador del ReplicaSet nota que el conteo bajó a 2 y crea un Pod de reemplazo, que el scheduler ubica en un nodo sano.\n\nPor eso nunca creas Pods sueltos en producción: un Pod suelto que muere se queda muerto, mientras que un Deployment se auto-repara."
+      },
+      "examples": [
+        {
+          "en": "An API runs with `replicas: 3`. A memory leak kills one Pod at 3 a.m.; within seconds the ReplicaSet spins up a replacement and nobody gets paged.",
+          "es": "Una API corre con `replicas: 3`. Un memory leak mata un Pod a las 3 a.m.; en segundos el ReplicaSet levanta un reemplazo y nadie recibe una alerta."
+        },
+        {
+          "en": "After `kubectl rollout undo deployment/api`, the Deployment simply scales the previous ReplicaSet back up — old ReplicaSets are kept as rollback history.",
+          "es": "Tras `kubectl rollout undo deployment/api`, el Deployment simplemente vuelve a escalar el ReplicaSet anterior — los ReplicaSets viejos se conservan como historial de rollback."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A Pod managed by a Deployment (replicas: 3) crashes. Order what happens next.",
+              "es": "Un Pod gestionado por un Deployment (replicas: 3) se cae. Ordena lo que sucede a continuación."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "crash",
+                "label": {
+                  "en": "The Pod's container exits and the Pod dies",
+                  "es": "El contenedor del Pod termina y el Pod muere"
+                }
+              },
+              {
+                "id": "detect",
+                "label": {
+                  "en": "The ReplicaSet controller sees 2 running instead of 3 desired",
+                  "es": "El controlador del ReplicaSet ve 2 corriendo en vez de 3 deseados"
+                }
+              },
+              {
+                "id": "create",
+                "label": {
+                  "en": "The controller creates a new Pod object",
+                  "es": "El controlador crea un nuevo objeto Pod"
+                }
+              },
+              {
+                "id": "schedule",
+                "label": {
+                  "en": "The scheduler assigns the Pod to a healthy node",
+                  "es": "El scheduler asigna el Pod a un nodo sano"
+                }
+              },
+              {
+                "id": "run",
+                "label": {
+                  "en": "The kubelet on that node pulls the image and starts the container",
+                  "es": "El kubelet de ese nodo descarga la imagen y arranca el contenedor"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "crash",
+              "detect",
+              "create",
+              "schedule",
+              "run"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why should you use a Deployment instead of creating Pods directly?",
+              "es": "¿Por qué deberías usar un Deployment en lugar de crear Pods directamente?"
+            },
+            "options": [
+              {
+                "en": "Pods created directly consume more resources",
+                "es": "Los Pods creados directamente consumen más recursos"
+              },
+              {
+                "en": "Services can only route traffic to Deployment Pods",
+                "es": "Los Services solo pueden enrutar tráfico a Pods de Deployments"
+              },
+              {
+                "en": "Deployments make containers start faster",
+                "es": "Los Deployments hacen que los contenedores arranquen más rápido"
+              },
+              {
+                "en": "A bare Pod that dies is not replaced; a Deployment reconciles and self-heals",
+                "es": "Un Pod suelto que muere no se reemplaza; un Deployment reconcilia y se auto-repara"
+              }
+            ],
+            "explanation": {
+              "en": "The value of a Deployment is the reconciliation loop: desired replicas are enforced continuously, and rollouts/rollbacks come for free.",
+              "es": "El valor de un Deployment es el bucle de reconciliación: las réplicas deseadas se garantizan continuamente, y los rollouts/rollbacks vienen gratis."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You change the container image in a Deployment's Pod template and apply it. What does the Deployment do at the ReplicaSet level?",
+              "es": "Cambias la imagen del contenedor en la plantilla de Pod de un Deployment y la aplicas. ¿Qué hace el Deployment a nivel de ReplicaSets?"
+            },
+            "options": [
+              {
+                "en": "It deletes the old ReplicaSet immediately and creates the new one at full size",
+                "es": "Elimina el ReplicaSet viejo de inmediato y crea el nuevo a tamaño completo"
+              },
+              {
+                "en": "It edits the existing ReplicaSet's template so its Pods restart with the new image",
+                "es": "Edita la plantilla del ReplicaSet existente para que sus Pods se reinicien con la nueva imagen"
+              },
+              {
+                "en": "It creates a new ReplicaSet with the new template and gradually scales it up while scaling the old one down",
+                "es": "Crea un nuevo ReplicaSet con la nueva plantilla y lo escala gradualmente mientras reduce el viejo"
+              },
+              {
+                "en": "It updates the image of each running Pod in place, without creating new Pods",
+                "es": "Actualiza la imagen de cada Pod en ejecución in situ, sin crear Pods nuevos"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A template change triggers a new ReplicaSet; replicas shift over gradually and the old ReplicaSet is kept at 0 replicas as rollback history — that's what `kubectl rollout undo` scales back up.",
+              "es": "Un cambio de plantilla dispara un ReplicaSet nuevo; las réplicas se trasladan gradualmente y el ReplicaSet viejo se conserva con 0 réplicas como historial de rollback — eso es lo que `kubectl rollout undo` vuelve a escalar."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "services-and-ingress",
+      "question": {
+        "en": "How do Services (ClusterIP, NodePort, LoadBalancer) and Ingress expose applications?",
+        "es": "¿Cómo exponen aplicaciones los Services (ClusterIP, NodePort, LoadBalancer) y el Ingress?"
+      },
+      "definition": {
+        "en": "Pods are ephemeral and their IPs change, so a **Service** gives a stable virtual IP and DNS name that load-balances across the Pods matching its **label selector**.\n\nService types build on each other: **ClusterIP** (default) is reachable only inside the cluster; **NodePort** additionally opens the same port on every node; **LoadBalancer** additionally provisions a cloud load balancer with a public IP.\n\nAn **Ingress** is not a Service type: it's an L7 (HTTP) router. One Ingress controller (nginx, Traefik, ALB) receives all external HTTP traffic and routes by host and path (`api.example.com/v1` → service A), handling TLS termination — much cheaper than one LoadBalancer per service.",
+        "es": "Los Pods son efímeros y sus IPs cambian, así que un **Service** da una IP virtual estable y un nombre DNS que balancea carga entre los Pods que coinciden con su **selector de labels**.\n\nLos tipos de Service se construyen uno sobre otro: **ClusterIP** (el default) solo es alcanzable dentro del clúster; **NodePort** además abre el mismo puerto en cada nodo; **LoadBalancer** además aprovisiona un balanceador de carga de la nube con IP pública.\n\nUn **Ingress** no es un tipo de Service: es un router L7 (HTTP). Un solo Ingress controller (nginx, Traefik, ALB) recibe todo el tráfico HTTP externo y enruta por host y path (`api.example.com/v1` → servicio A), manejando la terminación TLS — mucho más barato que un LoadBalancer por servicio."
+      },
+      "examples": [
+        {
+          "en": "A typical SaaS: the frontend, API and admin panel each have a ClusterIP Service, and a single nginx Ingress routes `app.example.com`, `api.example.com` and `admin.example.com` to them with one cloud load balancer.",
+          "es": "Un SaaS típico: el frontend, la API y el panel de admin tienen cada uno un Service ClusterIP, y un solo Ingress nginx enruta `app.example.com`, `api.example.com` y `admin.example.com` hacia ellos con un único balanceador de la nube."
+        },
+        {
+          "en": "PostgreSQL inside the cluster uses a ClusterIP Service: apps connect to `postgres.default.svc.cluster.local:5432` and never need to know Pod IPs.",
+          "es": "PostgreSQL dentro del clúster usa un Service ClusterIP: las apps se conectan a `postgres.default.svc.cluster.local:5432` y nunca necesitan conocer IPs de Pods."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each resource with its purpose.",
+              "es": "Conecta cada recurso con su propósito."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "ClusterIP",
+                  "es": "ClusterIP"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "NodePort",
+                  "es": "NodePort"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "LoadBalancer",
+                  "es": "LoadBalancer"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Ingress",
+                  "es": "Ingress"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Stable virtual IP reachable only inside the cluster",
+                  "es": "IP virtual estable alcanzable solo dentro del clúster"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Opens a fixed port on every node for external access",
+                  "es": "Abre un puerto fijo en cada nodo para acceso externo"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Provisions a cloud load balancer with a public IP",
+                  "es": "Aprovisiona un balanceador de la nube con IP pública"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "L7 router: directs HTTP traffic by host and path, terminates TLS",
+                  "es": "Router L7: dirige tráfico HTTP por host y path, termina TLS"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You have 15 HTTP microservices to expose publicly with TLS and host-based routing. What is the most cost-effective setup?",
+              "es": "Tienes 15 microservicios HTTP para exponer públicamente con TLS y enrutamiento por host. ¿Cuál es la configuración más rentable?"
+            },
+            "options": [
+              {
+                "en": "ClusterIP Services behind a single Ingress controller",
+                "es": "Services ClusterIP detrás de un solo Ingress controller"
+              },
+              {
+                "en": "NodePort Services and share the node IPs with clients",
+                "es": "Services NodePort y compartir las IPs de los nodos con los clientes"
+              },
+              {
+                "en": "One LoadBalancer Service per microservice",
+                "es": "Un Service LoadBalancer por microservicio"
+              },
+              {
+                "en": "Give each Pod a public IP",
+                "es": "Darle a cada Pod una IP pública"
+              }
+            ],
+            "explanation": {
+              "en": "An Ingress controller multiplexes many services behind one cloud load balancer and handles TLS and host/path routing — 15 LoadBalancers would cost far more.",
+              "es": "Un Ingress controller multiplexa muchos servicios detrás de un solo balanceador de la nube y maneja TLS y enrutamiento por host/path — 15 LoadBalancers costarían mucho más."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How does a Service determine which Pods should receive its traffic?",
+              "es": "¿Cómo determina un Service qué Pods deben recibir su tráfico?"
+            },
+            "options": [
+              {
+                "en": "It selects Pods whose labels match its selector, and only Ready Pods are kept in its endpoints",
+                "es": "Selecciona los Pods cuyos labels coinciden con su selector, y solo los Pods Ready se mantienen en sus endpoints"
+              },
+              {
+                "en": "The Service is bound to a Deployment by name in its spec",
+                "es": "El Service se vincula a un Deployment por nombre en su spec"
+              },
+              {
+                "en": "Each Pod registers itself with the Service when its container starts",
+                "es": "Cada Pod se registra en el Service cuando su contenedor arranca"
+              },
+              {
+                "en": "It routes to every Pod in the same namespace",
+                "es": "Enruta a todos los Pods del mismo namespace"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Services are decoupled from workloads: a label selector continuously matches Pods, and the endpoints list tracks their IPs — Pods that fail readiness are removed. There is no registration and no link by Deployment name.",
+              "es": "Los Services están desacoplados de las cargas de trabajo: un selector de labels empareja Pods continuamente, y la lista de endpoints registra sus IPs — los Pods que fallan readiness se quitan. No hay registro ni vínculo por nombre de Deployment."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "configmap-vs-secret",
+      "question": {
+        "en": "What is the difference between a ConfigMap and a Secret?",
+        "es": "¿Cuál es la diferencia entre un ConfigMap y un Secret?"
+      },
+      "definition": {
+        "en": "Both decouple configuration from container images so the same image runs in dev, staging and prod. A **ConfigMap** holds non-sensitive key-value data (feature flags, URLs, config files). A **Secret** holds sensitive data (passwords, API keys, TLS certs) and gets extra handling: base64 encoding, optional encryption at rest in etcd, tighter RBAC, and it's mounted via tmpfs (never written to node disk).\n\nImportant interview nuance: **base64 is encoding, not encryption** — anyone who can read the Secret can decode it. Real protection comes from RBAC, etcd encryption at rest, and often an external manager (Vault, AWS Secrets Manager, sealed-secrets).\n\nBoth can be consumed as **environment variables** or **mounted files**; mounted ConfigMaps update in place, while env vars require a Pod restart.",
+        "es": "Ambos desacoplan la configuración de las imágenes de contenedor para que la misma imagen corra en dev, staging y prod. Un **ConfigMap** guarda datos clave-valor no sensibles (feature flags, URLs, archivos de configuración). Un **Secret** guarda datos sensibles (contraseñas, API keys, certificados TLS) y recibe manejo extra: codificación base64, cifrado opcional en reposo en etcd, RBAC más estricto, y se monta vía tmpfs (nunca se escribe al disco del nodo).\n\nMatiz importante para la entrevista: **base64 es codificación, no cifrado** — cualquiera que pueda leer el Secret puede decodificarlo. La protección real viene de RBAC, el cifrado en reposo de etcd, y a menudo un gestor externo (Vault, AWS Secrets Manager, sealed-secrets).\n\nAmbos se consumen como **variables de entorno** o **archivos montados**; los ConfigMaps montados se actualizan en caliente, mientras que las variables de entorno requieren reiniciar el Pod."
+      },
+      "examples": [
+        {
+          "en": "A backend Deployment gets `LOG_LEVEL` and `FEATURE_FLAGS` from a ConfigMap, and `DATABASE_PASSWORD` from a Secret synced from AWS Secrets Manager by external-secrets.",
+          "es": "Un Deployment de backend obtiene `LOG_LEVEL` y `FEATURE_FLAGS` de un ConfigMap, y `DATABASE_PASSWORD` de un Secret sincronizado desde AWS Secrets Manager por external-secrets."
+        },
+        {
+          "en": "cert-manager stores TLS certificates as Secrets of type `kubernetes.io/tls`, which the Ingress controller mounts to terminate HTTPS.",
+          "es": "cert-manager guarda certificados TLS como Secrets de tipo `kubernetes.io/tls`, que el Ingress controller monta para terminar HTTPS."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A teammate says: \"Secrets are safe because they are base64 encoded.\" What is the correct assessment?",
+              "es": "Un compañero dice: \"Los Secrets son seguros porque están codificados en base64.\" ¿Cuál es la evaluación correcta?"
+            },
+            "options": [
+              {
+                "en": "Wrong — Secrets are stored in plain text with no protection possible",
+                "es": "Incorrecto — los Secrets se guardan en texto plano sin protección posible"
+              },
+              {
+                "en": "Correct — Kubernetes encrypts base64 automatically",
+                "es": "Correcto — Kubernetes cifra el base64 automáticamente"
+              },
+              {
+                "en": "Wrong — base64 is trivially decodable; you need RBAC and encryption at rest",
+                "es": "Incorrecto — base64 se decodifica trivialmente; necesitas RBAC y cifrado en reposo"
+              },
+              {
+                "en": "Correct — base64 cannot be reversed without the cluster key",
+                "es": "Correcto — base64 no se puede revertir sin la clave del clúster"
+              }
+            ],
+            "explanation": {
+              "en": "base64 is a reversible encoding. Real protection: restrict who can read Secrets (RBAC), enable etcd encryption at rest, and consider an external secret manager.",
+              "es": "base64 es una codificación reversible. Protección real: restringir quién puede leer Secrets (RBAC), habilitar cifrado en reposo en etcd y considerar un gestor de secretos externo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your app needs a database URL (non-sensitive) and a database password (sensitive). Explain how you would provide each one to the Pod and why.",
+              "es": "Tu app necesita una URL de base de datos (no sensible) y una contraseña de base de datos (sensible). Explica cómo proporcionarías cada una al Pod y por qué."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must put the URL in a ConfigMap and the password in a Secret, and justify the split (Secrets get RBAC restrictions / encryption at rest / tmpfs; ConfigMaps are for non-sensitive config). Bonus: mention env vars vs volume mounts or an external secret manager like Vault.",
+              "es": "Debe poner la URL en un ConfigMap y la contraseña en un Secret, y justificar la separación (los Secrets tienen restricciones RBAC / cifrado en reposo / tmpfs; los ConfigMaps son para configuración no sensible). Bonus: mencionar variables de entorno vs montajes de volumen o un gestor externo como Vault."
+            },
+            "reference": "Put DATABASE_URL in a ConfigMap and DATABASE_PASSWORD in a Secret, injecting both into the Pod as environment variables (or mounted files). The split matters because Secrets can be locked down with tighter RBAC, encrypted at rest in etcd, and are mounted via tmpfs, while ConfigMaps are plain configuration. In production, the Secret is often synced from an external manager like Vault or AWS Secrets Manager."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A Pod consumes a ConfigMap key as an environment variable. You edit the ConfigMap with `kubectl apply`. When does the running container see the new value?",
+              "es": "Un Pod consume una clave de un ConfigMap como variable de entorno. Editas el ConfigMap con `kubectl apply`. ¿Cuándo ve el contenedor en ejecución el nuevo valor?"
+            },
+            "options": [
+              {
+                "en": "Immediately — environment variables are refreshed live",
+                "es": "Inmediatamente — las variables de entorno se refrescan en caliente"
+              },
+              {
+                "en": "Never — a ConfigMap becomes immutable once a Pod consumes it",
+                "es": "Nunca — un ConfigMap se vuelve inmutable una vez que un Pod lo consume"
+              },
+              {
+                "en": "Within about a minute, when the kubelet syncs the ConfigMap",
+                "es": "En aproximadamente un minuto, cuando el kubelet sincroniza el ConfigMap"
+              },
+              {
+                "en": "Only when the Pod is restarted or recreated — env vars are fixed at container start",
+                "es": "Solo cuando el Pod se reinicia o se recrea — las variables de entorno se fijan al arrancar el contenedor"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Environment variables are injected once, at container start, so a ConfigMap edit requires a Pod restart (or a rollout) to take effect. ConfigMaps consumed as *mounted files* do update in place after a short sync delay — a classic gotcha.",
+              "es": "Las variables de entorno se inyectan una sola vez, al arrancar el contenedor, así que editar el ConfigMap requiere reiniciar el Pod (o hacer un rollout) para que surta efecto. Los ConfigMaps consumidos como *archivos montados* sí se actualizan en caliente tras un pequeño retraso de sincronización — un clásico truco de entrevista."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "liveness-readiness-startup-probes",
+      "question": {
+        "en": "What is the difference between liveness, readiness and startup probes?",
+        "es": "¿Cuál es la diferencia entre las probes de liveness, readiness y startup?"
+      },
+      "definition": {
+        "en": "Probes are periodic health checks the kubelet runs against your container, but each failure has a very different consequence. A failing **liveness** probe means \"this process is stuck\" → the container is **restarted**. A failing **readiness** probe means \"I can't serve traffic right now\" → the Pod is **removed from Service endpoints** but *not* restarted. A **startup** probe protects slow-starting apps: until it succeeds, liveness/readiness checks are disabled so the app isn't killed mid-boot.\n\nThe classic mistake is pointing a liveness probe at a check that depends on the database: when the DB blips, every Pod fails liveness and gets restarted simultaneously, turning a small incident into a full outage. Liveness should check only \"is *this process* alive\"; dependency health belongs in readiness.",
+        "es": "Las probes son chequeos de salud periódicos que el kubelet ejecuta contra tu contenedor, pero cada fallo tiene una consecuencia muy distinta. Una probe de **liveness** que falla significa \"este proceso está colgado\" → el contenedor se **reinicia**. Una probe de **readiness** que falla significa \"ahora mismo no puedo servir tráfico\" → el Pod se **quita de los endpoints del Service** pero *no* se reinicia. Una probe de **startup** protege a las apps de arranque lento: hasta que tiene éxito, los chequeos de liveness/readiness se desactivan para no matar la app a mitad del arranque.\n\nEl error clásico es apuntar la liveness a un chequeo que depende de la base de datos: cuando la DB parpadea, todos los Pods fallan liveness y se reinician a la vez, convirtiendo un incidente pequeño en una caída total. La liveness solo debe chequear \"¿está vivo *este proceso*?\"; la salud de las dependencias va en readiness."
+      },
+      "examples": [
+        {
+          "en": "A JVM service that takes 90 seconds to boot uses a startup probe with a generous budget; without it, the liveness probe would kill the container before Spring finishes loading — an infinite restart loop.",
+          "es": "Un servicio JVM que tarda 90 segundos en arrancar usa una startup probe con un presupuesto generoso; sin ella, la liveness mataría el contenedor antes de que Spring termine de cargar — un bucle infinito de reinicios."
+        },
+        {
+          "en": "During a cache warm-up, a Pod fails readiness on purpose: it receives no traffic while warming, then re-enters the load balancer when ready — zero errors for users.",
+          "es": "Durante el calentamiento de caché, un Pod falla readiness a propósito: no recibe tráfico mientras se calienta, y vuelve a entrar al balanceador cuando está listo — cero errores para los usuarios."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each probe (or probe failure) with its behavior.",
+              "es": "Conecta cada probe (o su fallo) con su comportamiento."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Liveness probe fails",
+                  "es": "Falla la probe de liveness"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Readiness probe fails",
+                  "es": "Falla la probe de readiness"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Startup probe running",
+                  "es": "Startup probe en ejecución"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Readiness probe succeeds again",
+                  "es": "La probe de readiness vuelve a pasar"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "The container is restarted",
+                  "es": "El contenedor se reinicia"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The Pod is removed from Service endpoints, no restart",
+                  "es": "El Pod se quita de los endpoints del Service, sin reinicio"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Liveness and readiness checks are held off during boot",
+                  "es": "Los chequeos de liveness y readiness se posponen durante el arranque"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "The Pod is added back to the load-balancing pool",
+                  "es": "El Pod vuelve a entrar al pool de balanceo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A liveness probe hits `/health`, which also checks database connectivity. The database has a 30-second outage. What happens?",
+              "es": "Una probe de liveness consulta `/health`, que también verifica la conectividad a la base de datos. La base de datos se cae 30 segundos. ¿Qué pasa?"
+            },
+            "options": [
+              {
+                "en": "Pods are removed from the Service until the DB recovers",
+                "es": "Los Pods se quitan del Service hasta que la DB se recupere"
+              },
+              {
+                "en": "Nothing — liveness probes ignore dependencies",
+                "es": "Nada — las probes de liveness ignoran las dependencias"
+              },
+              {
+                "en": "Kubernetes scales up more replicas to compensate",
+                "es": "Kubernetes escala más réplicas para compensar"
+              },
+              {
+                "en": "All Pods fail liveness and restart at once, amplifying the outage",
+                "es": "Todos los Pods fallan liveness y se reinician a la vez, amplificando la caída"
+              }
+            ],
+            "explanation": {
+              "en": "Restarting the app doesn't fix the database, so every replica gets killed for a problem it doesn't have. Dependency checks belong in readiness, not liveness.",
+              "es": "Reiniciar la app no arregla la base de datos, así que todas las réplicas mueren por un problema que no es suyo. Los chequeos de dependencias van en readiness, no en liveness."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A slow-starting app defines startup, liveness and readiness probes. Order what happens from container launch until it serves traffic.",
+              "es": "Una app de arranque lento define probes de startup, liveness y readiness. Ordena lo que sucede desde que arranca el contenedor hasta que sirve tráfico."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "launch",
+                "label": {
+                  "en": "The kubelet starts the container",
+                  "es": "El kubelet arranca el contenedor"
+                }
+              },
+              {
+                "id": "startupok",
+                "label": {
+                  "en": "The startup probe finally succeeds, ending the boot grace period",
+                  "es": "La startup probe por fin pasa, terminando el periodo de gracia del arranque"
+                }
+              },
+              {
+                "id": "begin",
+                "label": {
+                  "en": "Liveness and readiness probes begin running periodically",
+                  "es": "Las probes de liveness y readiness empiezan a ejecutarse periódicamente"
+                }
+              },
+              {
+                "id": "readyok",
+                "label": {
+                  "en": "The readiness probe passes",
+                  "es": "La probe de readiness pasa"
+                }
+              },
+              {
+                "id": "traffic",
+                "label": {
+                  "en": "The Pod is added to Service endpoints and receives traffic",
+                  "es": "El Pod se agrega a los endpoints del Service y recibe tráfico"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "launch",
+              "startupok",
+              "begin",
+              "readyok",
+              "traffic"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "horizontal-pod-autoscaler",
+      "question": {
+        "en": "How does Kubernetes scale an application automatically? How does the HPA work?",
+        "es": "¿Cómo escala Kubernetes una aplicación automáticamente? ¿Cómo funciona el HPA?"
+      },
+      "definition": {
+        "en": "The **Horizontal Pod Autoscaler (HPA)** adjusts the replica count of a Deployment based on observed metrics. Every ~15 seconds it reads metrics (via the metrics-server), compares them to the target, and computes: `desiredReplicas = ceil(currentReplicas × currentMetric / targetMetric)`. If pods average 80% CPU with a 50% target and 4 replicas, it scales to `ceil(4 × 80/50) = 7`.\n\nCrucial detail: CPU utilization is measured **relative to the Pod's CPU request** — so HPA on CPU doesn't work without resource requests. Scale-down is deliberately slower than scale-up (a stabilization window, ~5 min by default) to avoid flapping.\n\nHorizontal scaling (more Pods) is preferred over **vertical** (bigger Pods) for stateless services. For custom metrics (queue depth, requests/sec) you use adapters like KEDA or the custom metrics API. Node-level capacity is handled separately by the **Cluster Autoscaler**.",
+        "es": "El **Horizontal Pod Autoscaler (HPA)** ajusta el número de réplicas de un Deployment según métricas observadas. Cada ~15 segundos lee métricas (vía metrics-server), las compara con el objetivo y calcula: `desiredReplicas = ceil(currentReplicas × métricaActual / métricaObjetivo)`. Si los pods promedian 80% de CPU con objetivo de 50% y 4 réplicas, escala a `ceil(4 × 80/50) = 7`.\n\nDetalle crucial: la utilización de CPU se mide **relativa al CPU request del Pod** — así que el HPA por CPU no funciona sin resource requests. El scale-down es deliberadamente más lento que el scale-up (ventana de estabilización, ~5 min por defecto) para evitar oscilaciones.\n\nEl escalado horizontal (más Pods) se prefiere al **vertical** (Pods más grandes) para servicios sin estado. Para métricas personalizadas (profundidad de cola, peticiones/seg) se usan adaptadores como KEDA o la API de métricas personalizadas. La capacidad a nivel de nodos la maneja aparte el **Cluster Autoscaler**."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce API scales from 5 to 40 replicas during a flash sale with an HPA targeting 60% CPU; the Cluster Autoscaler adds nodes when the new Pods don't fit.",
+          "es": "Una API de e-commerce escala de 5 a 40 réplicas durante una venta flash con un HPA apuntando a 60% de CPU; el Cluster Autoscaler agrega nodos cuando los Pods nuevos no caben."
+        },
+        {
+          "en": "A worker service uses KEDA to scale on RabbitMQ queue depth: 0 replicas when the queue is empty, one replica per 100 pending messages under load.",
+          "es": "Un servicio de workers usa KEDA para escalar según la profundidad de la cola de RabbitMQ: 0 réplicas con la cola vacía, una réplica por cada 100 mensajes pendientes bajo carga."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An HPA targets 50% average CPU. Pods currently average 100% with 3 replicas. How many replicas does the HPA aim for?",
+              "es": "Un HPA apunta a 50% de CPU promedio. Los Pods promedian 100% con 3 réplicas. ¿A cuántas réplicas apunta el HPA?"
+            },
+            "options": [
+              {
+                "en": "5",
+                "es": "5"
+              },
+              {
+                "en": "4",
+                "es": "4"
+              },
+              {
+                "en": "9",
+                "es": "9"
+              },
+              {
+                "en": "6",
+                "es": "6"
+              }
+            ],
+            "explanation": {
+              "en": "desired = ceil(3 × 100/50) = 6. The formula scales replicas proportionally to how far the metric is from its target.",
+              "es": "deseadas = ceil(3 × 100/50) = 6. La fórmula escala las réplicas proporcionalmente a cuán lejos está la métrica de su objetivo."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of one HPA reconciliation cycle that scales up.",
+              "es": "Ordena los pasos de un ciclo de reconciliación del HPA que escala hacia arriba."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "metrics",
+                "label": {
+                  "en": "Read Pod metrics from the metrics-server",
+                  "es": "Leer métricas de los Pods desde el metrics-server"
+                }
+              },
+              {
+                "id": "compare",
+                "label": {
+                  "en": "Compare current utilization against the target",
+                  "es": "Comparar la utilización actual contra el objetivo"
+                }
+              },
+              {
+                "id": "compute",
+                "label": {
+                  "en": "Compute desired replicas with the ratio formula",
+                  "es": "Calcular las réplicas deseadas con la fórmula de proporción"
+                }
+              },
+              {
+                "id": "patch",
+                "label": {
+                  "en": "Update the Deployment's replica count",
+                  "es": "Actualizar el número de réplicas del Deployment"
+                }
+              },
+              {
+                "id": "sched",
+                "label": {
+                  "en": "New Pods are created and scheduled onto nodes",
+                  "es": "Se crean nuevos Pods y se agendan en nodos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "metrics",
+              "compare",
+              "compute",
+              "patch",
+              "sched"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You create an HPA targeting 60% CPU, but it never scales and `kubectl get hpa` shows the target as `<unknown>/60%`. What is the most likely cause?",
+              "es": "Creas un HPA apuntando a 60% de CPU, pero nunca escala y `kubectl get hpa` muestra el objetivo como `<unknown>/60%`. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "CPU-based scaling requires installing KEDA first",
+                "es": "El escalado por CPU requiere instalar KEDA primero"
+              },
+              {
+                "en": "The HPA only works with StatefulSets, not Deployments",
+                "es": "El HPA solo funciona con StatefulSets, no con Deployments"
+              },
+              {
+                "en": "minReplicas and maxReplicas are set to the same value",
+                "es": "minReplicas y maxReplicas tienen el mismo valor"
+              },
+              {
+                "en": "The Pods define no CPU requests (or metrics-server is missing), so utilization relative to the request cannot be computed",
+                "es": "Los Pods no definen CPU requests (o falta el metrics-server), así que la utilización relativa al request no puede calcularse"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "CPU utilization is a percentage of the Pod's CPU *request*. Without requests — or without a metrics-server providing usage data — the HPA has no denominator and reports `<unknown>`, so it never scales.",
+              "es": "La utilización de CPU es un porcentaje del CPU *request* del Pod. Sin requests — o sin un metrics-server que provea datos de uso — el HPA no tiene denominador y reporta `<unknown>`, así que nunca escala."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "rolling-updates-zero-downtime",
+      "question": {
+        "en": "How does a rolling deployment achieve zero downtime?",
+        "es": "¿Cómo logra un rolling deployment cero downtime?"
+      },
+      "definition": {
+        "en": "A **rolling update** replaces Pods gradually instead of all at once. The Deployment creates a new ReplicaSet with the new Pod template and shifts replicas over, bounded by **`maxSurge`** (how many extra Pods may exist above the desired count) and **`maxUnavailable`** (how many may be missing). With `maxSurge: 1, maxUnavailable: 0`, capacity never drops: one new Pod comes up, becomes Ready, then one old Pod is terminated.\n\nZero downtime requires more than the strategy: a **readiness probe** so new Pods only receive traffic when actually ready, and **graceful shutdown** — on termination the Pod gets SIGTERM, is removed from Service endpoints, and has `terminationGracePeriodSeconds` to drain in-flight requests before SIGKILL.\n\nIf the new version is broken, the readiness probe never passes, the rollout stalls with old Pods still serving, and `kubectl rollout undo` scales the previous ReplicaSet back up.",
+        "es": "Un **rolling update** reemplaza los Pods gradualmente en lugar de todos a la vez. El Deployment crea un nuevo ReplicaSet con la nueva plantilla de Pod y traslada las réplicas, acotado por **`maxSurge`** (cuántos Pods extra puede haber por encima del conteo deseado) y **`maxUnavailable`** (cuántos pueden faltar). Con `maxSurge: 1, maxUnavailable: 0`, la capacidad nunca baja: sube un Pod nuevo, se pone Ready, y luego se termina un Pod viejo.\n\nEl cero downtime requiere más que la estrategia: una **readiness probe** para que los Pods nuevos solo reciban tráfico cuando realmente estén listos, y **apagado ordenado** — al terminar, el Pod recibe SIGTERM, se quita de los endpoints del Service y tiene `terminationGracePeriodSeconds` para drenar las peticiones en vuelo antes del SIGKILL.\n\nSi la versión nueva está rota, la readiness nunca pasa, el rollout se atasca con los Pods viejos aún sirviendo, y `kubectl rollout undo` vuelve a escalar el ReplicaSet anterior."
+      },
+      "examples": [
+        {
+          "en": "A payments API deploys 20 times a day with `maxUnavailable: 0`: each rollout swaps Pods one at a time and users never see a dropped request.",
+          "es": "Una API de pagos despliega 20 veces al día con `maxUnavailable: 0`: cada rollout intercambia Pods de uno en uno y los usuarios nunca ven una petición perdida."
+        },
+        {
+          "en": "A rollout of a broken image stalls at 1/5 new Pods because readiness never passes; the on-call runs `kubectl rollout undo deployment/api` and traffic was never affected.",
+          "es": "El rollout de una imagen rota se atasca en 1/5 Pods nuevos porque la readiness nunca pasa; el on-call ejecuta `kubectl rollout undo deployment/api` y el tráfico nunca se vio afectado."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order one iteration of a rolling update with maxSurge: 1 and maxUnavailable: 0.",
+              "es": "Ordena una iteración de un rolling update con maxSurge: 1 y maxUnavailable: 0."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "newrs",
+                "label": {
+                  "en": "The Deployment creates a Pod in the new ReplicaSet",
+                  "es": "El Deployment crea un Pod en el nuevo ReplicaSet"
+                }
+              },
+              {
+                "id": "ready",
+                "label": {
+                  "en": "The new Pod passes its readiness probe",
+                  "es": "El Pod nuevo pasa su readiness probe"
+                }
+              },
+              {
+                "id": "traffic",
+                "label": {
+                  "en": "The Service starts sending traffic to the new Pod",
+                  "es": "El Service empieza a enviar tráfico al Pod nuevo"
+                }
+              },
+              {
+                "id": "sigterm",
+                "label": {
+                  "en": "An old Pod is removed from endpoints and receives SIGTERM",
+                  "es": "Un Pod viejo se quita de los endpoints y recibe SIGTERM"
+                }
+              },
+              {
+                "id": "drain",
+                "label": {
+                  "en": "The old Pod drains in-flight requests and exits",
+                  "es": "El Pod viejo drena las peticiones en vuelo y termina"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "newrs",
+              "ready",
+              "traffic",
+              "sigterm",
+              "drain"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A team does rolling updates but users still see 502 errors for a few seconds during each deploy. Name two likely causes and how to fix them.",
+              "es": "Un equipo hace rolling updates pero los usuarios aún ven errores 502 durante unos segundos en cada deploy. Nombra dos causas probables y cómo corregirlas."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must identify at least two of: missing/weak readiness probe (new Pods get traffic before being ready — add a real readiness check); no graceful shutdown (app dies on SIGTERM with in-flight requests — handle SIGTERM, drain, use preStop sleep or adequate terminationGracePeriodSeconds); maxUnavailable > 0 reducing capacity under load. Fixes must match the causes.",
+              "es": "Debe identificar al menos dos de: readiness probe ausente/débil (los Pods nuevos reciben tráfico antes de estar listos — agregar un chequeo real de readiness); falta de apagado ordenado (la app muere con SIGTERM con peticiones en vuelo — manejar SIGTERM, drenar, usar un preStop sleep o terminationGracePeriodSeconds adecuado); maxUnavailable > 0 reduciendo capacidad bajo carga. Las correcciones deben corresponder a las causas."
+            },
+            "reference": "Most common causes: (1) the new Pods have no meaningful readiness probe, so the Service routes to them before the app can serve — add a readiness probe that verifies the app is actually ready; (2) old Pods are killed abruptly: the app must catch SIGTERM and finish in-flight requests, often with a preStop hook (short sleep) so endpoint removal propagates before shutdown, and enough terminationGracePeriodSeconds. Also check that maxUnavailable is 0 so capacity never drops during the rollout."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During a rolling update with maxUnavailable: 0, the new image has a bug and its readiness probe never passes. What is the resulting behavior?",
+              "es": "Durante un rolling update con maxUnavailable: 0, la imagen nueva tiene un bug y su readiness probe nunca pasa. ¿Cuál es el comportamiento resultante?"
+            },
+            "options": [
+              {
+                "en": "The old Pods are terminated anyway and the service goes down",
+                "es": "Los Pods viejos se terminan de todos modos y el servicio se cae"
+              },
+              {
+                "en": "Traffic is split evenly between old Pods and the broken new Pods",
+                "es": "El tráfico se reparte por igual entre los Pods viejos y los Pods nuevos rotos"
+              },
+              {
+                "en": "The Deployment detects the failure and rolls back automatically",
+                "es": "El Deployment detecta el fallo y hace rollback automáticamente"
+              },
+              {
+                "en": "The rollout stalls: new Pods never get traffic and old Pods keep serving until someone intervenes (e.g. `kubectl rollout undo`)",
+                "es": "El rollout se atasca: los Pods nuevos nunca reciben tráfico y los viejos siguen sirviendo hasta que alguien interviene (p. ej. `kubectl rollout undo`)"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Because a new Pod must become Ready before an old one is removed, a failing readiness probe blocks the rollout while old Pods keep serving — users are protected, but Kubernetes performs no automatic rollback; an operator (or automation) must run `kubectl rollout undo`.",
+              "es": "Como un Pod nuevo debe ponerse Ready antes de quitar uno viejo, una readiness que falla bloquea el rollout mientras los Pods viejos siguen sirviendo — los usuarios quedan protegidos, pero Kubernetes no hace rollback automático; un operador (o automatización) debe ejecutar `kubectl rollout undo`."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "node-failure",
+      "question": {
+        "en": "What happens when a node dies in a Kubernetes cluster?",
+        "es": "¿Qué pasa cuando un nodo muere en un clúster de Kubernetes?"
+      },
+      "definition": {
+        "en": "Each kubelet heartbeats to the control plane. When heartbeats stop, the node controller marks the node **NotReady** (default: after ~40 seconds). Kubernetes waits a tolerance window (default **~5 minutes**, controlled by the `node.kubernetes.io/unreachable` toleration) before acting — the node might just have a network blip.\n\nAfter the timeout, Pods on the dead node are marked for **eviction**. Deployment/ReplicaSet controllers then create replacement Pods, which the scheduler places on healthy nodes. Notice Kubernetes doesn't \"move\" Pods — it creates new ones; anything stored on the dead node's local disk is gone, which is why persistent state needs PersistentVolumes on network storage.\n\n**StatefulSets are more careful**: to guarantee at-most-one instance per identity, they don't automatically replace Pods on an unreachable node until it's confirmed dead or the Pod is force-deleted. This whole scenario is also why you run multiple replicas spread across nodes (topology spread constraints / anti-affinity).",
+        "es": "Cada kubelet envía latidos (heartbeats) al plano de control. Cuando los latidos cesan, el node controller marca el nodo como **NotReady** (por defecto: tras ~40 segundos). Kubernetes espera una ventana de tolerancia (por defecto **~5 minutos**, controlada por la toleration `node.kubernetes.io/unreachable`) antes de actuar — el nodo podría tener solo un parpadeo de red.\n\nPasado el tiempo, los Pods del nodo muerto se marcan para **evicción**. Los controladores de Deployment/ReplicaSet crean entonces Pods de reemplazo, que el scheduler ubica en nodos sanos. Nota que Kubernetes no \"mueve\" Pods — crea nuevos; lo guardado en el disco local del nodo muerto se pierde, por eso el estado persistente necesita PersistentVolumes en almacenamiento de red.\n\n**Los StatefulSets son más cautelosos**: para garantizar como máximo una instancia por identidad, no reemplazan automáticamente los Pods de un nodo inalcanzable hasta confirmar que murió o hasta que el Pod se elimine a la fuerza. Este escenario también explica por qué corres varias réplicas repartidas entre nodos (topology spread constraints / anti-affinity)."
+      },
+      "examples": [
+        {
+          "en": "A spot/preemptible instance is reclaimed by the cloud provider: its 12 Pods are recreated on other nodes within minutes, and services with multiple spread replicas see no user impact.",
+          "es": "El proveedor de nube reclama una instancia spot/preemptible: sus 12 Pods se recrean en otros nodos en minutos, y los servicios con varias réplicas repartidas no ven impacto en usuarios."
+        },
+        {
+          "en": "A team ran all 3 replicas of an API on the same node (no anti-affinity). The node died and the API was fully down for ~5 minutes while eviction and rescheduling happened.",
+          "es": "Un equipo corría las 3 réplicas de una API en el mismo nodo (sin anti-affinity). El nodo murió y la API estuvo totalmente caída ~5 minutos mientras ocurrían la evicción y el re-scheduling."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A worker node loses power. Order the cluster's reaction.",
+              "es": "Un nodo worker pierde energía. Ordena la reacción del clúster."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "heartbeat",
+                "label": {
+                  "en": "The kubelet stops sending heartbeats",
+                  "es": "El kubelet deja de enviar heartbeats"
+                }
+              },
+              {
+                "id": "notready",
+                "label": {
+                  "en": "The node controller marks the node NotReady",
+                  "es": "El node controller marca el nodo NotReady"
+                }
+              },
+              {
+                "id": "tolerate",
+                "label": {
+                  "en": "The eviction tolerance window (~5 min) elapses",
+                  "es": "Transcurre la ventana de tolerancia de evicción (~5 min)"
+                }
+              },
+              {
+                "id": "evict",
+                "label": {
+                  "en": "Pods on the node are marked for eviction",
+                  "es": "Los Pods del nodo se marcan para evicción"
+                }
+              },
+              {
+                "id": "reschedule",
+                "label": {
+                  "en": "Controllers create replacement Pods scheduled on healthy nodes",
+                  "es": "Los controladores crean Pods de reemplazo agendados en nodos sanos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "heartbeat",
+              "notready",
+              "tolerate",
+              "evict",
+              "reschedule"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When Kubernetes recovers Pods from a dead node, what happens to data the app wrote to the container's local filesystem?",
+              "es": "Cuando Kubernetes recupera los Pods de un nodo muerto, ¿qué pasa con los datos que la app escribió en el filesystem local del contenedor?"
+            },
+            "options": [
+              {
+                "en": "It is preserved in etcd along with the Pod spec",
+                "es": "Se conservan en etcd junto con la spec del Pod"
+              },
+              {
+                "en": "Kubernetes copies it to the new node automatically",
+                "es": "Kubernetes los copia al nodo nuevo automáticamente"
+              },
+              {
+                "en": "It is lost — Pods are recreated, not moved; durable data needs PersistentVolumes",
+                "es": "Se pierden — los Pods se recrean, no se mueven; los datos durables necesitan PersistentVolumes"
+              },
+              {
+                "en": "It is backed up by the kubelet before the node dies",
+                "es": "El kubelet los respalda antes de que el nodo muera"
+              }
+            ],
+            "explanation": {
+              "en": "Replacement Pods start from a fresh container filesystem on another node. Anything that must survive needs a PersistentVolume on network storage.",
+              "es": "Los Pods de reemplazo arrancan con un filesystem de contenedor limpio en otro nodo. Lo que deba sobrevivir necesita un PersistentVolume en almacenamiento de red."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A node running a StatefulSet Pod becomes unreachable. Why doesn't Kubernetes immediately create a replacement Pod, as it would for a Deployment?",
+              "es": "Un nodo que corre un Pod de un StatefulSet se vuelve inalcanzable. ¿Por qué Kubernetes no crea inmediatamente un Pod de reemplazo, como haría con un Deployment?"
+            },
+            "options": [
+              {
+                "en": "StatefulSets have no controller watching their Pods",
+                "es": "Los StatefulSets no tienen un controlador vigilando sus Pods"
+              },
+              {
+                "en": "Unreachable is not the same as dead: the Pod may still be running, and a replacement could mean two instances with the same identity",
+                "es": "Inalcanzable no es lo mismo que muerto: el Pod podría seguir corriendo, y un reemplazo podría significar dos instancias con la misma identidad"
+              },
+              {
+                "en": "StatefulSet Pods can only run on the node where they were first scheduled",
+                "es": "Los Pods de un StatefulSet solo pueden correr en el nodo donde se agendaron por primera vez"
+              },
+              {
+                "en": "The HPA must approve the replacement first",
+                "es": "El HPA debe aprobar primero el reemplazo"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "StatefulSets guarantee at-most-one Pod per identity. A partitioned node may still be running the Pod, so a duplicate (e.g. two `db-0` writing to the same volume) could corrupt data. Replacement waits until the node is confirmed dead or the Pod is force-deleted.",
+              "es": "Los StatefulSets garantizan como máximo un Pod por identidad. Un nodo particionado podría seguir corriendo el Pod, así que un duplicado (p. ej. dos `db-0` escribiendo al mismo volumen) podría corromper datos. El reemplazo espera hasta confirmar que el nodo murió o hasta eliminar el Pod a la fuerza."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "requests-limits-oomkilled",
+      "question": {
+        "en": "What are resource requests and limits, and what causes OOMKilled and CPU throttling?",
+        "es": "¿Qué son los resource requests y limits, y qué causa OOMKilled y el CPU throttling?"
+      },
+      "definition": {
+        "en": "A **request** is the amount of CPU/memory the scheduler *reserves* when placing the Pod — it determines where the Pod fits and is the baseline for HPA percentages. A **limit** is the hard cap enforced at runtime.\n\nThe two resources behave differently at the limit: CPU is **compressible** — exceeding the CPU limit causes **throttling** (the container gets paused by the kernel scheduler, latency rises, nothing dies). Memory is **incompressible** — exceeding the memory limit gets the container **OOMKilled** (exit code 137) and restarted.\n\nRequests also define **QoS classes**: Guaranteed (requests = limits), Burstable, and BestEffort — which decide who is evicted first under node memory pressure. A common production setup: set requests realistically from observed usage, set a memory limit, and consider leaving CPU without a limit to avoid needless throttling.",
+        "es": "Un **request** es la cantidad de CPU/memoria que el scheduler *reserva* al ubicar el Pod — determina dónde cabe el Pod y es la base para los porcentajes del HPA. Un **limit** es el tope duro que se aplica en tiempo de ejecución.\n\nLos dos recursos se comportan distinto en el límite: la CPU es **compresible** — exceder el límite de CPU causa **throttling** (el kernel pausa el contenedor, la latencia sube, nada muere). La memoria es **incompresible** — exceder el límite de memoria hace que el contenedor sea **OOMKilled** (exit code 137) y reiniciado.\n\nLos requests también definen las **clases QoS**: Guaranteed (requests = limits), Burstable y BestEffort — que deciden quién es desalojado primero bajo presión de memoria del nodo. Una configuración común en producción: poner requests realistas basados en el uso observado, poner límite de memoria, y considerar dejar la CPU sin límite para evitar throttling innecesario."
+      },
+      "examples": [
+        {
+          "en": "A Java service with `-Xmx` above its memory limit gets OOMKilled every few hours under load; the fix is aligning the JVM heap with the container limit.",
+          "es": "Un servicio Java con `-Xmx` por encima de su límite de memoria es OOMKilled cada pocas horas bajo carga; la solución es alinear el heap de la JVM con el límite del contenedor."
+        },
+        {
+          "en": "An API had p99 latency spikes with low average CPU: the CPU limit was too tight and the container was throttled during bursts. Raising the limit (and later removing it) flattened the p99.",
+          "es": "Una API tenía picos de latencia p99 con CPU promedio baja: el límite de CPU era muy ajustado y el contenedor sufría throttling en las ráfagas. Subir el límite (y luego quitarlo) aplanó el p99."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each concept with its effect.",
+              "es": "Conecta cada concepto con su efecto."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "CPU request",
+                  "es": "CPU request"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Memory limit exceeded",
+                  "es": "Límite de memoria excedido"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "CPU limit exceeded",
+                  "es": "Límite de CPU excedido"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "requests = limits",
+                  "es": "requests = limits"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Capacity the scheduler reserves for Pod placement",
+                  "es": "Capacidad que el scheduler reserva para ubicar el Pod"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "OOMKilled: container terminated with exit code 137",
+                  "es": "OOMKilled: contenedor terminado con exit code 137"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Throttling: the container is slowed, not killed",
+                  "es": "Throttling: el contenedor se ralentiza, no muere"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Guaranteed QoS class — evicted last under pressure",
+                  "es": "Clase QoS Guaranteed — desalojado al final bajo presión"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`kubectl describe pod` shows Last State: Terminated, Reason: OOMKilled, Exit Code: 137. What happened?",
+              "es": "`kubectl describe pod` muestra Last State: Terminated, Reason: OOMKilled, Exit Code: 137. ¿Qué pasó?"
+            },
+            "options": [
+              {
+                "en": "The node ran out of disk space",
+                "es": "El nodo se quedó sin espacio en disco"
+              },
+              {
+                "en": "The container exceeded its memory limit and the kernel killed it",
+                "es": "El contenedor excedió su límite de memoria y el kernel lo mató"
+              },
+              {
+                "en": "The container exceeded its CPU limit",
+                "es": "El contenedor excedió su límite de CPU"
+              },
+              {
+                "en": "The liveness probe failed too many times",
+                "es": "La probe de liveness falló demasiadas veces"
+              }
+            ],
+            "explanation": {
+              "en": "OOMKilled / exit code 137 (128 + SIGKILL) means the container hit its memory limit. CPU overuse would only throttle, never kill.",
+              "es": "OOMKilled / exit code 137 (128 + SIGKILL) significa que el contenedor alcanzó su límite de memoria. Excederse en CPU solo causa throttling, nunca mata."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A node comes under memory pressure and Kubernetes must evict Pods. Which Pod is evicted first?",
+              "es": "Un nodo entra en presión de memoria y Kubernetes debe desalojar Pods. ¿Qué Pod es desalojado primero?"
+            },
+            "options": [
+              {
+                "en": "A Guaranteed Pod whose requests equal its limits",
+                "es": "Un Pod Guaranteed cuyos requests igualan sus limits"
+              },
+              {
+                "en": "A Burstable Pod consuming less memory than its request",
+                "es": "Un Pod Burstable que consume menos memoria que su request"
+              },
+              {
+                "en": "The Pod that has been running the longest on the node",
+                "es": "El Pod que lleva más tiempo corriendo en el nodo"
+              },
+              {
+                "en": "A BestEffort Pod that declares no requests or limits at all",
+                "es": "Un Pod BestEffort que no declara requests ni limits en absoluto"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Eviction under node pressure follows QoS: BestEffort Pods go first, then Burstable Pods exceeding their requests, and Guaranteed Pods last. Uptime is irrelevant — this is why production workloads should always declare requests.",
+              "es": "La evicción bajo presión del nodo sigue las clases QoS: primero los Pods BestEffort, luego los Burstable que exceden sus requests, y los Guaranteed al final. El tiempo corriendo es irrelevante — por eso las cargas de producción siempre deben declarar requests."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "crashloopbackoff-troubleshooting",
+      "question": {
+        "en": "How do you troubleshoot a Pod stuck in CrashLoopBackOff?",
+        "es": "¿Cómo diagnosticas un Pod atascado en CrashLoopBackOff?"
+      },
+      "definition": {
+        "en": "**CrashLoopBackOff** means the container starts, dies, and Kubernetes is waiting an exponentially increasing backoff (10s, 20s, 40s… capped at 5 min) before restarting it again. It's a symptom, not a cause — the job is finding *why* the container keeps exiting.\n\nThe methodology: **1)** `kubectl describe pod <name>` — check Last State, Reason (OOMKilled?), Exit Code and the Events section. **2)** `kubectl logs <name>` and crucially `kubectl logs <name> --previous` to see the *dying* container's output, since the current one may not have logged yet. **3)** Read the events for probe failures, image pull errors or mount problems. **4)** Check probe configuration — an aggressive liveness probe on a slow-starting app is a classic silent culprit.\n\nCommon causes map to exit codes: config/env errors (app exits at boot, code 1), OOMKilled (137), failing liveness probe (killed even though the app \"works\"), missing dependency or bad command. If the container dies too fast to inspect, temporarily override the command with `sleep` to get a shell inside.",
+        "es": "**CrashLoopBackOff** significa que el contenedor arranca, muere, y Kubernetes espera un backoff exponencial creciente (10s, 20s, 40s… con tope de 5 min) antes de reiniciarlo otra vez. Es un síntoma, no una causa — el trabajo es encontrar *por qué* el contenedor sigue terminando.\n\nLa metodología: **1)** `kubectl describe pod <name>` — revisar Last State, Reason (¿OOMKilled?), Exit Code y la sección de Events. **2)** `kubectl logs <name>` y sobre todo `kubectl logs <name> --previous` para ver la salida del contenedor *que murió*, ya que el actual puede no haber logueado aún. **3)** Leer los eventos buscando fallos de probes, errores de descarga de imagen o problemas de montaje. **4)** Revisar la configuración de probes — una liveness agresiva sobre una app de arranque lento es un culpable silencioso clásico.\n\nLas causas comunes se mapean a exit codes: errores de config/env (la app termina al arrancar, código 1), OOMKilled (137), liveness que falla (la matan aunque la app \"funcione\"), dependencia faltante o comando incorrecto. Si el contenedor muere demasiado rápido para inspeccionarlo, sobrescribe temporalmente el comando con `sleep` para obtener un shell dentro."
+      },
+      "examples": [
+        {
+          "en": "A Pod crash-looped after a deploy: `kubectl logs --previous` showed `KeyError: 'REDIS_URL'` — the new code required an env var that was never added to the ConfigMap.",
+          "es": "Un Pod entró en crash loop tras un deploy: `kubectl logs --previous` mostró `KeyError: 'REDIS_URL'` — el código nuevo requería una variable de entorno que nunca se agregó al ConfigMap."
+        },
+        {
+          "en": "A service crash-looped only in production: `kubectl describe` showed liveness failures — the probe allowed 5 seconds but the app took 30 to boot under prod data volume. A startup probe fixed it.",
+          "es": "Un servicio entraba en crash loop solo en producción: `kubectl describe` mostraba fallos de liveness — la probe daba 5 segundos pero la app tardaba 30 en arrancar con el volumen de datos de prod. Una startup probe lo arregló."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the debugging steps for a Pod in CrashLoopBackOff, from first to last.",
+              "es": "Ordena los pasos de debugging para un Pod en CrashLoopBackOff, del primero al último."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "describe",
+                "label": {
+                  "en": "kubectl describe pod — check Last State, Exit Code and Events",
+                  "es": "kubectl describe pod — revisar Last State, Exit Code y Events"
+                }
+              },
+              {
+                "id": "logsprev",
+                "label": {
+                  "en": "kubectl logs --previous — read the crashed container's output",
+                  "es": "kubectl logs --previous — leer la salida del contenedor que murió"
+                }
+              },
+              {
+                "id": "events",
+                "label": {
+                  "en": "Inspect events for probe failures or mount/image errors",
+                  "es": "Inspeccionar los eventos buscando fallos de probes o errores de montaje/imagen"
+                }
+              },
+              {
+                "id": "probes",
+                "label": {
+                  "en": "Review probe timing vs the app's real startup time",
+                  "es": "Revisar los tiempos de las probes vs el arranque real de la app"
+                }
+              },
+              {
+                "id": "fix",
+                "label": {
+                  "en": "Apply the fix and watch the rollout stabilize",
+                  "es": "Aplicar la corrección y observar que el rollout se estabilice"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "describe",
+              "logsprev",
+              "events",
+              "probes",
+              "fix"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "`kubectl logs my-pod` returns nothing useful because the container just restarted. What command shows you why the previous container died, and what two other places would you check?",
+              "es": "`kubectl logs my-pod` no devuelve nada útil porque el contenedor acaba de reiniciarse. ¿Qué comando te muestra por qué murió el contenedor anterior, y qué otros dos lugares revisarías?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must give `kubectl logs my-pod --previous` (the --previous flag is the key point). Other places (any two): `kubectl describe pod` for Last State / Exit Code / Reason (e.g. OOMKilled), the Events section (kubectl get events), probe configuration, or exit codes.",
+              "es": "Debe dar `kubectl logs my-pod --previous` (el flag --previous es el punto clave). Otros lugares (dos cualesquiera): `kubectl describe pod` para Last State / Exit Code / Reason (p. ej. OOMKilled), la sección de Events (kubectl get events), la configuración de probes, o los exit codes."
+            },
+            "reference": "Use `kubectl logs my-pod --previous` to read the logs of the container instance that crashed. Then check `kubectl describe pod my-pod` — the Last State block shows the Reason (e.g. OOMKilled, Error) and Exit Code (137 = OOM, 1 = app error) — and the Events section (also via `kubectl get events`), which reveals probe failures, image pull errors or volume mount problems."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each observation on a crash-looping Pod with its most likely diagnosis.",
+              "es": "Conecta cada observación en un Pod en crash loop con su diagnóstico más probable."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Last State: Exit Code 137, Reason: OOMKilled",
+                  "es": "Last State: Exit Code 137, Reason: OOMKilled"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Exit code 1 immediately after the container starts",
+                  "es": "Exit code 1 inmediatamente después de arrancar el contenedor"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Events show 'Liveness probe failed' before every restart",
+                  "es": "Los eventos muestran 'Liveness probe failed' antes de cada reinicio"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Restart delays growing: 10s, 20s, 40s, 80s…",
+                  "es": "Retrasos de reinicio crecientes: 10s, 20s, 40s, 80s…"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "The container exceeded its memory limit and was killed by the kernel",
+                  "es": "El contenedor excedió su límite de memoria y el kernel lo mató"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The app itself dies at boot — typically missing config or env vars",
+                  "es": "La app misma muere al arrancar — típicamente config o variables de entorno faltantes"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Kubernetes is killing the container — the probe may be too aggressive for a slow app",
+                  "es": "Kubernetes está matando el contenedor — la probe puede ser demasiado agresiva para una app lenta"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Normal exponential backoff between restarts, not a separate failure",
+                  "es": "Backoff exponencial normal entre reinicios, no un fallo aparte"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "works-locally-restarts-in-k8s",
+      "question": {
+        "en": "\"It works locally but Kubernetes keeps restarting the container.\" How do you debug this?",
+        "es": "\"Funciona en local pero Kubernetes reinicia el contenedor todo el tiempo.\" ¿Cómo lo depuras?"
+      },
+      "definition": {
+        "en": "If the app runs fine in Docker locally but restarts in Kubernetes, the cause is almost always in what's **different between the two environments**. There are only a few suspects, and they're checkable in order.\n\n**Who is killing it?** `kubectl describe pod` answers this. Reason **OOMKilled** → the memory limit is lower than what the app really uses (locally there was no limit). Reason **Unhealthy / liveness failed** → Kubernetes is killing a healthy-but-slow app; locally nothing probes it. Exit code 1 at boot → the app itself is dying: usually **missing env vars/config** that your local `.env` provided, or it can't reach a dependency due to cluster **DNS/NetworkPolicy** differences.\n\nAlso compare execution context: resource limits, env vars and mounted config, the security context (locally you run as root; the cluster may force `runAsNonRoot` or a read-only filesystem), and the image itself (is the tag you're running actually the image you tested?).",
+        "es": "Si la app corre bien en Docker local pero se reinicia en Kubernetes, la causa está casi siempre en lo que es **diferente entre los dos entornos**. Hay pocos sospechosos, y se pueden revisar en orden.\n\n**¿Quién la está matando?** `kubectl describe pod` lo responde. Reason **OOMKilled** → el límite de memoria es menor que lo que la app realmente usa (en local no había límite). Reason **Unhealthy / liveness failed** → Kubernetes está matando una app sana pero lenta; en local nadie la sondea. Exit code 1 al arrancar → la app misma está muriendo: normalmente **faltan env vars/config** que tu `.env` local proveía, o no alcanza una dependencia por diferencias de **DNS/NetworkPolicy** del clúster.\n\nCompara también el contexto de ejecución: límites de recursos, variables de entorno y config montada, el security context (en local corres como root; el clúster puede forzar `runAsNonRoot` o un filesystem de solo lectura), y la imagen misma (¿el tag que corres es realmente la imagen que probaste?)."
+      },
+      "examples": [
+        {
+          "en": "A Node.js app used ~600 MB locally but its manifest set a 512 MB limit: OOMKilled only under Kubernetes. `kubectl describe` showed exit code 137; raising the limit fixed it.",
+          "es": "Una app Node.js usaba ~600 MB en local pero su manifest fijaba un límite de 512 MB: OOMKilled solo en Kubernetes. `kubectl describe` mostró exit code 137; subir el límite lo resolvió."
+        },
+        {
+          "en": "An app booted in 2 seconds locally but 45 in the cluster (slow network volume). The liveness probe's 10-second budget killed it every time — restarts stopped after adding a startup probe.",
+          "es": "Una app arrancaba en 2 segundos en local pero en 45 en el clúster (volumen de red lento). El presupuesto de 10 segundos de la liveness la mataba cada vez — los reinicios pararon al agregar una startup probe."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An app works in local Docker but restarts in Kubernetes. `kubectl describe pod` shows Reason: OOMKilled. What's the most likely explanation?",
+              "es": "Una app funciona en Docker local pero se reinicia en Kubernetes. `kubectl describe pod` muestra Reason: OOMKilled. ¿Cuál es la explicación más probable?"
+            },
+            "options": [
+              {
+                "en": "The Pod's memory limit is below the app's real usage; locally no limit was enforced",
+                "es": "El límite de memoria del Pod está por debajo del uso real de la app; en local no se aplicaba ningún límite"
+              },
+              {
+                "en": "The liveness probe is misconfigured",
+                "es": "La probe de liveness está mal configurada"
+              },
+              {
+                "en": "The image was built for the wrong architecture",
+                "es": "La imagen se construyó para la arquitectura incorrecta"
+              },
+              {
+                "en": "The cluster's kernel has a bug that local Docker doesn't",
+                "es": "El kernel del clúster tiene un bug que el Docker local no tiene"
+              }
+            ],
+            "explanation": {
+              "en": "OOMKilled points specifically at the memory limit. Local Docker usually runs without limits, hiding the app's true footprint.",
+              "es": "OOMKilled apunta específicamente al límite de memoria. El Docker local normalmente corre sin límites, ocultando el consumo real de la app."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your container runs fine locally but Kubernetes restarts it every ~30 seconds. Logs look normal and there's no OOMKilled. What is your top suspect and how do you confirm and fix it?",
+              "es": "Tu contenedor corre bien en local pero Kubernetes lo reinicia cada ~30 segundos. Los logs se ven normales y no hay OOMKilled. ¿Cuál es tu principal sospechoso y cómo lo confirmas y corriges?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must suspect a failing liveness probe (healthy app killed by probe: wrong path/port, or timing too aggressive for the app's startup/response time). Confirm via `kubectl describe pod` events showing 'Liveness probe failed' / Unhealthy. Fix: correct the probe endpoint/port or relax timing (initialDelaySeconds, timeoutSeconds, failureThreshold) or add a startup probe.",
+              "es": "Debe sospechar de una liveness probe que falla (app sana matada por la probe: path/puerto incorrecto, o tiempos demasiado agresivos para el arranque/respuesta de la app). Confirmar vía los eventos de `kubectl describe pod` mostrando 'Liveness probe failed' / Unhealthy. Corregir: arreglar el endpoint/puerto de la probe o relajar los tiempos (initialDelaySeconds, timeoutSeconds, failureThreshold) o agregar una startup probe."
+            },
+            "reference": "Periodic restarts of a healthy app with clean logs strongly suggest the liveness probe is failing — wrong path or port, or timing too strict. Confirm with `kubectl describe pod`: the Events section will show 'Liveness probe failed' before each restart, and the restart count climbing. Fix by pointing the probe at a valid lightweight endpoint and relaxing timing (initialDelaySeconds / timeoutSeconds / failureThreshold), or by adding a startup probe if boot is slow."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each difference between local Docker and the cluster with the symptom it produces in Kubernetes.",
+              "es": "Conecta cada diferencia entre Docker local y el clúster con el síntoma que produce en Kubernetes."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Memory limit lower than the app's real usage",
+                  "es": "Límite de memoria menor que el uso real de la app"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Env var provided by your local .env but missing in the cluster",
+                  "es": "Variable de entorno provista por tu .env local pero ausente en el clúster"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Liveness probe too aggressive for the app's startup in the cluster",
+                  "es": "Liveness probe demasiado agresiva para el arranque de la app en el clúster"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Cluster enforces runAsNonRoot / read-only root filesystem",
+                  "es": "El clúster fuerza runAsNonRoot / filesystem raíz de solo lectura"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "OOMKilled with exit code 137, only under Kubernetes",
+                  "es": "OOMKilled con exit code 137, solo bajo Kubernetes"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The app exits with code 1 right at boot",
+                  "es": "La app termina con código 1 justo al arrancar"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A healthy but slow app is restarted over and over",
+                  "es": "Una app sana pero lenta es reiniciada una y otra vez"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Permission errors writing files that never happen locally as root",
+                  "es": "Errores de permisos al escribir archivos que nunca ocurren en local como root"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "latency-investigation-k8s",
+      "question": {
+        "en": "A service's latency suddenly increased in Kubernetes. How do you investigate?",
+        "es": "La latencia de un servicio aumentó de repente en Kubernetes. ¿Cómo lo investigas?"
+      },
+      "definition": {
+        "en": "Start with **what changed**: a deploy (`kubectl rollout history`), a config change, a traffic increase, or a neighbor. Then check the **Kubernetes-specific suspects** before diving into the app.\n\nThe big four in a cluster: **CPU throttling** (container hitting its CPU limit — check throttling metrics or `kubectl top pod` vs limits; the app is being paused, so p99 explodes while average CPU looks fine), **failing/flapping readiness** (fewer Ready endpoints → the same traffic concentrates on fewer Pods — `kubectl get endpoints`), **restarts/OOM pressure** (restart count rising means cold caches and dropped connections), and **HPA at max** (`kubectl get hpa` showing the autoscaler pinned at maxReplicas — the service is simply undersized).\n\nIf Kubernetes looks clean, move down the stack as usual: dependencies (database, cache), network (DNS latency inside the cluster is a classic), and node-level noisy neighbors. The differentiator in interviews is naming throttling and endpoint-shrink — the two failure modes people who only know Docker never mention.",
+        "es": "Empieza por **qué cambió**: un deploy (`kubectl rollout history`), un cambio de config, un aumento de tráfico o un vecino ruidoso. Luego revisa los **sospechosos específicos de Kubernetes** antes de sumergirte en la app.\n\nLos cuatro grandes en un clúster: **CPU throttling** (el contenedor tocando su límite de CPU — revisa las métricas de throttling o `kubectl top pod` vs límites; la app está siendo pausada, así que el p99 explota mientras la CPU promedio se ve bien), **readiness fallando/intermitente** (menos endpoints Ready → el mismo tráfico se concentra en menos Pods — `kubectl get endpoints`), **reinicios/presión de OOM** (el contador de restarts subiendo implica cachés frías y conexiones perdidas), y **HPA al máximo** (`kubectl get hpa` mostrando el autoscaler clavado en maxReplicas — el servicio simplemente quedó corto de capacidad).\n\nSi Kubernetes se ve limpio, baja por el stack como siempre: dependencias (base de datos, caché), red (la latencia de DNS dentro del clúster es un clásico) y vecinos ruidosos a nivel de nodo. Lo que te diferencia en la entrevista es nombrar el throttling y la reducción de endpoints — los dos modos de fallo que quien solo conoce Docker nunca menciona."
+      },
+      "examples": [
+        {
+          "en": "p99 latency tripled after a 'harmless' change that halved the CPU limit: average CPU looked fine but throttling metrics showed the container paused 40% of the time.",
+          "es": "La latencia p99 se triplicó tras un cambio 'inofensivo' que redujo a la mitad el límite de CPU: la CPU promedio se veía bien pero las métricas de throttling mostraban el contenedor pausado el 40% del tiempo."
+        },
+        {
+          "en": "Latency doubled because a flaky readiness probe kept ejecting 3 of 6 Pods from the Service — the remaining 3 handled double the traffic. `kubectl get endpoints` made it obvious.",
+          "es": "La latencia se duplicó porque una readiness intermitente expulsaba a 3 de 6 Pods del Service — los 3 restantes manejaban el doble de tráfico. `kubectl get endpoints` lo hizo evidente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "p99 latency spiked but average CPU utilization looks normal and there are no restarts. Which Kubernetes-specific cause fits best?",
+              "es": "La latencia p99 se disparó pero la utilización promedio de CPU se ve normal y no hay reinicios. ¿Qué causa específica de Kubernetes encaja mejor?"
+            },
+            "options": [
+              {
+                "en": "The image registry is slow",
+                "es": "El registro de imágenes está lento"
+              },
+              {
+                "en": "etcd is out of disk space",
+                "es": "etcd se quedó sin espacio en disco"
+              },
+              {
+                "en": "The Pod was OOMKilled repeatedly",
+                "es": "El Pod fue OOMKilled repetidamente"
+              },
+              {
+                "en": "CPU throttling: the container hits its CPU limit in short bursts",
+                "es": "CPU throttling: el contenedor toca su límite de CPU en ráfagas cortas"
+              }
+            ],
+            "explanation": {
+              "en": "Throttling pauses the container during bursts, inflating tail latency while *average* CPU stays deceptively low. Check container throttling metrics against the CPU limit.",
+              "es": "El throttling pausa el contenedor durante las ráfagas, inflando la latencia de cola mientras la CPU *promedio* se mantiene engañosamente baja. Revisa las métricas de throttling del contenedor contra el límite de CPU."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Latency of a service doubled 10 minutes ago. Describe your first three checks in Kubernetes, with the commands or metrics you'd look at and what each one would tell you.",
+              "es": "La latencia de un servicio se duplicó hace 10 minutos. Describe tus primeras tres verificaciones en Kubernetes, con los comandos o métricas que mirarías y qué te diría cada una."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must give three concrete, K8s-relevant checks, e.g.: recent deploys (`kubectl rollout history`), Ready endpoints count (`kubectl get endpoints` / readiness flapping), restarts (`kubectl get pods` restart count / OOMKilled), CPU throttling vs limits (`kubectl top pod`, throttling metrics), HPA at maxReplicas (`kubectl get hpa`). Each check must include what conclusion it supports.",
+              "es": "Debe dar tres verificaciones concretas y relevantes a K8s, p. ej.: deploys recientes (`kubectl rollout history`), conteo de endpoints Ready (`kubectl get endpoints` / readiness intermitente), reinicios (`kubectl get pods` contador de restarts / OOMKilled), CPU throttling vs límites (`kubectl top pod`, métricas de throttling), HPA en maxReplicas (`kubectl get hpa`). Cada verificación debe incluir qué conclusión sustenta."
+            },
+            "reference": "1) `kubectl rollout history deployment/svc` — did a deploy or config change coincide with the spike? If so, roll back first. 2) `kubectl get pods` and `kubectl get endpoints svc` — are all replicas Ready and serving? Rising restart counts or missing endpoints mean the surviving Pods carry extra load. 3) `kubectl top pod` plus throttling metrics vs CPU limits, and `kubectl get hpa` — throttled containers inflate p99, and an HPA pinned at maxReplicas means the service is undersized for current traffic."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each check with what it reveals during a latency investigation in Kubernetes.",
+              "es": "Conecta cada verificación con lo que revela durante una investigación de latencia en Kubernetes."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "kubectl rollout history",
+                  "es": "kubectl rollout history"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "kubectl get endpoints",
+                  "es": "kubectl get endpoints"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Container throttling metrics vs the CPU limit",
+                  "es": "Métricas de throttling del contenedor vs el límite de CPU"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "kubectl get hpa",
+                  "es": "kubectl get hpa"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Whether a recent deploy or config change coincides with the spike",
+                  "es": "Si un deploy o cambio de config reciente coincide con el pico"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "How many Ready Pods are actually receiving the Service's traffic",
+                  "es": "Cuántos Pods Ready están recibiendo realmente el tráfico del Service"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Whether the kernel is pausing the container during bursts, inflating p99",
+                  "es": "Si el kernel está pausando el contenedor en las ráfagas, inflando el p99"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Whether the autoscaler is pinned at maxReplicas — the service is undersized",
+                  "es": "Si el autoscaler está clavado en maxReplicas — el servicio quedó corto de capacidad"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the smallest deployable unit in Kubernetes?",
+          "es": "¿Cuál es la unidad desplegable más pequeña en Kubernetes?"
+        },
+        "options": [
+          {
+            "en": "A node",
+            "es": "Un nodo"
+          },
+          {
+            "en": "A container",
+            "es": "Un contenedor"
+          },
+          {
+            "en": "A Deployment",
+            "es": "Un Deployment"
+          },
+          {
+            "en": "A Pod",
+            "es": "Un Pod"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A Deployment has replicas: 5 and one Pod is deleted manually. What happens?",
+          "es": "Un Deployment tiene replicas: 5 y un Pod se elimina manualmente. ¿Qué pasa?"
+        },
+        "options": [
+          {
+            "en": "The ReplicaSet controller creates a replacement Pod to reach 5 again",
+            "es": "El controlador del ReplicaSet crea un Pod de reemplazo para volver a 5"
+          },
+          {
+            "en": "You must run kubectl apply again to restore it",
+            "es": "Debes ejecutar kubectl apply de nuevo para restaurarlo"
+          },
+          {
+            "en": "The whole Deployment restarts",
+            "es": "Todo el Deployment se reinicia"
+          },
+          {
+            "en": "The Deployment permanently runs with 4 replicas",
+            "es": "El Deployment queda permanentemente con 4 réplicas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which Service type is only reachable from inside the cluster?",
+          "es": "¿Qué tipo de Service solo es alcanzable desde dentro del clúster?"
+        },
+        "options": [
+          {
+            "en": "Ingress",
+            "es": "Ingress"
+          },
+          {
+            "en": "ClusterIP",
+            "es": "ClusterIP"
+          },
+          {
+            "en": "LoadBalancer",
+            "es": "LoadBalancer"
+          },
+          {
+            "en": "NodePort",
+            "es": "NodePort"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What distinguishes an Ingress from a LoadBalancer Service?",
+          "es": "¿Qué distingue a un Ingress de un Service LoadBalancer?"
+        },
+        "options": [
+          {
+            "en": "Ingress routes HTTP by host/path and terminates TLS at L7; LoadBalancer exposes one service at L4",
+            "es": "El Ingress enruta HTTP por host/path y termina TLS en L7; el LoadBalancer expone un servicio en L4"
+          },
+          {
+            "en": "LoadBalancer works only on-premises",
+            "es": "El LoadBalancer solo funciona on-premises"
+          },
+          {
+            "en": "They are two names for the same object",
+            "es": "Son dos nombres para el mismo objeto"
+          },
+          {
+            "en": "Ingress is faster because it skips kube-proxy",
+            "es": "El Ingress es más rápido porque evita kube-proxy"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Where should a database password live?",
+          "es": "¿Dónde debería vivir una contraseña de base de datos?"
+        },
+        "options": [
+          {
+            "en": "In a ConfigMap, for easy editing",
+            "es": "En un ConfigMap, para editarla fácilmente"
+          },
+          {
+            "en": "Hardcoded in the container image",
+            "es": "Hardcodeada en la imagen del contenedor"
+          },
+          {
+            "en": "In an annotation on the Pod",
+            "es": "En una annotation del Pod"
+          },
+          {
+            "en": "In a Secret (ideally synced from an external secret manager)",
+            "es": "En un Secret (idealmente sincronizado desde un gestor de secretos externo)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What happens when a readiness probe fails (but liveness passes)?",
+          "es": "¿Qué pasa cuando una probe de readiness falla (pero la de liveness pasa)?"
+        },
+        "options": [
+          {
+            "en": "The container is restarted",
+            "es": "El contenedor se reinicia"
+          },
+          {
+            "en": "The Pod is evicted from the node",
+            "es": "El Pod es desalojado del nodo"
+          },
+          {
+            "en": "The Deployment rolls back automatically",
+            "es": "El Deployment hace rollback automáticamente"
+          },
+          {
+            "en": "The Pod stops receiving Service traffic but keeps running",
+            "es": "El Pod deja de recibir tráfico del Service pero sigue corriendo"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "An HPA targets 50% CPU utilization. Utilization is computed relative to what?",
+          "es": "Un HPA apunta a 50% de utilización de CPU. ¿La utilización se calcula relativa a qué?"
+        },
+        "options": [
+          {
+            "en": "The container's CPU limit",
+            "es": "El límite de CPU del contenedor"
+          },
+          {
+            "en": "The cluster's average CPU usage",
+            "es": "El uso promedio de CPU del clúster"
+          },
+          {
+            "en": "The node's total CPU capacity",
+            "es": "La capacidad total de CPU del nodo"
+          },
+          {
+            "en": "The Pod's CPU request",
+            "es": "El CPU request del Pod"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which combination guarantees full capacity during a rolling update?",
+          "es": "¿Qué combinación garantiza capacidad completa durante un rolling update?"
+        },
+        "options": [
+          {
+            "en": "Recreate strategy",
+            "es": "Estrategia Recreate"
+          },
+          {
+            "en": "maxSurge: 0, maxUnavailable: 0",
+            "es": "maxSurge: 0, maxUnavailable: 0"
+          },
+          {
+            "en": "maxSurge: 0, maxUnavailable: 1",
+            "es": "maxSurge: 0, maxUnavailable: 1"
+          },
+          {
+            "en": "maxSurge: 1, maxUnavailable: 0",
+            "es": "maxSurge: 1, maxUnavailable: 0"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A container is terminated with exit code 137 and Reason: OOMKilled. What does this mean?",
+          "es": "Un contenedor termina con exit code 137 y Reason: OOMKilled. ¿Qué significa?"
+        },
+        "options": [
+          {
+            "en": "Its liveness probe failed",
+            "es": "Su probe de liveness falló"
+          },
+          {
+            "en": "It exceeded its CPU limit",
+            "es": "Excedió su límite de CPU"
+          },
+          {
+            "en": "The application called exit(137)",
+            "es": "La aplicación llamó a exit(137)"
+          },
+          {
+            "en": "It exceeded its memory limit and was killed by the kernel",
+            "es": "Excedió su límite de memoria y el kernel lo mató"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Exceeding the CPU limit causes ______, while exceeding the memory limit causes ______.",
+          "es": "Exceder el límite de CPU causa ______, mientras que exceder el límite de memoria causa ______."
+        },
+        "options": [
+          {
+            "en": "throttling / OOMKill",
+            "es": "throttling / OOMKill"
+          },
+          {
+            "en": "a restart / node drain",
+            "es": "un reinicio / drenado del nodo"
+          },
+          {
+            "en": "OOMKill / throttling",
+            "es": "OOMKill / throttling"
+          },
+          {
+            "en": "eviction / throttling",
+            "es": "evicción / throttling"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A Pod is in CrashLoopBackOff and the current container has no logs yet. What is the single most useful next command?",
+          "es": "Un Pod está en CrashLoopBackOff y el contenedor actual aún no tiene logs. ¿Cuál es el siguiente comando más útil?"
+        },
+        "options": [
+          {
+            "en": "kubectl logs <pod> --previous",
+            "es": "kubectl logs <pod> --previous"
+          },
+          {
+            "en": "kubectl drain the node",
+            "es": "kubectl drain del nodo"
+          },
+          {
+            "en": "kubectl delete pod to force a clean start",
+            "es": "kubectl delete pod para forzar un arranque limpio"
+          },
+          {
+            "en": "kubectl scale deployment --replicas=0",
+            "es": "kubectl scale deployment --replicas=0"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A worker node dies at 2 a.m. Explain step by step how Kubernetes recovers the workloads that were running on it, including the approximate timings involved.",
+          "es": "Un nodo worker muere a las 2 a.m. Explica paso a paso cómo Kubernetes recupera las cargas de trabajo que corrían en él, incluyendo los tiempos aproximados involucrados."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe: kubelet heartbeats stop → node marked NotReady (~40s) → eviction tolerance window (~5 min) → Pods on the node marked for eviction → ReplicaSet/Deployment controllers create replacement Pods → scheduler places them on healthy nodes. Bonus: Pods are recreated (not moved), local data is lost, StatefulSets are more conservative.",
+          "es": "Debe describir: cesan los heartbeats del kubelet → nodo marcado NotReady (~40s) → ventana de tolerancia de evicción (~5 min) → los Pods del nodo se marcan para evicción → los controladores de ReplicaSet/Deployment crean Pods de reemplazo → el scheduler los ubica en nodos sanos. Bonus: los Pods se recrean (no se mueven), los datos locales se pierden, los StatefulSets son más conservadores."
+        },
+        "reference": "The node's kubelet stops sending heartbeats; after ~40 seconds the node controller marks the node NotReady. Kubernetes then waits the unreachable toleration window (~5 minutes by default) in case it's a transient network issue. After that, Pods on the node are marked for eviction; the ReplicaSet controllers notice the replica count dropped and create new Pods, which the scheduler places on healthy nodes and their kubelets start. Pods are recreated rather than moved, so container-local data is lost — durable state must live in PersistentVolumes. StatefulSets hold off on replacement until the old Pod is confirmed gone, to avoid two instances with the same identity."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain the difference between liveness and readiness probes, what happens when each fails, and give one example of an outage caused by a badly configured liveness probe.",
+          "es": "Explica la diferencia entre las probes de liveness y readiness, qué pasa cuando cada una falla, y da un ejemplo de una caída causada por una liveness mal configurada."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must state: liveness failure → container restart; readiness failure → Pod removed from Service endpoints without restart. Must give a plausible outage example, e.g. liveness checking a database dependency (DB blip restarts every replica at once) or an aggressive liveness killing a slow-starting app in a restart loop.",
+          "es": "Debe indicar: fallo de liveness → reinicio del contenedor; fallo de readiness → Pod removido de los endpoints del Service sin reinicio. Debe dar un ejemplo plausible de caída, p. ej. una liveness que chequea una dependencia de base de datos (un parpadeo de la DB reinicia todas las réplicas a la vez) o una liveness agresiva que mata una app de arranque lento en bucle."
+        },
+        "reference": "Liveness answers 'is this process stuck?' — on failure the kubelet restarts the container. Readiness answers 'can it serve traffic right now?' — on failure the Pod is pulled out of Service endpoints but keeps running, and rejoins when it passes again. Classic outage: the liveness probe hits /health, which also pings the database; a 30-second DB blip makes every replica fail liveness simultaneously, so Kubernetes restarts the whole fleet at once and a minor dependency hiccup becomes a full outage. Another: a liveness probe with a 10-second budget on an app that takes 60 seconds to boot creates an infinite CrashLoopBackOff. Dependency checks belong in readiness; slow startup calls for a startup probe."
+      }
+    }
+  ]
+}

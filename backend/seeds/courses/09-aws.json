@@ -1,0 +1,1985 @@
+{
+  "slug": "aws",
+  "order": 9,
+  "icon": "cloud",
+  "title": {
+    "en": "AWS",
+    "es": "AWS"
+  },
+  "description": {
+    "en": "The AWS services every backend interview touches: compute, S3, databases, queues, caching, VPC, IAM, high availability and monitoring.",
+    "es": "Los servicios de AWS que toda entrevista de backend toca: cómputo, S3, bases de datos, colas, caché, VPC, IAM, alta disponibilidad y monitoreo."
+  },
+  "lessons": [
+    {
+      "slug": "compute-options",
+      "question": {
+        "en": "EC2 vs ECS/EKS vs Lambda — when would you use each?",
+        "es": "EC2 vs ECS/EKS vs Lambda — ¿cuándo usarías cada uno?"
+      },
+      "definition": {
+        "en": "**EC2** gives you raw virtual machines: full control over the OS, networking and installed software, but you manage patching, scaling and capacity yourself. Choose it for legacy workloads, custom kernels/GPUs, or when you need long-lived stateful processes.\n\n**ECS/EKS** run **containers**: you ship an image and the orchestrator handles placement, restarts and scaling. ECS is AWS-native and simpler; EKS is managed Kubernetes for teams that need the K8s ecosystem or portability. Ideal for microservices with steady traffic.\n\n**Lambda** is serverless functions: you upload code, AWS runs it per event and bills per millisecond. Perfect for spiky or event-driven work (queue consumers, image resizing, cron jobs), but limited by execution time (15 min max), package size and **cold starts**.",
+        "es": "**EC2** te da máquinas virtuales puras: control total del SO, la red y el software instalado, pero tú gestionas parches, escalado y capacidad. Elígelo para cargas legacy, kernels/GPUs personalizados o procesos con estado de larga vida.\n\n**ECS/EKS** ejecutan **contenedores**: entregas una imagen y el orquestador se encarga de la colocación, los reinicios y el escalado. ECS es nativo de AWS y más simple; EKS es Kubernetes gestionado para equipos que necesitan el ecosistema de K8s o portabilidad. Ideal para microservicios con tráfico estable.\n\n**Lambda** son funciones serverless: subes código, AWS lo ejecuta por evento y cobra por milisegundo. Perfecto para trabajo esporádico o dirigido por eventos (consumidores de colas, redimensionar imágenes, cron jobs), pero limitado por tiempo de ejecución (máx. 15 min), tamaño del paquete y **cold starts**."
+      },
+      "examples": [
+        {
+          "en": "A fintech runs its core API on ECS Fargate (steady traffic, containers), but uses Lambda to process webhook events from payment providers that arrive in bursts.",
+          "es": "Una fintech corre su API principal en ECS Fargate (tráfico estable, contenedores), pero usa Lambda para procesar webhooks de proveedores de pago que llegan en ráfagas."
+        },
+        {
+          "en": "A machine-learning team keeps EC2 GPU instances for training jobs because they need specific drivers and instances running for hours.",
+          "es": "Un equipo de machine learning mantiene instancias EC2 con GPU para entrenar modelos porque necesitan drivers específicos e instancias corriendo durante horas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You must process thumbnails whenever a user uploads an image. Traffic is unpredictable: zero at night, thousands of uploads during launches. What's the best compute choice?",
+              "es": "Debes generar miniaturas cada vez que un usuario sube una imagen. El tráfico es impredecible: cero de noche, miles de subidas durante lanzamientos. ¿Cuál es la mejor opción de cómputo?"
+            },
+            "options": [
+              {
+                "en": "Lambda triggered by S3 events — scales to zero and bills per invocation",
+                "es": "Lambda disparada por eventos de S3 — escala a cero y cobra por invocación"
+              },
+              {
+                "en": "A fixed fleet of EC2 instances sized for peak traffic",
+                "es": "Una flota fija de instancias EC2 dimensionada para el pico de tráfico"
+              },
+              {
+                "en": "EKS with a node group always running at maximum capacity",
+                "es": "EKS con un grupo de nodos siempre corriendo a capacidad máxima"
+              },
+              {
+                "en": "A single large EC2 instance with a cron job polling S3",
+                "es": "Una sola instancia EC2 grande con un cron job consultando S3"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Event-driven, spiky, short-lived work is Lambda's sweet spot: it scales automatically with the events and costs nothing when idle.",
+              "es": "El trabajo dirigido por eventos, esporádico y de corta duración es el punto fuerte de Lambda: escala automáticamente con los eventos y no cuesta nada cuando está inactivo."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each compute service with its ideal use case.",
+              "es": "Conecta cada servicio de cómputo con su caso de uso ideal."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "EC2",
+                  "es": "EC2"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "ECS Fargate",
+                  "es": "ECS Fargate"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "EKS",
+                  "es": "EKS"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Lambda",
+                  "es": "Lambda"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Legacy app needing full OS control and custom drivers",
+                  "es": "App legacy que necesita control total del SO y drivers personalizados"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Containerized microservices without managing servers",
+                  "es": "Microservicios en contenedores sin gestionar servidores"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Team standardized on Kubernetes and its ecosystem",
+                  "es": "Equipo estandarizado en Kubernetes y su ecosistema"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Short event-driven functions with spiky traffic",
+                  "es": "Funciones cortas dirigidas por eventos con tráfico esporádico"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A batch job transcodes 4-hour videos; each job needs about 45 minutes of CPU. Why is Lambda a poor fit for this workload?",
+              "es": "Un trabajo batch transcodifica videos de 4 horas; cada trabajo necesita unos 45 minutos de CPU. ¿Por qué Lambda encaja mal para esta carga?"
+            },
+            "options": [
+              {
+                "en": "Lambda cannot be triggered by queue or storage events",
+                "es": "Lambda no puede dispararse por eventos de colas o de almacenamiento"
+              },
+              {
+                "en": "Lambda's execution limit is 15 minutes — long-running jobs belong on ECS, EC2 or AWS Batch",
+                "es": "El límite de ejecución de Lambda es de 15 minutos — los trabajos largos van en ECS, EC2 o AWS Batch"
+              },
+              {
+                "en": "Lambda functions cannot read from or write to S3",
+                "es": "Las funciones Lambda no pueden leer ni escribir en S3"
+              },
+              {
+                "en": "Lambda only supports JavaScript, and transcoders are written in C",
+                "es": "Lambda solo soporta JavaScript, y los transcodificadores están escritos en C"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Lambda hard-caps execution at 15 minutes, so a 45-minute transcode can never finish. Long-running, CPU-heavy jobs fit containers (ECS), instances (EC2) or AWS Batch. The other options are false: Lambda integrates with S3 and SQS and supports many runtimes.",
+              "es": "Lambda limita la ejecución a 15 minutos como máximo, así que una transcodificación de 45 minutos nunca terminaría. Los trabajos largos e intensivos en CPU encajan en contenedores (ECS), instancias (EC2) o AWS Batch. Las demás opciones son falsas: Lambda se integra con S3 y SQS y soporta muchos runtimes."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "s3-fundamentals",
+      "question": {
+        "en": "What is S3? Explain its consistency model, storage classes and presigned URLs.",
+        "es": "¿Qué es S3? Explica su modelo de consistencia, clases de almacenamiento y presigned URLs."
+      },
+      "definition": {
+        "en": "**S3** is object storage: you store immutable objects (files + metadata) in **buckets**, addressed by key. It offers 11 nines of durability, virtually unlimited capacity, and you pay per GB stored and per request. It is *not* a filesystem — there are no real directories, and you can't append to an object.\n\nSince 2020, S3 is **strongly consistent**: after a successful write (PUT or DELETE), any subsequent read returns the latest version. **Storage classes** trade access cost for storage cost: Standard (hot data), Standard-IA (infrequent access), Glacier (archives, retrieval takes minutes to hours). Lifecycle rules move objects between classes automatically.\n\nA **presigned URL** is a time-limited URL signed with your credentials that grants temporary access to a private object — the standard way to let a browser upload or download directly to S3 without proxying bytes through your backend.",
+        "es": "**S3** es almacenamiento de objetos: guardas objetos inmutables (archivos + metadatos) en **buckets**, direccionados por clave. Ofrece 11 nueves de durabilidad, capacidad prácticamente ilimitada, y pagas por GB almacenado y por petición. *No* es un filesystem — no hay directorios reales y no puedes hacer append a un objeto.\n\nDesde 2020, S3 es **fuertemente consistente**: tras una escritura exitosa (PUT o DELETE), cualquier lectura posterior devuelve la última versión. Las **clases de almacenamiento** intercambian costo de acceso por costo de almacenamiento: Standard (datos calientes), Standard-IA (acceso infrecuente), Glacier (archivos históricos, la recuperación tarda de minutos a horas). Las reglas de lifecycle mueven objetos entre clases automáticamente.\n\nUna **presigned URL** es una URL firmada con tus credenciales y con tiempo límite que otorga acceso temporal a un objeto privado — la forma estándar de dejar que un navegador suba o descargue directo a S3 sin pasar los bytes por tu backend."
+      },
+      "examples": [
+        {
+          "en": "A video platform stores originals in S3 Standard, moves them to Standard-IA after 30 days, and archives raw footage to Glacier after a year via lifecycle rules.",
+          "es": "Una plataforma de video guarda los originales en S3 Standard, los mueve a Standard-IA a los 30 días y archiva el material crudo a Glacier al año mediante reglas de lifecycle."
+        },
+        {
+          "en": "A document app issues a presigned PUT URL valid for 5 minutes so the browser uploads a 200 MB PDF directly to S3 — the API server never touches the file bytes.",
+          "es": "Una app de documentos emite una presigned URL de PUT válida por 5 minutos para que el navegador suba un PDF de 200 MB directo a S3 — el servidor de API nunca toca los bytes del archivo."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Right after a successful PUT of a new object to S3, another client GETs the same key. What does it see?",
+              "es": "Justo después de un PUT exitoso de un objeto nuevo en S3, otro cliente hace GET de la misma clave. ¿Qué ve?"
+            },
+            "options": [
+              {
+                "en": "A cached stale version until the CDN expires",
+                "es": "Una versión vieja en caché hasta que el CDN expire"
+              },
+              {
+                "en": "A 404 for a few seconds due to eventual consistency",
+                "es": "Un 404 por unos segundos debido a consistencia eventual"
+              },
+              {
+                "en": "It depends on the storage class of the object",
+                "es": "Depende de la clase de almacenamiento del objeto"
+              },
+              {
+                "en": "The new object — S3 is strongly consistent for reads after writes",
+                "es": "El objeto nuevo — S3 es fuertemente consistente para lecturas tras escrituras"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Since December 2020 S3 provides strong read-after-write consistency for all operations, including overwrites and deletes.",
+              "es": "Desde diciembre de 2020, S3 ofrece consistencia fuerte de lectura tras escritura para todas las operaciones, incluidas sobrescrituras y borrados."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your API lets users download private files stored in S3. Explain how you would implement this with presigned URLs and why it's better than streaming the file through your backend.",
+              "es": "Tu API permite a los usuarios descargar archivos privados guardados en S3. Explica cómo lo implementarías con presigned URLs y por qué es mejor que transmitir el archivo a través de tu backend."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that the backend authenticates/authorizes the user, then generates a time-limited presigned URL (signed with its credentials/role) and returns it so the client downloads directly from S3. Must mention at least one benefit: offloading bandwidth/CPU from the backend, lower latency, or scalability. Bonus: mentioning short expiration times as a security measure.",
+              "es": "Debe explicar que el backend autentica/autoriza al usuario, luego genera una presigned URL con tiempo límite (firmada con sus credenciales/rol) y la devuelve para que el cliente descargue directo desde S3. Debe mencionar al menos un beneficio: liberar ancho de banda/CPU del backend, menor latencia o escalabilidad. Bonus: mencionar expiraciones cortas como medida de seguridad."
+            },
+            "reference": "The client requests the file from the API; the API checks permissions and, if allowed, calls S3 to generate a presigned GET URL that expires in a few minutes, then returns it. The browser downloads directly from S3. This avoids proxying bytes through the backend, saving bandwidth and CPU, scales with S3 instead of your servers, and the short expiry limits the window for URL leakage."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Compliance logs are written once, read often for 30 days, almost never after 90 days, and must be retained for 7 years (retrieval within hours is acceptable). What is the most cost-effective setup?",
+              "es": "Los logs de cumplimiento se escriben una vez, se leen con frecuencia durante 30 días, casi nunca después de 90 días, y deben conservarse 7 años (una recuperación de horas es aceptable). ¿Cuál es la configuración más rentable?"
+            },
+            "options": [
+              {
+                "en": "Store the logs as EBS snapshots attached to a stopped instance",
+                "es": "Guardar los logs como snapshots de EBS adjuntos a una instancia detenida"
+              },
+              {
+                "en": "Keep everything in S3 Standard for the full 7 years for instant access",
+                "es": "Mantener todo en S3 Standard durante los 7 años para acceso instantáneo"
+              },
+              {
+                "en": "A lifecycle rule: Standard, then Standard-IA at 30 days, then Glacier at 90 days",
+                "es": "Una regla de lifecycle: Standard, luego Standard-IA a los 30 días, luego Glacier a los 90 días"
+              },
+              {
+                "en": "Write the logs to DynamoDB with a 7-year TTL on each item",
+                "es": "Escribir los logs en DynamoDB con un TTL de 7 años en cada ítem"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Lifecycle rules automate exactly this: hot data stays in Standard, infrequently accessed data moves to Standard-IA, and archives land in Glacier where storage is cheapest and retrieval taking minutes to hours is acceptable. Standard-only wastes money for 7 years; EBS and DynamoDB are the wrong tools for cheap archival.",
+              "es": "Las reglas de lifecycle automatizan exactamente esto: los datos calientes quedan en Standard, los de acceso infrecuente pasan a Standard-IA, y los archivos históricos terminan en Glacier, donde el almacenamiento es más barato y una recuperación de minutos a horas es aceptable. Solo Standard desperdicia dinero durante 7 años; EBS y DynamoDB son herramientas equivocadas para archivar barato."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "rds-vs-dynamodb",
+      "question": {
+        "en": "RDS vs DynamoDB — when would you choose each?",
+        "es": "RDS vs DynamoDB — ¿cuándo elegirías cada uno?"
+      },
+      "definition": {
+        "en": "**RDS** is managed relational databases (PostgreSQL, MySQL, etc.): AWS handles backups, patching, replicas and failover, but it's still SQL — you get joins, transactions, ad-hoc queries and strong schemas. It scales *vertically* first, and read replicas help with read-heavy loads; write scaling has limits.\n\n**DynamoDB** is a fully managed NoSQL key-value/document store: single-digit-millisecond latency at any scale, autoscaling throughput, and no servers to manage. The catch: you must **design tables around access patterns** (partition key + sort key). Ad-hoc queries and joins are painful, and hot partition keys can throttle you.\n\nRule of thumb: relational data with flexible queries and transactions → RDS. Known, simple access patterns at massive scale (sessions, carts, event logs, user profiles) → DynamoDB.",
+        "es": "**RDS** son bases de datos relacionales gestionadas (PostgreSQL, MySQL, etc.): AWS se encarga de backups, parches, réplicas y failover, pero sigue siendo SQL — tienes joins, transacciones, consultas ad-hoc y esquemas fuertes. Escala primero *verticalmente*, y las réplicas de lectura ayudan con cargas de mucha lectura; escalar escrituras tiene límites.\n\n**DynamoDB** es un almacén NoSQL clave-valor/documentos totalmente gestionado: latencia de milisegundos de un dígito a cualquier escala, throughput con autoescalado y sin servidores que administrar. El detalle: debes **diseñar las tablas alrededor de los patrones de acceso** (partition key + sort key). Las consultas ad-hoc y los joins son dolorosos, y una partition key caliente puede limitarte (throttling).\n\nRegla práctica: datos relacionales con consultas flexibles y transacciones → RDS. Patrones de acceso conocidos y simples a escala masiva (sesiones, carritos, logs de eventos, perfiles de usuario) → DynamoDB."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce keeps orders, inventory and payments in RDS PostgreSQL (transactions and reporting), but stores shopping cart sessions in DynamoDB for cheap, fast key lookups.",
+          "es": "Un e-commerce guarda órdenes, inventario y pagos en RDS PostgreSQL (transacciones y reportes), pero almacena las sesiones del carrito en DynamoDB para búsquedas por clave rápidas y baratas."
+        },
+        {
+          "en": "A gaming backend stores player state in DynamoDB keyed by player ID: millions of concurrent reads/writes with predictable latency, no complex queries needed.",
+          "es": "Un backend de videojuegos guarda el estado de los jugadores en DynamoDB con el ID de jugador como clave: millones de lecturas/escrituras concurrentes con latencia predecible, sin necesidad de consultas complejas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your analytics team needs to run ad-hoc queries joining users, orders and products, with multi-row transactions for order placement. Which database fits best?",
+              "es": "Tu equipo de analítica necesita consultas ad-hoc con joins entre usuarios, órdenes y productos, con transacciones multi-fila al crear órdenes. ¿Qué base de datos encaja mejor?"
+            },
+            "options": [
+              {
+                "en": "ElastiCache — keep everything in memory for speed",
+                "es": "ElastiCache — mantener todo en memoria por velocidad"
+              },
+              {
+                "en": "RDS — relational model with joins, transactions and flexible SQL",
+                "es": "RDS — modelo relacional con joins, transacciones y SQL flexible"
+              },
+              {
+                "en": "DynamoDB — it scales better so queries will be faster",
+                "es": "DynamoDB — escala mejor así que las consultas serán más rápidas"
+              },
+              {
+                "en": "S3 — store rows as JSON objects and scan them",
+                "es": "S3 — guardar filas como objetos JSON y escanearlos"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Ad-hoc joins and multi-row transactions are exactly what relational databases are built for; DynamoDB requires pre-designed access patterns.",
+              "es": "Los joins ad-hoc y las transacciones multi-fila son exactamente para lo que se construyeron las bases relacionales; DynamoDB requiere patrones de acceso prediseñados."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each workload with the better database choice and reason.",
+              "es": "Conecta cada carga de trabajo con la mejor elección de base de datos y su razón."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Financial ledger with multi-table transactions",
+                  "es": "Libro contable con transacciones multi-tabla"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "User sessions looked up by session ID",
+                  "es": "Sesiones de usuario buscadas por ID de sesión"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "BI dashboard with unpredictable queries",
+                  "es": "Dashboard de BI con consultas impredecibles"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "IoT events: millions of writes/sec by device ID",
+                  "es": "Eventos IoT: millones de escrituras/seg por ID de dispositivo"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "RDS — ACID transactions across tables",
+                  "es": "RDS — transacciones ACID entre tablas"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "DynamoDB — simple key lookup at scale",
+                  "es": "DynamoDB — búsqueda simple por clave a escala"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "RDS — flexible SQL for ad-hoc analysis",
+                  "es": "RDS — SQL flexible para análisis ad-hoc"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "DynamoDB — massive write throughput on a partition key",
+                  "es": "DynamoDB — throughput masivo de escritura sobre una partition key"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A DynamoDB table uses `status` as its partition key, and 90% of items have status 'active'. Despite plenty of provisioned capacity, requests are being throttled. What is the root cause?",
+              "es": "Una tabla de DynamoDB usa `status` como partition key, y el 90% de los ítems tienen status 'active'. A pesar de tener capacidad provisionada de sobra, las peticiones sufren throttling. ¿Cuál es la causa raíz?"
+            },
+            "options": [
+              {
+                "en": "A global secondary index is missing on the status attribute",
+                "es": "Falta un índice secundario global sobre el atributo status"
+              },
+              {
+                "en": "The table has too many items and must be sharded manually",
+                "es": "La tabla tiene demasiados ítems y debe fragmentarse manualmente"
+              },
+              {
+                "en": "DynamoDB throttles every table during regional peak hours",
+                "es": "DynamoDB limita todas las tablas durante las horas pico de la región"
+              },
+              {
+                "en": "A hot partition: the low-cardinality key concentrates most traffic on one partition, whose throughput is capped",
+                "es": "Una partición caliente: la clave de baja cardinalidad concentra la mayoría del tráfico en una sola partición, cuyo throughput está limitado"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Provisioned throughput is divided across partitions, and each partition has a hard per-partition limit. A partition key with few distinct values (like `status`) funnels most requests to one partition, which throttles no matter how much total capacity you buy. The fix is a high-cardinality key such as a user or device ID.",
+              "es": "El throughput provisionado se reparte entre particiones, y cada partición tiene un límite fijo individual. Una partition key con pocos valores distintos (como `status`) canaliza la mayoría de las peticiones a una sola partición, que sufre throttling sin importar cuánta capacidad total compres. La solución es una clave de alta cardinalidad, como un ID de usuario o de dispositivo."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "sqs-vs-sns",
+      "question": {
+        "en": "What is the difference between SQS and SNS, and how does the fan-out pattern combine them?",
+        "es": "¿Cuál es la diferencia entre SQS y SNS, y cómo los combina el patrón fan-out?"
+      },
+      "definition": {
+        "en": "**SQS** is a message *queue*: producers enqueue messages, and **one consumer** processes each message, deleting it afterwards. Messages persist (up to 14 days) until processed, which decouples producers from slow or failing consumers. Standard queues offer at-least-once delivery; FIFO queues add ordering and exactly-once processing.\n\n**SNS** is *pub/sub*: a producer publishes to a **topic**, and SNS pushes a copy to **every subscriber** (Lambda, SQS, HTTP, email) immediately. There is no persistence — if nobody is subscribed, the message is gone.\n\nThe **fan-out pattern** combines them: publish once to an SNS topic that has several SQS queues subscribed. Each queue gets its own copy, so multiple independent services process the same event at their own pace, with retries and buffering per consumer.",
+        "es": "**SQS** es una *cola* de mensajes: los productores encolan mensajes y **un solo consumidor** procesa cada mensaje, borrándolo después. Los mensajes persisten (hasta 14 días) hasta ser procesados, lo que desacopla a los productores de consumidores lentos o caídos. Las colas Standard ofrecen entrega at-least-once; las FIFO agregan orden y procesamiento exactly-once.\n\n**SNS** es *pub/sub*: un productor publica en un **topic** y SNS empuja una copia a **cada suscriptor** (Lambda, SQS, HTTP, email) inmediatamente. No hay persistencia — si nadie está suscrito, el mensaje se pierde.\n\nEl patrón **fan-out** los combina: publicas una vez en un topic de SNS que tiene varias colas SQS suscritas. Cada cola recibe su propia copia, así múltiples servicios independientes procesan el mismo evento a su ritmo, con reintentos y buffering por consumidor."
+      },
+      "examples": [
+        {
+          "en": "When an order is placed, the order service publishes 'OrderCreated' to SNS; separate SQS queues feed the invoicing service, the shipping service and the analytics pipeline — each at its own speed.",
+          "es": "Cuando se crea una orden, el servicio de órdenes publica 'OrderCreated' en SNS; colas SQS separadas alimentan al servicio de facturación, al de envíos y al pipeline de analítica — cada uno a su ritmo."
+        },
+        {
+          "en": "A video encoder pulls jobs from an SQS queue: if encoding spikes, messages simply wait in the queue instead of overwhelming the workers, and failed jobs go to a dead-letter queue.",
+          "es": "Un encoder de video toma trabajos de una cola SQS: si la carga sube, los mensajes simplemente esperan en la cola en vez de saturar los workers, y los trabajos fallidos van a una dead-letter queue."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the flow of an event through a fan-out architecture, from producer to processing.",
+              "es": "Ordena el flujo de un evento a través de una arquitectura fan-out, del productor al procesamiento."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "publish",
+                "label": {
+                  "en": "Service publishes event to SNS topic",
+                  "es": "El servicio publica el evento en el topic de SNS"
+                }
+              },
+              {
+                "id": "fanout",
+                "label": {
+                  "en": "SNS delivers a copy to each subscribed SQS queue",
+                  "es": "SNS entrega una copia a cada cola SQS suscrita"
+                }
+              },
+              {
+                "id": "poll",
+                "label": {
+                  "en": "Each worker polls its own queue",
+                  "es": "Cada worker consulta (poll) su propia cola"
+                }
+              },
+              {
+                "id": "process",
+                "label": {
+                  "en": "Worker processes the message",
+                  "es": "El worker procesa el mensaje"
+                }
+              },
+              {
+                "id": "delete",
+                "label": {
+                  "en": "Worker deletes the message from its queue",
+                  "es": "El worker borra el mensaje de su cola"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "publish",
+              "fanout",
+              "poll",
+              "process",
+              "delete"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Three independent services must all react to every 'UserSignedUp' event, and each needs its own retries and buffering. What do you build?",
+              "es": "Tres servicios independientes deben reaccionar a cada evento 'UserSignedUp', y cada uno necesita sus propios reintentos y buffering. ¿Qué construyes?"
+            },
+            "options": [
+              {
+                "en": "A shared DynamoDB table that services poll every second",
+                "es": "Una tabla DynamoDB compartida que los servicios consultan cada segundo"
+              },
+              {
+                "en": "One SQS queue with three consumers competing for messages",
+                "es": "Una sola cola SQS con tres consumidores compitiendo por los mensajes"
+              },
+              {
+                "en": "SNS topic with three SQS queues subscribed (fan-out)",
+                "es": "Un topic de SNS con tres colas SQS suscritas (fan-out)"
+              },
+              {
+                "en": "Three SNS topics, one per service, published sequentially",
+                "es": "Tres topics de SNS, uno por servicio, publicados secuencialmente"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "With a single SQS queue, each message goes to only ONE consumer. Fan-out via SNS gives every service its own copy, and each SQS queue provides independent buffering and retries.",
+              "es": "Con una sola cola SQS, cada mensaje llega a UN solo consumidor. El fan-out con SNS da a cada servicio su propia copia, y cada cola SQS aporta buffering y reintentos independientes."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An SQS consumer takes about 60 seconds to process each message, but the queue's visibility timeout is 30 seconds. What happens, and what is the right fix?",
+              "es": "Un consumidor de SQS tarda unos 60 segundos en procesar cada mensaje, pero el visibility timeout de la cola es de 30 segundos. ¿Qué ocurre y cuál es la solución correcta?"
+            },
+            "options": [
+              {
+                "en": "The message is moved straight to the dead-letter queue after 30 seconds",
+                "es": "El mensaje pasa directo a la dead-letter queue a los 30 segundos"
+              },
+              {
+                "en": "SQS pauses the whole queue until the first worker finishes",
+                "es": "SQS pausa toda la cola hasta que el primer worker termina"
+              },
+              {
+                "en": "The message becomes visible again mid-processing and another worker picks it up — raise the visibility timeout and make processing idempotent",
+                "es": "El mensaje vuelve a ser visible a mitad del procesamiento y otro worker lo toma — aumenta el visibility timeout y haz el procesamiento idempotente"
+              },
+              {
+                "en": "The message is deleted automatically after 30 seconds, so work is silently lost",
+                "es": "El mensaje se borra automáticamente a los 30 segundos, así que el trabajo se pierde en silencio"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The visibility timeout only hides a message while a consumer works on it. If processing outlasts it, the message reappears and gets delivered again, producing duplicate processing. Set the timeout comfortably above the worst-case processing time, and design consumers to be idempotent since Standard queues are at-least-once anyway.",
+              "es": "El visibility timeout solo oculta un mensaje mientras un consumidor lo trabaja. Si el procesamiento dura más, el mensaje reaparece y se entrega de nuevo, produciendo procesamiento duplicado. Configura el timeout bastante por encima del peor caso de procesamiento, y diseña consumidores idempotentes, ya que las colas Standard son at-least-once de todos modos."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "elasticache-caching",
+      "question": {
+        "en": "What is ElastiCache and how do you use caching in an AWS architecture?",
+        "es": "¿Qué es ElastiCache y cómo usas caché en una arquitectura de AWS?"
+      },
+      "definition": {
+        "en": "**ElastiCache** is managed in-memory caching: **Redis** (rich data structures, persistence, replication, pub/sub) or **Memcached** (simple, multi-threaded key-value). It sits between your services and the database to absorb repeated reads at sub-millisecond latency.\n\nThe most common pattern is **cache-aside**: the app checks the cache first; on a **miss**, it reads the database, stores the result in the cache with a **TTL**, and returns it. Writes go to the database and either invalidate or update the cached entry.\n\nThe classic interview follow-ups are the hard parts: **invalidation** (stale data when the DB changes), **cache stampede** (many misses hit the DB at once when a hot key expires — mitigated with locking or staggered TTLs), and **eviction policies** (e.g. LRU when memory fills up).",
+        "es": "**ElastiCache** es caché en memoria gestionado: **Redis** (estructuras de datos ricas, persistencia, replicación, pub/sub) o **Memcached** (clave-valor simple y multi-hilo). Se ubica entre tus servicios y la base de datos para absorber lecturas repetidas con latencia sub-milisegundo.\n\nEl patrón más común es **cache-aside**: la app consulta primero el caché; en un **miss**, lee la base de datos, guarda el resultado en el caché con un **TTL** y lo devuelve. Las escrituras van a la base de datos e invalidan o actualizan la entrada cacheada.\n\nLas preguntas de seguimiento clásicas en entrevista son las partes difíciles: **invalidación** (datos obsoletos cuando la BD cambia), **cache stampede** (muchos misses golpean la BD a la vez cuando una clave caliente expira — se mitiga con locks o TTLs escalonados) y **políticas de expulsión** (p. ej. LRU cuando la memoria se llena)."
+      },
+      "examples": [
+        {
+          "en": "A news site caches rendered article pages in ElastiCache Redis with a 60-second TTL: the database receives one read per article per minute instead of thousands.",
+          "es": "Un sitio de noticias cachea las páginas de artículos renderizadas en ElastiCache Redis con TTL de 60 segundos: la base de datos recibe una lectura por artículo por minuto en vez de miles."
+        },
+        {
+          "en": "An API rate limiter uses Redis INCR with expiry to count requests per user per minute — atomic, fast, and shared across all API instances.",
+          "es": "Un rate limiter de API usa INCR de Redis con expiración para contar peticiones por usuario por minuto — atómico, rápido y compartido entre todas las instancias de la API."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In the cache-aside pattern, what happens on a cache miss?",
+              "es": "En el patrón cache-aside, ¿qué pasa en un cache miss?"
+            },
+            "options": [
+              {
+                "en": "The app returns stale data from a backup cache",
+                "es": "La app devuelve datos obsoletos de un caché de respaldo"
+              },
+              {
+                "en": "The cache itself fetches the data from the database automatically",
+                "es": "El caché mismo busca los datos en la base de datos automáticamente"
+              },
+              {
+                "en": "The app reads the database, writes the result to the cache with a TTL, and returns it",
+                "es": "La app lee la base de datos, escribe el resultado en el caché con un TTL y lo devuelve"
+              },
+              {
+                "en": "The request fails and the client must retry",
+                "es": "La petición falla y el cliente debe reintentar"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "In cache-aside the application owns the logic: check cache, on miss read the DB, populate the cache, return. The cache is passive.",
+              "es": "En cache-aside la aplicación es dueña de la lógica: consulta el caché, en un miss lee la BD, llena el caché y devuelve. El caché es pasivo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A very popular cache key expires and suddenly thousands of requests hit your database at once (cache stampede). Explain the problem and at least one mitigation.",
+              "es": "Una clave de caché muy popular expira y de repente miles de peticiones golpean tu base de datos a la vez (cache stampede). Explica el problema y al menos una mitigación."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must describe the stampede/thundering-herd: when a hot key expires, many concurrent requests miss the cache simultaneously and overwhelm the database. Must give at least one valid mitigation: a lock/mutex so only one request recomputes while others wait or serve stale data, staggered/randomized TTLs (jitter), refreshing the key in the background before expiry, or request coalescing.",
+              "es": "Debe describir la estampida/thundering herd: cuando una clave caliente expira, muchas peticiones concurrentes fallan el caché a la vez y saturan la base de datos. Debe dar al menos una mitigación válida: un lock/mutex para que solo una petición recalcule mientras las demás esperan o sirven datos obsoletos, TTLs escalonados/aleatorizados (jitter), refrescar la clave en segundo plano antes de expirar, o coalescencia de peticiones."
+            },
+            "reference": "When a hot key expires, every concurrent request misses at once and all of them query the database, which can overload it (thundering herd). Mitigations: (1) a distributed lock so only one request recomputes the value while others wait briefly or serve stale data; (2) TTL jitter so keys don't expire simultaneously; (3) proactive background refresh of hot keys before expiry; (4) coalescing duplicate in-flight requests into one DB query."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each caching concept with its description.",
+              "es": "Conecta cada concepto de caché con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Redis",
+                  "es": "Redis"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Memcached",
+                  "es": "Memcached"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "TTL",
+                  "es": "TTL"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "LRU eviction",
+                  "es": "Expulsión LRU"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "In-memory store with rich data structures, replication and pub/sub",
+                  "es": "Almacén en memoria con estructuras de datos ricas, replicación y pub/sub"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Simple, multi-threaded key-value cache with no persistence",
+                  "es": "Caché clave-valor simple y multi-hilo, sin persistencia"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Time after which a cached entry expires and is removed",
+                  "es": "Tiempo tras el cual una entrada cacheada expira y se elimina"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Discards the least-recently-used keys when memory fills up",
+                  "es": "Descarta las claves menos usadas recientemente cuando la memoria se llena"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "vpc-fundamentals",
+      "question": {
+        "en": "Explain VPC fundamentals: subnets, security groups, and public vs private subnets.",
+        "es": "Explica los fundamentos de VPC: subnets, security groups y subnets públicas vs privadas."
+      },
+      "definition": {
+        "en": "A **VPC** is your isolated virtual network in AWS with a private IP range (e.g. `10.0.0.0/16`). You divide it into **subnets**, each living in one Availability Zone. A subnet is **public** if its route table sends `0.0.0.0/0` to an **Internet Gateway**; it is **private** if it has no such route — instances there reach the internet only outbound, via a **NAT Gateway** in a public subnet.\n\n**Security groups** are stateful virtual firewalls attached to instances/ENIs: you allow inbound and outbound rules, and response traffic is automatically allowed. They support referencing other security groups (e.g. \"allow port 5432 only from the API's security group\"). **Network ACLs** are the stateless, subnet-level complement.\n\nThe standard layout: load balancers in public subnets; application servers and databases in private subnets, unreachable directly from the internet.",
+        "es": "Una **VPC** es tu red virtual aislada en AWS con un rango de IPs privadas (p. ej. `10.0.0.0/16`). La divides en **subnets**, cada una viviendo en una Availability Zone. Una subnet es **pública** si su tabla de rutas envía `0.0.0.0/0` a un **Internet Gateway**; es **privada** si no tiene esa ruta — sus instancias solo alcanzan internet de salida, a través de un **NAT Gateway** en una subnet pública.\n\nLos **security groups** son firewalls virtuales con estado (stateful) adjuntos a instancias/ENIs: permites reglas de entrada y salida, y el tráfico de respuesta se permite automáticamente. Soportan referenciar otros security groups (p. ej. \"permitir el puerto 5432 solo desde el security group de la API\"). Las **Network ACLs** son el complemento sin estado a nivel de subnet.\n\nEl diseño estándar: balanceadores en subnets públicas; servidores de aplicación y bases de datos en subnets privadas, inalcanzables directamente desde internet."
+      },
+      "examples": [
+        {
+          "en": "A typical production VPC: an ALB in two public subnets, ECS tasks in private subnets accepting traffic only from the ALB's security group, and RDS in private subnets accepting port 5432 only from the ECS tasks' security group.",
+          "es": "Una VPC de producción típica: un ALB en dos subnets públicas, tareas de ECS en subnets privadas que aceptan tráfico solo del security group del ALB, y RDS en subnets privadas aceptando el puerto 5432 solo desde el security group de las tareas de ECS."
+        },
+        {
+          "en": "A worker in a private subnet downloads packages from the internet through a NAT Gateway, but nothing on the internet can initiate a connection to it.",
+          "es": "Un worker en una subnet privada descarga paquetes de internet a través de un NAT Gateway, pero nada en internet puede iniciar una conexión hacia él."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What makes a subnet 'public' in AWS?",
+              "es": "¿Qué hace que una subnet sea 'pública' en AWS?"
+            },
+            "options": [
+              {
+                "en": "It uses public IP ranges instead of private ones",
+                "es": "Usa rangos de IP públicos en vez de privados"
+              },
+              {
+                "en": "Its security group allows all inbound traffic",
+                "es": "Su security group permite todo el tráfico de entrada"
+              },
+              {
+                "en": "Its route table has a route to an Internet Gateway",
+                "es": "Su tabla de rutas tiene una ruta hacia un Internet Gateway"
+              },
+              {
+                "en": "It is located in the default VPC",
+                "es": "Está ubicada en la VPC por defecto"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Public vs private is purely about routing: a subnet whose route table points 0.0.0.0/0 at an Internet Gateway is public.",
+              "es": "Público vs privado es puramente cuestión de rutas: una subnet cuya tabla de rutas apunta 0.0.0.0/0 a un Internet Gateway es pública."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each networking component with its role.",
+              "es": "Conecta cada componente de red con su función."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Internet Gateway",
+                  "es": "Internet Gateway"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "NAT Gateway",
+                  "es": "NAT Gateway"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Security group",
+                  "es": "Security group"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Network ACL",
+                  "es": "Network ACL"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Two-way internet access for public subnets",
+                  "es": "Acceso a internet bidireccional para subnets públicas"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Outbound-only internet access for private subnets",
+                  "es": "Acceso a internet solo de salida para subnets privadas"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Stateful firewall attached to an instance",
+                  "es": "Firewall con estado adjunto a una instancia"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Stateless rules applied at the subnet level",
+                  "es": "Reglas sin estado aplicadas a nivel de subnet"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your RDS security group allows inbound port 5432 from the API's security group, and you defined no explicit outbound rules for the responses. Can the database answer the API's queries?",
+              "es": "El security group de tu RDS permite entrada por el puerto 5432 desde el security group de la API, y no definiste reglas de salida explícitas para las respuestas. ¿Puede la base de datos responder a las consultas de la API?"
+            },
+            "options": [
+              {
+                "en": "No — response traffic requires a route through a NAT Gateway",
+                "es": "No — el tráfico de respuesta requiere una ruta a través de un NAT Gateway"
+              },
+              {
+                "en": "No — you must add an outbound rule for the ephemeral port range",
+                "es": "No — debes agregar una regla de salida para el rango de puertos efímeros"
+              },
+              {
+                "en": "Yes — security groups are stateful, so responses to an allowed connection are automatically permitted",
+                "es": "Sí — los security groups son stateful, así que las respuestas a una conexión permitida se permiten automáticamente"
+              },
+              {
+                "en": "Only if the database instance has a public IP address",
+                "es": "Solo si la instancia de base de datos tiene una dirección IP pública"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Security groups track connection state: once inbound traffic is allowed, the return traffic for that connection flows automatically, regardless of outbound rules. Needing explicit rules for response traffic is how *stateless* Network ACLs behave, not security groups. NAT Gateways and public IPs are unrelated to intra-VPC responses.",
+              "es": "Los security groups rastrean el estado de la conexión: una vez permitido el tráfico de entrada, el tráfico de retorno de esa conexión fluye automáticamente, sin importar las reglas de salida. Necesitar reglas explícitas para las respuestas es el comportamiento de las Network ACLs (*stateless*), no de los security groups. Los NAT Gateways y las IPs públicas no tienen relación con respuestas dentro de la VPC."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "iam-roles-policies",
+      "question": {
+        "en": "IAM: what are users, roles and policies, and how does a service securely access S3?",
+        "es": "IAM: ¿qué son usuarios, roles y políticas, y cómo accede un servicio de forma segura a S3?"
+      },
+      "definition": {
+        "en": "**IAM policies** are JSON documents that allow or deny actions (`s3:GetObject`) on resources (`arn:aws:s3:::my-bucket/*`). Policies attach to identities. An **IAM user** is a permanent identity with long-lived credentials (password, access keys) — meant for humans, and increasingly discouraged in favor of SSO. An **IAM role** is an identity with **no permanent credentials**: it is *assumed* by a trusted principal, which receives **temporary, auto-rotating credentials** via STS.\n\nThe secure way for a service to access S3 is: create a role with a least-privilege policy (e.g. read-only on one bucket), set its trust policy so the compute service (EC2, ECS task, Lambda) can assume it, and attach it. The AWS SDK then fetches temporary credentials automatically from the instance/task metadata — **no access keys in code, environment variables or config files**.\n\nInterview keywords: **least privilege**, **temporary credentials**, and \"never hardcode access keys\".",
+        "es": "Las **políticas de IAM** son documentos JSON que permiten o deniegan acciones (`s3:GetObject`) sobre recursos (`arn:aws:s3:::my-bucket/*`). Las políticas se adjuntan a identidades. Un **usuario de IAM** es una identidad permanente con credenciales de larga vida (contraseña, access keys) — pensado para humanos, y cada vez más desaconsejado en favor de SSO. Un **rol de IAM** es una identidad **sin credenciales permanentes**: lo *asume* un principal de confianza, que recibe **credenciales temporales con rotación automática** vía STS.\n\nLa forma segura de que un servicio acceda a S3 es: crear un rol con una política de privilegio mínimo (p. ej. solo lectura sobre un bucket), configurar su trust policy para que el servicio de cómputo (EC2, tarea de ECS, Lambda) pueda asumirlo, y adjuntarlo. El SDK de AWS obtiene entonces credenciales temporales automáticamente desde los metadatos de la instancia/tarea — **sin access keys en el código, variables de entorno ni archivos de configuración**.\n\nPalabras clave de entrevista: **privilegio mínimo**, **credenciales temporales** y \"nunca hardcodear access keys\"."
+      },
+      "examples": [
+        {
+          "en": "An ECS task runs with a task role allowing only `s3:GetObject` on `reports-bucket/*`; the SDK inside the container picks up temporary credentials without any configuration.",
+          "es": "Una tarea de ECS corre con un task role que permite solo `s3:GetObject` sobre `reports-bucket/*`; el SDK dentro del contenedor toma credenciales temporales sin configuración alguna."
+        },
+        {
+          "en": "A real incident pattern: an access key committed to GitHub gets scraped in minutes and used to mine crypto — roles with temporary credentials eliminate that whole class of leak.",
+          "es": "Un patrón de incidente real: una access key subida a GitHub es detectada en minutos y usada para minar cripto — los roles con credenciales temporales eliminan toda esa clase de fuga."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your ECS service needs to read objects from one S3 bucket. What is the most secure setup?",
+              "es": "Tu servicio en ECS necesita leer objetos de un bucket de S3. ¿Cuál es la configuración más segura?"
+            },
+            "options": [
+              {
+                "en": "Sharing the root account access keys across all services",
+                "es": "Compartir las access keys de la cuenta root entre todos los servicios"
+              },
+              {
+                "en": "An IAM user with access keys stored in the container's environment variables",
+                "es": "Un usuario de IAM con access keys guardadas en variables de entorno del contenedor"
+              },
+              {
+                "en": "A task role with a least-privilege policy; the SDK gets temporary credentials automatically",
+                "es": "Un task role con política de privilegio mínimo; el SDK obtiene credenciales temporales automáticamente"
+              },
+              {
+                "en": "Making the bucket public but with an obscure, hard-to-guess name",
+                "es": "Hacer el bucket público pero con un nombre oscuro y difícil de adivinar"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Roles provide temporary, auto-rotated credentials with no secrets to leak. Long-lived access keys in env vars can be exfiltrated; public buckets and root keys are serious anti-patterns.",
+              "es": "Los roles dan credenciales temporales con rotación automática y sin secretos que filtrar. Las access keys de larga vida en variables de entorno pueden exfiltrarse; los buckets públicos y las keys de root son anti-patrones graves."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain the difference between an IAM user and an IAM role, and why roles are preferred for services running on AWS.",
+              "es": "Explica la diferencia entre un usuario de IAM y un rol de IAM, y por qué se prefieren los roles para servicios que corren en AWS."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that a user has permanent/long-lived credentials (meant for humans) while a role has no permanent credentials and is assumed to obtain temporary credentials (via STS). Must explain why roles are preferred for services: temporary credentials rotate automatically and there are no secrets to store, leak or rotate manually. Bonus: mentions least privilege or trust policies.",
+              "es": "Debe indicar que un usuario tiene credenciales permanentes/de larga vida (pensado para humanos) mientras que un rol no tiene credenciales permanentes y se asume para obtener credenciales temporales (vía STS). Debe explicar por qué se prefieren los roles para servicios: las credenciales temporales rotan automáticamente y no hay secretos que guardar, filtrar o rotar manualmente. Bonus: menciona privilegio mínimo o trust policies."
+            },
+            "reference": "An IAM user is a permanent identity with long-lived credentials like passwords and access keys, intended for humans. An IAM role has no permanent credentials: a trusted principal (an EC2 instance, ECS task, Lambda, or another account) assumes it and receives short-lived credentials from STS that rotate automatically. Services should use roles because there is no static secret to hardcode, commit or leak, credentials expire quickly limiting blast radius, and each role can carry a least-privilege policy scoped to exactly what the service needs."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A role has one policy allowing `s3:*` on a bucket, and a second policy with an explicit Deny on `s3:DeleteObject` for the same bucket. What can the role actually do?",
+              "es": "Un rol tiene una política que permite `s3:*` sobre un bucket, y una segunda política con un Deny explícito sobre `s3:DeleteObject` para el mismo bucket. ¿Qué puede hacer realmente el rol?"
+            },
+            "options": [
+              {
+                "en": "It depends on the order in which the policies were attached",
+                "es": "Depende del orden en que se adjuntaron las políticas"
+              },
+              {
+                "en": "Everything, including deletes — the broader Allow takes precedence",
+                "es": "Todo, incluidos los borrados — el Allow más amplio tiene prioridad"
+              },
+              {
+                "en": "Nothing — conflicting policies invalidate the role until one is removed",
+                "es": "Nada — las políticas en conflicto invalidan el rol hasta que se elimine una"
+              },
+              {
+                "en": "Every S3 action on the bucket except deleting objects — an explicit Deny always overrides any Allow",
+                "es": "Toda acción de S3 sobre el bucket excepto borrar objetos — un Deny explícito siempre prevalece sobre cualquier Allow"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "IAM evaluation is order-independent: it starts from implicit deny, an Allow grants access, but an explicit Deny in any applicable policy wins over every Allow. This makes explicit Deny the tool for guardrails, e.g. blocking destructive actions even for otherwise broad permissions.",
+              "es": "La evaluación de IAM no depende del orden: parte de una denegación implícita, un Allow otorga acceso, pero un Deny explícito en cualquier política aplicable gana sobre todos los Allow. Eso hace del Deny explícito la herramienta para poner barreras, p. ej. bloquear acciones destructivas incluso con permisos amplios."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "high-availability",
+      "question": {
+        "en": "High availability on AWS: multi-AZ vs multi-region, and how do ALB health checks work?",
+        "es": "Alta disponibilidad en AWS: multi-AZ vs multi-region, ¿y cómo funcionan los health checks del ALB?"
+      },
+      "definition": {
+        "en": "An **Availability Zone (AZ)** is an isolated datacenter (or group) within a region, with independent power and networking. **Multi-AZ** means running redundant copies of every layer across 2-3 AZs in the same region: instances behind a load balancer, RDS with a synchronous standby that fails over automatically. It protects against a datacenter failure with low cost and no extra latency — the default for production.\n\n**Multi-region** replicates the stack across geographic regions. It protects against a whole-region outage and reduces latency for global users, but it is far more complex: asynchronous data replication (potential data loss on failover), DNS-based failover with Route53, and higher cost. Choose it only when the business truly requires it.\n\nAn **ALB health check** periodically sends a request (e.g. `GET /health`) to every registered target. After N failed checks the target is marked unhealthy and stops receiving traffic; when checks pass again, it's put back in rotation. Combined with Auto Scaling, unhealthy instances are also replaced.",
+        "es": "Una **Availability Zone (AZ)** es un datacenter aislado (o grupo) dentro de una región, con energía y red independientes. **Multi-AZ** significa correr copias redundantes de cada capa en 2-3 AZs de la misma región: instancias detrás de un balanceador, RDS con un standby síncrono que hace failover automático. Protege contra la caída de un datacenter con bajo costo y sin latencia extra — el estándar para producción.\n\n**Multi-region** replica el stack entre regiones geográficas. Protege contra la caída de una región completa y reduce latencia para usuarios globales, pero es mucho más complejo: replicación asíncrona de datos (posible pérdida de datos en el failover), failover por DNS con Route53 y mayor costo. Elígelo solo cuando el negocio realmente lo requiera.\n\nUn **health check del ALB** envía periódicamente una petición (p. ej. `GET /health`) a cada target registrado. Tras N fallos consecutivos el target se marca como no saludable y deja de recibir tráfico; cuando vuelve a pasar los checks, regresa a la rotación. Combinado con Auto Scaling, las instancias no saludables además se reemplazan."
+      },
+      "examples": [
+        {
+          "en": "RDS Multi-AZ: the primary database in AZ-a replicates synchronously to a standby in AZ-b; if AZ-a fails, AWS flips the DNS endpoint to the standby in about a minute with no data loss.",
+          "es": "RDS Multi-AZ: la base primaria en AZ-a replica síncronamente a un standby en AZ-b; si AZ-a cae, AWS cambia el endpoint DNS al standby en cerca de un minuto sin pérdida de datos."
+        },
+        {
+          "en": "A streaming platform serves the US from us-east-1 and Europe from eu-west-1 with Route53 latency-based routing, and can fail an entire region over via DNS in a regional outage.",
+          "es": "Una plataforma de streaming sirve EE. UU. desde us-east-1 y Europa desde eu-west-1 con enrutamiento por latencia de Route53, y puede conmutar una región completa vía DNS ante una caída regional."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your SaaS must survive the failure of a datacenter, with automatic database failover and minimal added cost and complexity. What do you implement?",
+              "es": "Tu SaaS debe sobrevivir la caída de un datacenter, con failover automático de base de datos y el mínimo costo y complejidad adicionales. ¿Qué implementas?"
+            },
+            "options": [
+              {
+                "en": "A single AZ with very frequent EBS snapshots",
+                "es": "Una sola AZ con snapshots de EBS muy frecuentes"
+              },
+              {
+                "en": "Two EC2 instances in the same AZ behind an ALB",
+                "es": "Dos instancias EC2 en la misma AZ detrás de un ALB"
+              },
+              {
+                "en": "Multi-AZ: instances across AZs behind an ALB, RDS Multi-AZ with synchronous standby",
+                "es": "Multi-AZ: instancias en varias AZs detrás de un ALB, RDS Multi-AZ con standby síncrono"
+              },
+              {
+                "en": "Multi-region active-active with asynchronous replication across continents",
+                "es": "Multi-region activo-activo con replicación asíncrona entre continentes"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Multi-AZ handles datacenter-level failure with synchronous replication, automatic failover and near-zero added latency. Multi-region is for region-level outages and costs much more complexity.",
+              "es": "Multi-AZ cubre fallas a nivel de datacenter con replicación síncrona, failover automático y latencia adicional casi nula. Multi-region es para caídas de región y cuesta mucha más complejidad."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An ALB marks one of your targets as unhealthy. What happens to it?",
+              "es": "Un ALB marca uno de tus targets como no saludable. ¿Qué pasa con él?"
+            },
+            "options": [
+              {
+                "en": "It stops receiving new traffic until it passes health checks again",
+                "es": "Deja de recibir tráfico nuevo hasta que vuelva a pasar los health checks"
+              },
+              {
+                "en": "The whole target group is drained and replaced",
+                "es": "Todo el target group se drena y se reemplaza"
+              },
+              {
+                "en": "Traffic continues but is logged as degraded",
+                "es": "El tráfico continúa pero se registra como degradado"
+              },
+              {
+                "en": "It is immediately terminated by the ALB",
+                "es": "Es terminado inmediatamente por el ALB"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The ALB only routes to healthy targets; it never terminates instances itself. Termination/replacement is Auto Scaling's job if configured to act on ALB health.",
+              "es": "El ALB solo enruta a targets saludables; nunca termina instancias por sí mismo. Terminar/reemplazar es trabajo de Auto Scaling si está configurado para actuar según la salud del ALB."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can a multi-region failover lose recent writes, while an RDS Multi-AZ failover does not?",
+              "es": "¿Por qué un failover multi-region puede perder escrituras recientes, mientras que un failover de RDS Multi-AZ no?"
+            },
+            "options": [
+              {
+                "en": "Cross-region replication is asynchronous, so the replica may lag behind the primary; Multi-AZ replicates synchronously",
+                "es": "La replicación entre regiones es asíncrona, así que la réplica puede ir rezagada respecto a la primaria; Multi-AZ replica síncronamente"
+              },
+              {
+                "en": "Route53 drops all in-flight requests during a DNS failover",
+                "es": "Route53 descarta todas las peticiones en vuelo durante un failover de DNS"
+              },
+              {
+                "en": "Multi-region deployments use cheaper storage with lower durability guarantees",
+                "es": "Los despliegues multi-region usan almacenamiento más barato con menores garantías de durabilidad"
+              },
+              {
+                "en": "Load balancers cannot forward traffic between regions, so writes are rejected",
+                "es": "Los balanceadores no pueden reenviar tráfico entre regiones, así que las escrituras se rechazan"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Synchronous replication across regions would add too much latency, so cross-region replicas apply changes asynchronously. If the primary region dies, writes not yet replicated are lost (a non-zero RPO). Multi-AZ standbys are synchronous within the region, so failover loses nothing.",
+              "es": "Replicar síncronamente entre regiones agregaría demasiada latencia, así que las réplicas entre regiones aplican los cambios de forma asíncrona. Si la región primaria cae, las escrituras aún no replicadas se pierden (un RPO mayor que cero). Los standby de Multi-AZ son síncronos dentro de la región, así que el failover no pierde nada."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "scalable-backend-architecture",
+      "question": {
+        "en": "How would you deploy a scalable backend on AWS? Walk through a reference architecture.",
+        "es": "¿Cómo desplegarías un backend escalable en AWS? Recorre una arquitectura de referencia."
+      },
+      "definition": {
+        "en": "A canonical scalable backend: **Route53** resolves your domain and points at an **ALB** in public subnets. The ALB terminates TLS, runs health checks and distributes requests to **ECS services** (containers in private subnets) with auto scaling based on CPU or request count.\n\nThe services read and write **RDS** (Multi-AZ, with read replicas if needed) and use **ElastiCache** to absorb hot reads. Anything slow or non-critical for the response — emails, PDFs, webhooks, image processing — is published to **SQS**, where a separate fleet of **workers** consumes at its own pace and scales on queue depth.\n\nThe key interview points: every layer is horizontally scalable and multi-AZ, the database is protected by the cache and by queues that flatten traffic spikes, and the web tier stays **stateless** (sessions in ElastiCache/DynamoDB) so instances can come and go freely.",
+        "es": "Un backend escalable canónico: **Route53** resuelve tu dominio y apunta a un **ALB** en subnets públicas. El ALB termina TLS, ejecuta health checks y distribuye peticiones a **servicios de ECS** (contenedores en subnets privadas) con auto scaling por CPU o número de peticiones.\n\nLos servicios leen y escriben **RDS** (Multi-AZ, con réplicas de lectura si hace falta) y usan **ElastiCache** para absorber lecturas calientes. Todo lo lento o no crítico para la respuesta — correos, PDFs, webhooks, procesamiento de imágenes — se publica en **SQS**, donde una flota separada de **workers** consume a su ritmo y escala según la profundidad de la cola.\n\nLos puntos clave de entrevista: cada capa escala horizontalmente y es multi-AZ, la base de datos está protegida por el caché y por colas que aplanan los picos de tráfico, y la capa web se mantiene **sin estado** (sesiones en ElastiCache/DynamoDB) para que las instancias puedan entrar y salir libremente."
+      },
+      "examples": [
+        {
+          "en": "A food-delivery app: Route53 → ALB → ECS API services; orders are written to RDS, restaurant menus are served from ElastiCache, and 'send receipt' plus 'notify courier' jobs go through SQS to worker services.",
+          "es": "Una app de delivery: Route53 → ALB → servicios API en ECS; las órdenes se escriben en RDS, los menús se sirven desde ElastiCache, y los trabajos de 'enviar recibo' y 'notificar repartidor' pasan por SQS hacia servicios worker."
+        },
+        {
+          "en": "During a Black Friday spike, ECS scales the API from 10 to 60 tasks on request count, while SQS absorbs a backlog of 200k email jobs that the workers drain over the next hour.",
+          "es": "Durante un pico de Black Friday, ECS escala la API de 10 a 60 tareas según el número de peticiones, mientras SQS absorbe un backlog de 200k trabajos de correo que los workers drenan durante la siguiente hora."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the path of a user request through the reference architecture, from DNS to background processing.",
+              "es": "Ordena el camino de una petición de usuario a través de la arquitectura de referencia, desde DNS hasta el procesamiento en segundo plano."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "route53",
+                "label": {
+                  "en": "Route53 resolves the domain",
+                  "es": "Route53 resuelve el dominio"
+                }
+              },
+              {
+                "id": "alb",
+                "label": {
+                  "en": "ALB terminates TLS and routes to a healthy target",
+                  "es": "El ALB termina TLS y enruta a un target saludable"
+                }
+              },
+              {
+                "id": "ecs",
+                "label": {
+                  "en": "ECS service handles the request",
+                  "es": "El servicio de ECS maneja la petición"
+                }
+              },
+              {
+                "id": "data",
+                "label": {
+                  "en": "Service reads/writes RDS and ElastiCache",
+                  "es": "El servicio lee/escribe RDS y ElastiCache"
+                }
+              },
+              {
+                "id": "sqs",
+                "label": {
+                  "en": "Slow work is queued to SQS for the workers",
+                  "es": "El trabajo lento se encola en SQS para los workers"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "route53",
+              "alb",
+              "ecs",
+              "data",
+              "sqs"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why should the API tier in this architecture be stateless?",
+              "es": "¿Por qué la capa de API en esta arquitectura debe ser sin estado (stateless)?"
+            },
+            "options": [
+              {
+                "en": "So any instance can serve any request, letting auto scaling add or remove instances freely",
+                "es": "Para que cualquier instancia pueda atender cualquier petición, permitiendo al auto scaling agregar o quitar instancias libremente"
+              },
+              {
+                "en": "Because the ALB requires sticky sessions to work",
+                "es": "Porque el ALB requiere sticky sessions para funcionar"
+              },
+              {
+                "en": "To reduce the cost of Route53 queries",
+                "es": "Para reducir el costo de las consultas de Route53"
+              },
+              {
+                "en": "Because ECS containers cannot write to disk",
+                "es": "Porque los contenedores de ECS no pueden escribir a disco"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "If session state lives in the instance, killing it breaks users. Externalizing state (ElastiCache, DynamoDB) makes instances interchangeable, which is what allows horizontal scaling and self-healing.",
+              "es": "Si el estado de sesión vive en la instancia, matarla afecta a los usuarios. Externalizar el estado (ElastiCache, DynamoDB) hace las instancias intercambiables, que es lo que permite el escalado horizontal y la auto-recuperación."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each layer of the reference architecture with how it scales or absorbs load.",
+              "es": "Conecta cada capa de la arquitectura de referencia con cómo escala o absorbe carga."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "ALB",
+                  "es": "ALB"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "ECS API service",
+                  "es": "Servicio API en ECS"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "RDS",
+                  "es": "RDS"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Worker fleet",
+                  "es": "Flota de workers"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Spreads requests across healthy targets in multiple AZs",
+                  "es": "Reparte peticiones entre targets saludables en varias AZs"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Auto scales task count based on CPU or request count",
+                  "es": "Autoescala el número de tareas según CPU o número de peticiones"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Scales reads with replicas, shielded by cache and queues",
+                  "es": "Escala lecturas con réplicas, protegida por el caché y las colas"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Scales on queue depth to drain backlogs at its own pace",
+                  "es": "Escala según la profundidad de la cola para drenar backlogs a su ritmo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cloudwatch-monitoring",
+      "question": {
+        "en": "How do you monitor an application on AWS with CloudWatch metrics, logs and alarms?",
+        "es": "¿Cómo monitoreas una aplicación en AWS con métricas, logs y alarmas de CloudWatch?"
+      },
+      "definition": {
+        "en": "**CloudWatch Metrics** are time-series data. AWS services publish them automatically (ALB request count and 5xx, ECS CPU/memory, RDS connections, SQS queue depth), and you publish **custom metrics** for business signals (orders/minute, payment failures). Dashboards visualize them.\n\n**CloudWatch Logs** collects log streams from Lambda, ECS (via the `awslogs` driver) and EC2 agents. **Logs Insights** lets you query them; **metric filters** turn log patterns (e.g. `ERROR`) into metrics you can alarm on.\n\n**Alarms** watch a metric against a threshold for N periods and trigger actions through SNS (page on-call, email) or automation (scale out, restart). Good practice: alarm on **symptoms users feel** — error rate, p99 latency, queue age — rather than only on causes like CPU, and use composite alarms to cut noise.",
+        "es": "Las **métricas de CloudWatch** son series de tiempo. Los servicios de AWS las publican automáticamente (peticiones y 5xx del ALB, CPU/memoria de ECS, conexiones de RDS, profundidad de cola de SQS), y tú publicas **métricas personalizadas** para señales de negocio (órdenes/minuto, fallos de pago). Los dashboards las visualizan.\n\n**CloudWatch Logs** recolecta streams de logs de Lambda, ECS (vía el driver `awslogs`) y agentes en EC2. **Logs Insights** permite consultarlos; los **metric filters** convierten patrones de log (p. ej. `ERROR`) en métricas sobre las que puedes alarmar.\n\nLas **alarmas** vigilan una métrica contra un umbral durante N períodos y disparan acciones vía SNS (avisar al on-call, email) o automatización (escalar, reiniciar). Buena práctica: alarmar sobre **síntomas que sienten los usuarios** — tasa de errores, latencia p99, edad de la cola — y no solo sobre causas como CPU, y usar alarmas compuestas para reducir el ruido."
+      },
+      "examples": [
+        {
+          "en": "An on-call setup: an alarm fires when ALB 5xx rate exceeds 1% for 5 minutes, publishing to an SNS topic that pages the engineer via PagerDuty.",
+          "es": "Un esquema de on-call: una alarma se dispara cuando la tasa de 5xx del ALB supera el 1% durante 5 minutos, publicando a un topic de SNS que avisa al ingeniero vía PagerDuty."
+        },
+        {
+          "en": "A worker fleet scales on the SQS metric ApproximateNumberOfMessagesVisible: when the backlog exceeds 1,000 messages, Auto Scaling adds workers; when it drains, they scale back in.",
+          "es": "Una flota de workers escala con la métrica de SQS ApproximateNumberOfMessagesVisible: cuando el backlog supera 1,000 mensajes, Auto Scaling agrega workers; cuando se drena, se reducen."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You want to be paged when your API starts failing for users. Which alarm is the best primary signal?",
+              "es": "Quieres que te avisen cuando tu API empiece a fallar para los usuarios. ¿Qué alarma es la mejor señal primaria?"
+            },
+            "options": [
+              {
+                "en": "ALB 5xx error rate above a threshold for several minutes",
+                "es": "Tasa de errores 5xx del ALB por encima de un umbral durante varios minutos"
+              },
+              {
+                "en": "Daily billing estimate increasing",
+                "es": "Aumento en el estimado diario de facturación"
+              },
+              {
+                "en": "Number of running tasks changing",
+                "es": "Cambios en el número de tareas corriendo"
+              },
+              {
+                "en": "Average CPU of the ECS tasks above 50%",
+                "es": "CPU promedio de las tareas de ECS por encima del 50%"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Error rate is a symptom users directly experience. High CPU or scaling activity may be perfectly normal and doesn't necessarily mean users are affected.",
+              "es": "La tasa de errores es un síntoma que los usuarios experimentan directamente. CPU alta o actividad de escalado pueden ser perfectamente normales y no implican que los usuarios estén afectados."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each CloudWatch capability with what you use it for.",
+              "es": "Conecta cada capacidad de CloudWatch con su uso."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Custom metric",
+                  "es": "Métrica personalizada"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Metric filter",
+                  "es": "Metric filter"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Alarm + SNS",
+                  "es": "Alarma + SNS"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Logs Insights",
+                  "es": "Logs Insights"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Publish business signals like orders per minute",
+                  "es": "Publicar señales de negocio como órdenes por minuto"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Turn 'ERROR' log lines into a countable metric",
+                  "es": "Convertir líneas de log 'ERROR' en una métrica contable"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Page the on-call when a threshold is breached",
+                  "es": "Avisar al on-call cuando se supera un umbral"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Query and analyze log data during an incident",
+                  "es": "Consultar y analizar logs durante un incidente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the chain that turns an application error into a page for the on-call engineer.",
+              "es": "Ordena la cadena que convierte un error de la aplicación en un aviso al ingeniero on-call."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "logs",
+                "label": {
+                  "en": "The app writes ERROR lines to CloudWatch Logs",
+                  "es": "La app escribe líneas ERROR en CloudWatch Logs"
+                }
+              },
+              {
+                "id": "filter",
+                "label": {
+                  "en": "A metric filter counts the matching log lines as a metric",
+                  "es": "Un metric filter cuenta las líneas de log coincidentes como métrica"
+                }
+              },
+              {
+                "id": "alarm",
+                "label": {
+                  "en": "The alarm breaches its threshold for N periods",
+                  "es": "La alarma supera su umbral durante N períodos"
+                }
+              },
+              {
+                "id": "sns",
+                "label": {
+                  "en": "The alarm publishes to an SNS topic",
+                  "es": "La alarma publica en un topic de SNS"
+                }
+              },
+              {
+                "id": "page",
+                "label": {
+                  "en": "The subscription pages the on-call engineer",
+                  "es": "La suscripción avisa al ingeniero on-call"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "logs",
+              "filter",
+              "alarm",
+              "sns",
+              "page"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which compute option scales to zero and bills per invocation?",
+          "es": "¿Qué opción de cómputo escala a cero y cobra por invocación?"
+        },
+        "options": [
+          {
+            "en": "EC2",
+            "es": "EC2"
+          },
+          {
+            "en": "ECS on EC2 launch type",
+            "es": "ECS con launch type EC2"
+          },
+          {
+            "en": "Lambda",
+            "es": "Lambda"
+          },
+          {
+            "en": "EKS with managed node groups",
+            "es": "EKS con grupos de nodos gestionados"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What consistency does S3 provide today after a successful write?",
+          "es": "¿Qué consistencia ofrece S3 hoy después de una escritura exitosa?"
+        },
+        "options": [
+          {
+            "en": "Strong consistency only for new objects",
+            "es": "Consistencia fuerte solo para objetos nuevos"
+          },
+          {
+            "en": "Eventual consistency for all reads",
+            "es": "Consistencia eventual para todas las lecturas"
+          },
+          {
+            "en": "Consistency depends on the bucket's region",
+            "es": "La consistencia depende de la región del bucket"
+          },
+          {
+            "en": "Strong read-after-write consistency for all operations",
+            "es": "Consistencia fuerte de lectura tras escritura para todas las operaciones"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which S3 storage class is designed for long-term archives where retrieval can take minutes to hours?",
+          "es": "¿Qué clase de almacenamiento de S3 está diseñada para archivos de largo plazo donde la recuperación puede tardar de minutos a horas?"
+        },
+        "options": [
+          {
+            "en": "S3 Standard",
+            "es": "S3 Standard"
+          },
+          {
+            "en": "S3 Glacier",
+            "es": "S3 Glacier"
+          },
+          {
+            "en": "S3 Express One Zone",
+            "es": "S3 Express One Zone"
+          },
+          {
+            "en": "S3 Standard-IA",
+            "es": "S3 Standard-IA"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which workload is the strongest case for DynamoDB over RDS?",
+          "es": "¿Qué carga de trabajo es el caso más fuerte para DynamoDB sobre RDS?"
+        },
+        "options": [
+          {
+            "en": "Multi-table ACID transactions for a financial ledger",
+            "es": "Transacciones ACID multi-tabla para un libro contable"
+          },
+          {
+            "en": "Key-value lookups at massive scale with known access patterns",
+            "es": "Búsquedas clave-valor a escala masiva con patrones de acceso conocidos"
+          },
+          {
+            "en": "Ad-hoc reporting with joins across many tables",
+            "es": "Reportes ad-hoc con joins entre muchas tablas"
+          },
+          {
+            "en": "A small internal CRUD app maintained by one team",
+            "es": "Una pequeña app CRUD interna mantenida por un equipo"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In SQS, what happens to a message after one consumer successfully processes and deletes it?",
+          "es": "En SQS, ¿qué pasa con un mensaje después de que un consumidor lo procesa y lo borra exitosamente?"
+        },
+        "options": [
+          {
+            "en": "It is delivered again to the other consumers",
+            "es": "Se entrega de nuevo a los demás consumidores"
+          },
+          {
+            "en": "It stays in the queue for 14 days regardless",
+            "es": "Permanece en la cola 14 días de todas formas"
+          },
+          {
+            "en": "It moves automatically to an SNS topic",
+            "es": "Se mueve automáticamente a un topic de SNS"
+          },
+          {
+            "en": "It is gone — each message is processed by one consumer",
+            "es": "Desaparece — cada mensaje lo procesa un solo consumidor"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the fan-out pattern in AWS messaging?",
+          "es": "¿Qué es el patrón fan-out en mensajería de AWS?"
+        },
+        "options": [
+          {
+            "en": "One SQS queue with many consumers competing for the same messages",
+            "es": "Una cola SQS con muchos consumidores compitiendo por los mismos mensajes"
+          },
+          {
+            "en": "Retrying failed messages through a dead-letter queue",
+            "es": "Reintentar mensajes fallidos mediante una dead-letter queue"
+          },
+          {
+            "en": "Publishing to an SNS topic that delivers copies to multiple subscribed SQS queues",
+            "es": "Publicar en un topic de SNS que entrega copias a múltiples colas SQS suscritas"
+          },
+          {
+            "en": "Sharding a queue across several regions",
+            "es": "Fragmentar una cola entre varias regiones"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What distinguishes a private subnet from a public one?",
+          "es": "¿Qué distingue a una subnet privada de una pública?"
+        },
+        "options": [
+          {
+            "en": "A private subnet has no route to an Internet Gateway",
+            "es": "Una subnet privada no tiene ruta hacia un Internet Gateway"
+          },
+          {
+            "en": "A private subnet exists outside the VPC",
+            "es": "Una subnet privada existe fuera de la VPC"
+          },
+          {
+            "en": "A private subnet cannot contain databases",
+            "es": "Una subnet privada no puede contener bases de datos"
+          },
+          {
+            "en": "A private subnet uses encrypted IP addresses",
+            "es": "Una subnet privada usa direcciones IP cifradas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why are IAM roles preferred over IAM users with access keys for services?",
+          "es": "¿Por qué se prefieren los roles de IAM sobre usuarios de IAM con access keys para servicios?"
+        },
+        "options": [
+          {
+            "en": "Roles bypass IAM policies entirely",
+            "es": "Los roles omiten las políticas de IAM por completo"
+          },
+          {
+            "en": "Roles provide temporary, auto-rotating credentials with no static secrets to leak",
+            "es": "Los roles dan credenciales temporales con rotación automática, sin secretos estáticos que filtrar"
+          },
+          {
+            "en": "Roles have more permissions than users by default",
+            "es": "Los roles tienen más permisos que los usuarios por defecto"
+          },
+          {
+            "en": "Roles are free while users cost money",
+            "es": "Los roles son gratis mientras que los usuarios cuestan dinero"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "RDS Multi-AZ primarily protects you against...",
+          "es": "RDS Multi-AZ te protege principalmente contra..."
+        },
+        "options": [
+          {
+            "en": "Slow queries caused by missing indexes",
+            "es": "Consultas lentas causadas por falta de índices"
+          },
+          {
+            "en": "The failure of an Availability Zone, via synchronous standby and automatic failover",
+            "es": "La caída de una Availability Zone, mediante un standby síncrono y failover automático"
+          },
+          {
+            "en": "Accidental deletion of tables by developers",
+            "es": "Borrado accidental de tablas por desarrolladores"
+          },
+          {
+            "en": "The outage of an entire AWS region",
+            "es": "La caída de una región completa de AWS"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which CloudWatch metric is the natural signal for scaling a fleet of SQS workers?",
+          "es": "¿Qué métrica de CloudWatch es la señal natural para escalar una flota de workers de SQS?"
+        },
+        "options": [
+          {
+            "en": "ALB request count",
+            "es": "Número de peticiones del ALB"
+          },
+          {
+            "en": "Route53 health check status",
+            "es": "Estado del health check de Route53"
+          },
+          {
+            "en": "RDS free storage space",
+            "es": "Espacio libre de almacenamiento de RDS"
+          },
+          {
+            "en": "ApproximateNumberOfMessagesVisible (queue backlog)",
+            "es": "ApproximateNumberOfMessagesVisible (backlog de la cola)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Design a scalable backend on AWS for a web API: name the main services from DNS to background processing and explain briefly what each one does.",
+          "es": "Diseña un backend escalable en AWS para una API web: nombra los servicios principales desde el DNS hasta el procesamiento en segundo plano y explica brevemente qué hace cada uno."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe a coherent flow including at least: Route53 (DNS), a load balancer (ALB) distributing traffic and health-checking, horizontally scalable compute (ECS/EKS/EC2 Auto Scaling or Lambda), a database (RDS or DynamoDB), and asynchronous processing with SQS and workers. Bonus: caching with ElastiCache, multi-AZ, stateless services, or monitoring with CloudWatch.",
+          "es": "Debe describir un flujo coherente que incluya al menos: Route53 (DNS), un balanceador (ALB) distribuyendo tráfico y con health checks, cómputo escalable horizontalmente (ECS/EKS/EC2 Auto Scaling o Lambda), una base de datos (RDS o DynamoDB) y procesamiento asíncrono con SQS y workers. Bonus: caché con ElastiCache, multi-AZ, servicios sin estado o monitoreo con CloudWatch."
+        },
+        "reference": "Route53 resolves the domain to an ALB in public subnets. The ALB terminates TLS, health-checks targets and distributes requests to auto-scaled ECS services in private subnets. Services use RDS Multi-AZ for relational data and ElastiCache to cache hot reads. Slow or non-critical work (emails, image processing) is published to SQS and consumed by a separate worker fleet that scales on queue depth. Everything spans multiple AZs, the API tier is stateless, and CloudWatch metrics, logs and alarms provide monitoring and paging."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your application running on ECS needs to read and write objects in a private S3 bucket. Explain the secure way to grant this access and why hardcoding access keys is dangerous.",
+          "es": "Tu aplicación corriendo en ECS necesita leer y escribir objetos en un bucket privado de S3. Explica la forma segura de otorgar este acceso y por qué hardcodear access keys es peligroso."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must propose an IAM task role with a least-privilege policy scoped to the bucket, assumed by the ECS task so the SDK obtains temporary credentials automatically. Must explain the danger of hardcoded keys: long-lived secrets can leak (code repos, images, env dumps) and grant standing access until manually rotated. Bonus: mentions STS, credential rotation, or scoping actions like s3:GetObject/s3:PutObject.",
+          "es": "Debe proponer un task role de IAM con política de privilegio mínimo limitada al bucket, asumido por la tarea de ECS para que el SDK obtenga credenciales temporales automáticamente. Debe explicar el peligro de las keys hardcodeadas: los secretos de larga vida pueden filtrarse (repos de código, imágenes, volcados de entorno) y dan acceso permanente hasta rotarse manualmente. Bonus: menciona STS, rotación de credenciales o limitar acciones como s3:GetObject/s3:PutObject."
+        },
+        "reference": "Create an IAM role with a policy allowing only the needed actions (s3:GetObject, s3:PutObject) on that bucket's ARN, and set it as the ECS task role. The task assumes the role and the AWS SDK automatically retrieves short-lived STS credentials from the task metadata endpoint — no secrets in code or environment. Hardcoded access keys are dangerous because they are long-lived: if leaked through a git repo, container image or log, an attacker has standing access until someone notices and rotates them, whereas role credentials expire in minutes and never live in the codebase."
+      }
+    }
+  ]
+}

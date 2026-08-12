@@ -1,0 +1,2350 @@
+{
+  "slug": "postgresql",
+  "order": 5,
+  "icon": "database",
+  "title": {
+    "en": "PostgreSQL & Databases",
+    "es": "PostgreSQL y Bases de Datos"
+  },
+  "description": {
+    "en": "Real interview questions about Postgres: indexes, transactions, isolation, deadlocks, EXPLAIN ANALYZE, pooling and production debugging — with real SQL you run in the browser.",
+    "es": "Preguntas reales de entrevista sobre Postgres: índices, transacciones, aislamiento, deadlocks, EXPLAIN ANALYZE, pooling y debugging en producción — con SQL real que ejecutas en el navegador."
+  },
+  "lessons": [
+    {
+      "slug": "what-is-a-btree-index",
+      "question": {
+        "en": "What is an index and how does a B-tree index work?",
+        "es": "¿Qué es un índice y cómo funciona un índice B-tree?"
+      },
+      "definition": {
+        "en": "An **index** is a secondary data structure that lets the database find rows without scanning the whole table. Without one, `WHERE email = '...'` is a **sequential scan**: O(n) over every row.\n\nPostgres' default index is a **B-tree**: a balanced tree where each node holds sorted keys and pointers. A lookup descends from the root comparing keys, reaching a leaf in **O(log n)**; leaves point to the actual table rows (heap tuples). Because keys are sorted, B-trees serve equality (`=`), ranges (`<`, `BETWEEN`), `ORDER BY` and prefix `LIKE 'abc%'`.\n\nThe trade-off: every `INSERT`/`UPDATE`/`DELETE` must also maintain the index, and it consumes disk. Indexes are bought with write speed and storage.",
+        "es": "Un **índice** es una estructura de datos secundaria que permite a la base de datos encontrar filas sin escanear toda la tabla. Sin uno, `WHERE email = '...'` es un **sequential scan**: O(n) sobre cada fila.\n\nEl índice por defecto de Postgres es un **B-tree**: un árbol balanceado donde cada nodo contiene claves ordenadas y punteros. Una búsqueda desciende desde la raíz comparando claves y llega a una hoja en **O(log n)**; las hojas apuntan a las filas reales de la tabla (heap tuples). Como las claves están ordenadas, los B-trees sirven para igualdad (`=`), rangos (`<`, `BETWEEN`), `ORDER BY` y `LIKE 'abc%'` por prefijo.\n\nEl costo: cada `INSERT`/`UPDATE`/`DELETE` también debe mantener el índice, y ocupa disco. Los índices se pagan con velocidad de escritura y almacenamiento."
+      },
+      "examples": [
+        {
+          "en": "A `users` table with 10M rows: finding one user by email goes from ~10M row reads (seq scan) to ~3-4 B-tree page reads with an index on `email`.",
+          "es": "Una tabla `users` con 10M de filas: buscar un usuario por email pasa de leer ~10M de filas (seq scan) a ~3-4 lecturas de páginas del B-tree con un índice en `email`."
+        },
+        {
+          "en": "Postgres automatically creates a B-tree index for every PRIMARY KEY and UNIQUE constraint — that's why lookups by `id` are always fast.",
+          "es": "Postgres crea automáticamente un índice B-tree para cada PRIMARY KEY y restricción UNIQUE — por eso las búsquedas por `id` siempre son rápidas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The `products` table gets constant lookups by `name`. Create a B-tree index named exactly `idx_products_name` on the `name` column.",
+              "es": "La tabla `products` recibe búsquedas constantes por `name`. Crea un índice B-tree llamado exactamente `idx_products_name` sobre la columna `name`."
+            },
+            "setup_sql": "CREATE TABLE products (id SERIAL PRIMARY KEY, name TEXT NOT NULL, price INT NOT NULL); INSERT INTO products (name, price) VALUES ('keyboard', 45), ('mouse', 20), ('monitor', 180);",
+            "verification_query": "SELECT indexname FROM pg_indexes WHERE tablename = 'products' ORDER BY indexname;",
+            "hint": {
+              "en": "CREATE INDEX index_name ON table_name (column);",
+              "es": "CREATE INDEX nombre_del_indice ON tabla (columna);"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "idx_products_name"
+              ],
+              [
+                "products_pkey"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does a B-tree index also speed up `WHERE price BETWEEN 10 AND 50`, not just equality?",
+              "es": "¿Por qué un índice B-tree también acelera `WHERE price BETWEEN 10 AND 50`, no solo la igualdad?"
+            },
+            "options": [
+              {
+                "en": "Because Postgres caches the whole table in RAM when an index exists",
+                "es": "Porque Postgres cachea toda la tabla en RAM cuando existe un índice"
+              },
+              {
+                "en": "It doesn't — B-trees only support equality",
+                "es": "No lo hace — los B-trees solo soportan igualdad"
+              },
+              {
+                "en": "Because the B-tree hashes each value into buckets",
+                "es": "Porque el B-tree hashea cada valor en buckets"
+              },
+              {
+                "en": "Because leaf keys are kept sorted, so the range is a descent plus a sequential walk of leaves",
+                "es": "Porque las claves de las hojas están ordenadas, así que el rango es un descenso más un recorrido secuencial de hojas"
+              }
+            ],
+            "explanation": {
+              "en": "B-tree leaves form a sorted linked structure: find the first key >= 10, then walk forward until keys exceed 50. Hash indexes are the ones limited to equality.",
+              "es": "Las hojas del B-tree forman una estructura enlazada ordenada: se busca la primera clave >= 10 y se avanza hasta que las claves superan 50. Los índices hash son los limitados a igualdad."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "There is a B-tree index on `users(email)`. Which query can NOT use it efficiently?",
+              "es": "Existe un índice B-tree sobre `users(email)`. ¿Qué consulta NO puede usarlo eficientemente?"
+            },
+            "options": [
+              {
+                "en": "ORDER BY email LIMIT 10",
+                "es": "ORDER BY email LIMIT 10"
+              },
+              {
+                "en": "WHERE email LIKE 'ana%'",
+                "es": "WHERE email LIKE 'ana%'"
+              },
+              {
+                "en": "WHERE email = 'ana@example.com'",
+                "es": "WHERE email = 'ana@example.com'"
+              },
+              {
+                "en": "WHERE email LIKE '%@gmail.com'",
+                "es": "WHERE email LIKE '%@gmail.com'"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "A B-tree stores keys in sorted order, so it serves equality, prefixes (`'ana%'` is a range from 'ana' to 'anb') and ordered walks. A suffix pattern like `'%@gmail.com'` matches keys scattered across the whole tree, so sorted order gives no descent path — you'd need a trigram (pg_trgm) index or a reversed-column trick.",
+              "es": "Un B-tree guarda las claves ordenadas, así que sirve igualdad, prefijos (`'ana%'` es un rango de 'ana' a 'anb') y recorridos ordenados. Un patrón por sufijo como `'%@gmail.com'` coincide con claves dispersas por todo el árbol, así que el orden no ofrece un camino de descenso — necesitarías un índice de trigramas (pg_trgm) o el truco de indexar la columna invertida."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "when-indexes-slow-you-down",
+      "question": {
+        "en": "When can an index make queries slower?",
+        "es": "¿Cuándo puede un índice hacer las consultas más lentas?"
+      },
+      "definition": {
+        "en": "Indexes are not free. Every write (`INSERT`, `UPDATE`, `DELETE`) must update **every index** on the table, so a write-heavy table with 8 indexes does 9 writes per insert. Indexes also bloat over time and compete for cache memory.\n\nFor **reads**, an index can lose too: if a query matches a large fraction of the table (low **selectivity**, e.g. `WHERE active = true` matching 90% of rows), following index pointers causes random I/O per row, and a sequential scan is cheaper. The planner estimates this with table **statistics** — if they're stale, it may pick the wrong plan.\n\nRule of thumb: index columns used in selective filters and joins; don't index low-cardinality flags, tiny tables, or columns you never query.",
+        "es": "Los índices no son gratis. Cada escritura (`INSERT`, `UPDATE`, `DELETE`) debe actualizar **todos los índices** de la tabla, así que una tabla con muchas escrituras y 8 índices hace 9 escrituras por insert. Los índices además se inflan (bloat) con el tiempo y compiten por memoria caché.\n\nEn **lecturas** un índice también puede perder: si la consulta coincide con una fracción grande de la tabla (baja **selectividad**, p. ej. `WHERE active = true` con 90% de las filas), seguir punteros del índice causa I/O aleatorio por fila, y un sequential scan resulta más barato. El planificador estima esto con **estadísticas** de la tabla — si están desactualizadas, puede elegir el plan equivocado.\n\nRegla práctica: indexa columnas usadas en filtros selectivos y joins; no indexes flags de baja cardinalidad, tablas diminutas ni columnas que nunca consultas."
+      },
+      "examples": [
+        {
+          "en": "An events ingestion table receiving 5k inserts/sec: dropping three unused indexes cut insert latency by more than half.",
+          "es": "Una tabla de ingesta de eventos con 5k inserts/seg: eliminar tres índices sin uso redujo la latencia de insert a menos de la mitad."
+        },
+        {
+          "en": "`WHERE country = 'US'` on a table where 80% of users are from the US: Postgres correctly ignores the index and seq-scans, because reading most of the table via index pointers would be slower.",
+          "es": "`WHERE country = 'US'` en una tabla donde el 80% de los usuarios son de EE. UU.: Postgres ignora correctamente el índice y hace seq scan, porque leer casi toda la tabla vía punteros del índice sería más lento."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A table receives heavy INSERT traffic and has 10 indexes, most unused. What is the most direct performance win?",
+              "es": "Una tabla recibe tráfico intenso de INSERT y tiene 10 índices, la mayoría sin uso. ¿Cuál es la mejora de rendimiento más directa?"
+            },
+            "options": [
+              {
+                "en": "Convert all indexes to UNIQUE",
+                "es": "Convertir todos los índices a UNIQUE"
+              },
+              {
+                "en": "Increase the primary key size",
+                "es": "Aumentar el tamaño de la clave primaria"
+              },
+              {
+                "en": "Drop the unused indexes — each insert currently maintains all 10",
+                "es": "Eliminar los índices sin uso — cada insert mantiene actualmente los 10"
+              },
+              {
+                "en": "Add one more index to speed up the inserts",
+                "es": "Agregar un índice más para acelerar los inserts"
+              }
+            ],
+            "explanation": {
+              "en": "Every index adds write amplification: each INSERT must insert an entry into every index. Unused indexes are pure cost. `pg_stat_user_indexes` shows which ones are never scanned.",
+              "es": "Cada índice agrega amplificación de escritura: cada INSERT debe insertar una entrada en cada índice. Los índices sin uso son costo puro. `pg_stat_user_indexes` muestra cuáles nunca se escanean."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain why Postgres might choose a sequential scan over an existing index for `WHERE active = true`, and why that can be the right call.",
+              "es": "Explica por qué Postgres podría elegir un sequential scan en lugar de un índice existente para `WHERE active = true`, y por qué esa puede ser la decisión correcta."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must mention low selectivity / the predicate matching a large fraction of rows, and that index access implies random I/O (or per-row heap fetches) which becomes more expensive than reading the table sequentially. Bonus: planner statistics/cost estimation, low-cardinality columns.",
+              "es": "Debe mencionar la baja selectividad / que el predicado coincide con una fracción grande de filas, y que el acceso por índice implica I/O aleatorio (o lecturas al heap por fila) que resulta más caro que leer la tabla secuencialmente. Bonus: estadísticas del planificador/estimación de costos, columnas de baja cardinalidad."
+            },
+            "reference": "If `active = true` matches, say, 90% of rows, using the index means jumping to almost every table page in random order, fetching rows one by one. A sequential scan reads the same pages in order with cheap, prefetchable I/O. The planner uses column statistics to estimate selectivity and picks the cheaper plan, so ignoring the index is correct for low-selectivity predicates."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You suspect several indexes on a hot table are dead weight. What is the reliable way to confirm an index is unused before dropping it?",
+              "es": "Sospechas que varios índices de una tabla caliente son peso muerto. ¿Cuál es la forma confiable de confirmar que un índice no se usa antes de eliminarlo?"
+            },
+            "options": [
+              {
+                "en": "Grep the codebase for the index name in every query",
+                "es": "Buscar el nombre del índice con grep en cada consulta del código"
+              },
+              {
+                "en": "Check pg_stat_user_indexes: idx_scan = 0 over a representative period (and confirm it doesn't back a UNIQUE or FK constraint)",
+                "es": "Revisar pg_stat_user_indexes: idx_scan = 0 durante un periodo representativo (y confirmar que no respalda una restricción UNIQUE o FK)"
+              },
+              {
+                "en": "Check its size in pg_indexes — small indexes are unused",
+                "es": "Revisar su tamaño en pg_indexes — los índices pequeños no se usan"
+              },
+              {
+                "en": "Drop it in production and watch the error rate",
+                "es": "Eliminarlo en producción y observar la tasa de errores"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "`pg_stat_user_indexes.idx_scan` counts how many times the planner actually used each index. Queries never reference indexes by name (the planner chooses them), size says nothing about usage, and dropping blind risks an incident. Also verify the index doesn't enforce a UNIQUE or foreign-key constraint before dropping.",
+              "es": "`pg_stat_user_indexes.idx_scan` cuenta cuántas veces el planificador usó realmente cada índice. Las consultas nunca referencian índices por nombre (el planificador los elige), el tamaño no dice nada del uso, y eliminar a ciegas arriesga un incidente. Verifica también que el índice no respalde una restricción UNIQUE o de clave foránea antes de eliminarlo."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "composite-indexes",
+      "question": {
+        "en": "How do composite indexes work and why does column order matter?",
+        "es": "¿Cómo funcionan los índices compuestos y por qué importa el orden de las columnas?"
+      },
+      "definition": {
+        "en": "A **composite index** on `(a, b)` sorts entries by `a` first, then by `b` within equal `a` — like a phone book sorted by last name, then first name. It serves queries filtering on `a`, or on `a AND b`, and ranges on `b` **only after** equality on `a`.\n\nThe **leftmost prefix rule**: an index on `(customer_id, created_at)` cannot efficiently serve `WHERE created_at > ...` alone, because rows with the same date are scattered across all customers. You'd need a separate index leading with `created_at`.\n\nOrdering heuristic: **equality columns first, range/sort columns last**. `WHERE customer_id = 42 ORDER BY created_at DESC` is perfectly served by `(customer_id, created_at)`.",
+        "es": "Un **índice compuesto** sobre `(a, b)` ordena las entradas primero por `a`, y por `b` dentro de cada valor igual de `a` — como una guía telefónica ordenada por apellido y luego por nombre. Sirve para consultas que filtran por `a`, o por `a AND b`, y rangos sobre `b` **solo después** de igualdad en `a`.\n\nLa **regla del prefijo izquierdo**: un índice sobre `(customer_id, created_at)` no puede servir eficientemente `WHERE created_at > ...` solo, porque las filas con la misma fecha están dispersas entre todos los clientes. Necesitarías otro índice que empiece por `created_at`.\n\nHeurística de orden: **columnas de igualdad primero, columnas de rango/orden al final**. `WHERE customer_id = 42 ORDER BY created_at DESC` se sirve perfectamente con `(customer_id, created_at)`."
+      },
+      "examples": [
+        {
+          "en": "A multi-tenant SaaS indexes almost everything as `(tenant_id, ...)` because every query filters by tenant first.",
+          "es": "Un SaaS multi-tenant indexa casi todo como `(tenant_id, ...)` porque toda consulta filtra primero por tenant."
+        },
+        {
+          "en": "An index on `(status, created_at)` serves the job queue query `WHERE status = 'pending' ORDER BY created_at LIMIT 10` without any sort step.",
+          "es": "Un índice sobre `(status, created_at)` sirve la consulta de cola de trabajos `WHERE status = 'pending' ORDER BY created_at LIMIT 10` sin ningún paso de ordenamiento."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The hot query is `SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC`. Create the right composite index, named exactly `idx_orders_customer_created`, with the columns in the correct order.",
+              "es": "La consulta caliente es `SELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC`. Crea el índice compuesto correcto, llamado exactamente `idx_orders_customer_created`, con las columnas en el orden correcto."
+            },
+            "setup_sql": "CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), amount INT NOT NULL); INSERT INTO orders (customer_id, amount) VALUES (1, 100), (1, 250), (2, 80);",
+            "verification_query": "SELECT indexdef FROM pg_indexes WHERE indexname = 'idx_orders_customer_created' ORDER BY indexdef;",
+            "hint": {
+              "en": "Equality column first, then the ORDER BY column: CREATE INDEX ... ON orders (equality_col, sort_col);",
+              "es": "Primero la columna de igualdad, luego la del ORDER BY: CREATE INDEX ... ON orders (col_igualdad, col_orden);"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "CREATE INDEX idx_orders_customer_created ON public.orders USING btree (customer_id, created_at)"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You have an index on `(customer_id, created_at)`. Which query can NOT use it efficiently?",
+              "es": "Tienes un índice sobre `(customer_id, created_at)`. ¿Qué consulta NO puede usarlo eficientemente?"
+            },
+            "options": [
+              {
+                "en": "WHERE customer_id = 42 ORDER BY created_at DESC",
+                "es": "WHERE customer_id = 42 ORDER BY created_at DESC"
+              },
+              {
+                "en": "WHERE customer_id = 42",
+                "es": "WHERE customer_id = 42"
+              },
+              {
+                "en": "WHERE created_at > now() - interval '1 day'",
+                "es": "WHERE created_at > now() - interval '1 day'"
+              },
+              {
+                "en": "WHERE customer_id = 42 AND created_at > now() - interval '1 day'",
+                "es": "WHERE customer_id = 42 AND created_at > now() - interval '1 day'"
+              }
+            ],
+            "explanation": {
+              "en": "The leftmost prefix rule: without a condition on `customer_id`, entries matching a date range are scattered across the whole index, so Postgres can't do a targeted descent.",
+              "es": "La regla del prefijo izquierdo: sin condición sobre `customer_id`, las entradas que cumplen el rango de fechas están dispersas por todo el índice, así que Postgres no puede hacer un descenso dirigido."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The hot query is `SELECT * FROM events WHERE tenant_id = $1 AND created_at >= $2 ORDER BY created_at`. Which single composite index serves it best?",
+              "es": "La consulta caliente es `SELECT * FROM events WHERE tenant_id = $1 AND created_at >= $2 ORDER BY created_at`. ¿Qué índice compuesto único la sirve mejor?"
+            },
+            "options": [
+              {
+                "en": "ON events (created_at)",
+                "es": "ON events (created_at)"
+              },
+              {
+                "en": "ON events (tenant_id, created_at)",
+                "es": "ON events (tenant_id, created_at)"
+              },
+              {
+                "en": "ON events (created_at, tenant_id)",
+                "es": "ON events (created_at, tenant_id)"
+              },
+              {
+                "en": "ON events (tenant_id)",
+                "es": "ON events (tenant_id)"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Equality column first, range/sort column last: with `(tenant_id, created_at)` Postgres descends straight to the tenant's entries, which are already sorted by `created_at`, satisfying both the range filter and the ORDER BY with no sort step. Leading with `created_at` scatters each tenant's rows across the matching date range.",
+              "es": "Columna de igualdad primero, columna de rango/orden al final: con `(tenant_id, created_at)` Postgres desciende directo a las entradas del tenant, que ya están ordenadas por `created_at`, satisfaciendo el filtro de rango y el ORDER BY sin paso de ordenamiento. Empezar por `created_at` dispersa las filas de cada tenant por todo el rango de fechas."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "covering-indexes",
+      "question": {
+        "en": "What is a covering index and an index-only scan?",
+        "es": "¿Qué es un índice cubriente (covering index) y un index-only scan?"
+      },
+      "definition": {
+        "en": "Normally, after finding an entry in the index, Postgres must visit the table (**heap fetch**) to read the remaining columns and check row visibility. A **covering index** contains every column the query needs, enabling an **index-only scan**: the heap is never touched.\n\nYou get one either by indexing all referenced columns, e.g. `(customer_id, created_at)` for `SELECT created_at FROM orders WHERE customer_id = 42`, or with the **INCLUDE** clause: `CREATE INDEX ... ON orders (customer_id) INCLUDE (amount)` stores `amount` in leaf pages without making it part of the search key.\n\nCaveat: index-only scans still consult the **visibility map**; on tables with many recent updates Postgres falls back to heap checks until `VACUUM` marks pages all-visible.",
+        "es": "Normalmente, tras encontrar una entrada en el índice, Postgres debe visitar la tabla (**heap fetch**) para leer las columnas restantes y verificar la visibilidad de la fila. Un **índice cubriente** contiene todas las columnas que la consulta necesita, habilitando un **index-only scan**: nunca se toca el heap.\n\nSe consigue indexando todas las columnas referenciadas, p. ej. `(customer_id, created_at)` para `SELECT created_at FROM orders WHERE customer_id = 42`, o con la cláusula **INCLUDE**: `CREATE INDEX ... ON orders (customer_id) INCLUDE (amount)` guarda `amount` en las hojas sin hacerla parte de la clave de búsqueda.\n\nDetalle: los index-only scans consultan el **visibility map**; en tablas con muchas actualizaciones recientes Postgres recurre a chequeos en el heap hasta que `VACUUM` marca las páginas como all-visible."
+      },
+      "examples": [
+        {
+          "en": "A dashboard query `SELECT status, count(*) FROM orders GROUP BY status` went from seconds to milliseconds with an index on `(status)` — an index-only scan reads just the compact index.",
+          "es": "Una consulta de dashboard `SELECT status, count(*) FROM orders GROUP BY status` pasó de segundos a milisegundos con un índice sobre `(status)` — un index-only scan lee solo el índice compacto."
+        },
+        {
+          "en": "`CREATE UNIQUE INDEX ON users (email) INCLUDE (name)` lets a login lookup return the name without touching the heap, while keeping uniqueness only on email.",
+          "es": "`CREATE UNIQUE INDEX ON users (email) INCLUDE (name)` permite que el lookup de login devuelva el nombre sin tocar el heap, manteniendo la unicidad solo sobre email."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Query: `SELECT amount FROM orders WHERE customer_id = 42`. Which index enables an index-only scan?",
+              "es": "Consulta: `SELECT amount FROM orders WHERE customer_id = 42`. ¿Qué índice habilita un index-only scan?"
+            },
+            "options": [
+              {
+                "en": "ON orders (id, customer_id)",
+                "es": "ON orders (id, customer_id)"
+              },
+              {
+                "en": "ON orders (amount)",
+                "es": "ON orders (amount)"
+              },
+              {
+                "en": "ON orders (customer_id) INCLUDE (amount)",
+                "es": "ON orders (customer_id) INCLUDE (amount)"
+              },
+              {
+                "en": "ON orders (customer_id)",
+                "es": "ON orders (customer_id)"
+              }
+            ],
+            "explanation": {
+              "en": "The index must contain both the filter column (`customer_id`) and the selected column (`amount`). INCLUDE stores `amount` in the leaves without widening the search key. `(customer_id, amount)` as key columns would also work.",
+              "es": "El índice debe contener tanto la columna del filtro (`customer_id`) como la seleccionada (`amount`). INCLUDE guarda `amount` en las hojas sin agrandar la clave de búsqueda. `(customer_id, amount)` como columnas clave también funcionaría."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each covering-index concept with its description.",
+              "es": "Conecta cada concepto de índices cubrientes con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Index-only scan",
+                  "es": "Index-only scan"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Heap fetch",
+                  "es": "Heap fetch"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "INCLUDE clause",
+                  "es": "Cláusula INCLUDE"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Visibility map",
+                  "es": "Visibility map"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Answers the query reading only index pages",
+                  "es": "Responde la consulta leyendo solo páginas del índice"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Visiting the table to read remaining columns",
+                  "es": "Visitar la tabla para leer las columnas restantes"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Stores extra payload columns in leaf pages, outside the search key",
+                  "es": "Guarda columnas extra en las hojas, fuera de la clave de búsqueda"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Tracks which pages are all-visible, avoiding per-row heap checks",
+                  "es": "Registra qué páginas son all-visible, evitando chequeos por fila en el heap"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "EXPLAIN ANALYZE shows `Index Only Scan using idx_orders_status ... Heap Fetches: 250000`. Why is the scan still touching the heap, and what fixes it?",
+              "es": "EXPLAIN ANALYZE muestra `Index Only Scan using idx_orders_status ... Heap Fetches: 250000`. ¿Por qué el scan sigue tocando el heap y qué lo soluciona?"
+            },
+            "options": [
+              {
+                "en": "The index is corrupted — run REINDEX",
+                "es": "El índice está corrupto — ejecutar REINDEX"
+              },
+              {
+                "en": "Many pages aren't marked all-visible in the visibility map — run VACUUM so future scans can skip the heap checks",
+                "es": "Muchas páginas no están marcadas como all-visible en el visibility map — ejecutar VACUUM para que futuros scans omitan los chequeos en el heap"
+              },
+              {
+                "en": "work_mem is too small — increase it",
+                "es": "work_mem es demasiado pequeño — aumentarlo"
+              },
+              {
+                "en": "The index is missing INCLUDE columns — recreate it with more columns",
+                "es": "Al índice le faltan columnas INCLUDE — recrearlo con más columnas"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "An index stores no row-visibility information. For pages not marked all-visible in the visibility map (typical after many recent updates), the scan must fetch the heap tuple just to check visibility. VACUUM marks stable pages all-visible, driving Heap Fetches toward zero. The index already covers the query — otherwise Postgres wouldn't have chosen an Index Only Scan.",
+              "es": "Un índice no guarda información de visibilidad de filas. Para las páginas no marcadas como all-visible en el visibility map (típico tras muchas actualizaciones recientes), el scan debe traer la tupla del heap solo para verificar visibilidad. VACUUM marca las páginas estables como all-visible, llevando los Heap Fetches hacia cero. El índice ya cubre la consulta — de lo contrario Postgres no habría elegido un Index Only Scan."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "normalization-and-denormalization",
+      "question": {
+        "en": "What is normalization and when would you denormalize?",
+        "es": "¿Qué es la normalización y cuándo desnormalizarías?"
+      },
+      "definition": {
+        "en": "**Normalization** organizes data so each fact lives in exactly one place: entities get their own tables, repeated groups become rows, and other tables reference them by **foreign key**. Up to third normal form (3NF), every non-key column depends on the key, the whole key, and nothing but the key. This eliminates **update anomalies** — change a customer's email once, not in 500 order rows.\n\n**Denormalization** deliberately duplicates data to avoid expensive joins or aggregates at read time: a cached `order_count` on the customer, a snapshot of the product price on each order line, a pre-joined reporting table.\n\nDefault to normalized. Denormalize when a measured read path is too slow and you accept the cost: extra writes and the risk of stale copies.",
+        "es": "La **normalización** organiza los datos para que cada hecho viva en exactamente un lugar: las entidades tienen sus propias tablas, los grupos repetidos se vuelven filas, y otras tablas los referencian por **clave foránea**. Hasta la tercera forma normal (3FN), cada columna no clave depende de la clave, de toda la clave y de nada más que la clave. Esto elimina **anomalías de actualización** — cambias el email de un cliente una vez, no en 500 filas de pedidos.\n\nLa **desnormalización** duplica datos deliberadamente para evitar joins o agregaciones costosas en lectura: un `order_count` cacheado en el cliente, un snapshot del precio del producto en cada línea de pedido, una tabla de reporting pre-unida.\n\nPor defecto, normaliza. Desnormaliza cuando un camino de lectura medido es demasiado lento y aceptas el costo: escrituras extra y riesgo de copias desactualizadas."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce schema stores the unit price on `order_items` even though `products.price` exists — a legitimate denormalization: the historical price must not change when the catalog price does.",
+          "es": "Un esquema de e-commerce guarda el precio unitario en `order_items` aunque exista `products.price` — una desnormalización legítima: el precio histórico no debe cambiar cuando cambia el precio del catálogo."
+        },
+        {
+          "en": "A feed showing 'Ana (12 posts)' for millions of users keeps a `post_count` column updated by trigger or job, instead of a COUNT(*) join per page load.",
+          "es": "Un feed que muestra 'Ana (12 posts)' para millones de usuarios mantiene una columna `post_count` actualizada por trigger o job, en vez de un join con COUNT(*) por cada carga de página."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "table_builder",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A denormalized `orders` table repeats `customer_name` and `customer_email` on every row. Design the extracted `customers` table: an auto-incrementing integer id, the name, and the email.",
+              "es": "Una tabla `orders` desnormalizada repite `customer_name` y `customer_email` en cada fila. Diseña la tabla `customers` extraída: un id entero autoincremental, el nombre y el email."
+            },
+            "type_options": [
+              "SERIAL",
+              "INTEGER",
+              "TEXT",
+              "NUMERIC",
+              "TIMESTAMPTZ",
+              "BOOLEAN"
+            ]
+          },
+          "solution": {
+            "columns": [
+              {
+                "name": "id",
+                "type": [
+                  "SERIAL",
+                  "INTEGER"
+                ]
+              },
+              {
+                "name": "name",
+                "type": [
+                  "TEXT"
+                ]
+              },
+              {
+                "name": "email",
+                "type": [
+                  "TEXT"
+                ]
+              }
+            ],
+            "allow_extra": false
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the main risk you accept when you denormalize (e.g. caching `order_count` on the customer row)?",
+              "es": "¿Cuál es el principal riesgo que aceptas al desnormalizar (p. ej. cachear `order_count` en la fila del cliente)?"
+            },
+            "options": [
+              {
+                "en": "Foreign keys stop working",
+                "es": "Las claves foráneas dejan de funcionar"
+              },
+              {
+                "en": "Reads become slower",
+                "es": "Las lecturas se vuelven más lentas"
+              },
+              {
+                "en": "The duplicated data can drift out of sync with the source of truth",
+                "es": "Los datos duplicados pueden desincronizarse de la fuente de verdad"
+              },
+              {
+                "en": "The table can no longer be indexed",
+                "es": "La tabla ya no se puede indexar"
+              }
+            ],
+            "explanation": {
+              "en": "Denormalization trades read speed for write complexity: every write path (and bug) that touches orders must also keep the counter correct, or it silently drifts.",
+              "es": "La desnormalización cambia velocidad de lectura por complejidad de escritura: cada camino de escritura (y cada bug) que toca pedidos también debe mantener el contador correcto, o se desvía silenciosamente."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An `orders` table stores `customer_email` on every row, and the app treats it as the customer's current contact email. The customer changes their email. What problem does this design exhibit?",
+              "es": "Una tabla `orders` guarda `customer_email` en cada fila, y la app lo trata como el email de contacto actual del cliente. El cliente cambia su email. ¿Qué problema exhibe este diseño?"
+            },
+            "options": [
+              {
+                "en": "Index bloat — the email index grows without bound",
+                "es": "Bloat de índice — el índice de email crece sin límite"
+              },
+              {
+                "en": "A phantom read — re-running the query returns new rows",
+                "es": "Una lectura fantasma — re-ejecutar la consulta devuelve filas nuevas"
+              },
+              {
+                "en": "An update anomaly — the change must be applied to every order row, or the copies silently diverge from the truth",
+                "es": "Una anomalía de actualización — el cambio debe aplicarse a cada fila de pedidos, o las copias divergen silenciosamente de la verdad"
+              },
+              {
+                "en": "A deadlock — two transactions wait on each other's locks",
+                "es": "Un deadlock — dos transacciones esperan los locks de la otra"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The same fact (the customer's current email) lives in many places, so one logical change requires N physical updates — the update anomaly that normalization eliminates by moving the email to a `customers` table referenced by foreign key. Note the contrast with a price snapshot on order lines, where duplicating a *historical* value is intentional and correct.",
+              "es": "El mismo hecho (el email actual del cliente) vive en muchos lugares, así que un cambio lógico requiere N actualizaciones físicas — la anomalía de actualización que la normalización elimina al mover el email a una tabla `customers` referenciada por clave foránea. Nota el contraste con el snapshot de precio en las líneas de pedido, donde duplicar un valor *histórico* es intencional y correcto."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "transactions-and-acid",
+      "question": {
+        "en": "What is a transaction and what does ACID mean?",
+        "es": "¿Qué es una transacción y qué significa ACID?"
+      },
+      "definition": {
+        "en": "A **transaction** groups statements into an all-or-nothing unit: `BEGIN`, do work, `COMMIT` to make it permanent or `ROLLBACK` to undo everything. The classic example is a money transfer — two UPDATEs that must both happen or neither.\n\n**ACID**: **Atomicity** (all or nothing), **Consistency** (constraints hold before and after), **Isolation** (concurrent transactions don't see each other's partial work), **Durability** (once committed, it survives a crash — Postgres guarantees this with the write-ahead log, WAL).\n\nIn Postgres every statement already runs in an implicit transaction; explicit `BEGIN ... COMMIT` matters when multiple statements must be atomic together.",
+        "es": "Una **transacción** agrupa sentencias en una unidad de todo-o-nada: `BEGIN`, se hace el trabajo, `COMMIT` para hacerlo permanente o `ROLLBACK` para deshacer todo. El ejemplo clásico es una transferencia de dinero — dos UPDATEs que deben ocurrir ambos o ninguno.\n\n**ACID**: **Atomicidad** (todo o nada), **Consistencia** (las restricciones se cumplen antes y después), **Aislamiento** (las transacciones concurrentes no ven el trabajo parcial de las otras), **Durabilidad** (una vez confirmada, sobrevive a un crash — Postgres lo garantiza con el write-ahead log, WAL).\n\nEn Postgres cada sentencia ya corre en una transacción implícita; el `BEGIN ... COMMIT` explícito importa cuando varias sentencias deben ser atómicas juntas."
+      },
+      "examples": [
+        {
+          "en": "Creating an order plus decrementing stock plus writing an audit row: one transaction, so a crash between steps can't sell inventory without an order.",
+          "es": "Crear un pedido más descontar stock más escribir una fila de auditoría: una transacción, así un crash entre pasos no puede vender inventario sin pedido."
+        },
+        {
+          "en": "Durability in practice: Postgres fsyncs the WAL on commit; after a power failure it replays the WAL and every committed transaction is still there.",
+          "es": "Durabilidad en la práctica: Postgres hace fsync del WAL al confirmar; tras un corte de luz reproduce el WAL y cada transacción confirmada sigue ahí."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Transfer 30 from alice's account to bob's account atomically: open a transaction, run both UPDATEs on the `accounts` table, and COMMIT.",
+              "es": "Transfiere 30 de la cuenta de alice a la de bob de forma atómica: abre una transacción, ejecuta ambos UPDATEs sobre la tabla `accounts` y haz COMMIT."
+            },
+            "setup_sql": "CREATE TABLE accounts (id INT PRIMARY KEY, owner TEXT NOT NULL, balance NUMERIC NOT NULL); INSERT INTO accounts (id, owner, balance) VALUES (1, 'alice', 100), (2, 'bob', 50);",
+            "verification_query": "SELECT id, owner, balance FROM accounts ORDER BY id;",
+            "hint": {
+              "en": "BEGIN; UPDATE accounts SET balance = balance - 30 WHERE owner = 'alice'; ... COMMIT;",
+              "es": "BEGIN; UPDATE accounts SET balance = balance - 30 WHERE owner = 'alice'; ... COMMIT;"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                1,
+                "alice",
+                70
+              ],
+              [
+                2,
+                "bob",
+                80
+              ]
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each ACID property with what it guarantees.",
+              "es": "Conecta cada propiedad ACID con lo que garantiza."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Atomicity",
+                  "es": "Atomicidad"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Consistency",
+                  "es": "Consistencia"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Isolation",
+                  "es": "Aislamiento"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Durability",
+                  "es": "Durabilidad"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "All statements apply, or none do",
+                  "es": "Se aplican todas las sentencias, o ninguna"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Constraints and invariants hold before and after",
+                  "es": "Las restricciones e invariantes se cumplen antes y después"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Concurrent transactions don't see each other's partial work",
+                  "es": "Las transacciones concurrentes no ven el trabajo parcial de las otras"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Committed data survives crashes, via the WAL",
+                  "es": "Los datos confirmados sobreviven a crashes, gracias al WAL"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A client receives the COMMIT confirmation and the server loses power one second later. When Postgres restarts, the transaction's changes are still there. Which mechanism guarantees this?",
+              "es": "Un cliente recibe la confirmación del COMMIT y el servidor pierde energía un segundo después. Cuando Postgres reinicia, los cambios de la transacción siguen ahí. ¿Qué mecanismo lo garantiza?"
+            },
+            "options": [
+              {
+                "en": "Durability: the commit record was fsynced to the write-ahead log (WAL), which is replayed during crash recovery",
+                "es": "Durabilidad: el registro del commit se escribió con fsync al write-ahead log (WAL), que se reproduce durante la recuperación del crash"
+              },
+              {
+                "en": "Consistency: constraints re-apply the changes on startup",
+                "es": "Consistencia: las restricciones re-aplican los cambios al arrancar"
+              },
+              {
+                "en": "Atomicity: the ROLLBACK machinery restores the changes",
+                "es": "Atomicidad: el mecanismo de ROLLBACK restaura los cambios"
+              },
+              {
+                "en": "Isolation: MVCC snapshots preserve the committed version",
+                "es": "Aislamiento: los snapshots de MVCC preservan la versión confirmada"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "COMMIT does not return until the WAL record is flushed to durable storage (with default `synchronous_commit = on`). Data pages in shared buffers may be lost, but recovery replays the WAL from the last checkpoint and reconstructs every committed change — that is Durability, the D in ACID.",
+              "es": "COMMIT no retorna hasta que el registro del WAL se vuelca a almacenamiento durable (con el `synchronous_commit = on` por defecto). Las páginas de datos en los buffers compartidos pueden perderse, pero la recuperación reproduce el WAL desde el último checkpoint y reconstruye cada cambio confirmado — eso es la Durabilidad, la D de ACID."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "isolation-levels",
+      "question": {
+        "en": "What are isolation levels and which anomalies does each prevent?",
+        "es": "¿Qué son los niveles de aislamiento y qué anomalías previene cada uno?"
+      },
+      "definition": {
+        "en": "Isolation levels trade correctness for concurrency. The SQL standard defines three anomalies: **dirty read** (seeing uncommitted data), **non-repeatable read** (re-reading a row and getting a different value), and **phantom read** (re-running a query and getting new rows).\n\nPostgres levels: **READ COMMITTED** (default) — each statement sees a fresh snapshot; dirty reads are impossible (in Postgres, always), but non-repeatable and phantom reads can occur. **REPEATABLE READ** — one snapshot for the whole transaction; no non-repeatable or phantom reads, but concurrent updates can fail with a serialization error you must retry. **SERIALIZABLE** — transactions behave as if run one at a time; write skew is also detected, at the cost of more retries.\n\nInterview key: Postgres never allows dirty reads, even at READ UNCOMMITTED (it silently behaves as READ COMMITTED).",
+        "es": "Los niveles de aislamiento intercambian correctitud por concurrencia. El estándar SQL define tres anomalías: **lectura sucia** (ver datos no confirmados), **lectura no repetible** (releer una fila y obtener otro valor) y **lectura fantasma** (re-ejecutar una consulta y obtener filas nuevas).\n\nNiveles en Postgres: **READ COMMITTED** (por defecto) — cada sentencia ve un snapshot fresco; las lecturas sucias son imposibles (en Postgres, siempre), pero pueden ocurrir lecturas no repetibles y fantasmas. **REPEATABLE READ** — un solo snapshot para toda la transacción; sin lecturas no repetibles ni fantasmas, pero las actualizaciones concurrentes pueden fallar con un error de serialización que debes reintentar. **SERIALIZABLE** — las transacciones se comportan como si corrieran una a la vez; también detecta write skew, a costa de más reintentos.\n\nClave de entrevista: Postgres nunca permite lecturas sucias, ni siquiera en READ UNCOMMITTED (se comporta silenciosamente como READ COMMITTED)."
+      },
+      "examples": [
+        {
+          "en": "A report that reads the same totals twice within one transaction under READ COMMITTED can get two different numbers if another transaction commits in between — REPEATABLE READ fixes it.",
+          "es": "Un reporte que lee los mismos totales dos veces dentro de una transacción bajo READ COMMITTED puede obtener dos números distintos si otra transacción confirma en el medio — REPEATABLE READ lo soluciona."
+        },
+        {
+          "en": "Two doctors both go off-call at once because each checked 'at least one doctor remains' before the other's commit — write skew, only prevented by SERIALIZABLE.",
+          "es": "Dos médicos salen de guardia a la vez porque cada uno verificó 'queda al menos un médico' antes del commit del otro — write skew, solo prevenido por SERIALIZABLE."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each anomaly with its definition.",
+              "es": "Conecta cada anomalía con su definición."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Dirty read",
+                  "es": "Lectura sucia"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Non-repeatable read",
+                  "es": "Lectura no repetible"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Phantom read",
+                  "es": "Lectura fantasma"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Write skew",
+                  "es": "Write skew"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Reading data another transaction has not yet committed",
+                  "es": "Leer datos que otra transacción aún no confirmó"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Re-reading the same row yields a different value",
+                  "es": "Releer la misma fila devuelve un valor distinto"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Re-running the same query returns new rows",
+                  "es": "Re-ejecutar la misma consulta devuelve filas nuevas"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Two transactions each validate a constraint, then together break it",
+                  "es": "Dos transacciones validan una restricción por separado y juntas la rompen"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is Postgres' default isolation level, and what can still happen under it?",
+              "es": "¿Cuál es el nivel de aislamiento por defecto de Postgres y qué puede pasar todavía bajo él?"
+            },
+            "options": [
+              {
+                "en": "SERIALIZABLE — nothing can go wrong",
+                "es": "SERIALIZABLE — nada puede salir mal"
+              },
+              {
+                "en": "REPEATABLE READ — phantom reads are possible",
+                "es": "REPEATABLE READ — son posibles las lecturas fantasma"
+              },
+              {
+                "en": "READ UNCOMMITTED — dirty reads are possible",
+                "es": "READ UNCOMMITTED — son posibles las lecturas sucias"
+              },
+              {
+                "en": "READ COMMITTED — non-repeatable and phantom reads are possible",
+                "es": "READ COMMITTED — son posibles lecturas no repetibles y fantasmas"
+              }
+            ],
+            "explanation": {
+              "en": "The default is READ COMMITTED: each statement gets a fresh snapshot, so values may change between statements of the same transaction. Dirty reads are never possible in Postgres.",
+              "es": "El nivel por defecto es READ COMMITTED: cada sentencia obtiene un snapshot fresco, así que los valores pueden cambiar entre sentencias de la misma transacción. Las lecturas sucias nunca son posibles en Postgres."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each Postgres isolation level with how it actually behaves.",
+              "es": "Conecta cada nivel de aislamiento de Postgres con su comportamiento real."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "READ COMMITTED",
+                  "es": "READ COMMITTED"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "REPEATABLE READ",
+                  "es": "REPEATABLE READ"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "SERIALIZABLE",
+                  "es": "SERIALIZABLE"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "READ UNCOMMITTED",
+                  "es": "READ UNCOMMITTED"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Fresh snapshot per statement; values can change between statements of the same transaction",
+                  "es": "Snapshot fresco por sentencia; los valores pueden cambiar entre sentencias de la misma transacción"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "One snapshot for the whole transaction; concurrent updates can raise serialization errors to retry",
+                  "es": "Un snapshot para toda la transacción; las actualizaciones concurrentes pueden lanzar errores de serialización a reintentar"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Behaves as if transactions ran one at a time; also detects write skew",
+                  "es": "Se comporta como si las transacciones corrieran una a la vez; también detecta write skew"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "In Postgres, silently behaves as READ COMMITTED — dirty reads never happen",
+                  "es": "En Postgres, se comporta silenciosamente como READ COMMITTED — las lecturas sucias nunca ocurren"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "deadlocks",
+      "question": {
+        "en": "What is a deadlock and how does Postgres resolve it?",
+        "es": "¿Qué es un deadlock y cómo lo resuelve Postgres?"
+      },
+      "definition": {
+        "en": "A **deadlock** is a cycle of transactions each waiting for a lock the other holds: T1 locks row A and wants row B; T2 locks row B and wants row A. Neither can ever proceed.\n\nPostgres runs a **deadlock detector**: when a transaction has waited longer than `deadlock_timeout` (default 1s), it searches the waits-for graph for a cycle. If found, it **aborts one of the transactions** with error `40P01 deadlock detected`; the others proceed. The application should catch the error and **retry** the aborted transaction.\n\nPrevention beats detection: acquire locks in a **consistent global order** (e.g. always update accounts in ascending id order), keep transactions short, and avoid user interaction inside transactions.",
+        "es": "Un **deadlock** es un ciclo de transacciones donde cada una espera un lock que la otra tiene: T1 bloquea la fila A y quiere la B; T2 bloquea la B y quiere la A. Ninguna puede avanzar jamás.\n\nPostgres ejecuta un **detector de deadlocks**: cuando una transacción lleva esperando más que `deadlock_timeout` (1s por defecto), busca un ciclo en el grafo de esperas. Si lo encuentra, **aborta una de las transacciones** con el error `40P01 deadlock detected`; las demás continúan. La aplicación debe capturar el error y **reintentar** la transacción abortada.\n\nPrevenir es mejor que detectar: adquiere locks en un **orden global consistente** (p. ej. siempre actualizar cuentas en orden ascendente de id), mantén las transacciones cortas y evita interacción con el usuario dentro de ellas."
+      },
+      "examples": [
+        {
+          "en": "Two transfer jobs: one moves money from account 1 to 2, the other from 2 to 1, updating in the order given. Under load they deadlock periodically; sorting the two updates by account id eliminated it completely.",
+          "es": "Dos jobs de transferencia: uno mueve dinero de la cuenta 1 a la 2, el otro de la 2 a la 1, actualizando en el orden recibido. Bajo carga hacían deadlock periódicamente; ordenar los dos updates por id de cuenta lo eliminó por completo."
+        },
+        {
+          "en": "A batch job that UPDATEs thousands of rows in random order deadlocks against OLTP traffic; adding ORDER BY id to select the batch (and locking with FOR UPDATE) fixed it.",
+          "es": "Un job batch que hace UPDATE a miles de filas en orden aleatorio hace deadlock contra el tráfico OLTP; agregar ORDER BY id al seleccionar el lote (y bloquear con FOR UPDATE) lo solucionó."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "T1 updates row A then row B. T2 updates row B then row A. Both run concurrently and freeze, then one gets an error. What happened and what should the app do?",
+              "es": "T1 actualiza la fila A y luego la B. T2 actualiza la B y luego la A. Corren concurrentemente y se congelan, luego una recibe un error. ¿Qué pasó y qué debe hacer la app?"
+            },
+            "options": [
+              {
+                "en": "Disk failure: the app should reconnect to a replica",
+                "es": "Falla de disco: la app debe reconectarse a una réplica"
+              },
+              {
+                "en": "Postgres paused both forever; a DBA must intervene",
+                "es": "Postgres pausó ambas para siempre; un DBA debe intervenir"
+              },
+              {
+                "en": "Both transactions committed twice; the app should deduplicate",
+                "es": "Ambas transacciones confirmaron dos veces; la app debe deduplicar"
+              },
+              {
+                "en": "Deadlock: Postgres aborted one transaction; the app should retry it",
+                "es": "Deadlock: Postgres abortó una transacción; la app debe reintentarla"
+              }
+            ],
+            "explanation": {
+              "en": "This is the classic lock-order cycle. After `deadlock_timeout`, the detector picks a victim and aborts it with `40P01`. Retrying the victim usually succeeds because the survivor has finished.",
+              "es": "Es el ciclo clásico de orden de locks. Tras `deadlock_timeout`, el detector elige una víctima y la aborta con `40P01`. Reintentar la víctima normalmente funciona porque la sobreviviente ya terminó."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your team sees frequent 'deadlock detected' errors between a batch job and the API. Propose at least two concrete strategies to prevent these deadlocks (not just retry).",
+              "es": "Tu equipo ve errores frecuentes de 'deadlock detected' entre un job batch y la API. Propón al menos dos estrategias concretas para prevenir estos deadlocks (no solo reintentar)."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose at least two of: acquiring locks/updating rows in a consistent global order (e.g. sorted by id), keeping transactions short / smaller batches, locking rows up front with SELECT ... FOR UPDATE in sorted order, avoiding cross-transaction lock interleaving, or scheduling the batch off-peak. Retry alone is not sufficient.",
+              "es": "Debe proponer al menos dos de: adquirir locks/actualizar filas en un orden global consistente (p. ej. ordenadas por id), mantener transacciones cortas / lotes más pequeños, bloquear filas por adelantado con SELECT ... FOR UPDATE en orden, evitar el entrelazado de locks entre transacciones, o correr el batch fuera de horas pico. Solo reintentar no es suficiente."
+            },
+            "reference": "1) Impose a global lock order: both the batch job and the API update rows sorted by primary key, so wait cycles cannot form. 2) Shrink batch transactions: process in small chunks so locks are held briefly. 3) Pre-lock deterministically with SELECT ... FOR UPDATE ... ORDER BY id. 4) Optionally run the batch during low-traffic windows. Keep retry logic as a safety net, but prevention removes the cycles."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What does the `deadlock_timeout` setting (default 1s) actually control in Postgres?",
+              "es": "¿Qué controla realmente el parámetro `deadlock_timeout` (1s por defecto) en Postgres?"
+            },
+            "options": [
+              {
+                "en": "The maximum total duration of any transaction",
+                "es": "La duración máxima total de cualquier transacción"
+              },
+              {
+                "en": "The maximum time a transaction may hold any lock before being aborted",
+                "es": "El tiempo máximo que una transacción puede sostener un lock antes de ser abortada"
+              },
+              {
+                "en": "How often Postgres terminates idle connections",
+                "es": "Cada cuánto Postgres termina conexiones ociosas"
+              },
+              {
+                "en": "How long a session waits on a lock before the deadlock detector runs its cycle check — waiting itself is not an error",
+                "es": "Cuánto espera una sesión por un lock antes de que el detector de deadlocks ejecute su búsqueda de ciclos — esperar en sí no es un error"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Cycle detection in the waits-for graph is expensive, so Postgres only runs it once a lock wait exceeds `deadlock_timeout`. If no cycle is found, the session simply keeps waiting (that's ordinary blocking, bounded only by `lock_timeout` if set). Only when a real cycle exists does the detector abort one victim with `40P01`.",
+              "es": "La detección de ciclos en el grafo de esperas es costosa, así que Postgres solo la ejecuta cuando una espera por lock supera `deadlock_timeout`. Si no hay ciclo, la sesión simplemente sigue esperando (bloqueo normal, limitado solo por `lock_timeout` si está configurado). Solo cuando existe un ciclo real el detector aborta a una víctima con `40P01`."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "explain-analyze",
+      "question": {
+        "en": "How do you use EXPLAIN ANALYZE to find why a query is slow?",
+        "es": "¿Cómo usas EXPLAIN ANALYZE para encontrar por qué una consulta es lenta?"
+      },
+      "definition": {
+        "en": "`EXPLAIN` shows the **plan** the optimizer chose (scan types, join order, estimated costs and rows). `EXPLAIN ANALYZE` actually **executes** the query and adds real timings and real row counts per node — careful with it on writes (wrap in a rolled-back transaction).\n\nWhat to look for: a **Seq Scan** on a large table filtered by a selective condition (missing index); **estimated vs actual rows** wildly off (stale statistics — run `ANALYZE`); a **Sort** or **Hash** spilling to disk (`work_mem` too small); **Nested Loop** over thousands of outer rows against a table without an index on the join key.\n\nFinding the slow query in the first place is the job of `pg_stat_statements`, which ranks queries by total and mean execution time.",
+        "es": "`EXPLAIN` muestra el **plan** que eligió el optimizador (tipos de scan, orden de joins, costos y filas estimadas). `EXPLAIN ANALYZE` realmente **ejecuta** la consulta y agrega tiempos y conteos de filas reales por nodo — cuidado con escrituras (envuélvelas en una transacción con rollback).\n\nQué buscar: un **Seq Scan** sobre una tabla grande filtrada por una condición selectiva (falta un índice); **filas estimadas vs reales** muy dispares (estadísticas viejas — ejecuta `ANALYZE`); un **Sort** o **Hash** que se derrama a disco (`work_mem` insuficiente); un **Nested Loop** sobre miles de filas externas contra una tabla sin índice en la clave del join.\n\nEncontrar la consulta lenta en primer lugar es trabajo de `pg_stat_statements`, que rankea consultas por tiempo total y promedio de ejecución."
+      },
+      "examples": [
+        {
+          "en": "A 30-second dashboard query showed `Seq Scan on events (actual rows=48000000)` with a filter on `tenant_id`; one composite index later it ran in 40ms with an Index Scan.",
+          "es": "Una consulta de dashboard de 30 segundos mostraba `Seq Scan on events (actual rows=48000000)` con filtro por `tenant_id`; un índice compuesto después, corría en 40ms con Index Scan."
+        },
+        {
+          "en": "A plan estimated 12 rows but the node actually produced 1.2M — after `ANALYZE big_table`, the planner switched from Nested Loop to Hash Join and the query dropped from minutes to seconds.",
+          "es": "Un plan estimaba 12 filas pero el nodo produjo realmente 1.2M — tras `ANALYZE big_table`, el planificador cambió de Nested Loop a Hash Join y la consulta bajó de minutos a segundos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "EXPLAIN ANALYZE shows `Seq Scan on orders (cost=... rows=120) (actual time=... rows=2100000)` under a filter. What are the two problems visible here?",
+              "es": "EXPLAIN ANALYZE muestra `Seq Scan on orders (cost=... rows=120) (actual time=... rows=2100000)` bajo un filtro. ¿Cuáles son los dos problemas visibles aquí?"
+            },
+            "options": [
+              {
+                "en": "A sequential scan where an index may help, and estimates wildly off from actuals (stale statistics)",
+                "es": "Un sequential scan donde un índice podría ayudar, y estimaciones muy alejadas de los valores reales (estadísticas viejas)"
+              },
+              {
+                "en": "Nothing — cost and time are always different units",
+                "es": "Nada — costo y tiempo siempre son unidades distintas"
+              },
+              {
+                "en": "Too many indexes and too much RAM",
+                "es": "Demasiados índices y demasiada RAM"
+              },
+              {
+                "en": "The query returned too few rows to be useful",
+                "es": "La consulta devolvió muy pocas filas para ser útil"
+              }
+            ],
+            "explanation": {
+              "en": "`rows=120` estimated vs `rows=2100000` actual means statistics are badly stale (run ANALYZE), and a Seq Scan producing millions of filtered rows suggests evaluating an index or rewriting the predicate.",
+              "es": "`rows=120` estimadas vs `rows=2100000` reales significa estadísticas muy desactualizadas (ejecutar ANALYZE), y un Seq Scan que produce millones de filas filtradas sugiere evaluar un índice o reescribir el predicado."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a methodical slow-query investigation.",
+              "es": "Ordena los pasos de una investigación metódica de una consulta lenta."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "find",
+                "label": {
+                  "en": "Identify the worst query with pg_stat_statements / logs",
+                  "es": "Identificar la peor consulta con pg_stat_statements / logs"
+                }
+              },
+              {
+                "id": "explain",
+                "label": {
+                  "en": "Run EXPLAIN ANALYZE on it",
+                  "es": "Ejecutarle EXPLAIN ANALYZE"
+                }
+              },
+              {
+                "id": "diagnose",
+                "label": {
+                  "en": "Find the expensive node: seq scan, bad estimates, disk sort",
+                  "es": "Encontrar el nodo caro: seq scan, malas estimaciones, sort en disco"
+                }
+              },
+              {
+                "id": "fix",
+                "label": {
+                  "en": "Apply a fix: index, ANALYZE, rewrite the query",
+                  "es": "Aplicar una corrección: índice, ANALYZE, reescribir la consulta"
+                }
+              },
+              {
+                "id": "verify",
+                "label": {
+                  "en": "Re-run EXPLAIN ANALYZE to confirm the new plan",
+                  "es": "Re-ejecutar EXPLAIN ANALYZE para confirmar el nuevo plan"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "find",
+              "explain",
+              "diagnose",
+              "fix",
+              "verify"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need the actual runtime plan of a slow DELETE in production. What is the correct approach?",
+              "es": "Necesitas el plan de ejecución real de un DELETE lento en producción. ¿Cuál es el enfoque correcto?"
+            },
+            "options": [
+              {
+                "en": "Wrap it in BEGIN; EXPLAIN ANALYZE DELETE ...; ROLLBACK; — ANALYZE really executes the statement, so the rollback undoes the deletions",
+                "es": "Envolverlo en BEGIN; EXPLAIN ANALYZE DELETE ...; ROLLBACK; — ANALYZE realmente ejecuta la sentencia, así que el rollback deshace los borrados"
+              },
+              {
+                "en": "Plain EXPLAIN is enough — it also executes the statement and reports real timings",
+                "es": "EXPLAIN normal es suficiente — también ejecuta la sentencia y reporta tiempos reales"
+              },
+              {
+                "en": "Run EXPLAIN ANALYZE directly — it never modifies data",
+                "es": "Ejecutar EXPLAIN ANALYZE directamente — nunca modifica datos"
+              },
+              {
+                "en": "Run the DELETE twice and compare wall-clock timings",
+                "es": "Ejecutar el DELETE dos veces y comparar los tiempos de reloj"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Plain EXPLAIN only estimates — it never runs the statement. EXPLAIN ANALYZE executes it for real, including its side effects, so on a DML statement you must wrap it in a transaction and ROLLBACK to get actual per-node timings without persisting the deletions.",
+              "es": "EXPLAIN normal solo estima — nunca ejecuta la sentencia. EXPLAIN ANALYZE la ejecuta de verdad, incluidos sus efectos secundarios, así que en una sentencia DML debes envolverla en una transacción y hacer ROLLBACK para obtener los tiempos reales por nodo sin persistir los borrados."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "connection-pooling",
+      "question": {
+        "en": "What is connection pooling and what happens with too many connections?",
+        "es": "¿Qué es el connection pooling y qué pasa con demasiadas conexiones?"
+      },
+      "definition": {
+        "en": "Each Postgres connection is a full **OS process** with its own memory. Opening one costs a TCP handshake, auth, and process fork — far too expensive per request. Beyond a few hundred active connections, context switching and per-backend memory degrade the whole server, even for idle connections.\n\nA **connection pool** keeps a small set of warm connections and lends them to requests. App-side pools (HikariCP, SQLAlchemy pool) live in each service instance; an external pooler like **PgBouncer** sits in front of Postgres and multiplexes thousands of client connections onto tens of server connections (in *transaction pooling* mode, a server connection is borrowed only for the duration of each transaction).\n\nSymptom of exhaustion: `FATAL: sorry, too many clients already`, or latency spikes while the database CPU looks fine — requests are queueing for a free connection.",
+        "es": "Cada conexión de Postgres es un **proceso del sistema operativo** completo con su propia memoria. Abrir una cuesta un handshake TCP, autenticación y un fork de proceso — demasiado caro por petición. Más allá de unos cientos de conexiones activas, el cambio de contexto y la memoria por backend degradan todo el servidor, incluso con conexiones ociosas.\n\nUn **pool de conexiones** mantiene un conjunto pequeño de conexiones calientes y las presta a las peticiones. Los pools del lado de la app (HikariCP, pool de SQLAlchemy) viven en cada instancia del servicio; un pooler externo como **PgBouncer** se pone delante de Postgres y multiplexa miles de conexiones de clientes sobre decenas de conexiones al servidor (en modo *transaction pooling*, una conexión al servidor se presta solo durante cada transacción).\n\nSíntoma de agotamiento: `FATAL: sorry, too many clients already`, o picos de latencia con la CPU de la base de datos tranquila — las peticiones hacen cola por una conexión libre."
+      },
+      "examples": [
+        {
+          "en": "50 Kubernetes pods each with a pool of 20 = 1000 connections against `max_connections = 100`: deploys started failing. PgBouncer in transaction mode reduced it to 40 server connections.",
+          "es": "50 pods de Kubernetes cada uno con un pool de 20 = 1000 conexiones contra `max_connections = 100`: los deploys empezaron a fallar. PgBouncer en modo transacción lo redujo a 40 conexiones al servidor."
+        },
+        {
+          "en": "Serverless functions (Lambda) each opening their own connection caused connection storms on traffic spikes — solved with RDS Proxy / PgBouncer between the functions and Postgres.",
+          "es": "Funciones serverless (Lambda) abriendo cada una su propia conexión causaban tormentas de conexiones en picos de tráfico — se resolvió con RDS Proxy / PgBouncer entre las funciones y Postgres."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "API latency spikes under load, Postgres CPU is at 20%, and app logs show requests waiting before their first query. Most likely cause?",
+              "es": "La latencia de la API se dispara bajo carga, la CPU de Postgres está al 20% y los logs de la app muestran peticiones esperando antes de su primera consulta. ¿Causa más probable?"
+            },
+            "options": [
+              {
+                "en": "The WAL is corrupted",
+                "es": "El WAL está corrupto"
+              },
+              {
+                "en": "The connection pool is exhausted — requests queue waiting for a free connection",
+                "es": "El pool de conexiones está agotado — las peticiones hacen cola esperando una conexión libre"
+              },
+              {
+                "en": "A missing index on the primary key",
+                "es": "Falta un índice en la clave primaria"
+              },
+              {
+                "en": "Postgres is running VACUUM",
+                "es": "Postgres está ejecutando VACUUM"
+              }
+            ],
+            "explanation": {
+              "en": "Idle database CPU plus waiting before the first query points at the connection layer, not query execution. Check pool saturation metrics and pool size vs concurrent request volume.",
+              "es": "CPU de la base ociosa más espera antes de la primera consulta apunta a la capa de conexiones, no a la ejecución de consultas. Revisa métricas de saturación del pool y su tamaño vs las peticiones concurrentes."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each pooling concept with its description.",
+              "es": "Conecta cada concepto de pooling con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "max_connections",
+                  "es": "max_connections"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "PgBouncer",
+                  "es": "PgBouncer"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Transaction pooling",
+                  "es": "Transaction pooling"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Connection storm",
+                  "es": "Tormenta de conexiones"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Server-side hard limit on simultaneous Postgres connections",
+                  "es": "Límite duro del servidor de conexiones simultáneas a Postgres"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "External pooler that multiplexes many clients onto few server connections",
+                  "es": "Pooler externo que multiplexa muchos clientes sobre pocas conexiones al servidor"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A server connection is lent only for the duration of each transaction",
+                  "es": "Una conexión al servidor se presta solo durante cada transacción"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Many clients (re)connecting at once, overwhelming the server",
+                  "es": "Muchos clientes (re)conectándose a la vez, saturando el servidor"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "After switching to PgBouncer in transaction pooling mode, some requests fail with errors about missing prepared statements, and `SET` settings seem to vanish. Why?",
+              "es": "Tras cambiar a PgBouncer en modo transaction pooling, algunas peticiones fallan con errores de prepared statements inexistentes, y los ajustes con `SET` parecen desvanecerse. ¿Por qué?"
+            },
+            "options": [
+              {
+                "en": "max_connections was lowered and connections are being rejected",
+                "es": "Se redujo max_connections y las conexiones están siendo rechazadas"
+              },
+              {
+                "en": "PgBouncer does not support TLS, so sessions are dropped",
+                "es": "PgBouncer no soporta TLS, así que las sesiones se caen"
+              },
+              {
+                "en": "Transaction pooling disables the WAL, losing session data",
+                "es": "El transaction pooling desactiva el WAL, perdiendo datos de sesión"
+              },
+              {
+                "en": "Each transaction may run on a different server connection, so session-scoped state (prepared statements, SET, advisory locks, temp tables) does not carry over",
+                "es": "Cada transacción puede correr sobre una conexión al servidor distinta, así que el estado de sesión (prepared statements, SET, advisory locks, tablas temporales) no se conserva"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "In transaction mode the server connection is returned to the pool after every transaction, and the next transaction from the same client may get a different one. Anything scoped to the Postgres session — named prepared statements, `SET` (non-LOCAL), session advisory locks, temp tables — silently breaks. Fixes: session pooling for those clients, protocol-level statement handling in the driver, or avoiding session state.",
+              "es": "En modo transacción, la conexión al servidor vuelve al pool después de cada transacción, y la siguiente transacción del mismo cliente puede recibir otra distinta. Todo lo ligado a la sesión de Postgres — prepared statements con nombre, `SET` (no LOCAL), advisory locks de sesión, tablas temporales — se rompe silenciosamente. Soluciones: session pooling para esos clientes, manejo de statements a nivel de protocolo en el driver, o evitar el estado de sesión."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "altering-tables-safely",
+      "question": {
+        "en": "How do you evolve a table with ALTER TABLE, and which operations are dangerous in production?",
+        "es": "¿Cómo evolucionas una tabla con ALTER TABLE y qué operaciones son peligrosas en producción?"
+      },
+      "definition": {
+        "en": "`ALTER TABLE` changes a table's structure: `ADD COLUMN`, `DROP COLUMN`, `ALTER COLUMN ... TYPE`, `SET NOT NULL`, add constraints. The danger in production is **locking**: most forms take an `ACCESS EXCLUSIVE` lock, blocking all reads and writes while they run.\n\nCheap operations (metadata-only, instant): `ADD COLUMN` nullable, and since Postgres 11, `ADD COLUMN ... DEFAULT <constant>` — the default is stored once, not written to each row. Expensive operations (full table rewrite or scan under the lock): changing a column's type (usually), `ADD COLUMN` with a volatile default, and adding constraints that must validate existing rows.\n\nSafe pattern for constraints: `ADD CONSTRAINT ... NOT VALID` (instant) followed by `VALIDATE CONSTRAINT` (takes a weaker lock). For indexes: `CREATE INDEX CONCURRENTLY`.",
+        "es": "`ALTER TABLE` cambia la estructura de una tabla: `ADD COLUMN`, `DROP COLUMN`, `ALTER COLUMN ... TYPE`, `SET NOT NULL`, agregar restricciones. El peligro en producción es el **locking**: la mayoría de las formas toman un lock `ACCESS EXCLUSIVE`, bloqueando todas las lecturas y escrituras mientras corren.\n\nOperaciones baratas (solo metadatos, instantáneas): `ADD COLUMN` nullable, y desde Postgres 11, `ADD COLUMN ... DEFAULT <constante>` — el default se guarda una vez, no se escribe en cada fila. Operaciones caras (reescritura o escaneo completo de la tabla bajo el lock): cambiar el tipo de una columna (normalmente), `ADD COLUMN` con default volátil, y agregar restricciones que deben validar las filas existentes.\n\nPatrón seguro para restricciones: `ADD CONSTRAINT ... NOT VALID` (instantáneo) seguido de `VALIDATE CONSTRAINT` (toma un lock más débil). Para índices: `CREATE INDEX CONCURRENTLY`."
+      },
+      "examples": [
+        {
+          "en": "Adding `ADD COLUMN settings JSONB DEFAULT '{}'` to a 500M-row table: instant since Postgres 11, because the constant default is metadata, not a rewrite.",
+          "es": "Agregar `ADD COLUMN settings JSONB DEFAULT '{}'` a una tabla de 500M de filas: instantáneo desde Postgres 11, porque el default constante es metadato, no una reescritura."
+        },
+        {
+          "en": "A plain `CREATE INDEX` on a busy table blocked writes for 20 minutes; `CREATE INDEX CONCURRENTLY` builds it without blocking writes (slower and can't run inside a transaction).",
+          "es": "Un `CREATE INDEX` normal en una tabla ocupada bloqueó escrituras por 20 minutos; `CREATE INDEX CONCURRENTLY` lo construye sin bloquear escrituras (más lento y no puede correr dentro de una transacción)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Add a NOT NULL column `department` of type TEXT with DEFAULT 'general' to the existing `employees` table, using a single ALTER TABLE (the default lets existing rows satisfy NOT NULL).",
+              "es": "Agrega una columna `department` NOT NULL de tipo TEXT con DEFAULT 'general' a la tabla existente `employees`, usando un solo ALTER TABLE (el default permite que las filas existentes cumplan NOT NULL)."
+            },
+            "setup_sql": "CREATE TABLE employees (id SERIAL PRIMARY KEY, name TEXT NOT NULL); INSERT INTO employees (name) VALUES ('ana'), ('bruno');",
+            "verification_query": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'employees' ORDER BY ordinal_position;",
+            "hint": {
+              "en": "ALTER TABLE employees ADD COLUMN department TEXT NOT NULL DEFAULT 'general';",
+              "es": "ALTER TABLE employees ADD COLUMN department TEXT NOT NULL DEFAULT 'general';"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "id",
+                "integer",
+                "NO"
+              ],
+              [
+                "name",
+                "text",
+                "NO"
+              ],
+              [
+                "department",
+                "text",
+                "NO"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which operation is safe (near-instant) on a huge, busy table in modern Postgres?",
+              "es": "¿Qué operación es segura (casi instantánea) en una tabla enorme y ocupada en Postgres moderno?"
+            },
+            "options": [
+              {
+                "en": "Plain CREATE INDEX (without CONCURRENTLY)",
+                "es": "CREATE INDEX normal (sin CONCURRENTLY)"
+              },
+              {
+                "en": "ALTER COLUMN ... TYPE from TEXT to INTEGER",
+                "es": "ALTER COLUMN ... TYPE de TEXT a INTEGER"
+              },
+              {
+                "en": "ADD COLUMN with a constant DEFAULT",
+                "es": "ADD COLUMN con un DEFAULT constante"
+              },
+              {
+                "en": "ADD COLUMN with DEFAULT now() (volatile)",
+                "es": "ADD COLUMN con DEFAULT now() (volátil)"
+              }
+            ],
+            "explanation": {
+              "en": "Since Postgres 11, a constant default is stored as metadata — no table rewrite. Type changes usually rewrite the table, plain CREATE INDEX blocks writes, and a volatile default must be evaluated and written per row.",
+              "es": "Desde Postgres 11, un default constante se guarda como metadato — sin reescritura de tabla. Los cambios de tipo normalmente reescriben la tabla, CREATE INDEX normal bloquea escrituras, y un default volátil debe evaluarse y escribirse por fila."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the zero-downtime steps to add a new NOT NULL column to a huge, busy table without long locks.",
+              "es": "Ordena los pasos sin downtime para agregar una columna NOT NULL nueva a una tabla enorme y ocupada sin locks largos."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "addcol",
+                "label": {
+                  "en": "ADD COLUMN as nullable (instant, metadata-only)",
+                  "es": "ADD COLUMN nullable (instantáneo, solo metadatos)"
+                }
+              },
+              {
+                "id": "backfill",
+                "label": {
+                  "en": "Backfill existing rows in small batches",
+                  "es": "Rellenar las filas existentes en lotes pequeños"
+                }
+              },
+              {
+                "id": "notvalid",
+                "label": {
+                  "en": "ADD CONSTRAINT ... CHECK (col IS NOT NULL) NOT VALID (instant)",
+                  "es": "ADD CONSTRAINT ... CHECK (col IS NOT NULL) NOT VALID (instantáneo)"
+                }
+              },
+              {
+                "id": "validate",
+                "label": {
+                  "en": "VALIDATE CONSTRAINT — scans the table under a weaker lock, without blocking writes",
+                  "es": "VALIDATE CONSTRAINT — escanea la tabla con un lock más débil, sin bloquear escrituras"
+                }
+              },
+              {
+                "id": "setnotnull",
+                "label": {
+                  "en": "SET NOT NULL — instant, since the validated constraint already proves it",
+                  "es": "SET NOT NULL — instantáneo, porque la restricción validada ya lo demuestra"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "addcol",
+              "backfill",
+              "notvalid",
+              "validate",
+              "setnotnull"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "joins-and-aggregations",
+      "question": {
+        "en": "How do JOINs and GROUP BY aggregations work together?",
+        "es": "¿Cómo funcionan los JOINs y las agregaciones con GROUP BY juntos?"
+      },
+      "definition": {
+        "en": "A **JOIN** combines rows from two tables on a condition. `INNER JOIN` keeps only matching pairs; `LEFT JOIN` also keeps unmatched left rows with NULLs on the right — the classic tool for 'customers with zero orders'.\n\n`GROUP BY` collapses rows into one row per group, computing **aggregates**: `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`. Every selected column must be either grouped or aggregated. `HAVING` filters groups after aggregation (`WHERE` filters rows before it).\n\nA **VIEW** names a query (`CREATE VIEW v AS SELECT ...`) so complex join+aggregate logic can be reused and queried like a table. It stores no data — it re-runs the query each time (unlike a materialized view).",
+        "es": "Un **JOIN** combina filas de dos tablas según una condición. `INNER JOIN` conserva solo los pares que coinciden; `LEFT JOIN` además conserva las filas izquierdas sin match con NULLs a la derecha — la herramienta clásica para 'clientes con cero pedidos'.\n\n`GROUP BY` colapsa filas en una por grupo, calculando **agregados**: `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`. Toda columna seleccionada debe estar agrupada o agregada. `HAVING` filtra grupos después de agregar (`WHERE` filtra filas antes).\n\nUna **VIEW** le pone nombre a una consulta (`CREATE VIEW v AS SELECT ...`) para reutilizar lógica compleja de join+agregación y consultarla como una tabla. No guarda datos — re-ejecuta la consulta cada vez (a diferencia de una vista materializada)."
+      },
+      "examples": [
+        {
+          "en": "Revenue per customer: `SELECT c.name, SUM(o.amount) FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.name` — the daily bread of reporting queries.",
+          "es": "Ingresos por cliente: `SELECT c.name, SUM(o.amount) FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.name` — el pan de cada día de las consultas de reporting."
+        },
+        {
+          "en": "Finding inactive customers: `LEFT JOIN orders ... WHERE orders.id IS NULL` returns customers with no orders at all — an INNER JOIN would silently drop them.",
+          "es": "Encontrar clientes inactivos: `LEFT JOIN orders ... WHERE orders.id IS NULL` devuelve clientes sin ningún pedido — un INNER JOIN los descartaría silenciosamente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Create a view named exactly `top_customers` with columns `name`, `order_count`, `total`: for each customer that has orders, their name, how many orders they have (COUNT) and the sum of `amount` (SUM). Join `customers` with `orders` and GROUP BY the name.",
+              "es": "Crea una vista llamada exactamente `top_customers` con columnas `name`, `order_count`, `total`: para cada cliente con pedidos, su nombre, cuántos pedidos tiene (COUNT) y la suma de `amount` (SUM). Une `customers` con `orders` y agrupa por el nombre."
+            },
+            "setup_sql": "CREATE TABLE customers (id INT PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT NOT NULL REFERENCES customers(id), amount INT NOT NULL); INSERT INTO customers (id, name) VALUES (1, 'ana'), (2, 'bruno'), (3, 'carla'); INSERT INTO orders (customer_id, amount) VALUES (1, 100), (1, 50), (2, 200), (3, 75), (3, 25), (3, 10);",
+            "verification_query": "SELECT name, order_count, total FROM top_customers ORDER BY name;",
+            "hint": {
+              "en": "CREATE VIEW top_customers AS SELECT c.name, COUNT(*) AS order_count, SUM(o.amount) AS total FROM customers c JOIN orders o ON ... GROUP BY c.name;",
+              "es": "CREATE VIEW top_customers AS SELECT c.name, COUNT(*) AS order_count, SUM(o.amount) AS total FROM customers c JOIN orders o ON ... GROUP BY c.name;"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "ana",
+                2,
+                150
+              ],
+              [
+                "bruno",
+                1,
+                200
+              ],
+              [
+                "carla",
+                3,
+                110
+              ]
+            ]
+          }
+        },
+        {
+          "type": "table_builder",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Orders and products have a many-to-many relationship. Design the junction table `order_items`: a reference to the order, a reference to the product, and the quantity ordered (all integers).",
+              "es": "Pedidos y productos tienen una relación muchos-a-muchos. Diseña la tabla intermedia `order_items`: una referencia al pedido, una referencia al producto y la cantidad pedida (todas enteras)."
+            },
+            "type_options": [
+              "SERIAL",
+              "INTEGER",
+              "TEXT",
+              "NUMERIC",
+              "TIMESTAMPTZ",
+              "BOOLEAN"
+            ]
+          },
+          "solution": {
+            "columns": [
+              {
+                "name": "order_id",
+                "type": [
+                  "INTEGER"
+                ]
+              },
+              {
+                "name": "product_id",
+                "type": [
+                  "INTEGER"
+                ]
+              },
+              {
+                "name": "quantity",
+                "type": [
+                  "INTEGER"
+                ]
+              }
+            ],
+            "allow_extra": false
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You want revenue per customer, counting only orders from 2024, and only customers whose total exceeds 1000. Where does each filter belong?",
+              "es": "Quieres los ingresos por cliente, contando solo pedidos de 2024, y solo clientes cuyo total supere 1000. ¿Dónde va cada filtro?"
+            },
+            "options": [
+              {
+                "en": "The order-date filter in WHERE (rows are dropped before grouping); the total > 1000 filter in HAVING (it needs the aggregate)",
+                "es": "El filtro de fecha del pedido en WHERE (las filas se descartan antes de agrupar); el filtro de total > 1000 en HAVING (necesita el agregado)"
+              },
+              {
+                "en": "Both in HAVING — filters on grouped queries always go there",
+                "es": "Ambos en HAVING — los filtros en consultas agrupadas siempre van ahí"
+              },
+              {
+                "en": "Both in WHERE — HAVING is just a slower synonym",
+                "es": "Ambos en WHERE — HAVING es solo un sinónimo más lento"
+              },
+              {
+                "en": "The date in HAVING and the total in WHERE",
+                "es": "La fecha en HAVING y el total en WHERE"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "WHERE runs before GROUP BY and can only see row-level columns, which is exactly right (and cheaper) for the date filter. `SUM(amount) > 1000` doesn't exist until after aggregation, so it must go in HAVING. Putting the date filter in HAVING would force aggregating rows you were going to discard anyway.",
+              "es": "WHERE se ejecuta antes del GROUP BY y solo ve columnas a nivel de fila, que es exactamente lo correcto (y más barato) para el filtro de fecha. `SUM(amount) > 1000` no existe hasta después de la agregación, así que debe ir en HAVING. Poner el filtro de fecha en HAVING obligaría a agregar filas que igual ibas a descartar."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "diagnosing-production-latency",
+      "question": {
+        "en": "Your database serves 50k QPS and latency is rising. How do you investigate?",
+        "es": "Tu base de datos sirve 50k QPS y la latencia está subiendo. ¿Cómo investigas?"
+      },
+      "definition": {
+        "en": "Interviewers want a **methodology**, not a lucky guess. Work outside-in:\n\n1. **Pool / connections**: is the app queueing for connections? Check pool saturation, `pg_stat_activity` counts, `max_connections`. 2. **Queries**: what changed? `pg_stat_statements` ordered by total/mean time; a new deploy or a query plan flip often explains sudden regressions. 3. **Indexes / plans**: `EXPLAIN ANALYZE` the top offenders; look for seq scans and bad estimates. 4. **Locks**: `pg_stat_activity` with `wait_event_type = 'Lock'`, `pg_locks` — a long transaction can block everyone. 5. **Resources**: CPU, I/O saturation, memory, checkpoints, autovacuum falling behind (dead tuples, bloat).\n\nAt each step, confirm with data before moving on. Say what you'd measure and what would confirm or rule out that layer — that's what distinguishes a senior answer.",
+        "es": "Los entrevistadores quieren una **metodología**, no una adivinanza afortunada. Trabaja de afuera hacia adentro:\n\n1. **Pool / conexiones**: ¿la app hace cola por conexiones? Revisa saturación del pool, conteos en `pg_stat_activity`, `max_connections`. 2. **Consultas**: ¿qué cambió? `pg_stat_statements` ordenado por tiempo total/promedio; un deploy nuevo o un cambio de plan suele explicar regresiones súbitas. 3. **Índices / planes**: `EXPLAIN ANALYZE` a las peores; busca seq scans y malas estimaciones. 4. **Locks**: `pg_stat_activity` con `wait_event_type = 'Lock'`, `pg_locks` — una transacción larga puede bloquear a todos. 5. **Recursos**: CPU, saturación de I/O, memoria, checkpoints, autovacuum atrasado (tuplas muertas, bloat).\n\nEn cada paso, confirma con datos antes de avanzar. Di qué medirías y qué confirmaría o descartaría esa capa — eso distingue una respuesta senior."
+      },
+      "examples": [
+        {
+          "en": "Latency doubled after a deploy: pg_stat_statements showed a new ORM-generated query doing N+1 lookups — 40k QPS of tiny queries. Fixed with a JOIN; pool and indexes were fine.",
+          "es": "La latencia se duplicó tras un deploy: pg_stat_statements mostró una consulta nueva generada por el ORM haciendo lookups N+1 — 40k QPS de consultas diminutas. Se arregló con un JOIN; el pool y los índices estaban bien."
+        },
+        {
+          "en": "Gradual afternoon slowdowns: a analytics job held a transaction open for an hour, blocking autovacuum; dead tuples piled up and every scan got slower. Killing the job and adding idle_in_transaction_session_timeout fixed it.",
+          "es": "Lentitud gradual por las tardes: un job de analítica mantenía una transacción abierta una hora, bloqueando el autovacuum; las tuplas muertas se acumulaban y cada scan se volvía más lento. Matar el job y configurar idle_in_transaction_session_timeout lo resolvió."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the investigation layers for rising latency at 50k QPS, from first to last.",
+              "es": "Ordena las capas de investigación para latencia creciente a 50k QPS, de primera a última."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "pool",
+                "label": {
+                  "en": "Connection pool: saturation, waits, max_connections",
+                  "es": "Pool de conexiones: saturación, esperas, max_connections"
+                }
+              },
+              {
+                "id": "queries",
+                "label": {
+                  "en": "Top queries: pg_stat_statements, recent deploys",
+                  "es": "Consultas top: pg_stat_statements, deploys recientes"
+                }
+              },
+              {
+                "id": "indexes",
+                "label": {
+                  "en": "Plans and indexes: EXPLAIN ANALYZE the offenders",
+                  "es": "Planes e índices: EXPLAIN ANALYZE a las culpables"
+                }
+              },
+              {
+                "id": "locks",
+                "label": {
+                  "en": "Locks: blocked sessions, long transactions",
+                  "es": "Locks: sesiones bloqueadas, transacciones largas"
+                }
+              },
+              {
+                "id": "resources",
+                "label": {
+                  "en": "Resources: CPU, I/O, memory, autovacuum health",
+                  "es": "Recursos: CPU, I/O, memoria, salud del autovacuum"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "pool",
+              "queries",
+              "indexes",
+              "locks",
+              "resources"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "p99 latency has been climbing for 2 hours at 50k QPS with no deploys. Describe, step by step, how you would investigate: what you check first, which tools/views you use, and what evidence would move you to the next step.",
+              "es": "La latencia p99 lleva 2 horas subiendo a 50k QPS sin deploys. Describe, paso a paso, cómo investigarías: qué revisas primero, qué herramientas/vistas usas y qué evidencia te haría pasar al siguiente paso."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must present an ordered methodology covering most of: connection pool saturation, identifying hot/slow queries (pg_stat_statements or logs), examining plans/indexes (EXPLAIN ANALYZE), checking locks/blocking (pg_stat_activity, pg_locks, long transactions), and system resources (CPU, I/O, memory, autovacuum/bloat). Must show evidence-driven reasoning, not just a list of names.",
+              "es": "Debe presentar una metodología ordenada que cubra la mayoría de: saturación del pool de conexiones, identificar consultas calientes/lentas (pg_stat_statements o logs), examinar planes/índices (EXPLAIN ANALYZE), revisar locks/bloqueos (pg_stat_activity, pg_locks, transacciones largas) y recursos del sistema (CPU, I/O, memoria, autovacuum/bloat). Debe mostrar razonamiento guiado por evidencia, no solo una lista de nombres."
+            },
+            "reference": "First check the connection layer: pool wait times and pg_stat_activity counts — if requests queue for connections, latency rises with idle DB CPU. If the pool is healthy, rank queries in pg_stat_statements by mean/total time and compare with an hour ago; with no deploys, suspect a plan flip or data growth crossing a threshold. EXPLAIN ANALYZE the top offenders looking for seq scans and estimate mismatches (run ANALYZE if stale). Then check pg_stat_activity for wait_event_type = 'Lock' and idle-in-transaction sessions holding locks or blocking autovacuum. Finally check resources: I/O saturation, CPU, checkpoint frequency, dead tuples/bloat from autovacuum lag. Each step's metrics either confirm the layer or rule it out before moving deeper."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Latency degrades gradually over hours, and `pg_stat_activity` shows a session that has been 'idle in transaction' since the morning. Why can one idle session slow down the whole database?",
+              "es": "La latencia se degrada gradualmente durante horas, y `pg_stat_activity` muestra una sesión que lleva 'idle in transaction' desde la mañana. ¿Por qué una sola sesión ociosa puede volver lenta toda la base?"
+            },
+            "options": [
+              {
+                "en": "It forces every other transaction to run at SERIALIZABLE",
+                "es": "Obliga a todas las demás transacciones a correr en SERIALIZABLE"
+              },
+              {
+                "en": "Its open snapshot holds back the xmin horizon, so vacuum can't remove dead tuples: bloat accumulates and every scan reads more garbage — plus any locks it holds block other sessions",
+                "es": "Su snapshot abierto retiene el horizonte xmin, así que vacuum no puede eliminar tuplas muertas: el bloat se acumula y cada scan lee más basura — además, los locks que sostiene bloquean a otras sesiones"
+              },
+              {
+                "en": "Idle sessions consume all available CPU on the server",
+                "es": "Las sesiones ociosas consumen toda la CPU disponible del servidor"
+              },
+              {
+                "en": "It invalidates the plan cache, forcing constant replanning",
+                "es": "Invalida el caché de planes, forzando replanificación constante"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "MVCC must keep every row version that any open transaction might still see. A transaction idle since morning pins that horizon, so (auto)vacuum cannot reclaim dead tuples created after it began: tables and indexes bloat and scans slow down across the board. It may also sit on locks. Mitigation: kill the session and set `idle_in_transaction_session_timeout`.",
+              "es": "MVCC debe conservar cada versión de fila que alguna transacción abierta aún pueda ver. Una transacción ociosa desde la mañana fija ese horizonte, así que el (auto)vacuum no puede recuperar las tuplas muertas creadas después de que comenzó: tablas e índices se inflan y los scans se vuelven lentos en general. Además puede estar sosteniendo locks. Mitigación: matar la sesión y configurar `idle_in_transaction_session_timeout`."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does a B-tree index fundamentally provide?",
+          "es": "¿Qué provee fundamentalmente un índice B-tree?"
+        },
+        "options": [
+          {
+            "en": "Faster INSERTs into the table",
+            "es": "INSERTs más rápidos en la tabla"
+          },
+          {
+            "en": "O(1) lookups via hashing",
+            "es": "Búsquedas O(1) mediante hashing"
+          },
+          {
+            "en": "O(log n) lookups over sorted keys, supporting equality, ranges and ORDER BY",
+            "es": "Búsquedas O(log n) sobre claves ordenadas, soportando igualdad, rangos y ORDER BY"
+          },
+          {
+            "en": "Automatic compression of the table",
+            "es": "Compresión automática de la tabla"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In which scenario does adding an index most likely HURT overall performance?",
+          "es": "¿En qué escenario agregar un índice probablemente PERJUDICA el rendimiento general?"
+        },
+        "options": [
+          {
+            "en": "A write-heavy table where the indexed column is rarely queried",
+            "es": "Una tabla con muchas escrituras donde la columna indexada casi nunca se consulta"
+          },
+          {
+            "en": "A unique email column used for login",
+            "es": "Una columna de email única usada para el login"
+          },
+          {
+            "en": "A read-heavy table with selective lookups on that column",
+            "es": "Una tabla con muchas lecturas y búsquedas selectivas sobre esa columna"
+          },
+          {
+            "en": "A join key used in every report",
+            "es": "Una clave de join usada en todos los reportes"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "With an index on `(a, b)`, which WHERE clause benefits the LEAST?",
+          "es": "Con un índice sobre `(a, b)`, ¿qué cláusula WHERE se beneficia MENOS?"
+        },
+        "options": [
+          {
+            "en": "WHERE a = 5",
+            "es": "WHERE a = 5"
+          },
+          {
+            "en": "WHERE a = 5 AND b = 5",
+            "es": "WHERE a = 5 AND b = 5"
+          },
+          {
+            "en": "WHERE a = 5 AND b > 5",
+            "es": "WHERE a = 5 AND b > 5"
+          },
+          {
+            "en": "WHERE b = 5",
+            "es": "WHERE b = 5"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What makes an index 'covering' for a query?",
+          "es": "¿Qué hace que un índice sea 'cubriente' para una consulta?"
+        },
+        "options": [
+          {
+            "en": "It contains every column the query needs, enabling an index-only scan",
+            "es": "Contiene todas las columnas que la consulta necesita, habilitando un index-only scan"
+          },
+          {
+            "en": "It is declared UNIQUE",
+            "es": "Está declarado UNIQUE"
+          },
+          {
+            "en": "It covers more than 50% of the table's rows",
+            "es": "Cubre más del 50% de las filas de la tabla"
+          },
+          {
+            "en": "It is the table's primary key",
+            "es": "Es la clave primaria de la tabla"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the main problem normalization eliminates?",
+          "es": "¿Cuál es el principal problema que elimina la normalización?"
+        },
+        "options": [
+          {
+            "en": "Slow SELECT queries",
+            "es": "Consultas SELECT lentas"
+          },
+          {
+            "en": "The need for indexes",
+            "es": "La necesidad de índices"
+          },
+          {
+            "en": "Update anomalies from the same fact stored in many places",
+            "es": "Anomalías de actualización por el mismo hecho guardado en muchos lugares"
+          },
+          {
+            "en": "Deadlocks between transactions",
+            "es": "Deadlocks entre transacciones"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A crash happens between the two UPDATEs of a money transfer wrapped in a transaction. What does atomicity guarantee?",
+          "es": "Ocurre un crash entre los dos UPDATEs de una transferencia envuelta en una transacción. ¿Qué garantiza la atomicidad?"
+        },
+        "options": [
+          {
+            "en": "Both UPDATEs are applied after recovery",
+            "es": "Ambos UPDATEs se aplican tras la recuperación"
+          },
+          {
+            "en": "Neither UPDATE takes effect — the transaction is rolled back entirely",
+            "es": "Ningún UPDATE tiene efecto — la transacción se revierte por completo"
+          },
+          {
+            "en": "The first UPDATE persists, the second is lost",
+            "es": "El primer UPDATE persiste, el segundo se pierde"
+          },
+          {
+            "en": "The table is locked until a DBA intervenes",
+            "es": "La tabla queda bloqueada hasta que intervenga un DBA"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which anomaly does REPEATABLE READ prevent that READ COMMITTED does not?",
+          "es": "¿Qué anomalía previene REPEATABLE READ que READ COMMITTED no previene?"
+        },
+        "options": [
+          {
+            "en": "Non-repeatable reads — re-reading a row within the transaction returns the same value",
+            "es": "Lecturas no repetibles — releer una fila dentro de la transacción devuelve el mismo valor"
+          },
+          {
+            "en": "Dirty reads",
+            "es": "Lecturas sucias"
+          },
+          {
+            "en": "Deadlocks",
+            "es": "Deadlocks"
+          },
+          {
+            "en": "Lost connections",
+            "es": "Conexiones perdidas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How does Postgres resolve a deadlock between two transactions?",
+          "es": "¿Cómo resuelve Postgres un deadlock entre dos transacciones?"
+        },
+        "options": [
+          {
+            "en": "It commits both transactions partially",
+            "es": "Confirma ambas transacciones parcialmente"
+          },
+          {
+            "en": "It restarts the whole server",
+            "es": "Reinicia todo el servidor"
+          },
+          {
+            "en": "It waits until one transaction times out at the TCP level",
+            "es": "Espera hasta que una transacción expire a nivel TCP"
+          },
+          {
+            "en": "It detects the cycle and aborts one transaction with an error, letting the other proceed",
+            "es": "Detecta el ciclo y aborta una transacción con un error, dejando continuar a la otra"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the key difference between EXPLAIN and EXPLAIN ANALYZE?",
+          "es": "¿Cuál es la diferencia clave entre EXPLAIN y EXPLAIN ANALYZE?"
+        },
+        "options": [
+          {
+            "en": "EXPLAIN ANALYZE only works on SELECT statements",
+            "es": "EXPLAIN ANALYZE solo funciona con sentencias SELECT"
+          },
+          {
+            "en": "EXPLAIN ANALYZE actually executes the query and reports real times and row counts",
+            "es": "EXPLAIN ANALYZE realmente ejecuta la consulta y reporta tiempos y conteos de filas reales"
+          },
+          {
+            "en": "EXPLAIN rewrites the query to be faster",
+            "es": "EXPLAIN reescribe la consulta para que sea más rápida"
+          },
+          {
+            "en": "There is no difference",
+            "es": "No hay diferencia"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is a connection pool essential in front of Postgres for a high-traffic service?",
+          "es": "¿Por qué es esencial un pool de conexiones frente a Postgres para un servicio de alto tráfico?"
+        },
+        "options": [
+          {
+            "en": "Postgres refuses direct connections from applications",
+            "es": "Postgres rechaza conexiones directas desde aplicaciones"
+          },
+          {
+            "en": "Pools encrypt the traffic between app and database",
+            "es": "Los pools cifran el tráfico entre la app y la base"
+          },
+          {
+            "en": "Pools cache query results automatically",
+            "es": "Los pools cachean resultados de consultas automáticamente"
+          },
+          {
+            "en": "Each Postgres connection is an expensive OS process; the pool reuses a small warm set instead of connecting per request",
+            "es": "Cada conexión de Postgres es un proceso del SO costoso; el pool reutiliza un conjunto pequeño y caliente en vez de conectar por petición"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which ALTER TABLE operation requires a full table rewrite (dangerous on a huge busy table)?",
+          "es": "¿Qué operación de ALTER TABLE requiere una reescritura completa de la tabla (peligrosa en una tabla enorme y ocupada)?"
+        },
+        "options": [
+          {
+            "en": "Renaming a column",
+            "es": "Renombrar una columna"
+          },
+          {
+            "en": "Changing a column's type in a way that must rewrite every row",
+            "es": "Cambiar el tipo de una columna de forma que deba reescribir cada fila"
+          },
+          {
+            "en": "Adding a column with a constant DEFAULT (Postgres 11+)",
+            "es": "Agregar una columna con DEFAULT constante (Postgres 11+)"
+          },
+          {
+            "en": "Adding a nullable column with no default",
+            "es": "Agregar una columna nullable sin default"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain what a deadlock is, how Postgres handles it, and two ways to prevent deadlocks in application code.",
+          "es": "Explica qué es un deadlock, cómo lo maneja Postgres y dos formas de prevenir deadlocks en el código de la aplicación."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must define a deadlock as a cycle of transactions waiting on each other's locks; state that Postgres detects the cycle (after deadlock_timeout) and aborts one transaction, which the app should retry; and give at least two prevention strategies (consistent lock ordering, short transactions, FOR UPDATE with ORDER BY, smaller batches).",
+          "es": "Debe definir un deadlock como un ciclo de transacciones esperando los locks de las otras; indicar que Postgres detecta el ciclo (tras deadlock_timeout) y aborta una transacción, que la app debe reintentar; y dar al menos dos estrategias de prevención (orden consistente de locks, transacciones cortas, FOR UPDATE con ORDER BY, lotes más pequeños)."
+        },
+        "reference": "A deadlock is a cycle where each transaction holds a lock the other needs, so none can proceed. Postgres' deadlock detector activates after deadlock_timeout, finds the cycle in the waits-for graph, and aborts one victim with error 40P01; the application should catch it and retry. Prevention: always acquire row locks in a consistent global order (e.g. sorted by primary key), keep transactions short and small, and pre-lock rows deterministically with SELECT ... FOR UPDATE ... ORDER BY id."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your Postgres serves 50k QPS and p99 latency has been rising for an hour. Describe your investigation methodology, in order, naming the tools or system views you would use at each step.",
+          "es": "Tu Postgres sirve 50k QPS y la latencia p99 lleva una hora subiendo. Describe tu metodología de investigación, en orden, nombrando las herramientas o vistas del sistema que usarías en cada paso."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must give an ordered methodology covering most of: connection pool saturation (pool metrics, pg_stat_activity), slow/hot queries (pg_stat_statements, logs), plans and indexes (EXPLAIN ANALYZE), locks and long transactions (pg_locks, pg_stat_activity wait events), and system resources / autovacuum health. Order and evidence-based transitions matter more than exact tool names.",
+          "es": "Debe dar una metodología ordenada que cubra la mayoría de: saturación del pool de conexiones (métricas del pool, pg_stat_activity), consultas lentas/calientes (pg_stat_statements, logs), planes e índices (EXPLAIN ANALYZE), locks y transacciones largas (pg_locks, wait events de pg_stat_activity) y recursos del sistema / salud del autovacuum. El orden y las transiciones basadas en evidencia importan más que los nombres exactos de las herramientas."
+        },
+        "reference": "1) Connection layer: pool wait/saturation metrics and connection counts in pg_stat_activity — queueing for connections raises latency while the DB looks idle. 2) Queries: pg_stat_statements ranked by mean and total time; compare against the baseline to find what changed. 3) Plans: EXPLAIN ANALYZE the top offenders; look for seq scans, estimate mismatches (fix with ANALYZE or an index). 4) Locks: pg_stat_activity wait_event_type = 'Lock', pg_locks, idle-in-transaction sessions blocking others or autovacuum. 5) Resources: CPU, I/O saturation, memory, checkpoint frequency, autovacuum lag and bloat. Confirm each layer with data before moving to the next."
+      }
+    }
+  ]
+}

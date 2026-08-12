@@ -1,0 +1,2154 @@
+{
+  "slug": "node",
+  "order": 14,
+  "icon": "hexagon",
+  "title": {
+    "en": "Node.js",
+    "es": "Node.js"
+  },
+  "description": {
+    "en": "The Node.js internals and patterns senior interviews probe: event loop, streams, workers, Express, security and scaling.",
+    "es": "Los internos y patrones de Node.js que evalúan las entrevistas senior: event loop, streams, workers, Express, seguridad y escalado."
+  },
+  "lessons": [
+    {
+      "slug": "event-loop-phases",
+      "question": {
+        "en": "How does the Node.js event loop work, and what are its phases?",
+        "es": "¿Cómo funciona el event loop de Node.js y cuáles son sus fases?"
+      },
+      "definition": {
+        "en": "The **event loop** is the scheduler that lets single-threaded JavaScript handle thousands of concurrent operations. Implemented by **libuv**, it cycles through phases, each with its own callback queue: **timers** (expired `setTimeout`/`setInterval`), **pending callbacks** (deferred system callbacks like TCP errors), **poll** (retrieve new I/O events and run their callbacks — where the loop spends most of its time), **check** (`setImmediate` callbacks) and **close callbacks** (`socket.on('close')`).\n\nBetween every callback, Node drains the **microtask queues**: `process.nextTick` first, then resolved promises. This means a promise chain or a recursive `nextTick` can starve the loop — no I/O callback runs until microtasks are exhausted. Senior candidates are expected to know that `setImmediate` runs in the check phase (deterministically after poll I/O callbacks), while `setTimeout(fn, 0)` runs in a *future* timers phase.\n\nThe practical consequence: **anything synchronous blocks everything**. A 200 ms JSON.parse of a huge payload freezes every connected client for 200 ms, because callbacks only run when the loop is free to advance.",
+        "es": "El **event loop** es el planificador que permite a JavaScript, con un solo hilo, manejar miles de operaciones concurrentes. Implementado por **libuv**, recorre fases en ciclo, cada una con su propia cola de callbacks: **timers** (`setTimeout`/`setInterval` vencidos), **pending callbacks** (callbacks de sistema diferidos, como errores TCP), **poll** (recoger nuevos eventos de I/O y ejecutar sus callbacks — donde el loop pasa la mayor parte del tiempo), **check** (callbacks de `setImmediate`) y **close callbacks** (`socket.on('close')`).\n\nEntre cada callback, Node vacía las **colas de microtareas**: primero `process.nextTick` y luego las promesas resueltas. Esto significa que una cadena de promesas o un `nextTick` recursivo puede matar de hambre al loop — ningún callback de I/O corre hasta agotar las microtareas. De un candidato senior se espera saber que `setImmediate` corre en la fase check (determinísticamente después de los callbacks de I/O del poll), mientras que `setTimeout(fn, 0)` corre en una fase timers *futura*.\n\nLa consecuencia práctica: **cualquier cosa síncrona bloquea todo**. Un `JSON.parse` de 200 ms sobre un payload gigante congela a todos los clientes conectados durante 200 ms, porque los callbacks solo corren cuando el loop está libre para avanzar."
+      },
+      "examples": [
+        {
+          "en": "Netflix moved its API layer to Node precisely because request handling is I/O-bound: the event loop multiplexes tens of thousands of pending upstream calls per instance without one thread per request.",
+          "es": "Netflix movió su capa de API a Node precisamente porque el manejo de peticiones está limitado por I/O: el event loop multiplexa decenas de miles de llamadas pendientes por instancia sin un hilo por petición."
+        },
+        {
+          "en": "A common production incident: a metrics endpoint that serialized a huge in-memory object synchronously caused p99 latency spikes across *all* endpoints — the classic signature of event loop blocking, visible with `perf_hooks.monitorEventLoopDelay`.",
+          "es": "Un incidente típico en producción: un endpoint de métricas que serializaba síncronamente un objeto enorme en memoria causó picos de latencia p99 en *todos* los endpoints — la firma clásica del bloqueo del event loop, visible con `perf_hooks.monitorEventLoopDelay`."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the phases the event loop visits in a single iteration.",
+              "es": "Ordena las fases que el event loop visita en una sola iteración."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "timers",
+                "label": {
+                  "en": "Timers (setTimeout/setInterval)",
+                  "es": "Timers (setTimeout/setInterval)"
+                }
+              },
+              {
+                "id": "pending",
+                "label": {
+                  "en": "Pending callbacks (deferred system callbacks)",
+                  "es": "Pending callbacks (callbacks de sistema diferidos)"
+                }
+              },
+              {
+                "id": "poll",
+                "label": {
+                  "en": "Poll (retrieve and run I/O callbacks)",
+                  "es": "Poll (recoger y ejecutar callbacks de I/O)"
+                }
+              },
+              {
+                "id": "check",
+                "label": {
+                  "en": "Check (setImmediate callbacks)",
+                  "es": "Check (callbacks de setImmediate)"
+                }
+              },
+              {
+                "id": "close",
+                "label": {
+                  "en": "Close callbacks (e.g. socket 'close')",
+                  "es": "Close callbacks (p. ej. 'close' de un socket)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "timers",
+              "pending",
+              "poll",
+              "check",
+              "close"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When do microtasks (resolved promises and process.nextTick callbacks) run relative to the event loop phases?",
+              "es": "¿Cuándo corren las microtareas (promesas resueltas y callbacks de process.nextTick) respecto a las fases del event loop?"
+            },
+            "options": [
+              {
+                "en": "Only in the check phase, right after setImmediate",
+                "es": "Solo en la fase check, justo después de setImmediate"
+              },
+              {
+                "en": "Their queues are drained completely after each callback, before the loop continues",
+                "es": "Sus colas se vacían por completo después de cada callback, antes de que el loop continúe"
+              },
+              {
+                "en": "Only during the poll phase, mixed with I/O callbacks",
+                "es": "Solo durante la fase poll, mezcladas con callbacks de I/O"
+              },
+              {
+                "en": "On a separate libuv thread, in parallel with the loop",
+                "es": "En un hilo separado de libuv, en paralelo con el loop"
+              }
+            ],
+            "explanation": {
+              "en": "Microtask queues (nextTick first, then promises) are drained to empty between callbacks. That is why recursive nextTick or an endless promise chain can starve I/O.",
+              "es": "Las colas de microtareas (primero nextTick, luego promesas) se vacían entre callbacks. Por eso un nextTick recursivo o una cadena infinita de promesas puede matar de hambre al I/O."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Inside an fs.readFile callback you schedule both setTimeout(fn, 0) and setImmediate(fn). Which runs first, and why?",
+              "es": "Dentro de un callback de fs.readFile programas setTimeout(fn, 0) y setImmediate(fn). ¿Cuál corre primero y por qué?"
+            },
+            "options": [
+              {
+                "en": "setImmediate — the loop is in poll, and check comes before the next timers phase",
+                "es": "setImmediate — el loop está en poll, y check viene antes de la siguiente fase timers"
+              },
+              {
+                "en": "They run simultaneously on different threads",
+                "es": "Corren simultáneamente en hilos distintos"
+              },
+              {
+                "en": "setTimeout — timers is the first phase of the loop",
+                "es": "setTimeout — timers es la primera fase del loop"
+              },
+              {
+                "en": "It is nondeterministic, same as outside an I/O callback",
+                "es": "Es no determinista, igual que fuera de un callback de I/O"
+              }
+            ],
+            "explanation": {
+              "en": "I/O callbacks run in the poll phase. From poll, the loop moves to check (setImmediate) before wrapping around to timers, so setImmediate is deterministic here. Outside I/O it depends on process startup timing.",
+              "es": "Los callbacks de I/O corren en la fase poll. Desde poll, el loop pasa a check (setImmediate) antes de dar la vuelta a timers, así que aquí setImmediate es determinista. Fuera de I/O depende del timing de arranque del proceso."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "nonblocking-io-libuv",
+      "question": {
+        "en": "How does Node.js achieve non-blocking I/O, and what is the libuv thread pool for?",
+        "es": "¿Cómo logra Node.js el I/O no bloqueante y para qué sirve el thread pool de libuv?"
+      },
+      "definition": {
+        "en": "Node delegates waiting to the operating system. For **network I/O**, libuv uses the kernel's readiness notification mechanisms (`epoll` on Linux, `kqueue` on macOS, IOCP on Windows): a single thread registers interest in thousands of sockets and gets told which ones are ready — no thread ever blocks on a read. This is why Node handles massive connection counts with one JavaScript thread.\n\nNot everything has an asynchronous kernel API. **File system operations, DNS lookups (`dns.lookup`), and CPU-heavy crypto/zlib functions** (`crypto.pbkdf2`, `zlib.gzip`) run on the **libuv thread pool** — 4 threads by default, configurable up to 1024 with `UV_THREADPOOL_SIZE`. When those 4 threads are busy, additional requests queue: a burst of bcrypt hashes or large file reads silently serializes behind the pool.\n\nThe senior-level distinction: the thread pool is *not* where your JavaScript runs. JS callbacks always execute on the main thread; the pool only runs native C work. So a slow *sync* function still blocks everything, while a saturated pool degrades only the operations that depend on it.",
+        "es": "Node delega la espera al sistema operativo. Para el **I/O de red**, libuv usa los mecanismos de notificación del kernel (`epoll` en Linux, `kqueue` en macOS, IOCP en Windows): un solo hilo registra interés en miles de sockets y el kernel le avisa cuáles están listos — ningún hilo se bloquea en un read. Por eso Node maneja cantidades masivas de conexiones con un solo hilo de JavaScript.\n\nNo todo tiene API asíncrona en el kernel. **Las operaciones de sistema de archivos, las resoluciones DNS (`dns.lookup`) y las funciones pesadas de crypto/zlib** (`crypto.pbkdf2`, `zlib.gzip`) corren en el **thread pool de libuv** — 4 hilos por defecto, configurable hasta 1024 con `UV_THREADPOOL_SIZE`. Cuando esos 4 hilos están ocupados, las peticiones adicionales hacen cola: una ráfaga de hashes bcrypt o lecturas de archivos grandes se serializa silenciosamente detrás del pool.\n\nLa distinción de nivel senior: el thread pool *no* es donde corre tu JavaScript. Los callbacks JS siempre ejecutan en el hilo principal; el pool solo ejecuta trabajo nativo en C. Así que una función *síncrona* lenta sigue bloqueando todo, mientras que un pool saturado degrada solo las operaciones que dependen de él."
+      },
+      "examples": [
+        {
+          "en": "A login service using bcrypt saw latency cliffs at exactly 4 concurrent logins: each hash occupied a thread-pool slot for ~100 ms, so the 5th request queued. Raising UV_THREADPOOL_SIZE (or moving hashing to workers) fixed it.",
+          "es": "Un servicio de login con bcrypt veía escalones de latencia justo con 4 logins concurrentes: cada hash ocupaba un hilo del pool ~100 ms, así que la 5.ª petición hacía cola. Subir UV_THREADPOOL_SIZE (o mover el hashing a workers) lo resolvió."
+        },
+        {
+          "en": "An image CDN edge in Node serves tens of thousands of concurrent downloads per instance: sockets are pure epoll-driven network I/O, so the thread pool is never involved and concurrency is essentially free.",
+          "es": "Un edge de CDN de imágenes en Node sirve decenas de miles de descargas concurrentes por instancia: los sockets son I/O de red puro con epoll, el thread pool nunca interviene y la concurrencia sale prácticamente gratis."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can a single-threaded Node process serve tens of thousands of concurrent HTTP connections?",
+              "es": "¿Por qué un proceso de Node con un solo hilo puede servir decenas de miles de conexiones HTTP concurrentes?"
+            },
+            "options": [
+              {
+                "en": "V8 spawns a hidden thread per connection",
+                "es": "V8 crea un hilo oculto por conexión"
+              },
+              {
+                "en": "Network I/O is delegated to the kernel (epoll/kqueue); the loop only dispatches callbacks when sockets are ready",
+                "es": "El I/O de red se delega al kernel (epoll/kqueue); el loop solo despacha callbacks cuando los sockets están listos"
+              },
+              {
+                "en": "libuv forks a child process per socket",
+                "es": "libuv hace fork de un proceso hijo por socket"
+              },
+              {
+                "en": "HTTP keep-alive reuses one connection for all clients",
+                "es": "HTTP keep-alive reutiliza una conexión para todos los clientes"
+              }
+            ],
+            "explanation": {
+              "en": "Sockets use non-blocking kernel APIs. Nothing waits on a thread; the loop reacts to readiness events, so connection count is bounded by memory and file descriptors, not threads.",
+              "es": "Los sockets usan APIs no bloqueantes del kernel. Nada espera en un hilo; el loop reacciona a eventos de disponibilidad, así que el límite es memoria y file descriptors, no hilos."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each operation with where it actually executes.",
+              "es": "Conecta cada operación con dónde se ejecuta realmente."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "fs.readFile",
+                  "es": "fs.readFile"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "TCP/HTTP socket I/O",
+                  "es": "I/O de sockets TCP/HTTP"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "crypto.pbkdf2",
+                  "es": "crypto.pbkdf2"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Your JavaScript callbacks",
+                  "es": "Tus callbacks de JavaScript"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "libuv thread pool (filesystem has no async kernel API)",
+                  "es": "Thread pool de libuv (el filesystem no tiene API asíncrona de kernel)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Kernel readiness notifications (epoll/kqueue/IOCP)",
+                  "es": "Notificaciones del kernel (epoll/kqueue/IOCP)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "libuv thread pool (CPU-heavy native work)",
+                  "es": "Thread pool de libuv (trabajo nativo pesado en CPU)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Always the main JavaScript thread",
+                  "es": "Siempre el hilo principal de JavaScript"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API's file-upload endpoint gets slow whenever several users hash passwords with crypto.pbkdf2 at the same time. What is the most likely cause?",
+              "es": "El endpoint de subida de archivos de tu API se pone lento cuando varios usuarios hashean contraseñas con crypto.pbkdf2 a la vez. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "The network interface is saturated",
+                "es": "La interfaz de red está saturada"
+              },
+              {
+                "en": "The database connection pool is exhausted",
+                "es": "El pool de conexiones a la base de datos está agotado"
+              },
+              {
+                "en": "pbkdf2 and fs share the 4-thread libuv pool, so file operations queue behind the hashes",
+                "es": "pbkdf2 y fs comparten el pool de 4 hilos de libuv, así que las operaciones de archivo hacen cola detrás de los hashes"
+              },
+              {
+                "en": "V8's garbage collector pauses the process",
+                "es": "El garbage collector de V8 pausa el proceso"
+              }
+            ],
+            "explanation": {
+              "en": "fs and crypto compete for the same default 4 threads. Saturating the pool with hashes delays unrelated fs work — a classic hidden coupling. Fixes: raise UV_THREADPOOL_SIZE or move hashing to worker_threads.",
+              "es": "fs y crypto compiten por los mismos 4 hilos por defecto. Saturar el pool con hashes retrasa trabajo de fs sin relación aparente — un acoplamiento oculto clásico. Soluciones: subir UV_THREADPOOL_SIZE o mover el hashing a worker_threads."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "callbacks-promises-async-await",
+      "question": {
+        "en": "Compare callbacks, promises and async/await. When does each still make sense?",
+        "es": "Compara callbacks, promesas y async/await. ¿Cuándo tiene sentido cada uno todavía?"
+      },
+      "definition": {
+        "en": "**Callbacks** are the original Node pattern (`fn(err, result)`): zero abstraction cost, but composing them nests code (\"callback hell\"), error handling is manual at every level, and forgetting to call — or double-calling — a callback creates silent bugs. **Promises** reify an eventual result as a value: they compose (`then` chains, `Promise.all`), errors propagate automatically down the chain, and a promise settles exactly once by contract.\n\n**async/await** is syntax over promises: `await` suspends the async function (yielding the thread back to the event loop) and resumes it as a microtask when the promise settles. You get synchronous-looking control flow, real `try/catch`, and working stack traces. It does not make anything parallel — `await a(); await b();` serializes two independent operations, which is the most common async performance bug; the fix is `await Promise.all([a(), b()])`.\n\nSenior nuance: know `Promise.all` (fail-fast) vs `Promise.allSettled` (collect all outcomes) vs `Promise.race`; know `util.promisify` for wrapping callback APIs; and know that an unhandled rejection crashes modern Node by default, so every floating promise needs an owner.",
+        "es": "Los **callbacks** son el patrón original de Node (`fn(err, result)`): costo de abstracción cero, pero componerlos anida el código (\"callback hell\"), el manejo de errores es manual en cada nivel, y olvidar llamar — o llamar dos veces — un callback crea bugs silenciosos. Las **promesas** convierten un resultado eventual en un valor: componen (`then` encadenado, `Promise.all`), los errores se propagan solos por la cadena, y una promesa se resuelve exactamente una vez por contrato.\n\n**async/await** es sintaxis sobre promesas: `await` suspende la función async (devolviendo el hilo al event loop) y la reanuda como microtarea cuando la promesa se resuelve. Obtienes flujo de control con apariencia síncrona, `try/catch` real y stack traces útiles. No paraleliza nada — `await a(); await b();` serializa dos operaciones independientes, que es el bug de rendimiento asíncrono más común; la solución es `await Promise.all([a(), b()])`.\n\nMatiz senior: conocer `Promise.all` (falla rápido) vs `Promise.allSettled` (recoge todos los resultados) vs `Promise.race`; conocer `util.promisify` para envolver APIs de callbacks; y saber que un rechazo no manejado tumba el proceso en Node moderno, así que toda promesa suelta necesita un dueño."
+      },
+      "examples": [
+        {
+          "en": "A checkout service fetched user, cart and inventory with three sequential awaits — 300 ms of avoidable latency. Switching the independent calls to Promise.all cut p50 by two thirds.",
+          "es": "Un servicio de checkout obtenía usuario, carrito e inventario con tres awaits secuenciales — 300 ms de latencia evitable. Cambiar las llamadas independientes a Promise.all redujo el p50 a un tercio."
+        },
+        {
+          "en": "Event emitters and streams still use callbacks/listeners in production code today: a 'data' handler fires many times, which a promise (single settlement) cannot model.",
+          "es": "Los event emitters y streams siguen usando callbacks/listeners en producción hoy: un handler de 'data' se dispara muchas veces, algo que una promesa (resolución única) no puede modelar."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Refactor this callback-based function to async/await. It must fetch a user, then fetch that user's orders and profile **concurrently**, and return `{ user, orders, profile }`. Propagate errors by letting them reject (no try/catch needed).",
+              "es": "Refactoriza esta función basada en callbacks a async/await. Debe obtener un usuario, luego obtener sus pedidos y su perfil **de forma concurrente**, y devolver `{ user, orders, profile }`. Propaga los errores dejando que rechacen (no hace falta try/catch)."
+            },
+            "language": "javascript",
+            "starter_code": "// Assume these promise-based APIs exist:\n//   getUser(id) -> Promise<User>\n//   getOrders(userId) -> Promise<Order[]>\n//   getProfile(userId) -> Promise<Profile>\n\n// Legacy version to refactor:\nfunction loadDashboard(id, cb) {\n  getUserCb(id, (err, user) => {\n    if (err) return cb(err);\n    getOrdersCb(user.id, (err, orders) => {\n      if (err) return cb(err);\n      getProfileCb(user.id, (err, profile) => {\n        if (err) return cb(err);\n        cb(null, { user, orders, profile });\n      });\n    });\n  });\n}\n\n// Your async/await version:\nasync function loadDashboard(id) {\n  // TODO\n}\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must be an async function that awaits getUser(id) first, then runs getOrders and getProfile concurrently (Promise.all or starting both promises before awaiting), and returns { user, orders, profile }. Must NOT await orders and profile sequentially. Should not wrap everything in an unnecessary try/catch that swallows errors.",
+              "es": "Debe ser una función async que primero espera getUser(id), luego ejecuta getOrders y getProfile de forma concurrente (Promise.all o arrancando ambas promesas antes de esperar), y devuelve { user, orders, profile }. NO debe esperar orders y profile secuencialmente. No debería envolver todo en un try/catch innecesario que trague errores."
+            },
+            "reference": "async function loadDashboard(id) {\n  const user = await getUser(id);\n  const [orders, profile] = await Promise.all([\n    getOrders(user.id),\n    getProfile(user.id),\n  ]);\n  return { user, orders, profile };\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the most accurate description of what `await` does?",
+              "es": "¿Cuál es la descripción más precisa de lo que hace `await`?"
+            },
+            "options": [
+              {
+                "en": "It blocks the thread until the promise resolves",
+                "es": "Bloquea el hilo hasta que la promesa se resuelve"
+              },
+              {
+                "en": "It suspends the async function and resumes it as a microtask when the promise settles; the event loop keeps running",
+                "es": "Suspende la función async y la reanuda como microtarea cuando la promesa se resuelve; el event loop sigue corriendo"
+              },
+              {
+                "en": "It polls the promise's state on every event loop tick",
+                "es": "Consulta el estado de la promesa en cada tick del event loop"
+              },
+              {
+                "en": "It converts the promise into a synchronous value at compile time",
+                "es": "Convierte la promesa en un valor síncrono en tiempo de compilación"
+              }
+            ],
+            "explanation": {
+              "en": "await never blocks the thread. The function's continuation is scheduled as a microtask, so other callbacks and requests keep flowing while this one waits.",
+              "es": "await nunca bloquea el hilo. La continuación de la función se agenda como microtarea, así que otros callbacks y peticiones siguen fluyendo mientras esta espera."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need results from three independent HTTP calls, and the whole operation must fail if any of them fails. What do you use?",
+              "es": "Necesitas los resultados de tres llamadas HTTP independientes, y la operación completa debe fallar si cualquiera falla. ¿Qué usas?"
+            },
+            "options": [
+              {
+                "en": "Promise.allSettled — it also fails fast",
+                "es": "Promise.allSettled — también falla rápido"
+              },
+              {
+                "en": "Promise.race — it waits for all three",
+                "es": "Promise.race — espera a las tres"
+              },
+              {
+                "en": "Promise.all — runs them concurrently and rejects on the first failure",
+                "es": "Promise.all — las ejecuta concurrentemente y rechaza con el primer fallo"
+              },
+              {
+                "en": "Three sequential awaits — simpler and equally fast",
+                "es": "Tres awaits secuenciales — más simple e igual de rápido"
+              }
+            ],
+            "explanation": {
+              "en": "Promise.all gives concurrency with fail-fast semantics. Sequential awaits triple the latency; allSettled never rejects; race settles with the first one only.",
+              "es": "Promise.all da concurrencia con semántica de fallo rápido. Los awaits secuenciales triplican la latencia; allSettled nunca rechaza; race se resuelve solo con la primera."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "streams-backpressure",
+      "question": {
+        "en": "What are Node streams, and how does backpressure work?",
+        "es": "¿Qué son los streams de Node y cómo funciona el backpressure?"
+      },
+      "definition": {
+        "en": "**Streams** process data in chunks instead of loading it all in memory: `Readable` (sources), `Writable` (sinks), `Duplex` (both) and `Transform` (modify data in flight). A 10 GB file copy with streams uses a few hundred KB of memory; with `fs.readFile` it would need 10 GB and likely crash the process.\n\n**Backpressure** is the flow-control protocol between a fast producer and a slow consumer. When `writable.write(chunk)` returns `false`, the writable's internal buffer has exceeded its `highWaterMark` — the producer must stop and wait for the `'drain'` event before writing again. Ignoring that `false` doesn't throw; it just buffers unboundedly in memory until the process dies. This is the single most-asked streams question in senior interviews.\n\nIn practice you rarely wire this by hand: `stream.pipeline(source, ...transforms, destination, callback)` handles backpressure *and* error propagation *and* cleanup of all streams if any of them fails — unlike bare `.pipe()`, which leaks the source stream when the destination errors.",
+        "es": "Los **streams** procesan datos en chunks en lugar de cargarlo todo en memoria: `Readable` (fuentes), `Writable` (destinos), `Duplex` (ambos) y `Transform` (modifican datos al vuelo). Copiar un archivo de 10 GB con streams usa unos cientos de KB de memoria; con `fs.readFile` necesitaría 10 GB y probablemente tumbaría el proceso.\n\nEl **backpressure** es el protocolo de control de flujo entre un productor rápido y un consumidor lento. Cuando `writable.write(chunk)` devuelve `false`, el buffer interno del writable superó su `highWaterMark` — el productor debe parar y esperar el evento `'drain'` antes de volver a escribir. Ignorar ese `false` no lanza error; simplemente acumula en memoria sin límite hasta que el proceso muere. Es la pregunta de streams más frecuente en entrevistas senior.\n\nEn la práctica rara vez cableas esto a mano: `stream.pipeline(source, ...transforms, destination, callback)` maneja el backpressure *y* la propagación de errores *y* la limpieza de todos los streams si alguno falla — a diferencia de `.pipe()` a secas, que filtra el stream fuente cuando el destino falla."
+      },
+      "examples": [
+        {
+          "en": "An export feature that built a full CSV string in memory OOM-killed pods for large tenants. Rewriting it as a DB cursor piped through a CSV Transform into the HTTP response made memory flat regardless of export size.",
+          "es": "Una funcionalidad de exportación que construía el CSV completo en memoria mataba pods por OOM con tenants grandes. Reescribirla como un cursor de BD encadenado por un Transform CSV hacia la respuesta HTTP dejó la memoria plana sin importar el tamaño."
+        },
+        {
+          "en": "Proxying uploads to S3 with pipeline(req, s3Upload) means a slow S3 connection automatically slows down reading from the client socket — backpressure propagates across the whole chain down to TCP.",
+          "es": "Hacer proxy de subidas a S3 con pipeline(req, s3Upload) hace que una conexión lenta a S3 frene automáticamente la lectura del socket del cliente — el backpressure se propaga por toda la cadena hasta TCP."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A producer keeps calling writable.write() and ignores its return value while the consumer is slow. What happens?",
+              "es": "Un productor sigue llamando writable.write() e ignora su valor de retorno mientras el consumidor va lento. ¿Qué pasa?"
+            },
+            "options": [
+              {
+                "en": "The stream closes itself to protect the process",
+                "es": "El stream se cierra solo para proteger el proceso"
+              },
+              {
+                "en": "write() throws once the buffer is full",
+                "es": "write() lanza una excepción cuando el buffer se llena"
+              },
+              {
+                "en": "Chunks buffer in memory without bound — RSS grows until the process is OOM-killed",
+                "es": "Los chunks se acumulan en memoria sin límite — la RSS crece hasta que el proceso muere por OOM"
+              },
+              {
+                "en": "Excess chunks are silently dropped",
+                "es": "Los chunks sobrantes se descartan silenciosamente"
+              }
+            ],
+            "explanation": {
+              "en": "write() returning false is advisory. Nothing enforces it: data is never lost or rejected, it just accumulates in the internal buffer past the highWaterMark.",
+              "es": "Que write() devuelva false es solo una señal. Nada lo obliga: los datos no se pierden ni se rechazan, solo se acumulan en el buffer interno más allá del highWaterMark."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the backpressure cycle between a fast producer and a slow writable stream.",
+              "es": "Ordena el ciclo de backpressure entre un productor rápido y un writable lento."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "write",
+                "label": {
+                  "en": "Producer calls write(chunk)",
+                  "es": "El productor llama write(chunk)"
+                }
+              },
+              {
+                "id": "false",
+                "label": {
+                  "en": "Buffer exceeds highWaterMark — write() returns false",
+                  "es": "El buffer supera el highWaterMark — write() devuelve false"
+                }
+              },
+              {
+                "id": "pause",
+                "label": {
+                  "en": "Producer stops writing (pauses the source)",
+                  "es": "El productor deja de escribir (pausa la fuente)"
+                }
+              },
+              {
+                "id": "drain",
+                "label": {
+                  "en": "Writable flushes its buffer and emits 'drain'",
+                  "es": "El writable vacía su buffer y emite 'drain'"
+                }
+              },
+              {
+                "id": "resume",
+                "label": {
+                  "en": "Producer resumes writing",
+                  "es": "El productor reanuda la escritura"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "write",
+              "false",
+              "pause",
+              "drain",
+              "resume"
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Implement `compressFile(src, dest)` so it streams the source file through gzip into the destination file with correct backpressure and error handling. Return a promise. Do not use bare .pipe().",
+              "es": "Implementa `compressFile(src, dest)` para que envíe el archivo origen a través de gzip hacia el archivo destino con backpressure y manejo de errores correctos. Devuelve una promesa. No uses .pipe() a secas."
+            },
+            "language": "javascript",
+            "starter_code": "const fs = require('node:fs');\nconst zlib = require('node:zlib');\nconst { pipeline } = require('node:stream/promises');\n\nasync function compressFile(src, dest) {\n  // TODO: stream src -> gzip -> dest\n}\n\nmodule.exports = { compressFile };\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must use stream.pipeline (promises version, or callback version wrapped in a promise) to connect fs.createReadStream(src), zlib.createGzip(), and fs.createWriteStream(dest). Must NOT use readFile/writeFile (loads everything in memory) and must NOT use bare .pipe() without error handling. Errors must reject the returned promise.",
+              "es": "Debe usar stream.pipeline (versión de promesas, o la de callback envuelta en una promesa) para conectar fs.createReadStream(src), zlib.createGzip() y fs.createWriteStream(dest). NO debe usar readFile/writeFile (carga todo en memoria) ni .pipe() a secas sin manejo de errores. Los errores deben rechazar la promesa devuelta."
+            },
+            "reference": "const fs = require('node:fs');\nconst zlib = require('node:zlib');\nconst { pipeline } = require('node:stream/promises');\n\nasync function compressFile(src, dest) {\n  await pipeline(\n    fs.createReadStream(src),\n    zlib.createGzip(),\n    fs.createWriteStream(dest),\n  );\n}\n\nmodule.exports = { compressFile };"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cluster-vs-worker-threads",
+      "question": {
+        "en": "When would you use the cluster module versus worker_threads?",
+        "es": "¿Cuándo usarías el módulo cluster y cuándo worker_threads?"
+      },
+      "definition": {
+        "en": "One Node process uses one CPU core for JavaScript. To use a whole machine you need multiple execution contexts, and Node offers two very different tools. The **cluster module** forks full **processes**: each worker has its own memory, its own event loop and its own V8 heap, and the primary process shares the listening socket, distributing incoming connections (round-robin by default on Linux). It exists to scale **I/O-bound servers** across cores, and a crashed worker can be replaced without killing the others.\n\n**worker_threads** creates **threads inside one process**: cheaper than processes, able to share memory via `SharedArrayBuffer` and transfer `ArrayBuffer`s with zero copy, communicating through message ports. Each worker still gets its own event loop and V8 isolate — JS objects are *not* shared; messages are cloned via the structured clone algorithm. Workers exist to run **CPU-bound work** (parsing, compression, image processing, ML inference) without blocking the main event loop.\n\nRule of thumb for interviews: *many concurrent connections → cluster (or better, multiple containers behind a load balancer); heavy computation inside a request → worker_threads (usually behind a pool like piscina)*. They compose: a clustered server whose workers offload CPU work to thread pools.",
+        "es": "Un proceso de Node usa un núcleo de CPU para JavaScript. Para aprovechar toda la máquina necesitas múltiples contextos de ejecución, y Node ofrece dos herramientas muy distintas. El **módulo cluster** hace fork de **procesos** completos: cada worker tiene su propia memoria, su propio event loop y su propio heap de V8, y el proceso primario comparte el socket de escucha, repartiendo las conexiones entrantes (round-robin por defecto en Linux). Existe para escalar **servidores limitados por I/O** entre núcleos, y un worker caído puede reemplazarse sin matar a los demás.\n\n**worker_threads** crea **hilos dentro de un proceso**: más baratos que procesos, capaces de compartir memoria con `SharedArrayBuffer` y transferir `ArrayBuffer`s sin copia, comunicándose por message ports. Cada worker tiene igualmente su propio event loop y su propio isolate de V8 — los objetos JS *no* se comparten; los mensajes se clonan con el algoritmo structured clone. Los workers existen para ejecutar **trabajo limitado por CPU** (parsing, compresión, procesamiento de imágenes, inferencia de ML) sin bloquear el event loop principal.\n\nRegla práctica para entrevistas: *muchas conexiones concurrentes → cluster (o mejor, varios contenedores tras un balanceador); cómputo pesado dentro de una petición → worker_threads (normalmente tras un pool como piscina)*. Se combinan: un servidor clusterizado cuyos workers delegan el CPU a pools de hilos."
+      },
+      "examples": [
+        {
+          "en": "PM2's cluster mode is the cluster module productized: `pm2 start app.js -i max` forks one worker per core and restarts any that die — a standard way to use a whole VM before containers took over.",
+          "es": "El modo cluster de PM2 es el módulo cluster productizado: `pm2 start app.js -i max` hace fork de un worker por núcleo y reinicia los que mueren — la forma estándar de usar toda una VM antes de que dominaran los contenedores."
+        },
+        {
+          "en": "A PDF-generation service kept its API responsive by rendering documents in a piscina worker pool: each render pegs a CPU for 2 seconds, but the main event loop only awaits a message, so health checks and other requests never stall.",
+          "es": "Un servicio de generación de PDFs mantenía su API responsiva renderizando documentos en un pool de workers con piscina: cada render satura una CPU 2 segundos, pero el event loop principal solo espera un mensaje, así que los health checks y otras peticiones nunca se congelan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each characteristic with cluster or worker_threads.",
+              "es": "Conecta cada característica con cluster o worker_threads."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Separate processes, fully isolated memory",
+                  "es": "Procesos separados, memoria totalmente aislada"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Can share memory via SharedArrayBuffer",
+                  "es": "Puede compartir memoria vía SharedArrayBuffer"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Primary distributes incoming connections on a shared port",
+                  "es": "El primario reparte conexiones entrantes en un puerto compartido"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Best fit: CPU-heavy work inside one service",
+                  "es": "Mejor opción: trabajo pesado de CPU dentro de un servicio"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "cluster — fork() of whole processes",
+                  "es": "cluster — fork() de procesos completos"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "worker_threads — threads in the same process",
+                  "es": "worker_threads — hilos en el mismo proceso"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "cluster — round-robin scheduling by default on Linux",
+                  "es": "cluster — round-robin por defecto en Linux"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "worker_threads — offload without blocking the main loop",
+                  "es": "worker_threads — delegar sin bloquear el loop principal"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "An HTTP endpoint must resize uploaded images (~1.5 s of pure CPU each). How do you keep the service responsive?",
+              "es": "Un endpoint HTTP debe redimensionar imágenes subidas (~1,5 s de CPU puro cada una). ¿Cómo mantienes el servicio responsivo?"
+            },
+            "options": [
+              {
+                "en": "Use the cluster module — forked workers make CPU code non-blocking",
+                "es": "Usar el módulo cluster — los workers forked hacen el código de CPU no bloqueante"
+              },
+              {
+                "en": "Wrap the resize in a Promise so it becomes asynchronous",
+                "es": "Envolver el resize en una Promise para que se vuelva asíncrono"
+              },
+              {
+                "en": "Offload the resize to a worker_threads pool and await the result message",
+                "es": "Delegar el resize a un pool de worker_threads y esperar el mensaje con el resultado"
+              },
+              {
+                "en": "Raise UV_THREADPOOL_SIZE — JavaScript will then run on more threads",
+                "es": "Subir UV_THREADPOOL_SIZE — el JavaScript correrá entonces en más hilos"
+              }
+            ],
+            "explanation": {
+              "en": "Wrapping sync code in a Promise doesn't move it off the main thread, and the libuv pool never runs your JS. Cluster helps throughput but each request still blocks its worker's loop. worker_threads is exactly for this.",
+              "es": "Envolver código síncrono en una Promise no lo saca del hilo principal, y el pool de libuv nunca ejecuta tu JS. Cluster ayuda al throughput pero cada petición sigue bloqueando el loop de su worker. worker_threads es exactamente para esto."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "With the cluster module, how do several workers serve the same port 3000?",
+              "es": "Con el módulo cluster, ¿cómo sirven varios workers el mismo puerto 3000?"
+            },
+            "options": [
+              {
+                "en": "Each worker binds its own port and an internal proxy merges them",
+                "es": "Cada worker abre su propio puerto y un proxy interno los une"
+              },
+              {
+                "en": "The OS clones the socket per worker via DNS",
+                "es": "El SO clona el socket por worker vía DNS"
+              },
+              {
+                "en": "The primary process owns the listening socket and hands connections to workers (round-robin by default on Linux)",
+                "es": "El proceso primario posee el socket de escucha y entrega conexiones a los workers (round-robin por defecto en Linux)"
+              },
+              {
+                "en": "Workers take turns binding and unbinding the port",
+                "es": "Los workers se turnan abriendo y cerrando el puerto"
+              }
+            ],
+            "explanation": {
+              "en": "listen() in a worker is intercepted: the primary listens and distributes accepted connections over IPC, avoiding the thundering-herd problem of all workers racing to accept.",
+              "es": "El listen() de un worker se intercepta: el primario escucha y reparte las conexiones aceptadas por IPC, evitando el problema de estampida de todos los workers compitiendo por aceptar."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "express-middleware-error-handling",
+      "question": {
+        "en": "How does the Express middleware pattern work, and how should errors be handled?",
+        "es": "¿Cómo funciona el patrón de middleware de Express y cómo deben manejarse los errores?"
+      },
+      "definition": {
+        "en": "Express models request handling as a **pipeline of middleware functions** `(req, res, next)`, executed in registration order. Each middleware either ends the response (`res.send`, `res.json`) or calls `next()` to pass control onward; calling neither leaves the request hanging until the client times out. This composition is why cross-cutting concerns — body parsing, logging, auth, rate limiting — are all just middleware placed before the route handlers.\n\n**Error handling** uses a separate class of middleware identified purely by arity: **four parameters** `(err, req, res, next)`. Calling `next(err)` (or throwing synchronously) skips every remaining regular middleware and jumps to the first error handler. The classic Express 4 trap: errors thrown inside `async` handlers reject a promise Express never awaits, producing an *unhandled rejection* instead of reaching your error middleware — you must catch and forward them (`.catch(next)`, a wrapper utility, or Express 5, which forwards rejected promises automatically).\n\nA production-grade error middleware distinguishes **operational errors** (expected: validation failures, 404s — map to a status code and safe message) from **programmer errors** (bugs: often best to log, report, and let the process restart cleanly), and never leaks stack traces to clients.",
+        "es": "Express modela el manejo de peticiones como una **tubería de funciones middleware** `(req, res, next)`, ejecutadas en orden de registro. Cada middleware o termina la respuesta (`res.send`, `res.json`) o llama `next()` para ceder el control; no hacer ninguna de las dos deja la petición colgada hasta que el cliente agota su timeout. Esta composición explica por qué las preocupaciones transversales — parseo del body, logging, auth, rate limiting — son simplemente middleware colocado antes de los handlers de rutas.\n\nEl **manejo de errores** usa una clase separada de middleware identificada solo por la aridad: **cuatro parámetros** `(err, req, res, next)`. Llamar `next(err)` (o lanzar síncronamente) salta todo el middleware regular restante y va al primer manejador de errores. La trampa clásica de Express 4: los errores lanzados dentro de handlers `async` rechazan una promesa que Express nunca espera, produciendo un *unhandled rejection* en vez de llegar a tu middleware de errores — debes capturarlos y reenviarlos (`.catch(next)`, un wrapper, o Express 5, que reenvía promesas rechazadas automáticamente).\n\nUn middleware de errores de nivel producción distingue **errores operacionales** (esperados: fallos de validación, 404s — se mapean a un código de estado y un mensaje seguro) de **errores de programador** (bugs: suele ser mejor loguear, reportar y dejar que el proceso reinicie limpio), y nunca filtra stack traces a los clientes."
+      },
+      "examples": [
+        {
+          "en": "A typical production stack: helmet → request-id → pino logger → express.json with a size limit → auth → rate limiter → routes → 404 handler → single error middleware that maps known error classes to statuses and reports the rest to Sentry.",
+          "es": "Un stack típico en producción: helmet → request-id → logger pino → express.json con límite de tamaño → auth → rate limiter → rutas → handler de 404 → un único middleware de errores que mapea clases de error conocidas a estados y reporta el resto a Sentry."
+        },
+        {
+          "en": "A team on Express 4 saw crashes with no error logs: async route handlers were throwing after a DB timeout and the rejection never reached their error middleware. A 10-line asyncHandler wrapper (or upgrading to Express 5) closed the gap.",
+          "es": "Un equipo en Express 4 veía caídas sin logs de error: los handlers async lanzaban tras un timeout de BD y el rechazo nunca llegaba a su middleware de errores. Un wrapper asyncHandler de 10 líneas (o subir a Express 5) cerró la brecha."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order how Express processes a request to a protected JSON endpoint that throws a validation error.",
+              "es": "Ordena cómo procesa Express una petición a un endpoint JSON protegido que lanza un error de validación."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "parse",
+                "label": {
+                  "en": "express.json() parses the body and calls next()",
+                  "es": "express.json() parsea el body y llama next()"
+                }
+              },
+              {
+                "id": "auth",
+                "label": {
+                  "en": "Auth middleware verifies the token and calls next()",
+                  "es": "El middleware de auth verifica el token y llama next()"
+                }
+              },
+              {
+                "id": "route",
+                "label": {
+                  "en": "Route handler runs and hits invalid input",
+                  "es": "El handler de la ruta corre y encuentra input inválido"
+                }
+              },
+              {
+                "id": "nexterr",
+                "label": {
+                  "en": "Handler calls next(err) with a ValidationError",
+                  "es": "El handler llama next(err) con un ValidationError"
+                }
+              },
+              {
+                "id": "errmw",
+                "label": {
+                  "en": "Error middleware (err, req, res, next) sends the 400 response",
+                  "es": "El middleware de errores (err, req, res, next) envía la respuesta 400"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "parse",
+              "auth",
+              "route",
+              "nexterr",
+              "errmw"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How does Express distinguish an error-handling middleware from a regular one?",
+              "es": "¿Cómo distingue Express un middleware de manejo de errores de uno regular?"
+            },
+            "options": [
+              {
+                "en": "By its arity: it declares exactly four parameters (err, req, res, next)",
+                "es": "Por su aridad: declara exactamente cuatro parámetros (err, req, res, next)"
+              },
+              {
+                "en": "By registering it with app.error() instead of app.use()",
+                "es": "Registrándolo con app.error() en lugar de app.use()"
+              },
+              {
+                "en": "By wrapping it in a try/catch block",
+                "es": "Envolviéndolo en un bloque try/catch"
+              },
+              {
+                "en": "By naming the function errorHandler",
+                "es": "Nombrando la función errorHandler"
+              }
+            ],
+            "explanation": {
+              "en": "Express literally checks fn.length === 4. That is also why you cannot drop the unused next parameter from an error handler — with three params it becomes regular middleware.",
+              "es": "Express literalmente comprueba fn.length === 4. Por eso no puedes quitar el parámetro next sin usar de un manejador de errores — con tres parámetros se convierte en middleware regular."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write a production-ready Express error-handling middleware. It must: log the error; respond with err.statusCode when set (operational errors) using err.message; otherwise respond 500 with a generic message; and never leak stack traces to the client.",
+              "es": "Escribe un middleware de manejo de errores de Express listo para producción. Debe: loguear el error; responder con err.statusCode cuando exista (errores operacionales) usando err.message; en caso contrario responder 500 con un mensaje genérico; y nunca filtrar stack traces al cliente."
+            },
+            "language": "javascript",
+            "starter_code": "// app.use(express.json());\n// app.use('/api', routes);\n// ...registered last:\n\nfunction errorHandler(/* TODO: correct signature */) {\n  // TODO\n}\n\nmodule.exports = { errorHandler };\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must declare four parameters (err, req, res, next) so Express treats it as an error handler. Must log the error (console.error or a logger). Must respond with err.statusCode + err.message when statusCode is present, and a generic 500 message otherwise. Must NOT send err.stack or the raw error object for unknown errors. Bonus: guard with res.headersSent and delegate to next(err).",
+              "es": "Debe declarar cuatro parámetros (err, req, res, next) para que Express lo trate como manejador de errores. Debe loguear el error (console.error o un logger). Debe responder con err.statusCode + err.message cuando statusCode exista, y un mensaje genérico 500 en caso contrario. NO debe enviar err.stack ni el objeto de error crudo para errores desconocidos. Bonus: proteger con res.headersSent y delegar a next(err)."
+            },
+            "reference": "function errorHandler(err, req, res, next) {\n  if (res.headersSent) return next(err);\n  console.error(err);\n  if (err.statusCode) {\n    return res.status(err.statusCode).json({ error: err.message });\n  }\n  res.status(500).json({ error: 'Internal Server Error' });\n}\n\nmodule.exports = { errorHandler };"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "commonjs-vs-esm",
+      "question": {
+        "en": "What are the differences between CommonJS and ES Modules in Node?",
+        "es": "¿Cuáles son las diferencias entre CommonJS y ES Modules en Node?"
+      },
+      "definition": {
+        "en": "**CommonJS** (`require`/`module.exports`) loads modules **synchronously at runtime**: `require` is a normal function call, can appear anywhere (even conditionally), and exports are **copies of values** captured at require time. **ES Modules** (`import`/`export`) are **static**: the dependency graph is resolved before execution, imports are hoisted, and exported names are **live, read-only bindings** — if the module updates an exported `let`, importers see the new value.\n\nNode decides the module system per file: `.mjs` is always ESM, `.cjs` is always CJS, and `.js` follows the nearest `package.json` `\"type\"` field (`\"module\"` → ESM, absent or `\"commonjs\"` → CJS). Interop is asymmetric: ESM can `import` CJS modules (the `module.exports` object becomes the default export), but CJS historically could not `require` an ES Module because ESM loading is asynchronous — the escape hatch is dynamic `import()`, which returns a promise and works in both systems. (Recent Node versions can `require()` synchronous ESM graphs, but interviews still expect the classic model.)\n\nPractical differences that bite: ESM has no `__dirname`/`__filename` (use `import.meta.url`), supports **top-level await**, and its static shape enables tree-shaking in bundlers. The static graph is also why you cannot conditionally `import` at the top level — configuration-dependent loading needs dynamic `import()`.",
+        "es": "**CommonJS** (`require`/`module.exports`) carga módulos **síncronamente en tiempo de ejecución**: `require` es una llamada normal de función, puede aparecer en cualquier parte (incluso condicionalmente), y los exports son **copias de valores** capturadas al momento del require. **ES Modules** (`import`/`export`) son **estáticos**: el grafo de dependencias se resuelve antes de ejecutar, los imports se elevan (hoisting), y los nombres exportados son **bindings vivos de solo lectura** — si el módulo actualiza un `let` exportado, los importadores ven el valor nuevo.\n\nNode decide el sistema de módulos por archivo: `.mjs` siempre es ESM, `.cjs` siempre es CJS, y `.js` sigue el campo `\"type\"` del `package.json` más cercano (`\"module\"` → ESM; ausente o `\"commonjs\"` → CJS). La interoperabilidad es asimétrica: ESM puede hacer `import` de módulos CJS (el objeto `module.exports` se convierte en el default export), pero CJS históricamente no podía hacer `require` de un ES Module porque la carga de ESM es asíncrona — la vía de escape es el `import()` dinámico, que devuelve una promesa y funciona en ambos sistemas. (Versiones recientes de Node pueden hacer `require()` de grafos ESM síncronos, pero las entrevistas aún esperan el modelo clásico.)\n\nDiferencias prácticas que muerden: ESM no tiene `__dirname`/`__filename` (usa `import.meta.url`), soporta **top-level await**, y su forma estática habilita el tree-shaking en bundlers. El grafo estático también explica por qué no puedes hacer `import` condicional en el nivel superior — la carga dependiente de configuración necesita `import()` dinámico."
+      },
+      "examples": [
+        {
+          "en": "The ecosystem's 'dual package' era: libraries like chalk and node-fetch went ESM-only, breaking require() consumers overnight; many packages now ship both builds selected via the package.json \"exports\" field with \"import\" and \"require\" conditions.",
+          "es": "La era de los 'paquetes duales' del ecosistema: librerías como chalk y node-fetch pasaron a ESM puro, rompiendo a los consumidores con require() de un día para otro; muchos paquetes ahora publican ambos builds seleccionados con el campo \"exports\" del package.json y sus condiciones \"import\" y \"require\"."
+        },
+        {
+          "en": "A CLI needed to load an optional plugin only when a flag was passed. In CJS that's a conditional require; in ESM the team used `await import(pluginPath)` — valid thanks to top-level await.",
+          "es": "Una CLI necesitaba cargar un plugin opcional solo cuando se pasaba un flag. En CJS eso es un require condicional; en ESM el equipo usó `await import(pluginPath)` — válido gracias al top-level await."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each feature with the module system it belongs to.",
+              "es": "Conecta cada característica con el sistema de módulos al que pertenece."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "require() — synchronous, callable anywhere",
+                  "es": "require() — síncrono, invocable en cualquier parte"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Static imports resolved before execution",
+                  "es": "Imports estáticos resueltos antes de la ejecución"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Top-level await",
+                  "es": "Top-level await"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Exports are value copies taken at load time",
+                  "es": "Los exports son copias de valores tomadas al cargar"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "CommonJS — runtime function call",
+                  "es": "CommonJS — llamada de función en runtime"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "ES Modules — hoisted, graph built ahead of time",
+                  "es": "ES Modules — hoisted, grafo construido de antemano"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "ES Modules only",
+                  "es": "Solo ES Modules"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "CommonJS — unlike ESM's live bindings",
+                  "es": "CommonJS — a diferencia de los bindings vivos de ESM"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the key difference between how CJS and ESM expose exported values?",
+              "es": "¿Cuál es la diferencia clave entre cómo CJS y ESM exponen los valores exportados?"
+            },
+            "options": [
+              {
+                "en": "CJS exposes live bindings; ESM copies values",
+                "es": "CJS expone bindings vivos; ESM copia valores"
+              },
+              {
+                "en": "There is none — both freeze the exported object",
+                "es": "Ninguna — ambos congelan el objeto exportado"
+              },
+              {
+                "en": "ESM exports are mutable by importers; CJS exports are not",
+                "es": "Los exports de ESM son mutables por los importadores; los de CJS no"
+              },
+              {
+                "en": "ESM exposes live read-only bindings; CJS hands out value copies captured at require time",
+                "es": "ESM expone bindings vivos de solo lectura; CJS entrega copias de valores capturadas al hacer require"
+              }
+            ],
+            "explanation": {
+              "en": "If an ESM module reassigns an exported let, importers observe the change; a destructured CJS value never updates. Importers can never assign to an ESM binding.",
+              "es": "Si un módulo ESM reasigna un let exportado, los importadores ven el cambio; un valor CJS desestructurado nunca se actualiza. Los importadores jamás pueden asignar a un binding de ESM."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How do you make Node treat the .js files of a package as ES Modules?",
+              "es": "¿Cómo haces que Node trate los archivos .js de un paquete como ES Modules?"
+            },
+            "options": [
+              {
+                "en": "Set \"type\": \"module\" in package.json (or rename files to .mjs)",
+                "es": "Poner \"type\": \"module\" en el package.json (o renombrar los archivos a .mjs)"
+              },
+              {
+                "en": "Nothing — Node auto-detects import statements in any .js file",
+                "es": "Nada — Node autodetecta las sentencias import en cualquier archivo .js"
+              },
+              {
+                "en": "Run node with a --esm flag",
+                "es": "Ejecutar node con un flag --esm"
+              },
+              {
+                "en": "Add 'use module' at the top of each file",
+                "es": "Agregar 'use module' al inicio de cada archivo"
+              }
+            ],
+            "explanation": {
+              "en": "The nearest package.json \"type\" field governs .js files; .mjs/.cjs extensions override it per file. There is no --esm flag or pragma.",
+              "es": "El campo \"type\" del package.json más cercano gobierna los archivos .js; las extensiones .mjs/.cjs lo sobreescriben por archivo. No existe flag --esm ni pragma."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "memory-leaks-profiling",
+      "question": {
+        "en": "How do you find and fix a memory leak in a Node.js service?",
+        "es": "¿Cómo encuentras y arreglas una fuga de memoria en un servicio de Node.js?"
+      },
+      "definition": {
+        "en": "A Node **memory leak** is memory that stays *reachable* from a GC root, so V8 can never collect it. The usual suspects are boring: **caches and Maps that only grow** (no eviction/TTL), **event listeners added per request and never removed** (the emitter keeps every closure alive — hence the MaxListenersExceededWarning), **closures capturing large objects** longer than intended, timers holding references, and module-level arrays used as ad-hoc state.\n\nThe production signature: **RSS/heap grows steadily across days, GC runs get longer, latency degrades, and a restart 'fixes' it**. The diagnosis workflow: reproduce or attach with `node --inspect`, take a **heap snapshot** in Chrome DevTools, exercise the leak, take a second snapshot, and use the **comparison view** to see which constructors grew and — critically — the **retainer chain** showing *why* the objects are still reachable. `process.memoryUsage()`, `--heap-prof`, and `v8.writeHeapSnapshot()` cover cases where you can't attach interactively.\n\nSenior nuance: distinguish heap leaks from **native/Buffer growth** (visible as RSS growing while heapUsed stays flat — `external` in memoryUsage) and from **heap fragmentation**; know `WeakMap`/`WeakRef` for caches keyed by objects; and remember that `--max-old-space-size` only moves the OOM point, it fixes nothing.",
+        "es": "Una **fuga de memoria** en Node es memoria que sigue *alcanzable* desde una raíz del GC, así que V8 nunca puede recolectarla. Los sospechosos habituales son aburridos: **cachés y Maps que solo crecen** (sin evicción/TTL), **event listeners añadidos por petición y nunca removidos** (el emitter mantiene vivo cada closure — de ahí el MaxListenersExceededWarning), **closures capturando objetos grandes** más tiempo del previsto, timers reteniendo referencias, y arrays a nivel de módulo usados como estado improvisado.\n\nLa firma en producción: **la RSS/heap crece de forma sostenida durante días, los ciclos de GC se alargan, la latencia se degrada y un reinicio lo 'arregla'**. El flujo de diagnóstico: reproducir o conectarse con `node --inspect`, tomar un **heap snapshot** en Chrome DevTools, ejercitar la fuga, tomar un segundo snapshot y usar la **vista de comparación** para ver qué constructores crecieron y — clave — la **cadena de retainers** que muestra *por qué* los objetos siguen alcanzables. `process.memoryUsage()`, `--heap-prof` y `v8.writeHeapSnapshot()` cubren los casos donde no puedes conectarte interactivamente.\n\nMatiz senior: distinguir fugas de heap del **crecimiento nativo/de Buffers** (visible como RSS creciendo con heapUsed plano — `external` en memoryUsage) y de la **fragmentación del heap**; conocer `WeakMap`/`WeakRef` para cachés indexadas por objetos; y recordar que `--max-old-space-size` solo mueve el punto de OOM, no arregla nada."
+      },
+      "examples": [
+        {
+          "en": "A gateway leaked ~40 MB/hour: a per-request 'metrics' listener was attached to a shared EventEmitter and never removed. The heap snapshot diff showed thousands of retained closures; the retainer chain pointed straight at the emitter's listeners array.",
+          "es": "Un gateway fugaba ~40 MB/hora: un listener de 'metrics' por petición se añadía a un EventEmitter compartido y nunca se removía. El diff de heap snapshots mostró miles de closures retenidos; la cadena de retainers apuntaba directo al array de listeners del emitter."
+        },
+        {
+          "en": "An in-memory cache keyed by session id grew forever because sessions were never evicted. Replacing the plain Map with an LRU cache (max entries + TTL) flattened the memory curve without touching business logic.",
+          "es": "Una caché en memoria indexada por id de sesión crecía para siempre porque las sesiones nunca se desalojaban. Reemplazar el Map plano por una caché LRU (máximo de entradas + TTL) aplanó la curva de memoria sin tocar la lógica de negocio."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these is the most common source of memory leaks in real Node services?",
+              "es": "¿Cuál de estas es la fuente más común de fugas de memoria en servicios reales de Node?"
+            },
+            "options": [
+              {
+                "en": "Creating many short-lived strings",
+                "es": "Crear muchos strings de vida corta"
+              },
+              {
+                "en": "Declaring variables with let instead of const",
+                "es": "Declarar variables con let en lugar de const"
+              },
+              {
+                "en": "Using streams instead of buffers",
+                "es": "Usar streams en lugar de buffers"
+              },
+              {
+                "en": "Ever-growing caches/Maps and event listeners that are added but never removed",
+                "es": "Cachés/Maps que solo crecen y event listeners que se añaden pero nunca se remueven"
+              }
+            ],
+            "explanation": {
+              "en": "Short-lived objects are exactly what generational GC handles well. Leaks come from references that keep objects reachable: unbounded collections, listeners, closures and timers.",
+              "es": "Los objetos de vida corta son justo lo que el GC generacional maneja bien. Las fugas vienen de referencias que mantienen objetos alcanzables: colecciones sin límite, listeners, closures y timers."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Production alert: your Node pod's memory grows ~5% per hour until it is OOM-killed; a restart resets it. Describe, step by step, how you would confirm it is a leak and locate the leaking code.",
+              "es": "Alerta de producción: la memoria de tu pod de Node crece ~5% por hora hasta que muere por OOM; un reinicio la resetea. Describe, paso a paso, cómo confirmarías que es una fuga y localizarías el código que fuga."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must include: monitoring memory over time (process.memoryUsage / metrics) to confirm steady growth; capturing at least two heap snapshots (via --inspect + Chrome DevTools, or v8.writeHeapSnapshot) separated by load; comparing snapshots to find which object types grew; and following retainer chains/paths to GC roots to find the code holding references. Bonus: mentions common culprits (unbounded caches, listeners, closures, timers), distinguishing heap vs external/native memory, or reproducing under synthetic load in staging.",
+              "es": "Debe incluir: monitorear la memoria en el tiempo (process.memoryUsage / métricas) para confirmar crecimiento sostenido; capturar al menos dos heap snapshots (con --inspect + Chrome DevTools, o v8.writeHeapSnapshot) separados por carga; comparar los snapshots para ver qué tipos de objetos crecieron; y seguir las cadenas de retainers/caminos a raíces del GC para hallar el código que retiene referencias. Bonus: mencionar culpables comunes (cachés sin límite, listeners, closures, timers), distinguir heap vs memoria externa/nativa, o reproducir con carga sintética en staging."
+            },
+            "reference": "First confirm the pattern: plot process.memoryUsage() (heapUsed, external, rss) over time under steady traffic — a leak shows monotonic heapUsed growth that survives GC. Reproduce in staging under synthetic load if possible. Attach with node --inspect (or call v8.writeHeapSnapshot() on SIGUSR2), take a baseline heap snapshot, drive traffic for a while, and take a second one. In Chrome DevTools' comparison view, sort by size delta to find the constructors that grew (e.g. thousands of retained closures or Map entries). Open the retainer chain of a grown object to see the exact path to a GC root — that path names the variable, emitter, cache or timer holding the reference. Fix by bounding the cache (LRU/TTL), removing listeners, or clearing timers, then redeploy and verify the memory curve is flat."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the standard tool/workflow for pinpointing which objects are leaking?",
+              "es": "¿Cuál es la herramienta/flujo estándar para identificar qué objetos están fugando?"
+            },
+            "options": [
+              {
+                "en": "Raising --max-old-space-size until the growth stops",
+                "es": "Subir --max-old-space-size hasta que el crecimiento pare"
+              },
+              {
+                "en": "npm audit — it detects leaking dependencies",
+                "es": "npm audit — detecta dependencias que fugan"
+              },
+              {
+                "en": "node --inspect + Chrome DevTools: compare two heap snapshots and inspect retainer chains",
+                "es": "node --inspect + Chrome DevTools: comparar dos heap snapshots e inspeccionar las cadenas de retainers"
+              },
+              {
+                "en": "console.log(process.memoryUsage()) — it lists the leaking objects",
+                "es": "console.log(process.memoryUsage()) — lista los objetos que fugan"
+              }
+            ],
+            "explanation": {
+              "en": "memoryUsage gives totals, not causes; npm audit is for vulnerabilities; a bigger heap just delays the OOM. Snapshot diffing plus retainer chains shows what grew and why it is still reachable.",
+              "es": "memoryUsage da totales, no causas; npm audit es para vulnerabilidades; un heap más grande solo pospone el OOM. El diff de snapshots más las cadenas de retainers muestra qué creció y por qué sigue alcanzable."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "websockets-in-node",
+      "question": {
+        "en": "How do WebSockets work in Node, and what does it take to run them in production?",
+        "es": "¿Cómo funcionan los WebSockets en Node y qué hace falta para operarlos en producción?"
+      },
+      "definition": {
+        "en": "A **WebSocket** starts life as an HTTP request with `Upgrade: websocket` headers; after the **101 Switching Protocols** handshake, the same TCP connection becomes a persistent, **full-duplex** message channel — either side can push frames at any time, with none of HTTP's per-request overhead. In Node, the `ws` library handles the protocol on top of the HTTP server's `'upgrade'` event; Socket.IO adds rooms, auto-reconnection and fallbacks on top. Node's event-driven model makes it a natural fit: one process can hold tens of thousands of mostly-idle sockets.\n\nProduction realities the interview probes: **dead connection detection** — TCP won't tell you a client vanished behind NAT, so servers send protocol-level **pings** and terminate sockets that miss **pongs** (a heartbeat). **Authentication** happens at the upgrade request (cookie or token), because there are no per-message headers afterward. **Proxies and load balancers** must be configured to pass the Upgrade and to not kill long-lived idle connections.\n\n**Scaling horizontally** is the hard part: a socket lives on *one* specific instance, so broadcasting to \"all subscribers of channel X\" requires a **pub/sub backplane** (typically Redis) that every instance subscribes to — plus either sticky routing or a connection registry. Statelessness rules that apply to HTTP APIs need rethinking here, because the connection itself *is* state.",
+        "es": "Un **WebSocket** nace como una petición HTTP con cabeceras `Upgrade: websocket`; tras el handshake **101 Switching Protocols**, la misma conexión TCP se convierte en un canal de mensajes persistente y **full-duplex** — cualquiera de los dos lados puede empujar frames en cualquier momento, sin el overhead por petición de HTTP. En Node, la librería `ws` maneja el protocolo sobre el evento `'upgrade'` del servidor HTTP; Socket.IO añade rooms, reconexión automática y fallbacks encima. El modelo orientado a eventos de Node encaja de forma natural: un proceso puede sostener decenas de miles de sockets mayormente inactivos.\n\nRealidades de producción que la entrevista sondea: **detección de conexiones muertas** — TCP no te avisa si un cliente desapareció detrás de un NAT, así que los servidores envían **pings** a nivel de protocolo y terminan los sockets que no responden con **pongs** (un heartbeat). La **autenticación** ocurre en la petición de upgrade (cookie o token), porque después no hay cabeceras por mensaje. **Los proxies y balanceadores** deben configurarse para dejar pasar el Upgrade y no matar conexiones inactivas de larga vida.\n\n**Escalar horizontalmente** es la parte difícil: un socket vive en *una* instancia específica, así que difundir a \"todos los suscriptores del canal X\" requiere un **backplane pub/sub** (típicamente Redis) al que cada instancia se suscribe — más enrutamiento sticky o un registro de conexiones. Las reglas de statelessness de las APIs HTTP hay que repensarlas aquí, porque la conexión misma *es* estado."
+      },
+      "examples": [
+        {
+          "en": "Slack-style chat: each Node instance holds its clients' sockets and subscribes to Redis pub/sub channels; a message posted to #general is published once and every instance fans it out to its local sockets in that room.",
+          "es": "Chat estilo Slack: cada instancia de Node sostiene los sockets de sus clientes y se suscribe a canales pub/sub de Redis; un mensaje a #general se publica una vez y cada instancia lo reparte a sus sockets locales de esa room."
+        },
+        {
+          "en": "A trading dashboard pushes price ticks over WebSockets. A 30-second heartbeat with ws's ping/pong terminated zombie connections left by flaky mobile networks, cutting memory held by dead sockets by half.",
+          "es": "Un dashboard de trading empuja precios por WebSockets. Un heartbeat de 30 segundos con ping/pong de ws terminaba las conexiones zombis dejadas por redes móviles inestables, reduciendo a la mitad la memoria retenida por sockets muertos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How is a WebSocket connection established?",
+              "es": "¿Cómo se establece una conexión WebSocket?"
+            },
+            "options": [
+              {
+                "en": "The client polls an HTTP endpoint and the server batches responses",
+                "es": "El cliente hace polling a un endpoint HTTP y el servidor agrupa respuestas"
+              },
+              {
+                "en": "Over UDP, to minimize latency",
+                "es": "Sobre UDP, para minimizar la latencia"
+              },
+              {
+                "en": "A brand-new TCP protocol negotiated from scratch on port 8080",
+                "es": "Un protocolo TCP totalmente nuevo negociado desde cero en el puerto 8080"
+              },
+              {
+                "en": "An HTTP request with Upgrade headers; after the 101 response, the same TCP connection becomes full-duplex",
+                "es": "Una petición HTTP con cabeceras Upgrade; tras la respuesta 101, la misma conexión TCP se vuelve full-duplex"
+              }
+            ],
+            "explanation": {
+              "en": "Starting as HTTP lets WebSockets traverse existing infrastructure (ports 80/443, TLS, proxies) before switching protocols on the same socket. Polling is what WebSockets replace.",
+              "es": "Nacer como HTTP permite a los WebSockets atravesar la infraestructura existente (puertos 80/443, TLS, proxies) antes de cambiar de protocolo en el mismo socket. El polling es justo lo que los WebSockets reemplazan."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You scale a WebSocket chat service from 1 to 4 Node instances behind a load balancer. Broadcasts now only reach some users. Why, and what fixes it?",
+              "es": "Escalas un chat con WebSockets de 1 a 4 instancias de Node tras un balanceador. Los broadcasts ahora solo llegan a algunos usuarios. ¿Por qué, y qué lo arregla?"
+            },
+            "options": [
+              {
+                "en": "Each instance only knows its own sockets; add a pub/sub backplane (e.g. Redis) so every instance re-broadcasts to its local clients",
+                "es": "Cada instancia solo conoce sus propios sockets; añade un backplane pub/sub (p. ej. Redis) para que cada instancia re-difunda a sus clientes locales"
+              },
+              {
+                "en": "The load balancer drops frames; enable HTTP/2",
+                "es": "El balanceador pierde frames; habilita HTTP/2"
+              },
+              {
+                "en": "Node cannot run WebSockets on multiple instances",
+                "es": "Node no puede correr WebSockets en varias instancias"
+              },
+              {
+                "en": "Raise UV_THREADPOOL_SIZE so sockets are shared between instances",
+                "es": "Sube UV_THREADPOOL_SIZE para que los sockets se compartan entre instancias"
+              }
+            ],
+            "explanation": {
+              "en": "Connections are per-instance state. A broadcast executed on instance A never touches sockets held by B, C and D unless a shared message bus fans it out to all instances.",
+              "es": "Las conexiones son estado por instancia. Un broadcast ejecutado en la instancia A nunca toca los sockets de B, C y D salvo que un bus de mensajes compartido lo reparta a todas las instancias."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Using the `ws` library, add a heartbeat to this WebSocket server: mark each socket alive when it connects and whenever it answers a pong; every 30 seconds, terminate sockets that did not answer since the last check and ping the rest. Clear the interval when the server closes.",
+              "es": "Usando la librería `ws`, añade un heartbeat a este servidor WebSocket: marca cada socket como vivo al conectarse y cada vez que responde un pong; cada 30 segundos, termina los sockets que no respondieron desde el último chequeo y haz ping al resto. Limpia el interval cuando el servidor se cierre."
+            },
+            "language": "javascript",
+            "starter_code": "const { WebSocketServer } = require('ws');\n\nconst wss = new WebSocketServer({ port: 8080 });\n\nwss.on('connection', (ws) => {\n  // TODO: mark alive on connect and on pong\n  ws.on('message', (data) => {\n    // echo for demo purposes\n    ws.send(data.toString());\n  });\n});\n\n// TODO: 30s heartbeat interval that terminates dead sockets and pings live ones\n// TODO: clear the interval on wss 'close'\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must set an isAlive flag to true on connection and in a 'pong' listener. Must run a setInterval (~30s) that iterates wss.clients: if isAlive is false, call ws.terminate(); otherwise set isAlive = false and call ws.ping(). Must clearInterval in a wss 'close' handler. Using terminate() (not close()) for dead sockets matters, since close() waits for a handshake a dead peer will never complete.",
+              "es": "Debe poner un flag isAlive en true al conectar y en un listener de 'pong'. Debe correr un setInterval (~30 s) que itere wss.clients: si isAlive es false, llamar ws.terminate(); si no, poner isAlive = false y llamar ws.ping(). Debe hacer clearInterval en un handler 'close' del wss. Usar terminate() (no close()) para sockets muertos importa, porque close() espera un handshake que un peer muerto nunca completará."
+            },
+            "reference": "const { WebSocketServer } = require('ws');\n\nconst wss = new WebSocketServer({ port: 8080 });\n\nwss.on('connection', (ws) => {\n  ws.isAlive = true;\n  ws.on('pong', () => { ws.isAlive = true; });\n  ws.on('message', (data) => {\n    ws.send(data.toString());\n  });\n});\n\nconst interval = setInterval(() => {\n  for (const ws of wss.clients) {\n    if (!ws.isAlive) { ws.terminate(); continue; }\n    ws.isAlive = false;\n    ws.ping();\n  }\n}, 30000);\n\nwss.on('close', () => clearInterval(interval));"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "security-essentials",
+      "question": {
+        "en": "What are the essential security practices for a Node.js API?",
+        "es": "¿Cuáles son las prácticas de seguridad esenciales para una API de Node.js?"
+      },
+      "definition": {
+        "en": "**Injection** is still the top killer. SQL injection dies with **parameterized queries** (`db.query('... WHERE id = $1', [id])`) — never string concatenation; the same principle applies to NoSQL operators (an attacker sending `{\"$gt\": \"\"}` as a password), shell commands (`execFile` with an argument array instead of `exec` with an interpolated string), and path traversal. Validate every input at the boundary with a schema library (zod, joi) so handlers only ever see well-formed data.\n\n**helmet** sets the security response headers most apps forget — `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, frame protections — one `app.use(helmet())` closes a whole audit-checklist category. Pair it with **rate limiting** on auth endpoints, strict **CORS** origins, and body size limits (`express.json({ limit })`).\n\n**Secrets never live in code or git.** They come from the environment or a secret manager (Vault, AWS Secrets Manager), rotate periodically, and a leaked secret is *rotated immediately* — deleting the commit does not help once it has been cloned. Finish the picture with dependency hygiene: `npm audit`, lockfiles, and automated update PRs, because most Node vulnerabilities ship inside `node_modules`, not your code.",
+        "es": "La **inyección** sigue siendo la asesina número uno. La inyección SQL muere con **consultas parametrizadas** (`db.query('... WHERE id = $1', [id])`) — nunca concatenación de strings; el mismo principio aplica a operadores NoSQL (un atacante enviando `{\"$gt\": \"\"}` como contraseña), comandos de shell (`execFile` con array de argumentos en vez de `exec` con string interpolado) y path traversal. Valida toda entrada en la frontera con una librería de esquemas (zod, joi) para que los handlers solo vean datos bien formados.\n\n**helmet** pone las cabeceras de seguridad que la mayoría olvida — `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, protección de frames — un solo `app.use(helmet())` cierra toda una categoría del checklist de auditoría. Acompáñalo de **rate limiting** en los endpoints de autenticación, orígenes **CORS** estrictos y límites de tamaño de body (`express.json({ limit })`).\n\n**Los secretos nunca viven en el código ni en git.** Vienen del entorno o de un gestor de secretos (Vault, AWS Secrets Manager), rotan periódicamente, y un secreto filtrado se *rota de inmediato* — borrar el commit no sirve una vez clonado. Completa el cuadro con higiene de dependencias: `npm audit`, lockfiles y PRs de actualización automatizados, porque la mayoría de vulnerabilidades de Node vienen dentro de `node_modules`, no de tu código."
+      },
+      "examples": [
+        {
+          "en": "The 2021 codecov incident and countless smaller ones started with credentials committed to repositories. Standard practice now: gitignored .env locally, injected secrets in CI/CD, secret scanning on push, and immediate rotation when a leak is detected.",
+          "es": "El incidente de codecov de 2021 y muchos menores empezaron con credenciales commiteadas a repositorios. La práctica estándar hoy: .env en gitignore localmente, secretos inyectados en CI/CD, escaneo de secretos al hacer push y rotación inmediata al detectar una fuga."
+        },
+        {
+          "en": "A classic NoSQL injection: a login posting {\"password\": {\"$gt\": \"\"}} matched every user in MongoDB because the query trusted req.body. Schema validation (reject non-string passwords) plus mongo-sanitize closed it.",
+          "es": "Una inyección NoSQL clásica: un login enviando {\"password\": {\"$gt\": \"\"}} coincidía con cualquier usuario en MongoDB porque la query confiaba en req.body. La validación de esquema (rechazar contraseñas no string) más mongo-sanitize lo cerró."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each threat with its primary mitigation.",
+              "es": "Conecta cada amenaza con su mitigación principal."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "SQL injection",
+                  "es": "Inyección SQL"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Missing security headers (clickjacking, MIME sniffing)",
+                  "es": "Cabeceras de seguridad ausentes (clickjacking, MIME sniffing)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Credentials hardcoded in the repository",
+                  "es": "Credenciales hardcodeadas en el repositorio"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Brute-force login attempts",
+                  "es": "Intentos de login por fuerza bruta"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Parameterized queries / prepared statements",
+                  "es": "Consultas parametrizadas / prepared statements"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "helmet middleware setting hardened headers",
+                  "es": "Middleware helmet configurando cabeceras endurecidas"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Environment variables / a secret manager, with rotation",
+                  "es": "Variables de entorno / un gestor de secretos, con rotación"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Rate limiting on authentication endpoints",
+                  "es": "Rate limiting en los endpoints de autenticación"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which is the correct defense against SQL injection in a Node API?",
+              "es": "¿Cuál es la defensa correcta contra la inyección SQL en una API de Node?"
+            },
+            "options": [
+              {
+                "en": "Adding helmet — it sanitizes query strings",
+                "es": "Añadir helmet — sanitiza los query strings"
+              },
+              {
+                "en": "Escaping single quotes in user input by hand",
+                "es": "Escapar comillas simples del input del usuario a mano"
+              },
+              {
+                "en": "Serving the API over HTTPS",
+                "es": "Servir la API sobre HTTPS"
+              },
+              {
+                "en": "Parameterized queries — user values travel as bound parameters, never as SQL text",
+                "es": "Consultas parametrizadas — los valores del usuario viajan como parámetros enlazados, nunca como texto SQL"
+              }
+            ],
+            "explanation": {
+              "en": "Bound parameters make injection structurally impossible: the driver sends values separately from the SQL text. Hand-escaping is bypassable; helmet is response headers; HTTPS protects transport, not queries.",
+              "es": "Los parámetros enlazados hacen la inyección estructuralmente imposible: el driver envía los valores separados del texto SQL. El escapado manual es evadible; helmet son cabeceras de respuesta; HTTPS protege el transporte, no las consultas."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A developer accidentally pushed the production database password to a public GitHub repo, then force-pushed to remove the commit. What is the correct next step?",
+              "es": "Un desarrollador subió por accidente la contraseña de la base de datos de producción a un repo público de GitHub y luego hizo force-push para borrar el commit. ¿Cuál es el siguiente paso correcto?"
+            },
+            "options": [
+              {
+                "en": "Nothing — the commit is gone from history",
+                "es": "Nada — el commit ya no está en el historial"
+              },
+              {
+                "en": "Make the repository private",
+                "es": "Hacer el repositorio privado"
+              },
+              {
+                "en": "Base64-encode the password in the next commit",
+                "es": "Codificar la contraseña en base64 en el siguiente commit"
+              },
+              {
+                "en": "Rotate the credential immediately and move it to env vars / a secret manager",
+                "es": "Rotar la credencial de inmediato y moverla a variables de entorno / un gestor de secretos"
+              }
+            ],
+            "explanation": {
+              "en": "Assume any secret that touched a public remote is compromised: clones, forks, caches and scrapers already have it. Rotation is the only real fix; rewriting history is cleanup, not remediation.",
+              "es": "Asume que cualquier secreto que tocó un remoto público está comprometido: clones, forks, cachés y scrapers ya lo tienen. La rotación es la única solución real; reescribir el historial es limpieza, no remediación."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cli-signals-graceful-shutdown",
+      "question": {
+        "en": "How do you build a Node CLI, and how should a Node process handle signals and shut down gracefully?",
+        "es": "¿Cómo construyes una CLI en Node y cómo debe un proceso de Node manejar señales y apagarse con gracia?"
+      },
+      "definition": {
+        "en": "A Node **CLI** is a script with a `#!/usr/bin/env node` shebang, exposed via the `bin` field in `package.json` (npm symlinks it onto the PATH on install). Inputs arrive through `process.argv` (usually parsed with commander or yargs — or `util.parseArgs` in core), configuration through `process.env`, and results leave through `process.stdout` (data) vs `process.stderr` (diagnostics) — keeping them separate makes the tool pipeable. **Exit codes matter**: `0` success, non-zero failure, because CI systems and shell scripts branch on them.\n\n**Signals** are how the outside world asks your process to stop: `SIGINT` (Ctrl+C), `SIGTERM` (what `kill`, Docker and Kubernetes send first) — both catchable with `process.on` — and `SIGKILL`, which cannot be caught and arrives after a grace period (Docker's default is 10 s, Kubernetes' 30 s) if you have not exited.\n\n**Graceful shutdown** is the sequence senior interviews ask for: on SIGTERM, (1) **stop accepting new work** — `server.close()` stops new connections while letting in-flight requests finish; (2) **drain**: await active requests, finish or re-queue jobs; (3) **release resources**: close DB pools, flush logs and metrics; (4) `process.exit(0)`, with a hard timeout so a stuck connection can't stall shutdown forever. Skipping this turns every deploy into dropped requests and half-committed jobs.",
+        "es": "Una **CLI** en Node es un script con shebang `#!/usr/bin/env node`, expuesto mediante el campo `bin` del `package.json` (npm lo enlaza al PATH al instalar). Las entradas llegan por `process.argv` (normalmente parseado con commander o yargs — o `util.parseArgs` del core), la configuración por `process.env`, y los resultados salen por `process.stdout` (datos) vs `process.stderr` (diagnósticos) — mantenerlos separados hace la herramienta encadenable con pipes. **Los códigos de salida importan**: `0` éxito, distinto de cero fallo, porque los sistemas de CI y los scripts de shell se bifurcan según ellos.\n\nLas **señales** son la forma en que el mundo exterior pide a tu proceso que pare: `SIGINT` (Ctrl+C), `SIGTERM` (lo que `kill`, Docker y Kubernetes envían primero) — ambas capturables con `process.on` — y `SIGKILL`, que no se puede capturar y llega tras un periodo de gracia (10 s por defecto en Docker, 30 s en Kubernetes) si no has salido.\n\nEl **apagado con gracia** es la secuencia que piden las entrevistas senior: al recibir SIGTERM, (1) **dejar de aceptar trabajo nuevo** — `server.close()` rechaza conexiones nuevas mientras deja terminar las peticiones en vuelo; (2) **drenar**: esperar las peticiones activas, terminar o re-encolar jobs; (3) **liberar recursos**: cerrar pools de BD, hacer flush de logs y métricas; (4) `process.exit(0)`, con un timeout duro para que una conexión atascada no congele el apagado para siempre. Saltarse esto convierte cada deploy en peticiones perdidas y jobs a medio commitear."
+      },
+      "examples": [
+        {
+          "en": "npm, eslint and vite are all Node CLIs: a bin entry pointing to a shebang script. eslint's non-zero exit code on lint errors is what makes `eslint . && npm test` short-circuit in CI.",
+          "es": "npm, eslint y vite son CLIs de Node: una entrada bin apuntando a un script con shebang. El código de salida distinto de cero de eslint ante errores de lint es lo que hace que `eslint . && npm test` corte en seco en CI."
+        },
+        {
+          "en": "During Kubernetes rolling deploys, a service without a SIGTERM handler dropped ~0.1% of requests on every release. Adding server.close() + connection draining + a 25 s hard timeout (under the 30 s grace period) made deploys invisible in the error-rate graphs.",
+          "es": "Durante deploys rolling en Kubernetes, un servicio sin handler de SIGTERM perdía ~0,1% de las peticiones en cada release. Añadir server.close() + drenado de conexiones + un timeout duro de 25 s (bajo el periodo de gracia de 30 s) hizo los deploys invisibles en las gráficas de errores."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a graceful shutdown for a Node HTTP service running in Kubernetes.",
+              "es": "Ordena los pasos de un apagado con gracia para un servicio HTTP de Node corriendo en Kubernetes."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "sigterm",
+                "label": {
+                  "en": "Receive SIGTERM from the orchestrator",
+                  "es": "Recibir SIGTERM del orquestador"
+                }
+              },
+              {
+                "id": "stop",
+                "label": {
+                  "en": "server.close() — stop accepting new connections",
+                  "es": "server.close() — dejar de aceptar conexiones nuevas"
+                }
+              },
+              {
+                "id": "drain",
+                "label": {
+                  "en": "Let in-flight requests finish (with a hard timeout)",
+                  "es": "Dejar terminar las peticiones en vuelo (con un timeout duro)"
+                }
+              },
+              {
+                "id": "cleanup",
+                "label": {
+                  "en": "Close DB pools, flush logs and metrics",
+                  "es": "Cerrar pools de BD, hacer flush de logs y métricas"
+                }
+              },
+              {
+                "id": "exit",
+                "label": {
+                  "en": "process.exit(0)",
+                  "es": "process.exit(0)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "sigterm",
+              "stop",
+              "drain",
+              "cleanup",
+              "exit"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which signal does `docker stop` (and a Kubernetes pod termination) send first, and what happens if the process ignores it?",
+              "es": "¿Qué señal envía primero `docker stop` (y la terminación de un pod de Kubernetes), y qué pasa si el proceso la ignora?"
+            },
+            "options": [
+              {
+                "en": "SIGHUP first; the process is expected to reload its config",
+                "es": "SIGHUP primero; se espera que el proceso recargue su configuración"
+              },
+              {
+                "en": "SIGKILL first; the process can catch it and clean up",
+                "es": "SIGKILL primero; el proceso puede capturarla y limpiar"
+              },
+              {
+                "en": "SIGINT first; only interactive terminals can stop containers",
+                "es": "SIGINT primero; solo las terminales interactivas pueden parar contenedores"
+              },
+              {
+                "en": "SIGTERM first; after the grace period an uncatchable SIGKILL force-kills the process",
+                "es": "SIGTERM primero; tras el periodo de gracia, un SIGKILL incapturable mata el proceso a la fuerza"
+              }
+            ],
+            "explanation": {
+              "en": "SIGTERM is the polite request and your only window to drain; SIGKILL cannot be handled. This is also why the app must run as PID 1's signal target (exec form / tini), or it may never receive the SIGTERM.",
+              "es": "SIGTERM es la petición educada y tu única ventana para drenar; SIGKILL no se puede manejar. Por eso además la app debe recibir las señales como PID 1 (forma exec / tini), o puede que el SIGTERM nunca le llegue."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your Node worker consumes jobs from a queue and runs in Docker. Explain what could go wrong on deploys if it does not handle SIGTERM, and describe the shutdown sequence you would implement.",
+              "es": "Tu worker de Node consume jobs de una cola y corre en Docker. Explica qué podría salir mal en los deploys si no maneja SIGTERM, y describe la secuencia de apagado que implementarías."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain the failure mode: on deploy Docker sends SIGTERM, and after the grace period SIGKILL — an unhandled worker is killed mid-job, causing lost/duplicated/half-processed jobs. The sequence must include: catch SIGTERM; stop pulling new jobs from the queue; let the current job finish (or checkpoint/re-queue it) within a timeout below the grace period; close connections (queue, DB); exit with code 0. Bonus: hard timeout fallback, idempotent job design or acking only after completion, PID 1 signal caveat (exec form/tini).",
+              "es": "Debe explicar el modo de fallo: en el deploy Docker envía SIGTERM, y tras el periodo de gracia SIGKILL — un worker sin handler muere a mitad de un job, causando jobs perdidos/duplicados/a medio procesar. La secuencia debe incluir: capturar SIGTERM; dejar de tomar jobs nuevos de la cola; dejar terminar el job actual (o hacer checkpoint/re-encolarlo) dentro de un timeout menor al periodo de gracia; cerrar conexiones (cola, BD); salir con código 0. Bonus: timeout duro de respaldo, diseño idempotente de jobs o hacer ack solo al completar, y la advertencia de señales con PID 1 (forma exec/tini)."
+            },
+            "reference": "Without a SIGTERM handler, every deploy interrupts the worker mid-job: Docker sends SIGTERM (ignored), waits ~10s, then SIGKILLs the process. Jobs die half-processed; if the queue uses at-least-once delivery they are redelivered (duplicates without idempotency), and with auto-ack they are lost. The fix: process.on('SIGTERM', ...) that (1) stops fetching new jobs, (2) awaits the in-flight job with a timeout safely under the grace period — re-queueing or checkpointing if it can't finish, (3) closes the queue consumer and DB connections and flushes logs, (4) calls process.exit(0). Add a setTimeout fallback that force-exits non-zero if draining hangs, make handlers idempotent, and ack messages only after successful processing. Ensure the Node process actually receives signals (exec-form CMD or tini as PID 1)."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "scaling-node-services",
+      "question": {
+        "en": "How do you scale a Node.js service to handle production traffic?",
+        "es": "¿Cómo escalas un servicio de Node.js para manejar tráfico de producción?"
+      },
+      "definition": {
+        "en": "Since one Node process ≈ one core, scaling Node means **running more copies** — and everything follows from making copies interchangeable. **Statelessness** is the prerequisite: no sessions in process memory, no local file uploads, no in-process caches used as truth. Sessions and shared cache go to **Redis**, files to object storage, coordination to the database or a queue. Then any instance can serve any request, a load balancer can spread traffic freely, and instances can be killed or added at will — which is also what makes zero-downtime deploys and autoscaling possible.\n\nThe **process manager layer** evolved: **PM2** (cluster mode, restarts, `pm2 reload` for zero-downtime) rules the VM world; in **containers**, the orchestrator takes those jobs — the standard is **one Node process per container**, with Kubernetes handling replicas, health probes, rolling deploys and autoscaling. Running PM2-with-clustering inside Kubernetes mostly fights the platform: fewer, bigger pods scale and schedule worse than more, smaller ones, and CPU limits interact badly with intra-pod clustering.\n\nBeyond replication: put a reverse proxy/LB in front (nginx/ALB) for TLS and slow-client buffering, autoscale on CPU or event-loop lag, add **liveness/readiness probes** (readiness gates traffic during startup and shutdown), and cap per-instance memory with `--max-old-space-size` aligned to the container limit. Horizontal scaling multiplies *capacity*, not per-request speed — a blocked event loop is slow no matter how many replicas you run.",
+        "es": "Como un proceso de Node ≈ un núcleo, escalar Node significa **correr más copias** — y todo se deriva de hacer las copias intercambiables. La **statelessness** es el prerrequisito: nada de sesiones en la memoria del proceso, ni archivos subidos al disco local, ni cachés en proceso usadas como fuente de verdad. Las sesiones y la caché compartida van a **Redis**, los archivos a object storage, la coordinación a la base de datos o a una cola. Entonces cualquier instancia puede servir cualquier petición, un balanceador puede repartir tráfico libremente, y las instancias pueden matarse o añadirse a voluntad — que es también lo que hace posibles los deploys sin caída y el autoscaling.\n\nLa **capa de gestión de procesos** evolucionó: **PM2** (modo cluster, reinicios, `pm2 reload` para cero caída) reina en el mundo de las VMs; en **contenedores**, el orquestador asume esos trabajos — el estándar es **un proceso de Node por contenedor**, con Kubernetes manejando réplicas, health probes, deploys rolling y autoscaling. Correr PM2 con clustering dentro de Kubernetes en general pelea contra la plataforma: menos pods más grandes escalan y se programan peor que más pods pequeños, y los límites de CPU interactúan mal con el clustering intra-pod.\n\nMás allá de replicar: pon un reverse proxy/LB delante (nginx/ALB) para TLS y buffering de clientes lentos, autoescala por CPU o por lag del event loop, añade **probes de liveness/readiness** (readiness controla el tráfico durante arranque y apagado), y limita la memoria por instancia con `--max-old-space-size` alineado al límite del contenedor. El escalado horizontal multiplica *capacidad*, no velocidad por petición — un event loop bloqueado es lento por muchas réplicas que tengas."
+      },
+      "examples": [
+        {
+          "en": "A typical migration: an Express monolith on a VM with PM2 cluster mode (8 workers, pm2 reload on deploy) moved to Kubernetes as a Deployment of 12 single-process pods with an HPA scaling on CPU, readiness probes gating rollouts, and sessions already in Redis so nothing else changed.",
+          "es": "Una migración típica: un monolito Express en una VM con PM2 en modo cluster (8 workers, pm2 reload al desplegar) pasó a Kubernetes como un Deployment de 12 pods de proceso único con un HPA escalando por CPU, probes de readiness controlando los rollouts, y las sesiones ya en Redis, así que nada más cambió."
+        },
+        {
+          "en": "A team scaled from 4 to 40 pods for a product launch and hit a wall: in-process rate-limit counters reset per pod, letting 10x the intended traffic through. Moving the counters to Redis restored a single global limit — a textbook statelessness bug.",
+          "es": "Un equipo escaló de 4 a 40 pods para un lanzamiento y chocó con un muro: los contadores de rate limit en proceso se reiniciaban por pod, dejando pasar 10 veces el tráfico previsto. Mover los contadores a Redis restauró un único límite global — un bug de statelessness de libro."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why must a horizontally scaled Node service be stateless?",
+              "es": "¿Por qué un servicio de Node escalado horizontalmente debe ser stateless?"
+            },
+            "options": [
+              {
+                "en": "It makes V8's garbage collector run faster",
+                "es": "Hace que el garbage collector de V8 corra más rápido"
+              },
+              {
+                "en": "So any instance can serve any request — enabling load balancing, autoscaling and killing instances safely",
+                "es": "Para que cualquier instancia sirva cualquier petición — habilitando balanceo, autoscaling y matar instancias sin riesgo"
+              },
+              {
+                "en": "Statelessness makes each individual request faster",
+                "es": "La statelessness hace más rápida cada petición individual"
+              },
+              {
+                "en": "Node cannot store objects in memory across requests",
+                "es": "Node no puede guardar objetos en memoria entre peticiones"
+              }
+            ],
+            "explanation": {
+              "en": "If a user's state lives on instance 3, the balancer must always route them there and instance 3 can never die without losing data. Externalizing state makes instances disposable and interchangeable.",
+              "es": "Si el estado de un usuario vive en la instancia 3, el balanceador debe enrutarlo siempre ahí y la instancia 3 no puede morir sin perder datos. Externalizar el estado hace las instancias desechables e intercambiables."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Where should user sessions live in a Node API running as 10 replicas behind a load balancer?",
+              "es": "¿Dónde deben vivir las sesiones de usuario en una API de Node corriendo como 10 réplicas tras un balanceador?"
+            },
+            "options": [
+              {
+                "en": "In a shared external store like Redis (or in signed tokens such as JWT)",
+                "es": "En un almacén externo compartido como Redis (o en tokens firmados como JWT)"
+              },
+              {
+                "en": "In each process's memory — the balancer will figure it out",
+                "es": "En la memoria de cada proceso — el balanceador lo resolverá"
+              },
+              {
+                "en": "In a JSON file on each instance's local disk",
+                "es": "En un archivo JSON en el disco local de cada instancia"
+              },
+              {
+                "en": "In a global variable synchronized via cluster IPC",
+                "es": "En una variable global sincronizada vía IPC del cluster"
+              }
+            ],
+            "explanation": {
+              "en": "In-memory sessions break the moment a second replica exists (or the first one restarts). Redis-backed stores or stateless signed tokens keep every replica interchangeable.",
+              "es": "Las sesiones en memoria se rompen en cuanto existe una segunda réplica (o la primera se reinicia). Los stores respaldados por Redis o los tokens firmados stateless mantienen todas las réplicas intercambiables."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the accepted best practice for using PM2 cluster mode versus containers?",
+              "es": "¿Cuál es la buena práctica aceptada sobre el modo cluster de PM2 frente a contenedores?"
+            },
+            "options": [
+              {
+                "en": "Containers cannot use more than one CPU core, so PM2 is mandatory",
+                "es": "Los contenedores no pueden usar más de un núcleo, así que PM2 es obligatorio"
+              },
+              {
+                "en": "They are interchangeable — pick whichever has nicer logs",
+                "es": "Son intercambiables — elige el que tenga logs más bonitos"
+              },
+              {
+                "en": "PM2 cluster mode fits VMs; in Kubernetes run one Node process per container and let the orchestrator handle replicas, restarts and scaling",
+                "es": "El modo cluster de PM2 encaja en VMs; en Kubernetes corre un proceso de Node por contenedor y deja que el orquestador maneje réplicas, reinicios y escalado"
+              },
+              {
+                "en": "Always run PM2 inside every container — Kubernetes needs it for restarts",
+                "es": "Correr siempre PM2 dentro de cada contenedor — Kubernetes lo necesita para los reinicios"
+              }
+            ],
+            "explanation": {
+              "en": "PM2 duplicates the orchestrator's job (supervision, scaling, zero-downtime reloads). Single-process pods scale in finer increments and play well with CPU limits and probes.",
+              "es": "PM2 duplica el trabajo del orquestador (supervisión, escalado, reloads sin caída). Los pods de un solo proceso escalan con granularidad más fina y se llevan bien con los límites de CPU y las probes."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In which event loop phase do expired setTimeout callbacks run?",
+          "es": "¿En qué fase del event loop corren los callbacks de setTimeout vencidos?"
+        },
+        "options": [
+          {
+            "en": "Check",
+            "es": "Check"
+          },
+          {
+            "en": "Timers",
+            "es": "Timers"
+          },
+          {
+            "en": "Close callbacks",
+            "es": "Close callbacks"
+          },
+          {
+            "en": "Poll",
+            "es": "Poll"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which of these operations runs on the libuv thread pool?",
+          "es": "¿Cuál de estas operaciones corre en el thread pool de libuv?"
+        },
+        "options": [
+          {
+            "en": "Resolved promise callbacks",
+            "es": "Callbacks de promesas resueltas"
+          },
+          {
+            "en": "setTimeout callbacks",
+            "es": "Callbacks de setTimeout"
+          },
+          {
+            "en": "fs.readFile and crypto.pbkdf2",
+            "es": "fs.readFile y crypto.pbkdf2"
+          },
+          {
+            "en": "TCP socket reads and writes",
+            "es": "Lecturas y escrituras de sockets TCP"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does an async function always return, regardless of its body?",
+          "es": "¿Qué devuelve siempre una función async, sin importar su cuerpo?"
+        },
+        "options": [
+          {
+            "en": "A Promise",
+            "es": "Una Promise"
+          },
+          {
+            "en": "The value directly, if no await is used",
+            "es": "El valor directamente, si no se usa await"
+          },
+          {
+            "en": "undefined until it finishes",
+            "es": "undefined hasta que termina"
+          },
+          {
+            "en": "A callback",
+            "es": "Un callback"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How does a writable stream signal backpressure to a producer?",
+          "es": "¿Cómo señala un writable stream el backpressure a un productor?"
+        },
+        "options": [
+          {
+            "en": "It emits a 'pause' event",
+            "es": "Emite un evento 'pause'"
+          },
+          {
+            "en": "write() returns false; the producer should wait for 'drain'",
+            "es": "write() devuelve false; el productor debe esperar 'drain'"
+          },
+          {
+            "en": "It throws a BufferOverflowError",
+            "es": "Lanza un BufferOverflowError"
+          },
+          {
+            "en": "It emits 'end' and closes",
+            "es": "Emite 'end' y se cierra"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How is memory shared between cluster workers?",
+          "es": "¿Cómo se comparte la memoria entre workers del módulo cluster?"
+        },
+        "options": [
+          {
+            "en": "Through copy-on-write JavaScript objects",
+            "es": "A través de objetos JavaScript copy-on-write"
+          },
+          {
+            "en": "It is not shared — each worker is a separate process with its own memory; they communicate via IPC messages",
+            "es": "No se comparte — cada worker es un proceso separado con su propia memoria; se comunican por mensajes IPC"
+          },
+          {
+            "en": "They share the V8 heap",
+            "es": "Comparten el heap de V8"
+          },
+          {
+            "en": "Through SharedArrayBuffer by default",
+            "es": "A través de SharedArrayBuffer por defecto"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "An Express middleware neither sends a response nor calls next(). What happens to the request?",
+          "es": "Un middleware de Express ni envía respuesta ni llama next(). ¿Qué pasa con la petición?"
+        },
+        "options": [
+          {
+            "en": "Express throws a MiddlewareError",
+            "es": "Express lanza un MiddlewareError"
+          },
+          {
+            "en": "It hangs until the client times out",
+            "es": "Queda colgada hasta que el cliente agota su timeout"
+          },
+          {
+            "en": "next() is called implicitly after the function returns",
+            "es": "next() se llama implícitamente cuando la función retorna"
+          },
+          {
+            "en": "Express automatically responds 404",
+            "es": "Express responde 404 automáticamente"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "From a CommonJS file, which mechanism lets you load an ES Module?",
+          "es": "Desde un archivo CommonJS, ¿qué mecanismo te permite cargar un ES Module?"
+        },
+        "options": [
+          {
+            "en": "Dynamic import() — it returns a promise and works in both module systems",
+            "es": "El import() dinámico — devuelve una promesa y funciona en ambos sistemas de módulos"
+          },
+          {
+            "en": "A plain require() — it has always worked for any module",
+            "es": "Un require() normal — siempre ha funcionado para cualquier módulo"
+          },
+          {
+            "en": "module.importSync()",
+            "es": "module.importSync()"
+          },
+          {
+            "en": "It is impossible in any Node version",
+            "es": "Es imposible en cualquier versión de Node"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A service's memory grows steadily for days and a restart resets it. What is the right first diagnostic step?",
+          "es": "La memoria de un servicio crece de forma sostenida durante días y un reinicio la resetea. ¿Cuál es el primer paso de diagnóstico correcto?"
+        },
+        "options": [
+          {
+            "en": "Disable the garbage collector to test if it is the cause",
+            "es": "Desactivar el garbage collector para probar si es la causa"
+          },
+          {
+            "en": "Capture heap snapshots before/after load and compare them to see which objects grew",
+            "es": "Capturar heap snapshots antes/después de carga y compararlos para ver qué objetos crecieron"
+          },
+          {
+            "en": "Rewrite the hot path in a compiled language",
+            "es": "Reescribir el hot path en un lenguaje compilado"
+          },
+          {
+            "en": "Double the pod's memory limit",
+            "es": "Duplicar el límite de memoria del pod"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why do production WebSocket servers send periodic pings and expect pongs?",
+          "es": "¿Por qué los servidores WebSocket en producción envían pings periódicos y esperan pongs?"
+        },
+        "options": [
+          {
+            "en": "To encrypt the frames",
+            "es": "Para cifrar los frames"
+          },
+          {
+            "en": "To compress messages",
+            "es": "Para comprimir los mensajes"
+          },
+          {
+            "en": "To re-authenticate the user on every ping",
+            "es": "Para re-autenticar al usuario en cada ping"
+          },
+          {
+            "en": "To detect dead/half-open connections that TCP won't report, and free their resources",
+            "es": "Para detectar conexiones muertas/semiabiertas que TCP no reporta, y liberar sus recursos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "An API key for a third-party service was committed to a shared repository last week. What must happen first?",
+          "es": "Una API key de un servicio de terceros fue commiteada a un repositorio compartido la semana pasada. ¿Qué debe pasar primero?"
+        },
+        "options": [
+          {
+            "en": "Delete the commit from history — that fully fixes it",
+            "es": "Borrar el commit del historial — eso lo arregla por completo"
+          },
+          {
+            "en": "Encode the key in base64 before committing next time",
+            "es": "Codificar la key en base64 antes de commitear la próxima vez"
+          },
+          {
+            "en": "Nothing, if the repository is private",
+            "es": "Nada, si el repositorio es privado"
+          },
+          {
+            "en": "Rotate the key immediately, then move it to env vars or a secret manager",
+            "es": "Rotar la key de inmediato, y luego moverla a variables de entorno o un gestor de secretos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What should a well-behaved Node service do in its SIGTERM handler?",
+          "es": "¿Qué debe hacer un servicio de Node bien portado en su handler de SIGTERM?"
+        },
+        "options": [
+          {
+            "en": "Call process.exit(0) immediately to free the pod fast",
+            "es": "Llamar process.exit(0) de inmediato para liberar el pod rápido"
+          },
+          {
+            "en": "Send itself SIGKILL to skip the grace period",
+            "es": "Enviarse SIGKILL a sí mismo para saltarse el periodo de gracia"
+          },
+          {
+            "en": "Ignore it — the orchestrator knows best",
+            "es": "Ignorarla — el orquestador sabe lo que hace"
+          },
+          {
+            "en": "Stop accepting new work, drain in-flight requests, close resources, then exit",
+            "es": "Dejar de aceptar trabajo nuevo, drenar las peticiones en vuelo, cerrar recursos y luego salir"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain why a single CPU-heavy request (e.g. parsing a 50 MB JSON body) degrades every other request in a Node service, and name two concrete techniques to prevent it.",
+          "es": "Explica por qué una sola petición pesada en CPU (p. ej. parsear un body JSON de 50 MB) degrada todas las demás peticiones en un servicio de Node, y nombra dos técnicas concretas para evitarlo."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must explain that JavaScript runs on a single thread driven by the event loop: while synchronous CPU work runs, the loop cannot process any other callbacks, so every concurrent request stalls. Must give at least two valid mitigations, e.g.: offload to worker_threads (or a worker pool), split work into chunks yielding via setImmediate, enforce body size limits / reject oversized payloads, use streaming parsing, or move heavy work to a separate service/queue. Cluster alone is acceptable only if the answer notes each worker still blocks individually.",
+          "es": "Debe explicar que JavaScript corre en un solo hilo dirigido por el event loop: mientras corre trabajo síncrono de CPU, el loop no puede procesar ningún otro callback, así que todas las peticiones concurrentes se estancan. Debe dar al menos dos mitigaciones válidas, p. ej.: delegar a worker_threads (o un pool de workers), trocear el trabajo cediendo con setImmediate, imponer límites de tamaño de body / rechazar payloads gigantes, usar parsing en streaming, o mover el trabajo pesado a un servicio/cola aparte. Cluster solo es aceptable si la respuesta aclara que cada worker sigue bloqueándose individualmente."
+        },
+        "reference": "Node runs all JavaScript on one thread. The event loop can only dispatch callbacks between JS executions, so a synchronous 800 ms JSON.parse monopolizes the thread: no timers fire, no I/O callbacks run, and every in-flight request waits — p99 latency spikes across the whole service. Preventions: (1) offload CPU-heavy parsing to a worker_threads pool (e.g. piscina) and await the result message, keeping the main loop free; (2) refuse the problem at the boundary with express.json({ limit: '1mb' }) or use a streaming parser to process the body incrementally; also valid: chunking work with setImmediate between slices, or moving the processing behind a queue to dedicated workers. Adding cluster workers only dilutes the blast radius — each worker's loop still blocks."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "You are moving a single-instance Express app to Kubernetes with 8 replicas and rolling deploys. Describe the changes needed around state and shutdown for this to work correctly.",
+          "es": "Vas a mover una app de Express de instancia única a Kubernetes con 8 réplicas y deploys rolling. Describe los cambios necesarios en torno al estado y al apagado para que funcione correctamente."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "State: must identify that in-process state breaks with replicas — sessions must move to a shared store (Redis) or signed tokens (JWT); same for in-memory caches/rate-limit counters (shared store) and local file storage (object storage). Shutdown: must describe handling SIGTERM — stop accepting new connections (server.close), drain in-flight requests within the grace period, close DB/queue connections, then exit 0 — so rolling deploys don't drop requests. Bonus: readiness probes gating traffic, one process per container instead of PM2 clustering, hard shutdown timeout, sticky sessions as an inferior alternative.",
+          "es": "Estado: debe identificar que el estado en proceso se rompe con réplicas — las sesiones deben ir a un store compartido (Redis) o a tokens firmados (JWT); igual las cachés/contadores de rate limit en memoria (store compartido) y los archivos en disco local (object storage). Apagado: debe describir el manejo de SIGTERM — dejar de aceptar conexiones nuevas (server.close), drenar las peticiones en vuelo dentro del periodo de gracia, cerrar conexiones a BD/colas y salir con 0 — para que los deploys rolling no pierdan peticiones. Bonus: probes de readiness controlando el tráfico, un proceso por contenedor en vez de clustering con PM2, timeout duro de apagado, sticky sessions como alternativa inferior."
+        },
+        "reference": "State: with 8 interchangeable replicas, nothing user-visible can live in process memory. Move sessions to Redis (connect-redis) or switch to stateless JWTs; move rate-limit counters and shared caches to Redis; move uploaded files to object storage (S3); any scheduled job must be leader-elected or moved to a CronJob so 8 replicas don't run it 8 times. Shutdown: Kubernetes sends SIGTERM on every rollout, then SIGKILL after the grace period (default 30s). Handle SIGTERM: fail the readiness probe / stop taking traffic, call server.close() to finish in-flight requests, close DB pools and queue consumers, flush logs, then process.exit(0) — with a hard timeout (~25s) forcing exit if a connection hangs. Run one Node process per container (no PM2 cluster) and let the Deployment + HPA handle replicas and restarts."
+      }
+    }
+  ]
+}

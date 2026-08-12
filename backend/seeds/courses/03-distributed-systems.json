@@ -1,0 +1,2577 @@
+{
+  "slug": "distributed-systems",
+  "order": 3,
+  "icon": "network",
+  "title": {
+    "en": "Distributed Systems",
+    "es": "Sistemas Distribuidos"
+  },
+  "description": {
+    "en": "The distributed systems questions senior interviews always hit: CAP, consistency, idempotency, retries, circuit breakers, delivery semantics, rate limiting and unique IDs.",
+    "es": "Las preguntas de sistemas distribuidos que siempre caen en entrevistas senior: CAP, consistencia, idempotencia, reintentos, circuit breakers, semánticas de entrega, rate limiting e IDs únicos."
+  },
+  "lessons": [
+    {
+      "slug": "horizontal-vs-vertical-scaling",
+      "question": {
+        "en": "What makes a system distributed, and what is the difference between horizontal and vertical scaling?",
+        "es": "¿Qué hace que un sistema sea distribuido y cuál es la diferencia entre escalado horizontal y vertical?"
+      },
+      "definition": {
+        "en": "A system is **distributed** when its components run on multiple machines that coordinate over a network. That buys you scale and fault tolerance, but the network introduces new failure modes: messages can be lost, delayed, duplicated or reordered, and you can never be sure whether a remote node is slow, dead, or unreachable.\n\n**Vertical scaling** (scale up) means adding more CPU, RAM or disk to one machine: simple, no code changes, but bounded by hardware limits and it remains a single point of failure. **Horizontal scaling** (scale out) means adding more machines behind a load balancer: nearly unbounded, but it forces you to deal with state — sessions, caches and data must be shared, replicated or partitioned.\n\nA useful senior framing: scale vertically until the operational or cost curve breaks, and design *stateless* services from day one so scaling out later is just adding replicas.",
+        "es": "Un sistema es **distribuido** cuando sus componentes corren en varias máquinas que se coordinan a través de una red. Eso te da escala y tolerancia a fallos, pero la red introduce nuevos modos de fallo: los mensajes pueden perderse, retrasarse, duplicarse o llegar desordenados, y nunca puedes saber con certeza si un nodo remoto está lento, caído o inalcanzable.\n\nEl **escalado vertical** (scale up) significa agregar más CPU, RAM o disco a una sola máquina: simple, sin cambios de código, pero acotado por límites de hardware y sigue siendo un único punto de fallo. El **escalado horizontal** (scale out) significa agregar más máquinas detrás de un balanceador de carga: casi ilimitado, pero te obliga a lidiar con el estado — sesiones, cachés y datos deben compartirse, replicarse o particionarse.\n\nUn framing senior útil: escala verticalmente hasta que la curva operativa o de costos se rompa, y diseña servicios *stateless* desde el día uno para que escalar horizontalmente sea solo agregar réplicas."
+      },
+      "examples": [
+        {
+          "en": "Stack Overflow famously ran for years on a handful of very large SQL Server boxes (vertical scaling), while its web tier scaled horizontally behind a load balancer.",
+          "es": "Stack Overflow corrió durante años sobre unos pocos servidores SQL Server muy grandes (escalado vertical), mientras su capa web escalaba horizontalmente detrás de un balanceador."
+        },
+        {
+          "en": "A Kubernetes HorizontalPodAutoscaler adds API pods when CPU rises — that only works because the pods are stateless and sessions live in Redis, not in pod memory.",
+          "es": "Un HorizontalPodAutoscaler de Kubernetes agrega pods de API cuando sube el CPU — eso solo funciona porque los pods son stateless y las sesiones viven en Redis, no en la memoria del pod."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your stateful monolith stores user sessions in local memory. What breaks first if you put three instances behind a round-robin load balancer?",
+              "es": "Tu monolito con estado guarda sesiones de usuario en memoria local. ¿Qué se rompe primero si pones tres instancias detrás de un balanceador round-robin?"
+            },
+            "options": [
+              {
+                "en": "CPU usage triples on every instance",
+                "es": "El uso de CPU se triplica en cada instancia"
+              },
+              {
+                "en": "The database becomes inconsistent immediately",
+                "es": "La base de datos se vuelve inconsistente de inmediato"
+              },
+              {
+                "en": "Users get logged out randomly because each request may hit an instance without their session",
+                "es": "Los usuarios pierden la sesión aleatoriamente porque cada request puede llegar a una instancia que no la tiene"
+              },
+              {
+                "en": "Nothing — the load balancer replicates memory between instances",
+                "es": "Nada — el balanceador replica la memoria entre instancias"
+              }
+            ],
+            "explanation": {
+              "en": "In-memory session state is the classic blocker for horizontal scaling: requests land on instances that don't know the session. Fixes: sticky sessions (fragile) or externalizing state to Redis/DB (correct).",
+              "es": "El estado de sesión en memoria es el bloqueador clásico del escalado horizontal: los requests caen en instancias que no conocen la sesión. Soluciones: sticky sessions (frágil) o externalizar el estado a Redis/BD (correcto)."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each property with the scaling strategy it describes best.",
+              "es": "Conecta cada propiedad con la estrategia de escalado que mejor describe."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Bounded by the biggest machine you can buy",
+                  "es": "Acotado por la máquina más grande que puedas comprar"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Requires stateless services or shared state",
+                  "es": "Requiere servicios stateless o estado compartido"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "No code changes, but a single point of failure",
+                  "es": "Sin cambios de código, pero un único punto de fallo"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Capacity grows by adding replicas behind a load balancer",
+                  "es": "La capacidad crece agregando réplicas detrás de un balanceador"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Vertical scaling (hardware ceiling)",
+                  "es": "Escalado vertical (techo de hardware)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Horizontal scaling (state must be externalized)",
+                  "es": "Escalado horizontal (el estado debe externalizarse)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Vertical scaling (scale up one box)",
+                  "es": "Escalado vertical (agrandar una sola máquina)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Horizontal scaling (scale out)",
+                  "es": "Escalado horizontal (scale out)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your relational database is CPU-bound and the team debates how to scale it. When is vertical scaling the right first move?",
+              "es": "Tu base de datos relacional está saturada de CPU y el equipo debate cómo escalarla. ¿Cuándo es el escalado vertical la primera jugada correcta?"
+            },
+            "options": [
+              {
+                "en": "Never — horizontal scaling is always the superior long-term choice",
+                "es": "Nunca — el escalado horizontal siempre es la opción superior a largo plazo"
+              },
+              {
+                "en": "When the database must survive the loss of an entire data center",
+                "es": "Cuando la base de datos debe sobrevivir a la pérdida de un centro de datos completo"
+              },
+              {
+                "en": "When a bigger machine solves the bottleneck today and avoids the sharding/replication complexity that scaling a stateful database horizontally would require",
+                "es": "Cuando una máquina más grande resuelve el cuello de botella hoy y evita la complejidad de sharding/replicación que exigiría escalar horizontalmente una base de datos con estado"
+              },
+              {
+                "en": "When the workload is stateless and trivially parallelizable",
+                "es": "Cuando la carga de trabajo es stateless y trivialmente paralelizable"
+              }
+            ],
+            "explanation": {
+              "en": "Databases are the classic case where scaling up first is pragmatic: a bigger box needs no code changes, while sharding or multi-primary replication is a re-architecture. Stateless workloads are precisely the easy case for scaling out, and surviving a data-center loss requires replication across machines — vertical scaling can't provide that.",
+              "es": "Las bases de datos son el caso clásico donde escalar hacia arriba primero es pragmático: una máquina más grande no requiere cambios de código, mientras que el sharding o la replicación multi-primario es una re-arquitectura. Las cargas stateless son justamente el caso fácil para escalar horizontalmente, y sobrevivir a la pérdida de un centro de datos requiere replicación entre máquinas — el escalado vertical no puede darla."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cap-theorem",
+      "question": {
+        "en": "What is the CAP theorem, and what actually happens during a network partition?",
+        "es": "¿Qué es el teorema CAP y qué pasa realmente durante una partición de red?"
+      },
+      "definition": {
+        "en": "The **CAP theorem** says a distributed data store can guarantee at most two of: **Consistency** (every read sees the latest write), **Availability** (every request gets a non-error response), and **Partition tolerance** (the system keeps working when nodes can't talk to each other). Since network partitions *will* happen, partition tolerance is not optional — the real choice is **C vs A during a partition**.\n\nWhen a partition splits your cluster, each side must decide: a **CP** system refuses writes (or reads) on the minority side to avoid divergence — you lose availability but stay consistent. An **AP** system keeps serving both sides — you stay available but replicas diverge and must reconcile later (last-write-wins, vector clocks, CRDTs).\n\nSenior nuance: CAP only applies *during* the partition, and it's per-operation, not per-system. Many databases let you tune it per request (e.g. quorum reads vs stale reads).",
+        "es": "El **teorema CAP** dice que un almacén de datos distribuido puede garantizar como máximo dos de: **Consistencia** (toda lectura ve la última escritura), **Disponibilidad** (todo request recibe una respuesta sin error) y **Tolerancia a particiones** (el sistema sigue funcionando cuando los nodos no pueden comunicarse). Como las particiones de red *van* a ocurrir, la tolerancia a particiones no es opcional — la elección real es **C vs A durante una partición**.\n\nCuando una partición divide tu clúster, cada lado debe decidir: un sistema **CP** rechaza escrituras (o lecturas) en el lado minoritario para evitar divergencia — pierdes disponibilidad pero mantienes consistencia. Un sistema **AP** sigue atendiendo ambos lados — mantienes disponibilidad pero las réplicas divergen y deben reconciliarse después (last-write-wins, vector clocks, CRDTs).\n\nMatiz senior: CAP solo aplica *durante* la partición, y es por operación, no por sistema. Muchas bases de datos permiten ajustarlo por request (p. ej. lecturas de quórum vs lecturas obsoletas)."
+      },
+      "examples": [
+        {
+          "en": "ZooKeeper and etcd are CP: during a partition, the side without a quorum majority stops accepting writes — which is exactly why Kubernetes control planes need an odd number of etcd nodes.",
+          "es": "ZooKeeper y etcd son CP: durante una partición, el lado sin mayoría de quórum deja de aceptar escrituras — por eso los planos de control de Kubernetes necesitan un número impar de nodos etcd."
+        },
+        {
+          "en": "Amazon DynamoDB (and the original Dynamo paper) favor AP for shopping carts: better to accept an item added on a stale replica and merge carts later than to reject the sale.",
+          "es": "Amazon DynamoDB (y el paper original de Dynamo) favorecen AP para carritos de compra: es mejor aceptar un ítem agregado en una réplica desactualizada y fusionar carritos después que rechazar la venta."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A partition splits your 5-node CP database into groups of 3 and 2. What happens to writes?",
+              "es": "Una partición divide tu base de datos CP de 5 nodos en grupos de 3 y 2. ¿Qué pasa con las escrituras?"
+            },
+            "options": [
+              {
+                "en": "The 3-node side keeps accepting writes (it has quorum); the 2-node side rejects them",
+                "es": "El lado de 3 nodos sigue aceptando escrituras (tiene quórum); el lado de 2 las rechaza"
+              },
+              {
+                "en": "Both sides keep accepting writes and merge later",
+                "es": "Ambos lados siguen aceptando escrituras y se fusionan después"
+              },
+              {
+                "en": "All writes fail until the partition heals",
+                "es": "Todas las escrituras fallan hasta que la partición se repare"
+              },
+              {
+                "en": "The 2-node side accepts writes because it has less load",
+                "es": "El lado de 2 nodos acepta escrituras porque tiene menos carga"
+              }
+            ],
+            "explanation": {
+              "en": "CP systems use majority quorum: 3 of 5 can still commit safely, while the minority side sacrifices availability to avoid split-brain divergence.",
+              "es": "Los sistemas CP usan quórum de mayoría: 3 de 5 pueden seguir confirmando de forma segura, mientras el lado minoritario sacrifica disponibilidad para evitar divergencia por split-brain."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "An interviewer asks: 'Would you choose CP or AP for a product inventory counter, and what does your choice cost you during a partition?' Answer as you would in the interview.",
+              "es": "Un entrevistador pregunta: '¿Elegirías CP o AP para un contador de inventario de productos, y qué te cuesta tu elección durante una partición?' Responde como lo harías en la entrevista."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that partition tolerance is mandatory and the real trade-off is C vs A during a partition. Must pick a side and justify it (CP: no overselling but writes blocked on the minority side; AP: always available but risk of overselling / need for reconciliation or compensation). Bonus: mentions quorum, or that the choice can be per-operation.",
+              "es": "Debe indicar que la tolerancia a particiones es obligatoria y que el trade-off real es C vs A durante una partición. Debe elegir un lado y justificarlo (CP: no se sobrevende pero las escrituras se bloquean en el lado minoritario; AP: siempre disponible pero con riesgo de sobreventa / necesidad de reconciliación o compensación). Bonus: menciona quórum, o que la elección puede ser por operación."
+            },
+            "reference": "Partitions are unavoidable, so the real question is what happens during one. For strict inventory (no overselling) I'd lean CP: decrements go through a quorum, and during a partition the minority side rejects writes — the cost is availability, some purchases fail. If the business tolerates rare overselling (compensated with an apology email or refund), AP is better: both sides keep selling and we reconcile counts after the partition heals. The choice can even be per operation: CP for checkout decrements, AP for displaying approximate stock."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A teammate claims: 'Our distributed database is CA — consistent and available — we simply don't do partitions.' What is wrong with that claim?",
+              "es": "Un compañero afirma: 'Nuestra base de datos distribuida es CA — consistente y disponible — simplemente no hacemos particiones.' ¿Qué está mal en esa afirmación?"
+            },
+            "options": [
+              {
+                "en": "On a real network partitions are inevitable, so a distributed system can't opt out of P — when one happens it must give up either C or A",
+                "es": "En una red real las particiones son inevitables, así que un sistema distribuido no puede renunciar a P — cuando ocurre una, debe sacrificar C o A"
+              },
+              {
+                "en": "The claim is fine as long as all nodes synchronize their clocks via NTP",
+                "es": "La afirmación está bien siempre que todos los nodos sincronicen sus relojes vía NTP"
+              },
+              {
+                "en": "Nothing — CA is a valid design point for systems deployed in a single cloud region",
+                "es": "Nada — CA es un punto de diseño válido para sistemas desplegados en una sola región de nube"
+              },
+              {
+                "en": "CA is only achievable with NoSQL databases, never with relational ones",
+                "es": "CA solo se logra con bases de datos NoSQL, nunca con relacionales"
+              }
+            ],
+            "explanation": {
+              "en": "Partition tolerance isn't a feature you choose to implement — it's the acknowledgement that networks fail. Switches die, cables get cut, GC pauses look like partitions. A system that 'doesn't do partitions' has simply not decided what it will do when one occurs, which usually means it loses both C and A at the worst moment.",
+              "es": "La tolerancia a particiones no es una funcionalidad que eliges implementar — es el reconocimiento de que las redes fallan. Los switches mueren, los cables se cortan, las pausas de GC parecen particiones. Un sistema que 'no hace particiones' simplemente no ha decidido qué hará cuando ocurra una, lo que suele significar que pierde C y A en el peor momento."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "eventual-vs-strong-consistency",
+      "question": {
+        "en": "What is the difference between eventual consistency and strong consistency, and when do you choose each?",
+        "es": "¿Cuál es la diferencia entre consistencia eventual y consistencia fuerte, y cuándo eliges cada una?"
+      },
+      "definition": {
+        "en": "**Strong consistency** guarantees that once a write completes, every subsequent read — from any node — sees it. It usually requires synchronous coordination (quorums, consensus like Raft/Paxos, or a single leader), which costs latency and availability. **Eventual consistency** guarantees only that, if writes stop, all replicas *converge* to the same value; in the meantime reads may return stale data.\n\nChoose strong consistency when stale reads cause real damage: account balances, inventory decrements at checkout, uniqueness constraints (usernames), access revocation. Choose eventual consistency when staleness is tolerable and you need low latency, high availability or geo-distribution: social feeds, like counts, product views, DNS, caches.\n\nIn between live useful models worth naming in interviews: **read-your-own-writes** (a user always sees their own updates), **monotonic reads** (never travel back in time), and **causal consistency** (effects never appear before their causes).",
+        "es": "La **consistencia fuerte** garantiza que, una vez completada una escritura, toda lectura posterior — desde cualquier nodo — la ve. Suele requerir coordinación síncrona (quórums, consenso tipo Raft/Paxos, o un único líder), lo que cuesta latencia y disponibilidad. La **consistencia eventual** solo garantiza que, si las escrituras se detienen, todas las réplicas *convergen* al mismo valor; mientras tanto, las lecturas pueden devolver datos obsoletos.\n\nElige consistencia fuerte cuando las lecturas obsoletas causan daño real: saldos de cuentas, decrementos de inventario en el checkout, restricciones de unicidad (usernames), revocación de accesos. Elige consistencia eventual cuando la obsolescencia es tolerable y necesitas baja latencia, alta disponibilidad o distribución geográfica: feeds sociales, contadores de likes, vistas de producto, DNS, cachés.\n\nEntre medio viven modelos útiles que vale la pena nombrar en entrevistas: **read-your-own-writes** (un usuario siempre ve sus propias actualizaciones), **lecturas monotónicas** (nunca viajar hacia atrás en el tiempo) y **consistencia causal** (los efectos nunca aparecen antes que sus causas)."
+      },
+      "examples": [
+        {
+          "en": "Your bank shows the exact balance before approving a transfer (strong), but the 'recent transactions' list on the mobile app may lag a few seconds (eventual).",
+          "es": "Tu banco muestra el saldo exacto antes de aprobar una transferencia (fuerte), pero la lista de 'movimientos recientes' en la app móvil puede atrasarse unos segundos (eventual)."
+        },
+        {
+          "en": "When you edit your profile photo, you see it immediately (read-your-own-writes via the primary), while your followers may see the old photo for a minute from replicas.",
+          "es": "Cuando editas tu foto de perfil la ves de inmediato (read-your-own-writes vía el primario), mientras tus seguidores pueden ver la foto vieja durante un minuto desde réplicas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each use case with the most appropriate consistency model.",
+              "es": "Conecta cada caso de uso con el modelo de consistencia más apropiado."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Debiting a bank account balance",
+                  "es": "Debitar el saldo de una cuenta bancaria"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Like counter on a viral post",
+                  "es": "Contador de likes en un post viral"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "User edits their bio and reloads the page",
+                  "es": "Un usuario edita su bio y recarga la página"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Comment replies must appear after the comment",
+                  "es": "Las respuestas deben aparecer después del comentario original"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Strong consistency — stale reads cause real money errors",
+                  "es": "Consistencia fuerte — las lecturas obsoletas causan errores de dinero real"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Eventual consistency — approximate values are fine",
+                  "es": "Consistencia eventual — los valores aproximados están bien"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Read-your-own-writes — the author must see their update",
+                  "es": "Read-your-own-writes — el autor debe ver su actualización"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Causal consistency — effects never precede causes",
+                  "es": "Consistencia causal — los efectos nunca preceden a sus causas"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does strong consistency generally cost more latency than eventual consistency?",
+              "es": "¿Por qué la consistencia fuerte generalmente cuesta más latencia que la eventual?"
+            },
+            "options": [
+              {
+                "en": "Writes/reads must synchronously coordinate with a quorum or leader before responding",
+                "es": "Las escrituras/lecturas deben coordinarse síncronamente con un quórum o líder antes de responder"
+              },
+              {
+                "en": "Strong consistency requires bigger servers",
+                "es": "La consistencia fuerte requiere servidores más grandes"
+              },
+              {
+                "en": "Strongly consistent databases store more copies of the data",
+                "es": "Las bases de datos fuertemente consistentes guardan más copias de los datos"
+              },
+              {
+                "en": "Eventual consistency skips writing to disk",
+                "es": "La consistencia eventual omite escribir a disco"
+              }
+            ],
+            "explanation": {
+              "en": "The latency comes from coordination: waiting for acknowledgements from a majority (or the leader) on the critical path, often across availability zones. Eventual systems acknowledge locally and replicate asynchronously.",
+              "es": "La latencia viene de la coordinación: esperar confirmaciones de una mayoría (o del líder) en el camino crítico, a menudo entre zonas de disponibilidad. Los sistemas eventuales confirman localmente y replican de forma asíncrona."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A user refreshes their order page: the first load shows 'shipped', the next refresh shows 'processing' again. Which guarantee is missing, and what is the typical cause?",
+              "es": "Un usuario recarga la página de su pedido: la primera carga muestra 'enviado', la siguiente vuelve a mostrar 'procesando'. ¿Qué garantía falta y cuál es la causa típica?"
+            },
+            "options": [
+              {
+                "en": "Monotonic reads; consecutive reads hit replicas with different replication lag, so the session should be pinned to one replica (or use session tokens)",
+                "es": "Lecturas monotónicas; lecturas consecutivas caen en réplicas con distinto retraso de replicación, así que la sesión debería fijarse a una réplica (o usar tokens de sesión)"
+              },
+              {
+                "en": "Strong consistency; the only fix is moving everything to a single-node database",
+                "es": "Consistencia fuerte; la única solución es mover todo a una base de datos de un solo nodo"
+              },
+              {
+                "en": "Read-your-own-writes; the user's browser cached the old status",
+                "es": "Read-your-own-writes; el navegador del usuario cacheó el estado viejo"
+              },
+              {
+                "en": "Causal consistency; the message broker reordered the status events",
+                "es": "Consistencia causal; el broker de mensajes reordenó los eventos de estado"
+              }
+            ],
+            "explanation": {
+              "en": "Going 'back in time' between reads is the signature of missing monotonic reads: a load balancer sent the second read to a more-lagged replica. Fixes: sticky routing of a session to one replica, or session tokens that carry the last-seen version so replicas below it are skipped. It's not about the user's own write, so read-your-own-writes isn't the model at play.",
+              "es": "'Viajar hacia atrás en el tiempo' entre lecturas es la firma de la falta de lecturas monotónicas: un balanceador envió la segunda lectura a una réplica más atrasada. Soluciones: enrutamiento sticky de la sesión a una réplica, o tokens de sesión que llevan la última versión vista para saltarse réplicas por debajo de ella. No se trata de una escritura del propio usuario, así que read-your-own-writes no es el modelo en juego."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "distributed-transactions",
+      "question": {
+        "en": "What is a distributed transaction, and how do two-phase commit and sagas differ?",
+        "es": "¿Qué es una transacción distribuida y en qué se diferencian el two-phase commit y las sagas?"
+      },
+      "definition": {
+        "en": "A **distributed transaction** updates data owned by multiple services or databases and needs all-or-nothing semantics. **Two-phase commit (2PC)** achieves it with a coordinator: phase 1 asks every participant to *prepare* (lock resources and vote), phase 2 tells everyone to *commit* or *abort*. It gives atomicity but blocks: participants hold locks while waiting, and if the coordinator dies at the wrong moment, they can be stuck. That's why 2PC is rare across microservices.\n\nA **saga** replaces the global transaction with a sequence of *local* transactions, each followed by an event or command that triggers the next step. If a step fails, the saga runs **compensating actions** to semantically undo previous steps (refund the charge, release the reservation). Sagas are non-blocking and fit event-driven systems, but they trade atomicity for **eventual consistency**: intermediate states are visible, and compensations must be designed explicitly.\n\nTwo styles: **choreography** (services react to each other's events — simple, but the flow is implicit) and **orchestration** (a central orchestrator commands each step — explicit flow, easier to reason about and debug).",
+        "es": "Una **transacción distribuida** actualiza datos que pertenecen a múltiples servicios o bases de datos y necesita semántica de todo-o-nada. El **two-phase commit (2PC)** lo logra con un coordinador: la fase 1 pide a cada participante *prepararse* (bloquear recursos y votar), la fase 2 les indica *commit* o *abort*. Da atomicidad pero bloquea: los participantes retienen locks mientras esperan, y si el coordinador muere en el momento equivocado, pueden quedar atascados. Por eso el 2PC es raro entre microservicios.\n\nUna **saga** reemplaza la transacción global con una secuencia de transacciones *locales*, cada una seguida de un evento o comando que dispara el siguiente paso. Si un paso falla, la saga ejecuta **acciones compensatorias** para deshacer semánticamente los pasos previos (reembolsar el cobro, liberar la reserva). Las sagas no bloquean y encajan en sistemas orientados a eventos, pero cambian atomicidad por **consistencia eventual**: los estados intermedios son visibles y las compensaciones deben diseñarse explícitamente.\n\nDos estilos: **coreografía** (los servicios reaccionan a eventos de otros — simple, pero el flujo es implícito) y **orquestación** (un orquestador central comanda cada paso — flujo explícito, más fácil de razonar y depurar)."
+      },
+      "examples": [
+        {
+          "en": "A travel booking saga: reserve flight, reserve hotel, charge card. If the charge fails, compensations cancel the hotel and flight reservations — customers may briefly see a 'pending' booking.",
+          "es": "Una saga de reserva de viaje: reservar vuelo, reservar hotel, cobrar la tarjeta. Si el cobro falla, las compensaciones cancelan las reservas de hotel y vuelo — el cliente puede ver brevemente una reserva 'pendiente'."
+        },
+        {
+          "en": "Classic 2PC still lives inside single-vendor infrastructure, e.g. a JMS message broker and a relational database committing together via XA transactions in legacy Java systems.",
+          "es": "El 2PC clásico aún vive dentro de infraestructura de un solo proveedor, p. ej. un broker JMS y una base relacional confirmando juntos vía transacciones XA en sistemas Java legacy."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of an order-processing saga where the payment fails and compensation kicks in.",
+              "es": "Ordena los pasos de una saga de procesamiento de pedidos donde el pago falla y entra la compensación."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "create",
+                "label": {
+                  "en": "Order service creates the order in PENDING state",
+                  "es": "El servicio de pedidos crea el pedido en estado PENDING"
+                }
+              },
+              {
+                "id": "reserve",
+                "label": {
+                  "en": "Inventory service reserves the stock (local transaction)",
+                  "es": "El servicio de inventario reserva el stock (transacción local)"
+                }
+              },
+              {
+                "id": "charge",
+                "label": {
+                  "en": "Payment service tries to charge the card — it fails",
+                  "es": "El servicio de pagos intenta cobrar la tarjeta — falla"
+                }
+              },
+              {
+                "id": "compensate",
+                "label": {
+                  "en": "Compensating action: inventory releases the reserved stock",
+                  "es": "Acción compensatoria: inventario libera el stock reservado"
+                }
+              },
+              {
+                "id": "cancel",
+                "label": {
+                  "en": "Order service marks the order as CANCELLED",
+                  "es": "El servicio de pedidos marca el pedido como CANCELLED"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "create",
+              "reserve",
+              "charge",
+              "compensate",
+              "cancel"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the main reason 2PC is avoided between independent microservices?",
+              "es": "¿Cuál es la razón principal por la que se evita el 2PC entre microservicios independientes?"
+            },
+            "options": [
+              {
+                "en": "2PC only works with SQL databases",
+                "es": "El 2PC solo funciona con bases de datos SQL"
+              },
+              {
+                "en": "Sagas are always strongly consistent, so they are strictly better",
+                "es": "Las sagas siempre son fuertemente consistentes, así que son estrictamente mejores"
+              },
+              {
+                "en": "2PC cannot guarantee atomicity even when everything works",
+                "es": "El 2PC no puede garantizar atomicidad ni siquiera cuando todo funciona"
+              },
+              {
+                "en": "Participants hold locks while waiting on the coordinator, so one slow/dead node blocks everyone",
+                "es": "Los participantes retienen locks mientras esperan al coordinador, así que un nodo lento/caído bloquea a todos"
+              }
+            ],
+            "explanation": {
+              "en": "2PC is a blocking protocol: prepared participants must hold locks until the coordinator decides. Across autonomous services with independent deploys and failures, that coupling and availability cost is unacceptable. (Sagas avoid blocking but are eventually consistent, not strongly.)",
+              "es": "El 2PC es un protocolo bloqueante: los participantes preparados deben retener locks hasta que el coordinador decida. Entre servicios autónomos con despliegues y fallos independientes, ese acoplamiento y costo de disponibilidad es inaceptable. (Las sagas evitan el bloqueo pero son eventualmente consistentes, no fuertes.)"
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each distributed-transaction concept with its description.",
+              "es": "Conecta cada concepto de transacciones distribuidas con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "2PC coordinator crashes after all participants voted 'prepared'",
+                  "es": "El coordinador de 2PC se cae después de que todos los participantes votaron 'prepared'"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Compensating action",
+                  "es": "Acción compensatoria"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Choreography-based saga",
+                  "es": "Saga basada en coreografía"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Orchestration-based saga",
+                  "es": "Saga basada en orquestación"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Participants stay blocked holding locks until the coordinator recovers",
+                  "es": "Los participantes quedan bloqueados reteniendo locks hasta que el coordinador se recupere"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Semantically undoes an already-committed local step (refund, release reservation)",
+                  "es": "Deshace semánticamente un paso local ya confirmado (reembolso, liberar reserva)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Services react to each other's events; the overall flow is implicit",
+                  "es": "Los servicios reaccionan a los eventos de otros; el flujo global es implícito"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "A central component commands each step; the flow is explicit and easier to debug",
+                  "es": "Un componente central comanda cada paso; el flujo es explícito y más fácil de depurar"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "idempotency",
+      "question": {
+        "en": "What is idempotency and why is it critical in payment or advertising systems?",
+        "es": "¿Qué es la idempotencia y por qué es crítica en sistemas de pagos o publicidad?"
+      },
+      "definition": {
+        "en": "An operation is **idempotent** when executing it once or N times produces the same final state. `SET balance = 100` is idempotent; `balance += 100` is not. In distributed systems this matters because **retries are unavoidable**: a client that times out cannot know whether the server processed the request or not — the only safe move is to retry, and retrying is only safe if the operation is idempotent.\n\nThe standard mechanism is an **idempotency key**: the client generates a unique key per logical operation (not per attempt) and sends it with the request. The server stores the key with the result of the first execution; any repeat with the same key returns the stored result instead of re-executing. Payment APIs like Stripe make this a first-class header.\n\nIn payments a duplicated non-idempotent charge means charging a customer twice; in advertising, counting an ad click twice means overbilling an advertiser. Both are money bugs — which is why interviewers love this question.",
+        "es": "Una operación es **idempotente** cuando ejecutarla una o N veces produce el mismo estado final. `SET balance = 100` es idempotente; `balance += 100` no lo es. En sistemas distribuidos esto importa porque **los reintentos son inevitables**: un cliente al que se le agota el timeout no puede saber si el servidor procesó el request o no — lo único seguro es reintentar, y reintentar solo es seguro si la operación es idempotente.\n\nEl mecanismo estándar es la **clave de idempotencia**: el cliente genera una clave única por operación lógica (no por intento) y la envía con el request. El servidor guarda la clave con el resultado de la primera ejecución; cualquier repetición con la misma clave devuelve el resultado guardado en lugar de re-ejecutar. APIs de pago como Stripe la manejan como un header de primera clase.\n\nEn pagos, un cobro duplicado no idempotente significa cobrarle dos veces al cliente; en publicidad, contar un clic dos veces significa sobrefacturar al anunciante. Ambos son bugs de dinero — por eso a los entrevistadores les encanta esta pregunta."
+      },
+      "examples": [
+        {
+          "en": "Stripe's API accepts an `Idempotency-Key` header on POST /charges: if the network drops the response, the client retries with the same key and gets the original charge back instead of a duplicate.",
+          "es": "La API de Stripe acepta un header `Idempotency-Key` en POST /charges: si la red pierde la respuesta, el cliente reintenta con la misma clave y recibe el cobro original en lugar de un duplicado."
+        },
+        {
+          "en": "Ad-click pipelines deduplicate by click ID before billing: the same click event arriving twice from a mobile SDK retry must increment the advertiser's bill exactly once.",
+          "es": "Los pipelines de clics publicitarios deduplican por ID de clic antes de facturar: el mismo evento de clic llegando dos veces por un reintento del SDK móvil debe incrementar la factura del anunciante exactamente una vez."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A client calls POST /charges, the request succeeds server-side, but the response is lost. The client retries. Which design prevents a double charge?",
+              "es": "Un cliente llama a POST /charges, el request tiene éxito en el servidor, pero la respuesta se pierde. El cliente reintenta. ¿Qué diseño evita un doble cobro?"
+            },
+            "options": [
+              {
+                "en": "The client waits 30 seconds before retrying",
+                "es": "El cliente espera 30 segundos antes de reintentar"
+              },
+              {
+                "en": "The server rejects all retried requests with HTTP 429",
+                "es": "El servidor rechaza todos los requests reintentados con HTTP 429"
+              },
+              {
+                "en": "The client generates a new idempotency key for each retry attempt",
+                "es": "El cliente genera una nueva clave de idempotencia por cada intento de reintento"
+              },
+              {
+                "en": "The client sends the same idempotency key on the retry; the server detects it and returns the stored result",
+                "es": "El cliente envía la misma clave de idempotencia en el reintento; el servidor la detecta y devuelve el resultado guardado"
+              }
+            ],
+            "explanation": {
+              "en": "The key must identify the logical operation, so it is reused across retries. Waiting doesn't resolve the ambiguity, and a new key per attempt defeats the whole mechanism — the server would see two distinct charges.",
+              "es": "La clave debe identificar la operación lógica, así que se reutiliza entre reintentos. Esperar no resuelve la ambigüedad, y una clave nueva por intento anula todo el mecanismo — el servidor vería dos cobros distintos."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain how you would implement idempotency keys on the server side for a payment endpoint. Where do you store them, what do you store, and what race condition must you handle?",
+              "es": "Explica cómo implementarías claves de idempotencia del lado del servidor para un endpoint de pagos. ¿Dónde las guardas, qué guardas y qué condición de carrera debes manejar?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must describe storing the key with the operation result (in a table or Redis with a unique constraint), returning the stored response on repeats, and handling the race of two concurrent requests with the same key (unique constraint / atomic insert decides the winner; the loser waits or gets the first result). Bonus: TTL/expiry for keys, scoping keys per client, storing request hash to reject same key with different payload.",
+              "es": "Debe describir guardar la clave con el resultado de la operación (en una tabla o Redis con restricción de unicidad), devolver la respuesta guardada en repeticiones, y manejar la carrera de dos requests concurrentes con la misma clave (la restricción única / inserción atómica decide el ganador; el perdedor espera u obtiene el resultado del primero). Bonus: TTL/expiración de claves, claves por cliente, guardar hash del request para rechazar la misma clave con payload distinto."
+            },
+            "reference": "Store keys in a table with a UNIQUE constraint: (client_id, idempotency_key) -> status, response_body, request_hash. On arrival, atomically INSERT the key as 'in_progress'; if the insert wins, execute the charge and save the response; if it conflicts, either return the saved response (completed) or 409/wait (in progress). The unique constraint resolves the race where two retries arrive concurrently — exactly one executes. Keys get a TTL (e.g. 24h), and the stored request hash lets you reject reuse of a key with a different payload."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A team derives the idempotency key as hash(user_id, amount). A user legitimately buys the same $5 item twice in one day. What happens, and what is the fix?",
+              "es": "Un equipo deriva la clave de idempotencia como hash(user_id, monto). Un usuario compra legítimamente el mismo artículo de $5 dos veces en un día. ¿Qué pasa y cuál es la solución?"
+            },
+            "options": [
+              {
+                "en": "The payment provider blocks the account for suspected fraud",
+                "es": "El proveedor de pagos bloquea la cuenta por sospecha de fraude"
+              },
+              {
+                "en": "The second purchase is wrongly treated as a duplicate and returns the first result; the key must identify the logical operation (e.g. a client-generated UUID per checkout attempt), not the payload",
+                "es": "La segunda compra se trata erróneamente como duplicado y devuelve el resultado de la primera; la clave debe identificar la operación lógica (p. ej. un UUID generado por el cliente por intento de checkout), no el payload"
+              },
+              {
+                "en": "Nothing goes wrong — hashing the payload is exactly how idempotency keys are meant to work",
+                "es": "Nada sale mal — hashear el payload es exactamente como deben funcionar las claves de idempotencia"
+              },
+              {
+                "en": "Both purchases succeed because the timestamps differ, so the hashes differ",
+                "es": "Ambas compras tienen éxito porque los timestamps difieren, así que los hashes difieren"
+              }
+            ],
+            "explanation": {
+              "en": "Deriving the key from the payload conflates 'same data' with 'same operation': two distinct purchases with identical fields collide, and the second customer intent is silently swallowed. The key must be minted once per logical operation — a fresh UUID created when the user initiates the checkout — and reused only across retries of that same operation.",
+              "es": "Derivar la clave del payload confunde 'mismos datos' con 'misma operación': dos compras distintas con campos idénticos colisionan, y la segunda intención del cliente se traga silenciosamente. La clave debe acuñarse una vez por operación lógica — un UUID nuevo creado cuando el usuario inicia el checkout — y reutilizarse solo entre reintentos de esa misma operación."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "duplicate-messages",
+      "question": {
+        "en": "How do you handle duplicate messages in a distributed system?",
+        "es": "¿Cómo manejas mensajes duplicados en un sistema distribuido?"
+      },
+      "definition": {
+        "en": "Duplicates are a fact of life: producers retry after ambiguous timeouts, brokers redeliver unacked messages, consumers reprocess after crashes, and rebalances replay in-flight work. Since you can't prevent duplicates end-to-end, you make processing **safe under duplication** on the consumer side.\n\nTwo complementary strategies. First, **natural idempotency**: design handlers so reprocessing is harmless — upserts keyed by a business ID (`INSERT ... ON CONFLICT DO NOTHING`), absolute writes (`SET status = 'shipped'`) instead of increments. Second, **explicit deduplication**: every message carries a stable, unique ID assigned by the producer; the consumer records processed IDs (a dedup table or Redis set with TTL) and skips messages it has already seen — ideally checking and writing *in the same transaction* as the business change.\n\nKey details interviewers probe: the dedup ID must identify the *logical event* (not the delivery attempt), the dedup store needs a retention window aligned with maximum redelivery delay, and the check-then-process must be atomic or a crash between them reintroduces the bug.",
+        "es": "Los duplicados son un hecho de la vida: los productores reintentan tras timeouts ambiguos, los brokers reentregan mensajes sin ack, los consumidores reprocesan tras crashes, y los rebalanceos repiten trabajo en vuelo. Como no puedes prevenir duplicados de extremo a extremo, haces que el procesamiento sea **seguro ante duplicación** del lado del consumidor.\n\nDos estrategias complementarias. Primera, **idempotencia natural**: diseña los handlers para que reprocesar sea inofensivo — upserts con clave de negocio (`INSERT ... ON CONFLICT DO NOTHING`), escrituras absolutas (`SET status = 'shipped'`) en vez de incrementos. Segunda, **deduplicación explícita**: cada mensaje lleva un ID único y estable asignado por el productor; el consumidor registra los IDs procesados (una tabla de dedup o un set de Redis con TTL) y descarta mensajes ya vistos — idealmente verificando y escribiendo *en la misma transacción* que el cambio de negocio.\n\nDetalles que sondean los entrevistadores: el ID de dedup debe identificar el *evento lógico* (no el intento de entrega), el almacén de dedup necesita una ventana de retención alineada con el retraso máximo de reentrega, y el verificar-y-procesar debe ser atómico o un crash entre ambos reintroduce el bug."
+      },
+      "examples": [
+        {
+          "en": "SQS standard queues deliver at-least-once, so consumers store processed message IDs in DynamoDB with a conditional put — if the ID already exists, the message is silently dropped.",
+          "es": "Las colas estándar de SQS entregan al-menos-una-vez, así que los consumidores guardan los IDs procesados en DynamoDB con un put condicional — si el ID ya existe, el mensaje se descarta silenciosamente."
+        },
+        {
+          "en": "An email service dedups by (user_id, campaign_id): even if the 'send welcome email' event arrives three times, the unique constraint ensures the user gets exactly one email.",
+          "es": "Un servicio de emails deduplica por (user_id, campaign_id): aunque el evento 'enviar email de bienvenida' llegue tres veces, la restricción única asegura que el usuario reciba exactamente un email."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each duplicate-handling technique with its description.",
+              "es": "Conecta cada técnica de manejo de duplicados con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Natural idempotency",
+                  "es": "Idempotencia natural"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Dedup table with unique constraint",
+                  "es": "Tabla de dedup con restricción única"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Redis SET with TTL",
+                  "es": "SET de Redis con TTL"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Broker-side deduplication",
+                  "es": "Deduplicación del lado del broker"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Handlers written so reprocessing changes nothing (upserts, absolute writes)",
+                  "es": "Handlers escritos para que reprocesar no cambie nada (upserts, escrituras absolutas)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Processed IDs recorded transactionally with the business change",
+                  "es": "IDs procesados registrados transaccionalmente junto al cambio de negocio"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Fast best-effort ID check with a bounded time window",
+                  "es": "Chequeo rápido de IDs, best-effort, con ventana de tiempo acotada"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "e.g. SQS FIFO drops repeats of the same dedup ID within 5 minutes",
+                  "es": "p. ej. SQS FIFO descarta repeticiones del mismo ID de dedup dentro de 5 minutos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A consumer checks a Redis set for the message ID, processes the message, then adds the ID to the set. It crashes right after processing but before adding the ID. What happens on redelivery?",
+              "es": "Un consumidor consulta un set de Redis por el ID del mensaje, procesa el mensaje y luego agrega el ID al set. Se cae justo después de procesar pero antes de agregar el ID. ¿Qué pasa en la reentrega?"
+            },
+            "options": [
+              {
+                "en": "Nothing — Redis remembers the check",
+                "es": "Nada — Redis recuerda el chequeo"
+              },
+              {
+                "en": "The message is processed twice — the check and the business write were not atomic",
+                "es": "El mensaje se procesa dos veces — el chequeo y la escritura de negocio no fueron atómicos"
+              },
+              {
+                "en": "The broker detects the crash and discards the message",
+                "es": "El broker detecta el crash y descarta el mensaje"
+              },
+              {
+                "en": "Redis TTL prevents the duplicate",
+                "es": "El TTL de Redis evita el duplicado"
+              }
+            ],
+            "explanation": {
+              "en": "This is the classic gap: dedup marking must be atomic with the business effect (same DB transaction) or the effect itself must be idempotent. Marking after processing leaves a crash window that produces duplicates.",
+              "es": "Este es el hueco clásico: marcar el dedup debe ser atómico con el efecto de negocio (misma transacción de BD) o el efecto en sí debe ser idempotente. Marcar después de procesar deja una ventana de crash que produce duplicados."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Duplicates can come from producer retries AND broker redeliveries. Which field should the consumer use as its deduplication ID?",
+              "es": "Los duplicados pueden venir de reintentos del productor Y de reentregas del broker. ¿Qué campo debería usar el consumidor como ID de deduplicación?"
+            },
+            "options": [
+              {
+                "en": "The message's arrival timestamp, which is unique per message",
+                "es": "El timestamp de llegada del mensaje, que es único por mensaje"
+              },
+              {
+                "en": "The broker's delivery receipt handle, since the broker assigns it",
+                "es": "El receipt handle de entrega del broker, ya que el broker lo asigna"
+              },
+              {
+                "en": "A stable event ID assigned by the producer when the logical event is created, before any publish attempt",
+                "es": "Un ID de evento estable asignado por el productor cuando se crea el evento lógico, antes de cualquier intento de publicación"
+              },
+              {
+                "en": "A hash of the consumer's hostname and the partition offset",
+                "es": "Un hash del hostname del consumidor y el offset de la partición"
+              }
+            ],
+            "explanation": {
+              "en": "Only an ID minted with the logical event survives every duplication path: a producer retry re-sends the same event ID, and a broker redelivery carries it too. Receipt handles and offsets change per delivery attempt, and timestamps are neither unique nor stable — deduplicating on any of those misses producer-side duplicates entirely.",
+              "es": "Solo un ID acuñado junto con el evento lógico sobrevive a todos los caminos de duplicación: un reintento del productor reenvía el mismo ID de evento, y una reentrega del broker también lo lleva. Los receipt handles y offsets cambian por intento de entrega, y los timestamps no son ni únicos ni estables — deduplicar con cualquiera de esos pierde por completo los duplicados del lado del productor."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "retries-and-backoff",
+      "question": {
+        "en": "What is a retry storm, and how do exponential backoff and jitter prevent it?",
+        "es": "¿Qué es una tormenta de reintentos y cómo la previenen el backoff exponencial y el jitter?"
+      },
+      "definition": {
+        "en": "A **retry storm** happens when a struggling service slows down, every client times out and retries, and the retries multiply the load on the already-degraded service — turning a partial slowdown into a full outage. Layered retries make it exponential: if the edge, the BFF and the internal client each retry 3 times, one user click can become 27 requests.\n\n**Exponential backoff** spaces retries out: wait 1s, then 2s, 4s, 8s… giving the service room to recover instead of hammering it. But backoff alone synchronizes clients: everything that failed at the same moment retries at the same moment, producing waves. **Jitter** adds randomness — with *full jitter* each wait is `random(0, base * 2^attempt)` — spreading retries evenly over time.\n\nSenior checklist: cap the maximum delay and total attempts, budget retries (e.g. retry only at one layer), only retry idempotent operations or use idempotency keys, and combine with circuit breakers so persistent failures stop generating traffic at all.",
+        "es": "Una **tormenta de reintentos** ocurre cuando un servicio degradado se pone lento, todos los clientes agotan su timeout y reintentan, y los reintentos multiplican la carga sobre el servicio ya degradado — convirtiendo una lentitud parcial en una caída total. Los reintentos en capas lo hacen exponencial: si el edge, el BFF y el cliente interno reintentan 3 veces cada uno, un clic de usuario puede volverse 27 requests.\n\nEl **backoff exponencial** espacia los reintentos: espera 1s, luego 2s, 4s, 8s… dándole al servicio espacio para recuperarse en vez de martillarlo. Pero el backoff solo sincroniza a los clientes: todo lo que falló en el mismo momento reintenta en el mismo momento, produciendo olas. El **jitter** agrega aleatoriedad — con *full jitter* cada espera es `random(0, base * 2^intento)` — repartiendo los reintentos uniformemente en el tiempo.\n\nChecklist senior: limita el retraso máximo y el total de intentos, presupuesta los reintentos (p. ej. reintentar en una sola capa), reintenta solo operaciones idempotentes o usa claves de idempotencia, y combina con circuit breakers para que los fallos persistentes dejen de generar tráfico por completo."
+      },
+      "examples": [
+        {
+          "en": "AWS documented that adding full jitter to their SDK retries dramatically reduced contention: without jitter, synchronized retry waves kept knocking over recovering services.",
+          "es": "AWS documentó que agregar full jitter a los reintentos de su SDK redujo drásticamente la contención: sin jitter, olas sincronizadas de reintentos seguían tumbando a los servicios en recuperación."
+        },
+        {
+          "en": "A mobile app that retries a failed sync every 5 seconds flat can DDoS your own backend after a deploy glitch — millions of devices retrying in lockstep is a self-inflicted outage.",
+          "es": "Una app móvil que reintenta un sync fallido cada 5 segundos fijos puede hacerle DDoS a tu propio backend tras un fallo de deploy — millones de dispositivos reintentando al unísono es una caída autoinfligida."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the timeline of a well-behaved client using exponential backoff with jitter against a failing dependency.",
+              "es": "Ordena la línea de tiempo de un cliente bien portado usando backoff exponencial con jitter contra una dependencia que falla."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "fail1",
+                "label": {
+                  "en": "Initial request times out",
+                  "es": "El request inicial agota el timeout"
+                }
+              },
+              {
+                "id": "wait1",
+                "label": {
+                  "en": "Wait random(0, 1s), retry — fails again",
+                  "es": "Espera random(0, 1s), reintenta — falla de nuevo"
+                }
+              },
+              {
+                "id": "wait2",
+                "label": {
+                  "en": "Wait random(0, 2s), retry — fails again",
+                  "es": "Espera random(0, 2s), reintenta — falla de nuevo"
+                }
+              },
+              {
+                "id": "wait3",
+                "label": {
+                  "en": "Wait random(0, 4s), retry — fails again",
+                  "es": "Espera random(0, 4s), reintenta — falla de nuevo"
+                }
+              },
+              {
+                "id": "stop",
+                "label": {
+                  "en": "Retry budget exhausted: surface the error / trip the circuit breaker",
+                  "es": "Presupuesto de reintentos agotado: propaga el error / abre el circuit breaker"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "fail1",
+              "wait1",
+              "wait2",
+              "wait3",
+              "stop"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is exponential backoff *without* jitter still dangerous at scale?",
+              "es": "¿Por qué el backoff exponencial *sin* jitter sigue siendo peligroso a escala?"
+            },
+            "options": [
+              {
+                "en": "Backoff only works over TCP, not HTTP",
+                "es": "El backoff solo funciona sobre TCP, no HTTP"
+              },
+              {
+                "en": "It increases the total number of retries",
+                "es": "Aumenta el número total de reintentos"
+              },
+              {
+                "en": "Clients that failed together retry together, producing synchronized waves that re-overload the service",
+                "es": "Los clientes que fallaron juntos reintentan juntos, produciendo olas sincronizadas que vuelven a sobrecargar el servicio"
+              },
+              {
+                "en": "Exponential delays grow too slowly to matter",
+                "es": "Los retrasos exponenciales crecen demasiado lento para importar"
+              }
+            ],
+            "explanation": {
+              "en": "Backoff spaces retries but keeps them correlated: every client computes the same schedule from the same failure moment. Jitter decorrelates them, flattening the retry waves into a uniform trickle.",
+              "es": "El backoff espacia los reintentos pero los mantiene correlacionados: cada cliente calcula el mismo cronograma desde el mismo momento de fallo. El jitter los descorrelaciona, aplanando las olas de reintentos en un goteo uniforme."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your HTTP client retries every failed request automatically. Which failure should it NOT retry?",
+              "es": "Tu cliente HTTP reintenta automáticamente cada request fallido. ¿Qué fallo NO debería reintentar?"
+            },
+            "options": [
+              {
+                "en": "A connection timeout on an idempotent GET",
+                "es": "Un timeout de conexión en un GET idempotente"
+              },
+              {
+                "en": "HTTP 503 Service Unavailable with a Retry-After header",
+                "es": "HTTP 503 Service Unavailable con un header Retry-After"
+              },
+              {
+                "en": "HTTP 429 Too Many Requests",
+                "es": "HTTP 429 Too Many Requests"
+              },
+              {
+                "en": "HTTP 400 Bad Request — the request is deterministically invalid, so retrying can never succeed and only adds load",
+                "es": "HTTP 400 Bad Request — el request es determinísticamente inválido, así que reintentar nunca puede tener éxito y solo agrega carga"
+              }
+            ],
+            "explanation": {
+              "en": "Retries are for transient failures: overload (503, 429) and network flakiness on safe operations can succeed on a later attempt. A 400 means the request itself is malformed — the same bytes will fail every time, so retrying it burns retry budget and amplifies traffic for zero benefit. Client errors (4xx, except 429) should surface immediately.",
+              "es": "Los reintentos son para fallos transitorios: la sobrecarga (503, 429) y la inestabilidad de red en operaciones seguras pueden tener éxito en un intento posterior. Un 400 significa que el request en sí está mal formado — los mismos bytes fallarán cada vez, así que reintentarlo quema presupuesto de reintentos y amplifica el tráfico sin beneficio alguno. Los errores de cliente (4xx, excepto 429) deben propagarse de inmediato."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "circuit-breaker",
+      "question": {
+        "en": "How does the circuit breaker pattern work?",
+        "es": "¿Cómo funciona el patrón circuit breaker?"
+      },
+      "definition": {
+        "en": "A **circuit breaker** wraps calls to a dependency and tracks their outcomes. While things are healthy it stays **closed** and lets calls through. When failures cross a threshold (e.g. >50% errors in a rolling window), it **opens**: calls fail *immediately* without touching the dependency — failing fast protects your threads/connections and gives the dependency breathing room to recover.\n\nAfter a cooldown timer, the breaker goes **half-open** and lets a small number of probe requests through. If they succeed, it closes again; if they fail, it re-opens and restarts the timer. The three states — closed → open → half-open — are the core of the interview answer.\n\nTwo details that signal seniority: breakers should be scoped per dependency (or per endpoint) so one bad dependency doesn't block others, and an open breaker should trigger a **fallback** where possible — cached data, a default value, a degraded response — rather than a raw error.",
+        "es": "Un **circuit breaker** envuelve las llamadas a una dependencia y registra sus resultados. Mientras todo está sano permanece **cerrado** (closed) y deja pasar las llamadas. Cuando los fallos cruzan un umbral (p. ej. >50% de errores en una ventana móvil), se **abre** (open): las llamadas fallan *inmediatamente* sin tocar la dependencia — fallar rápido protege tus threads/conexiones y le da a la dependencia espacio para recuperarse.\n\nTras un temporizador de enfriamiento, el breaker pasa a **semiabierto** (half-open) y deja pasar unas pocas peticiones de prueba. Si tienen éxito, se cierra de nuevo; si fallan, se reabre y reinicia el temporizador. Los tres estados — closed → open → half-open — son el núcleo de la respuesta de entrevista.\n\nDos detalles que señalan seniority: los breakers deben tener alcance por dependencia (o por endpoint) para que una dependencia mala no bloquee a las demás, y un breaker abierto debería disparar un **fallback** cuando sea posible — datos cacheados, un valor por defecto, una respuesta degradada — en lugar de un error crudo."
+      },
+      "examples": [
+        {
+          "en": "Netflix's Hystrix (now Resilience4j) popularized the pattern: when the recommendations service breaks, the breaker opens and users see a generic popular-titles list instead of an error page.",
+          "es": "Hystrix de Netflix (hoy Resilience4j) popularizó el patrón: cuando el servicio de recomendaciones se rompe, el breaker se abre y los usuarios ven una lista genérica de títulos populares en vez de una página de error."
+        },
+        {
+          "en": "Service meshes like Istio implement outlier detection at the proxy level: an upstream pod returning consecutive 5xx errors is ejected from the load-balancing pool — a distributed circuit breaker.",
+          "es": "Los service meshes como Istio implementan detección de outliers a nivel de proxy: un pod upstream que devuelve errores 5xx consecutivos es expulsado del pool de balanceo — un circuit breaker distribuido."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the lifecycle of a circuit breaker through a dependency outage and recovery.",
+              "es": "Ordena el ciclo de vida de un circuit breaker durante la caída y recuperación de una dependencia."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "closed",
+                "label": {
+                  "en": "CLOSED: calls flow normally, failures are counted",
+                  "es": "CLOSED: las llamadas fluyen con normalidad, los fallos se cuentan"
+                }
+              },
+              {
+                "id": "trip",
+                "label": {
+                  "en": "Failure rate crosses the threshold — the breaker trips",
+                  "es": "La tasa de fallos cruza el umbral — el breaker se dispara"
+                }
+              },
+              {
+                "id": "open",
+                "label": {
+                  "en": "OPEN: calls fail fast without reaching the dependency",
+                  "es": "OPEN: las llamadas fallan rápido sin llegar a la dependencia"
+                }
+              },
+              {
+                "id": "halfopen",
+                "label": {
+                  "en": "Cooldown expires — HALF-OPEN lets a few probe requests through",
+                  "es": "El enfriamiento expira — HALF-OPEN deja pasar unas pocas peticiones de prueba"
+                }
+              },
+              {
+                "id": "recover",
+                "label": {
+                  "en": "Probes succeed — the breaker CLOSES again",
+                  "es": "Las pruebas tienen éxito — el breaker se CIERRA de nuevo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "closed",
+              "trip",
+              "open",
+              "halfopen",
+              "recover"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the purpose of the half-open state?",
+              "es": "¿Cuál es el propósito del estado half-open?"
+            },
+            "options": [
+              {
+                "en": "To let half of all requests through permanently",
+                "es": "Dejar pasar la mitad de todos los requests permanentemente"
+              },
+              {
+                "en": "To split traffic between two instances of the dependency",
+                "es": "Repartir el tráfico entre dos instancias de la dependencia"
+              },
+              {
+                "en": "To test recovery with limited traffic instead of instantly flooding a possibly-still-sick dependency",
+                "es": "Probar la recuperación con tráfico limitado en vez de inundar instantáneamente una dependencia posiblemente aún enferma"
+              },
+              {
+                "en": "To retry every failed request from the open period",
+                "es": "Reintentar todos los requests fallidos del periodo abierto"
+              }
+            ],
+            "explanation": {
+              "en": "Going straight from open to closed would slam a recovering dependency with full traffic and likely knock it over again. Half-open sends a few probes: success closes the breaker gradually and safely, failure re-opens it.",
+              "es": "Pasar directo de open a closed golpearía a una dependencia en recuperación con todo el tráfico y probablemente la tumbaría de nuevo. Half-open envía unas pocas pruebas: el éxito cierra el breaker de forma gradual y segura, el fallo lo reabre."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You configure one global circuit breaker for all outbound calls of your service. The recommendations dependency dies, its errors dominate the window, and the breaker opens. What is the consequence?",
+              "es": "Configuras un solo circuit breaker global para todas las llamadas salientes de tu servicio. La dependencia de recomendaciones muere, sus errores dominan la ventana y el breaker se abre. ¿Cuál es la consecuencia?"
+            },
+            "options": [
+              {
+                "en": "Nothing — the open breaker just adds logging without affecting traffic",
+                "es": "Nada — el breaker abierto solo agrega logging sin afectar el tráfico"
+              },
+              {
+                "en": "Only recommendations calls fail; breakers automatically track each destination host separately",
+                "es": "Solo fallan las llamadas a recomendaciones; los breakers rastrean automáticamente cada host de destino por separado"
+              },
+              {
+                "en": "Calls to perfectly healthy dependencies (payments, catalog) also start failing fast — breakers must be scoped per dependency or endpoint",
+                "es": "Las llamadas a dependencias perfectamente sanas (pagos, catálogo) también empiezan a fallar rápido — los breakers deben tener alcance por dependencia o endpoint"
+              },
+              {
+                "en": "The breaker converts recommendation errors into successful cached responses",
+                "es": "El breaker convierte los errores de recomendaciones en respuestas cacheadas exitosas"
+              }
+            ],
+            "explanation": {
+              "en": "A breaker's scope defines its blast radius: one shared breaker means one bad dependency cuts off all of them. Each dependency (ideally each endpoint) needs its own failure window and state machine. Fallbacks are a separate mechanism you attach to the breaker — an open breaker by itself just fails fast.",
+              "es": "El alcance de un breaker define su radio de impacto: un breaker compartido significa que una dependencia mala corta a todas. Cada dependencia (idealmente cada endpoint) necesita su propia ventana de fallos y máquina de estados. Los fallbacks son un mecanismo aparte que acoplas al breaker — un breaker abierto por sí solo únicamente falla rápido."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "bulkhead-pattern",
+      "question": {
+        "en": "What is the bulkhead pattern, and how do you design a service for partial failure?",
+        "es": "¿Qué es el patrón bulkhead y cómo diseñas un servicio para el fallo parcial?"
+      },
+      "definition": {
+        "en": "The **bulkhead pattern** — named after the watertight compartments in a ship's hull — isolates resources per dependency or workload so one failure can't sink everything. Concretely: separate thread pools or connection pools per downstream service, per-tenant concurrency limits, dedicated instance pools for critical vs batch traffic. If the payments dependency hangs and exhausts *its* pool of 20 connections, the search and catalog paths still have their own pools and keep working.\n\nWithout bulkheads, the classic death spiral is: one slow dependency → all worker threads block waiting on it → the whole service stops responding to *everything*, including healthy endpoints and health checks → cascading failure upstream.\n\nDesigning for **partial failure** means assuming any dependency can be down at any time and deciding, per feature, what degraded looks like: serve stale cache, hide the recommendations widget, queue the work for later, or fail just that endpoint. Bulkheads provide the isolation; timeouts, circuit breakers and fallbacks provide the behavior.",
+        "es": "El **patrón bulkhead** — nombrado por los compartimentos estancos del casco de un barco — aísla recursos por dependencia o carga de trabajo para que un fallo no hunda todo. En concreto: pools de threads o de conexiones separados por servicio downstream, límites de concurrencia por tenant, pools de instancias dedicados para tráfico crítico vs batch. Si la dependencia de pagos se cuelga y agota *su* pool de 20 conexiones, las rutas de búsqueda y catálogo siguen teniendo sus propios pools y continúan funcionando.\n\nSin bulkheads, la espiral de muerte clásica es: una dependencia lenta → todos los threads workers se bloquean esperándola → el servicio entero deja de responder a *todo*, incluidos los endpoints sanos y los health checks → fallo en cascada hacia arriba.\n\nDiseñar para el **fallo parcial** significa asumir que cualquier dependencia puede caerse en cualquier momento y decidir, por funcionalidad, cómo se ve lo degradado: servir caché obsoleta, ocultar el widget de recomendaciones, encolar el trabajo para después, o fallar solo ese endpoint. Los bulkheads dan el aislamiento; los timeouts, circuit breakers y fallbacks dan el comportamiento."
+      },
+      "examples": [
+        {
+          "en": "An airline site keeps selling tickets when its seat-map service dies: the seat picker shows 'assigned at check-in' instead. Checkout and seat maps live in separate pools, so one can't starve the other.",
+          "es": "El sitio de una aerolínea sigue vendiendo boletos cuando su servicio de mapa de asientos muere: el selector muestra 'asignado en el check-in'. Checkout y mapa de asientos viven en pools separados, así que uno no puede matar de hambre al otro."
+        },
+        {
+          "en": "Multi-tenant SaaS APIs apply per-tenant concurrency limits as bulkheads: one customer's runaway batch job saturates only their quota, not the shared capacity of every customer.",
+          "es": "Las APIs SaaS multi-tenant aplican límites de concurrencia por tenant como bulkheads: el batch descontrolado de un cliente satura solo su cuota, no la capacidad compartida de todos los clientes."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API calls payments, search, and catalog through one shared pool of 200 worker threads. Payments starts taking 30s per call. What happens without bulkheads?",
+              "es": "Tu API llama a pagos, búsqueda y catálogo a través de un pool compartido de 200 threads workers. Pagos empieza a tardar 30s por llamada. ¿Qué pasa sin bulkheads?"
+            },
+            "options": [
+              {
+                "en": "Only payment requests are affected; the pool protects the rest",
+                "es": "Solo los requests de pagos se ven afectados; el pool protege al resto"
+              },
+              {
+                "en": "The thread pool automatically grows to compensate",
+                "es": "El pool de threads crece automáticamente para compensar"
+              },
+              {
+                "en": "Payment calls gradually occupy all 200 threads, and search/catalog requests start failing too",
+                "es": "Las llamadas a pagos ocupan gradualmente los 200 threads, y los requests de búsqueda/catálogo empiezan a fallar también"
+              },
+              {
+                "en": "The OS scheduler prioritizes the fast endpoints",
+                "es": "El scheduler del SO prioriza los endpoints rápidos"
+              }
+            ],
+            "explanation": {
+              "en": "A shared pool means shared fate: slow calls accumulate until they hold every thread, starving unrelated endpoints. Bulkheads (e.g. max 20 threads for payments) cap the blast radius to one dependency.",
+              "es": "Un pool compartido significa destino compartido: las llamadas lentas se acumulan hasta ocupar todos los threads, matando de hambre a endpoints no relacionados. Los bulkheads (p. ej. máximo 20 threads para pagos) acotan el radio de impacto a una dependencia."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your product page composes data from pricing (critical), reviews, and recommendations services. Describe how you'd design it to survive the failure of each dependency. Mention at least two resilience mechanisms.",
+              "es": "Tu página de producto compone datos de los servicios de precios (crítico), reseñas y recomendaciones. Describe cómo la diseñarías para sobrevivir al fallo de cada dependencia. Menciona al menos dos mecanismos de resiliencia."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must distinguish critical from optional dependencies (page fails or serves stale/cached price if pricing is down; reviews and recommendations degrade gracefully — hidden section or cached content). Must name at least two mechanisms among: bulkheads/separate pools, timeouts, circuit breakers, fallbacks/cached data, async/parallel fan-out. Bonus: aggressive timeouts on optional calls, monitoring/alerting on degraded mode.",
+              "es": "Debe distinguir dependencias críticas de opcionales (la página falla o sirve un precio cacheado/obsoleto si pagos/precios está caído; reseñas y recomendaciones se degradan con gracia — sección oculta o contenido cacheado). Debe nombrar al menos dos mecanismos entre: bulkheads/pools separados, timeouts, circuit breakers, fallbacks/datos cacheados, fan-out asíncrono/paralelo. Bonus: timeouts agresivos en llamadas opcionales, monitoreo/alertas del modo degradado."
+            },
+            "reference": "Fan out to the three services in parallel with per-dependency pools (bulkheads) and short timeouts — e.g. 2s for pricing, 500ms for reviews and recommendations. Pricing is critical: on failure, serve a recent cached price if fresh enough, otherwise fail the page. Reviews and recommendations are optional: wrap each in a circuit breaker with a fallback that hides the section or shows cached content, so their outages never block the page. Alert when fallbacks activate so degradation is visible to operators."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You give the payments dependency a dedicated pool of 20 connections (a bulkhead). Payments then hangs completely. What is the maximum blast radius now?",
+              "es": "Le das a la dependencia de pagos un pool dedicado de 20 conexiones (un bulkhead). Luego pagos se cuelga por completo. ¿Cuál es el radio de impacto máximo ahora?"
+            },
+            "options": [
+              {
+                "en": "At most 20 concurrent callers (plus any queued behind them) block on payments; every other endpoint keeps its own resources and continues serving",
+                "es": "A lo sumo 20 llamadores concurrentes (más los encolados detrás) se bloquean en pagos; todos los demás endpoints conservan sus recursos y siguen atendiendo"
+              },
+              {
+                "en": "Zero impact — the bulkhead absorbs the failure and payment requests succeed from a buffer",
+                "es": "Impacto cero — el bulkhead absorbe el fallo y los requests de pagos tienen éxito desde un buffer"
+              },
+              {
+                "en": "Exactly one request fails at a time because the pool serializes access",
+                "es": "Exactamente un request falla a la vez porque el pool serializa el acceso"
+              },
+              {
+                "en": "The whole service still locks up once the payments pool is exhausted",
+                "es": "El servicio completo igual se congela cuando el pool de pagos se agota"
+              }
+            ],
+            "explanation": {
+              "en": "A bulkhead caps the damage — it doesn't eliminate it. The 20 pooled connections (and callers waiting for them) are sacrificed to the hung dependency, which is exactly the point: the loss is bounded and predictable. Pair the bulkhead with timeouts so those 20 slots free up, and a circuit breaker so new payment calls fail fast instead of queuing.",
+              "es": "Un bulkhead acota el daño — no lo elimina. Las 20 conexiones del pool (y los llamadores que las esperan) se sacrifican a la dependencia colgada, y ese es exactamente el punto: la pérdida es acotada y predecible. Combina el bulkhead con timeouts para que esos 20 slots se liberen, y un circuit breaker para que las nuevas llamadas a pagos fallen rápido en vez de encolarse."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "consumer-crash-before-ack",
+      "question": {
+        "en": "A consumer processes a message but crashes before acknowledging it. What happens next?",
+        "es": "Un consumidor procesa un mensaje pero se cae antes de confirmarlo (ack). ¿Qué pasa después?"
+      },
+      "definition": {
+        "en": "The broker doesn't know the work was done — it only knows the message was never acknowledged. After the visibility timeout (SQS), when the connection drops (RabbitMQ), or when the consumer group rebalances past an uncommitted offset (Kafka), the broker **redelivers the message** to another consumer, which processes it *again*. Result: the side effect happens twice unless processing is idempotent.\n\nThis is not a bug — it's the deliberate design of **at-least-once delivery**. The alternative, acking *before* processing, converts the failure into message *loss* (at-most-once). Since the ack and the business side effect live in different systems, no ordering of the two operations is crash-proof: ack-after risks duplicates, ack-before risks loss. Brokers choose redelivery because duplicates are recoverable and loss usually isn't.\n\nThe standard answer therefore has two parts: (1) acknowledge only *after* processing completes, and (2) make processing idempotent or deduplicate by message ID, so the inevitable redelivery is harmless. Also mention poison messages: if a message crashes the consumer every time, redelivery loops forever — cap delivery attempts and route to a **dead-letter queue**.",
+        "es": "El broker no sabe que el trabajo se hizo — solo sabe que el mensaje nunca fue confirmado. Tras el visibility timeout (SQS), cuando la conexión se corta (RabbitMQ), o cuando el grupo de consumidores rebalancea sobre un offset sin commitear (Kafka), el broker **reentrega el mensaje** a otro consumidor, que lo procesa *de nuevo*. Resultado: el efecto secundario ocurre dos veces salvo que el procesamiento sea idempotente.\n\nEsto no es un bug — es el diseño deliberado de la **entrega al-menos-una-vez**. La alternativa, confirmar *antes* de procesar, convierte el fallo en *pérdida* del mensaje (a-lo-sumo-una-vez). Como el ack y el efecto de negocio viven en sistemas distintos, ningún orden de las dos operaciones es a prueba de crashes: ack-después arriesga duplicados, ack-antes arriesga pérdida. Los brokers eligen la reentrega porque los duplicados son recuperables y la pérdida normalmente no.\n\nLa respuesta estándar tiene entonces dos partes: (1) confirmar solo *después* de completar el procesamiento, y (2) hacer el procesamiento idempotente o deduplicar por ID de mensaje, para que la reentrega inevitable sea inofensiva. Menciona también los mensajes veneno (poison messages): si un mensaje tumba al consumidor cada vez, la reentrega cicla para siempre — limita los intentos de entrega y enruta a una **dead-letter queue**."
+      },
+      "examples": [
+        {
+          "en": "SQS: a worker finishes writing to the DB but dies before DeleteMessage. After the 30s visibility timeout the message reappears and another worker repeats the write — harmless only because the write is an upsert.",
+          "es": "SQS: un worker termina de escribir en la BD pero muere antes del DeleteMessage. Tras el visibility timeout de 30s el mensaje reaparece y otro worker repite la escritura — inofensivo solo porque la escritura es un upsert."
+        },
+        {
+          "en": "Kafka: a consumer processes records but crashes before committing offsets. On rebalance, the new consumer resumes from the last committed offset and reprocesses the whole uncommitted batch.",
+          "es": "Kafka: un consumidor procesa registros pero se cae antes de commitear los offsets. En el rebalanceo, el nuevo consumidor retoma desde el último offset commiteado y reprocesa todo el lote sin commitear."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why do brokers redeliver unacknowledged messages instead of assuming they were processed?",
+              "es": "¿Por qué los brokers reentregan los mensajes sin ack en lugar de asumir que fueron procesados?"
+            },
+            "options": [
+              {
+                "en": "Consumers are required by protocol to be idempotent, so it never matters",
+                "es": "El protocolo exige consumidores idempotentes, así que nunca importa"
+              },
+              {
+                "en": "The broker can't distinguish 'processed but crashed before ack' from 'crashed before processing' — redelivering risks duplicates, assuming success risks loss",
+                "es": "El broker no puede distinguir 'procesado pero caído antes del ack' de 'caído antes de procesar' — reentregar arriesga duplicados, asumir éxito arriesga pérdida"
+              },
+              {
+                "en": "Redelivery is cheaper than tracking acknowledgements",
+                "es": "Reentregar es más barato que rastrear confirmaciones"
+              },
+              {
+                "en": "Brokers redeliver only when the message was corrupted",
+                "es": "Los brokers reentregan solo cuando el mensaje se corrompió"
+              }
+            ],
+            "explanation": {
+              "en": "From the broker's viewpoint both crash scenarios look identical: no ack arrived. Choosing redelivery makes the failure mode 'duplicate' (recoverable with idempotency) instead of 'silent loss' (usually unrecoverable).",
+              "es": "Desde el punto de vista del broker ambos escenarios de crash se ven idénticos: no llegó ningún ack. Elegir la reentrega hace que el modo de fallo sea 'duplicado' (recuperable con idempotencia) en vez de 'pérdida silenciosa' (normalmente irrecuperable)."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A worker consumes 'send $10 refund' messages. Walk through what goes wrong if it acks before processing vs after processing, and how you'd make the system safe.",
+              "es": "Un worker consume mensajes de 'enviar reembolso de $10'. Explica qué sale mal si hace ack antes de procesar vs después de procesar, y cómo harías el sistema seguro."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain: ack-before-processing risks losing the refund if the worker crashes (at-most-once); ack-after-processing risks issuing the refund twice on redelivery (at-least-once). Safe design: ack after processing AND make the refund idempotent (idempotency key / dedup by message or refund ID, checked atomically with the refund record). Bonus: dead-letter queue for poison messages, mention that exactly-once end-to-end isn't achievable without these techniques.",
+              "es": "Debe explicar: ack antes de procesar arriesga perder el reembolso si el worker se cae (a-lo-sumo-una-vez); ack después de procesar arriesga emitir el reembolso dos veces en la reentrega (al-menos-una-vez). Diseño seguro: ack después de procesar Y hacer el reembolso idempotente (clave de idempotencia / dedup por ID de mensaje o reembolso, verificada atómicamente con el registro del reembolso). Bonus: dead-letter queue para mensajes veneno, mencionar que exactly-once de extremo a extremo no se logra sin estas técnicas."
+            },
+            "reference": "Ack-before: the worker acks, crashes mid-refund, the broker considers it done — the customer never gets the $10 (silent loss). Ack-after: the worker refunds, crashes before acking, the broker redelivers, another worker refunds again — the customer gets $20. The safe design combines ack-after (never lose the message) with idempotent processing: each message carries a refund ID stored with a unique constraint in the same transaction as the refund record, so a redelivered message detects the existing refund and just acks. Add a max-delivery count with a dead-letter queue so a poison message can't loop forever."
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the full lifecycle of a message whose first consumer crashes before acking, assuming an idempotent consumer design.",
+              "es": "Ordena el ciclo de vida completo de un mensaje cuyo primer consumidor se cae antes del ack, asumiendo un diseño de consumidor idempotente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "deliver",
+                "label": {
+                  "en": "Broker delivers the message; the visibility timer starts",
+                  "es": "El broker entrega el mensaje; arranca el temporizador de visibilidad"
+                }
+              },
+              {
+                "id": "process",
+                "label": {
+                  "en": "Consumer applies the business effect and records the message ID in the same transaction — then crashes before acking",
+                  "es": "El consumidor aplica el efecto de negocio y registra el ID del mensaje en la misma transacción — luego se cae antes del ack"
+                }
+              },
+              {
+                "id": "timeout",
+                "label": {
+                  "en": "The visibility timeout expires and the broker makes the message deliverable again",
+                  "es": "El visibility timeout expira y el broker vuelve a hacer entregable el mensaje"
+                }
+              },
+              {
+                "id": "redeliver",
+                "label": {
+                  "en": "A second consumer receives the same message",
+                  "es": "Un segundo consumidor recibe el mismo mensaje"
+                }
+              },
+              {
+                "id": "skip",
+                "label": {
+                  "en": "The dedup check finds the recorded ID — the consumer skips the effect and just acks",
+                  "es": "El chequeo de dedup encuentra el ID registrado — el consumidor omite el efecto y solo hace ack"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "deliver",
+              "process",
+              "timeout",
+              "redeliver",
+              "skip"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "delivery-semantics",
+      "question": {
+        "en": "What is the difference between at-most-once, at-least-once, and exactly-once delivery?",
+        "es": "¿Cuál es la diferencia entre entrega a-lo-sumo-una-vez, al-menos-una-vez y exactamente-una-vez?"
+      },
+      "definition": {
+        "en": "**At-most-once**: fire and forget — the message is delivered zero or one times. No retries, no redelivery; a crash or dropped packet loses it. Cheapest and lowest latency; fine when the next data point supersedes the lost one (metrics, telemetry, presence pings).\n\n**At-least-once**: the sender/broker retries until acknowledged, so every message arrives — but possibly more than once. This is the default of real-world queues (SQS, RabbitMQ, Kafka consumers). It pushes the duplicate problem onto consumers, who must be idempotent or deduplicate.\n\n**Exactly-once delivery** across arbitrary distributed systems is impossible in the pure sense (Two Generals problem): you can't atomically deliver a message and record that fact across a network. What systems actually offer is **exactly-once *processing***: at-least-once delivery combined with dedup or transactions so the *effect* is applied once. Kafka's transactional producer + read_process_write achieves this within Kafka; end-to-end, the consumer's idempotency does the real work. Saying this distinction out loud is exactly what interviewers want to hear.",
+        "es": "**A-lo-sumo-una-vez**: dispara y olvida — el mensaje se entrega cero o una vez. Sin reintentos ni reentregas; un crash o un paquete perdido lo pierde. Lo más barato y de menor latencia; sirve cuando el siguiente dato reemplaza al perdido (métricas, telemetría, pings de presencia).\n\n**Al-menos-una-vez**: el emisor/broker reintenta hasta recibir confirmación, así que todo mensaje llega — pero posiblemente más de una vez. Es el default de las colas del mundo real (SQS, RabbitMQ, consumidores de Kafka). Traslada el problema de los duplicados a los consumidores, que deben ser idempotentes o deduplicar.\n\nLa **entrega exactamente-una-vez** entre sistemas distribuidos arbitrarios es imposible en sentido puro (problema de los Dos Generales): no puedes entregar un mensaje y registrar ese hecho atómicamente a través de una red. Lo que los sistemas realmente ofrecen es **procesamiento exactamente-una-vez**: entrega al-menos-una-vez combinada con dedup o transacciones para que el *efecto* se aplique una vez. El productor transaccional de Kafka + read_process_write lo logra dentro de Kafka; de extremo a extremo, la idempotencia del consumidor hace el trabajo real. Decir esta distinción en voz alta es exactamente lo que los entrevistadores quieren oír."
+      },
+      "examples": [
+        {
+          "en": "StatsD metrics over UDP are at-most-once: losing a datapoint under load is acceptable because the next flush arrives in seconds.",
+          "es": "Las métricas de StatsD sobre UDP son a-lo-sumo-una-vez: perder un datapoint bajo carga es aceptable porque el siguiente flush llega en segundos."
+        },
+        {
+          "en": "Kafka Streams offers exactly-once *processing* within a Kafka-to-Kafka pipeline by committing input offsets and output records in one transaction — but the moment you write to an external DB, you're back to needing idempotency.",
+          "es": "Kafka Streams ofrece procesamiento *exactamente-una-vez* dentro de un pipeline Kafka-a-Kafka commiteando offsets de entrada y registros de salida en una transacción — pero en cuanto escribes a una BD externa, vuelves a necesitar idempotencia."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each delivery guarantee with its trade-off or typical use.",
+              "es": "Conecta cada garantía de entrega con su trade-off o uso típico."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "At-most-once",
+                  "es": "A-lo-sumo-una-vez"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "At-least-once",
+                  "es": "Al-menos-una-vez"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Exactly-once processing",
+                  "es": "Procesamiento exactamente-una-vez"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Exactly-once delivery (pure, end-to-end)",
+                  "es": "Entrega exactamente-una-vez (pura, de extremo a extremo)"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "May lose messages; good for disposable telemetry",
+                  "es": "Puede perder mensajes; buena para telemetría descartable"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "May duplicate messages; the queue default, consumers must cope",
+                  "es": "Puede duplicar mensajes; el default de las colas, los consumidores deben lidiar con ello"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "At-least-once + dedup/transactions so the effect applies once",
+                  "es": "Al-menos-una-vez + dedup/transacciones para que el efecto se aplique una vez"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Impossible in general over an unreliable network (Two Generals)",
+                  "es": "Imposible en general sobre una red no confiable (Dos Generales)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A vendor claims their queue gives 'exactly-once delivery to your webhook endpoint, guaranteed, with retries'. What should you conclude?",
+              "es": "Un proveedor afirma que su cola da 'entrega exactamente-una-vez a tu webhook, garantizada, con reintentos'. ¿Qué deberías concluir?"
+            },
+            "options": [
+              {
+                "en": "It's really at-least-once with retries — your endpoint must still be idempotent",
+                "es": "En realidad es al-menos-una-vez con reintentos — tu endpoint igual debe ser idempotente"
+              },
+              {
+                "en": "It means each message is sent exactly one time, even if it's lost",
+                "es": "Significa que cada mensaje se envía exactamente una vez, aunque se pierda"
+              },
+              {
+                "en": "The claim is plausible if they use TCP",
+                "es": "La afirmación es plausible si usan TCP"
+              },
+              {
+                "en": "Exactly-once is trivial for webhooks because HTTP has status codes",
+                "es": "Exactly-once es trivial para webhooks porque HTTP tiene códigos de estado"
+              }
+            ],
+            "explanation": {
+              "en": "If they retry (needed to avoid loss), a lost HTTP response means your endpoint can receive the same event twice. No transport tricks fix this — the receiver needs idempotent handling keyed by event ID.",
+              "es": "Si reintentan (necesario para evitar pérdidas), una respuesta HTTP perdida implica que tu endpoint puede recibir el mismo evento dos veces. Ningún truco de transporte lo arregla — el receptor necesita manejo idempotente con clave por ID de evento."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which pairing of use case and delivery guarantee is the best engineering choice?",
+              "es": "¿Qué combinación de caso de uso y garantía de entrega es la mejor elección de ingeniería?"
+            },
+            "options": [
+              {
+                "en": "Billing events: at-most-once, to guarantee no customer is ever charged twice",
+                "es": "Eventos de facturación: a-lo-sumo-una-vez, para garantizar que ningún cliente sea cobrado dos veces"
+              },
+              {
+                "en": "Password-reset emails: fire-and-forget over UDP, since users can always ask again",
+                "es": "Emails de restablecimiento de contraseña: dispara-y-olvida sobre UDP, ya que el usuario siempre puede pedirlo de nuevo"
+              },
+              {
+                "en": "Live presence pings ('user is online'): at-least-once with a durable dedup table per ping",
+                "es": "Pings de presencia en vivo ('usuario en línea'): al-menos-una-vez con una tabla durable de dedup por ping"
+              },
+              {
+                "en": "Ad-click billing: at-least-once delivery plus deduplication by click ID, achieving an exactly-once effect",
+                "es": "Facturación de clics publicitarios: entrega al-menos-una-vez más deduplicación por ID de clic, logrando un efecto exactamente-una-vez"
+              }
+            ],
+            "explanation": {
+              "en": "Money-related events need both no-loss and no-double-effect: at-least-once delivery guarantees arrival, and dedup by a stable click ID collapses duplicates — the standard exactly-once-effect recipe. At-most-once for billing silently loses revenue; presence pings are superseded seconds later, so dedup infrastructure for them is wasted cost.",
+              "es": "Los eventos de dinero necesitan tanto no-pérdida como no-doble-efecto: la entrega al-menos-una-vez garantiza la llegada, y el dedup por un ID de clic estable colapsa los duplicados — la receta estándar del efecto exactamente-una-vez. A-lo-sumo-una-vez en facturación pierde ingresos silenciosamente; los pings de presencia se reemplazan segundos después, así que la infraestructura de dedup para ellos es costo desperdiciado."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "exactly-once-processing",
+      "question": {
+        "en": "How do you guarantee an event is not processed twice? (deduplication, outbox pattern, idempotent consumers)",
+        "es": "¿Cómo garantizas que un evento no se procese dos veces? (deduplicación, patrón outbox, consumidores idempotentes)"
+      },
+      "definition": {
+        "en": "Since delivery is at-least-once, 'not processed twice' must be engineered at the edges. On the **producer side**, the danger is the dual write: saving to your DB and publishing to the broker are two systems — if you crash between them, you either lose the event or publish one for a rolled-back change. The **transactional outbox pattern** fixes it: write the business change *and* an event row into an `outbox` table in the **same local transaction**; a relay (poller or CDC like Debezium) then reads the outbox and publishes to the broker. The relay itself retries, so events may publish more than once — that's fine, because…\n\n…on the **consumer side**, you make processing idempotent. Each event carries a unique event ID; the consumer inserts that ID into a `processed_events` table **in the same transaction** as the business change. A duplicate hits the unique constraint, the transaction rolls back, and the consumer just acks. If the effect is external (send email, call a payment API), pass the event ID downstream as an idempotency key.\n\nThe complete interview answer chains it: outbox guarantees the event is published at-least-once and never lost; the idempotent consumer collapses at-least-once into exactly-once *effect*. Neither half is sufficient alone.",
+        "es": "Como la entrega es al-menos-una-vez, el 'no procesar dos veces' debe construirse en los extremos. Del **lado del productor**, el peligro es la doble escritura: guardar en tu BD y publicar al broker son dos sistemas — si te caes entre ambos, o pierdes el evento o publicas uno de un cambio revertido. El **patrón transactional outbox** lo arregla: escribe el cambio de negocio *y* una fila de evento en una tabla `outbox` en la **misma transacción local**; un relay (poller o CDC como Debezium) luego lee el outbox y publica al broker. El relay también reintenta, así que los eventos pueden publicarse más de una vez — y está bien, porque…\n\n…del **lado del consumidor**, haces el procesamiento idempotente. Cada evento lleva un ID único; el consumidor inserta ese ID en una tabla `processed_events` **en la misma transacción** que el cambio de negocio. Un duplicado choca con la restricción única, la transacción se revierte y el consumidor simplemente hace ack. Si el efecto es externo (enviar un email, llamar a una API de pagos), pasa el ID del evento hacia abajo como clave de idempotencia.\n\nLa respuesta completa de entrevista lo encadena: el outbox garantiza que el evento se publica al-menos-una-vez y nunca se pierde; el consumidor idempotente colapsa al-menos-una-vez en *efecto* exactamente-una-vez. Ninguna mitad es suficiente por sí sola."
+      },
+      "examples": [
+        {
+          "en": "An order service inserts the order row and an OrderPlaced event into the outbox in one transaction; Debezium tails the WAL and publishes to Kafka. Even if Kafka is down for an hour, no event is lost.",
+          "es": "Un servicio de pedidos inserta la fila del pedido y un evento OrderPlaced en el outbox en una transacción; Debezium lee el WAL y publica a Kafka. Aunque Kafka esté caído una hora, ningún evento se pierde."
+        },
+        {
+          "en": "A billing consumer inserts (event_id) into processed_events and the invoice row in one transaction. When Kafka redelivers after a rebalance, the unique violation tells it 'already done' and it commits the offset without side effects.",
+          "es": "Un consumidor de facturación inserta (event_id) en processed_events y la fila de la factura en una transacción. Cuando Kafka reentrega tras un rebalanceo, la violación de unicidad le dice 'ya hecho' y commitea el offset sin efectos secundarios."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the end-to-end flow of the transactional outbox pattern with an idempotent consumer.",
+              "es": "Ordena el flujo de extremo a extremo del patrón transactional outbox con un consumidor idempotente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "tx",
+                "label": {
+                  "en": "Service opens a local DB transaction",
+                  "es": "El servicio abre una transacción local de BD"
+                }
+              },
+              {
+                "id": "write",
+                "label": {
+                  "en": "Writes the business change AND the event row to the outbox table",
+                  "es": "Escribe el cambio de negocio Y la fila del evento en la tabla outbox"
+                }
+              },
+              {
+                "id": "commit",
+                "label": {
+                  "en": "Commits — change and event are now atomic",
+                  "es": "Hace commit — el cambio y el evento ahora son atómicos"
+                }
+              },
+              {
+                "id": "relay",
+                "label": {
+                  "en": "Relay (poller/CDC) reads the outbox and publishes to the broker, retrying as needed",
+                  "es": "El relay (poller/CDC) lee el outbox y publica al broker, reintentando según haga falta"
+                }
+              },
+              {
+                "id": "consume",
+                "label": {
+                  "en": "Consumer records the event ID and applies the effect in one transaction — duplicates hit the unique constraint and are skipped",
+                  "es": "El consumidor registra el ID del evento y aplica el efecto en una transacción — los duplicados chocan con la restricción única y se descartan"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "tx",
+              "write",
+              "commit",
+              "relay",
+              "consume"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Without the outbox pattern, a service saves the order to its DB and then publishes the event to Kafka. What failure does this dual write allow?",
+              "es": "Sin el patrón outbox, un servicio guarda el pedido en su BD y luego publica el evento a Kafka. ¿Qué fallo permite esta doble escritura?"
+            },
+            "options": [
+              {
+                "en": "Kafka rejects events that reference database rows",
+                "es": "Kafka rechaza eventos que referencian filas de base de datos"
+              },
+              {
+                "en": "A crash between the two steps: the order exists but the event was never published (or vice versa if you publish first)",
+                "es": "Un crash entre los dos pasos: el pedido existe pero el evento nunca se publicó (o viceversa si publicas primero)"
+              },
+              {
+                "en": "The database and Kafka automatically share a transaction",
+                "es": "La base de datos y Kafka comparten una transacción automáticamente"
+              },
+              {
+                "en": "Events get published in the wrong partition",
+                "es": "Los eventos se publican en la partición equivocada"
+              }
+            ],
+            "explanation": {
+              "en": "Two systems can't be updated atomically without a shared transaction. The outbox makes the event part of the DB transaction, and the relay moves it to the broker afterwards — trading the lost-event problem for a duplicate-event problem the consumer can handle.",
+              "es": "Dos sistemas no pueden actualizarse atómicamente sin una transacción compartida. El outbox hace que el evento sea parte de la transacción de BD, y el relay lo lleva después al broker — cambiando el problema de evento perdido por uno de evento duplicado que el consumidor sí puede manejar."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The outbox relay publishes an event to the broker but crashes before marking the outbox row as sent. What happens after it restarts, and why is the design still correct?",
+              "es": "El relay del outbox publica un evento al broker pero se cae antes de marcar la fila del outbox como enviada. ¿Qué pasa cuando reinicia y por qué el diseño sigue siendo correcto?"
+            },
+            "options": [
+              {
+                "en": "It publishes the same event again — a duplicate — which is safe because idempotent consumers deduplicate by event ID",
+                "es": "Publica el mismo evento otra vez — un duplicado — lo cual es seguro porque los consumidores idempotentes deduplican por ID de evento"
+              },
+              {
+                "en": "The event is lost, because the broker refuses rows that were already published once",
+                "es": "El evento se pierde, porque el broker rechaza filas que ya fueron publicadas una vez"
+              },
+              {
+                "en": "The broker detects the duplicate by hashing the payload and silently drops it",
+                "es": "El broker detecta el duplicado hasheando el payload y lo descarta silenciosamente"
+              },
+              {
+                "en": "The outbox table is corrupted and requires manual reconciliation before the relay can resume",
+                "es": "La tabla outbox queda corrupta y requiere reconciliación manual antes de que el relay pueda continuar"
+              }
+            ],
+            "explanation": {
+              "en": "The relay's 'publish, then mark as sent' is itself a dual write, so it deliberately errs on the side of re-publishing: unmarked rows are retried after a crash. That downgrade from exactly-once to at-least-once publishing is by design — the outbox's job is only to never lose an event; collapsing duplicates is the idempotent consumer's job.",
+              "es": "El 'publicar y luego marcar como enviado' del relay es en sí una doble escritura, así que deliberadamente peca de re-publicar: las filas sin marcar se reintentan tras un crash. Esa degradación de exactamente-una-vez a al-menos-una-vez en la publicación es intencional — el trabajo del outbox es solo no perder nunca un evento; colapsar duplicados es trabajo del consumidor idempotente."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "distributed-rate-limiter",
+      "question": {
+        "en": "How would you design a distributed rate limiter?",
+        "es": "¿Cómo diseñarías un rate limiter distribuido?"
+      },
+      "definition": {
+        "en": "Start with the algorithm. **Token bucket** is the usual pick: a bucket holds up to `capacity` tokens, refilled at `rate` per second; each request consumes one, and an empty bucket means 429. It allows controlled bursts, unlike fixed windows, which admit 2x traffic at window boundaries. **Sliding window log/counter** trades memory for smoothness; **leaky bucket** smooths the *output* rate.\n\nThe distributed part: with N API instances, local counters let a client get N times the limit by spraying requests. So the state must be shared — typically **Redis**, keyed per client (`ratelimit:{api_key}`), with the check-and-decrement done **atomically in a Lua script** (read tokens, refill by elapsed time, decrement, set TTL) to avoid the read-modify-write race between instances.\n\nSenior trade-offs to volunteer: Redis adds ~1ms and becomes a dependency — decide whether to **fail open** (allow traffic, protect UX) or **fail closed** (block, protect the backend) when it's down. At very high scale, keep small local token batches and sync asynchronously, accepting slight over-admission for latency. Return `429` with `Retry-After` and rate-limit headers so clients back off correctly.",
+        "es": "Empieza por el algoritmo. **Token bucket** es la elección habitual: un bucket guarda hasta `capacity` tokens, rellenados a `rate` por segundo; cada request consume uno, y un bucket vacío significa 429. Permite ráfagas controladas, a diferencia de las ventanas fijas, que admiten 2x de tráfico en los bordes de ventana. **Sliding window log/counter** cambia memoria por suavidad; **leaky bucket** suaviza la tasa de *salida*.\n\nLa parte distribuida: con N instancias de API, los contadores locales dejan que un cliente obtenga N veces el límite repartiendo requests. El estado debe compartirse — típicamente **Redis**, con clave por cliente (`ratelimit:{api_key}`), y el chequeo-y-decremento hecho **atómicamente en un script Lua** (leer tokens, rellenar por tiempo transcurrido, decrementar, poner TTL) para evitar la carrera de leer-modificar-escribir entre instancias.\n\nTrade-offs senior para ofrecer proactivamente: Redis agrega ~1ms y se vuelve una dependencia — decide si **fallar abierto** (permitir tráfico, proteger UX) o **fallar cerrado** (bloquear, proteger el backend) cuando está caído. A escala muy alta, mantén pequeños lotes locales de tokens y sincroniza asíncronamente, aceptando ligera sobreadmisión a cambio de latencia. Devuelve `429` con `Retry-After` y headers de rate limit para que los clientes hagan backoff correctamente."
+      },
+      "examples": [
+        {
+          "en": "Stripe rate-limits per API key using token buckets backed by Redis, returning 429 with headers that tell SDKs exactly when to retry.",
+          "es": "Stripe limita por API key usando token buckets respaldados por Redis, devolviendo 429 con headers que le dicen a los SDKs exactamente cuándo reintentar."
+        },
+        {
+          "en": "Cloudflare enforces limits across hundreds of edge PoPs with local counters plus asynchronous global reconciliation — strict global accuracy would require a coordination round-trip on every request.",
+          "es": "Cloudflare aplica límites en cientos de PoPs de edge con contadores locales más reconciliación global asíncrona — la exactitud global estricta requeriría un round-trip de coordinación en cada request."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why must the token check-and-decrement in Redis be a single atomic operation (e.g. a Lua script)?",
+              "es": "¿Por qué el chequeo-y-decremento de tokens en Redis debe ser una sola operación atómica (p. ej. un script Lua)?"
+            },
+            "options": [
+              {
+                "en": "Atomicity is only needed for fail-open behavior",
+                "es": "La atomicidad solo se necesita para el comportamiento fail-open"
+              },
+              {
+                "en": "Lua scripts run faster than GET/SET commands",
+                "es": "Los scripts Lua corren más rápido que los comandos GET/SET"
+              },
+              {
+                "en": "Two instances could read '1 token left' simultaneously and both admit their request, exceeding the limit",
+                "es": "Dos instancias podrían leer '1 token restante' simultáneamente y ambas admitir su request, excediendo el límite"
+              },
+              {
+                "en": "Redis rejects non-atomic commands in cluster mode",
+                "es": "Redis rechaza comandos no atómicos en modo clúster"
+              }
+            ],
+            "explanation": {
+              "en": "It's a classic read-modify-write race: GET then DECR as separate commands lets concurrent instances interleave and over-admit. A Lua script (or atomic INCR pattern) executes the whole check as one unit.",
+              "es": "Es la clásica carrera de leer-modificar-escribir: GET y luego DECR como comandos separados permite que instancias concurrentes se intercalen y sobreadmitan. Un script Lua (o un patrón INCR atómico) ejecuta todo el chequeo como una unidad."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Design a rate limiter for a public API: 100 requests/minute per API key, running on 20 API instances. Describe the algorithm, where the state lives, and what happens when the state store goes down.",
+              "es": "Diseña un rate limiter para una API pública: 100 requests/minuto por API key, corriendo en 20 instancias de API. Describe el algoritmo, dónde vive el estado y qué pasa cuando el almacén de estado se cae."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must choose an algorithm (token bucket or sliding window) and justify it briefly, place shared state in a central store like Redis keyed per API key (local counters alone are wrong with 20 instances), and make the check atomic (Lua script / atomic ops). Must address store failure with an explicit fail-open vs fail-closed decision and its trade-off. Bonus: TTLs on keys, 429 + Retry-After headers, local token batching for scale.",
+              "es": "Debe elegir un algoritmo (token bucket o sliding window) y justificarlo brevemente, poner el estado compartido en un almacén central como Redis con clave por API key (contadores locales solos son incorrectos con 20 instancias), y hacer el chequeo atómico (script Lua / operaciones atómicas). Debe abordar la caída del almacén con una decisión explícita fail-open vs fail-closed y su trade-off. Bonus: TTLs en las claves, headers 429 + Retry-After, lotes locales de tokens para escalar."
+            },
+            "reference": "Token bucket per API key: capacity 100, refill 100/60 tokens per second, state in Redis as ratelimit:{key} = {tokens, last_refill}. Every request runs a Lua script that refills based on elapsed time, decrements if tokens remain, sets a TTL, and returns allow/deny — atomicity prevents the race where two of the 20 instances admit the last token twice. Local counters are wrong: a client spraying all instances would get 20x the limit. If Redis is down, I'd fail open for this public API (availability over strictness) with an aggressive local fallback limit and an alert; a payments API might fail closed instead. Deny with 429, Retry-After, and X-RateLimit-Remaining headers."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each rate-limiting algorithm with its defining behavior.",
+              "es": "Conecta cada algoritmo de rate limiting con su comportamiento característico."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Fixed window counter",
+                  "es": "Contador de ventana fija"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Sliding window",
+                  "es": "Ventana deslizante"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Token bucket",
+                  "es": "Token bucket"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Leaky bucket",
+                  "es": "Leaky bucket"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Cheap, but admits up to 2x the limit around window boundaries",
+                  "es": "Barato, pero admite hasta 2x el límite en los bordes de ventana"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Weights or logs recent requests for smooth limiting, at higher memory/compute cost",
+                  "es": "Pondera o registra requests recientes para un límite suave, a mayor costo de memoria/cómputo"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Allows controlled bursts up to a capacity while refilling at a steady rate",
+                  "es": "Permite ráfagas controladas hasta una capacidad mientras se rellena a una tasa constante"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Smooths the output to a constant processing rate, queuing or shedding the excess",
+                  "es": "Suaviza la salida a una tasa de procesamiento constante, encolando o descartando el exceso"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "unique-id-generation",
+      "question": {
+        "en": "How do you generate unique IDs across distributed services? (UUID, Snowflake, DB sequences)",
+        "es": "¿Cómo generas IDs únicos entre servicios distribuidos? (UUID, Snowflake, secuencias de BD)"
+      },
+      "definition": {
+        "en": "Three main families. **DB sequences / auto-increment**: a central database hands out consecutive integers — simple, compact, strictly ordered, but every insert hits one coordination point, and it becomes a bottleneck and single point of failure at scale (mitigations: interleaved ranges like odds/evens, or block allocation where each service leases ranges of 1000).\n\n**UUIDs** (v4: 128 random bits) need zero coordination — any node mints IDs offline with negligible collision probability. Costs: 16 bytes, ugly in URLs, and random values scatter across B-tree indexes causing page splits and cache misses on insert-heavy tables. **UUIDv7** fixes that by putting a millisecond timestamp in the high bits, making IDs roughly sortable and index-friendly.\n\n**Snowflake IDs** (Twitter) pack `timestamp (41 bits) + machine ID (10) + per-ms sequence (12)` into a 64-bit integer: time-ordered, compact, no coordination on the hot path — at the cost of assigning unique machine IDs (via ZooKeeper/etcd or config) and handling **clock skew**: if a node's clock moves backwards, it must wait or refuse to mint rather than risk duplicates. Interview heuristic: need ordering + compactness at scale → Snowflake/UUIDv7; need zero infrastructure → UUIDv4; small single-DB system → sequences are fine.",
+        "es": "Tres familias principales. **Secuencias de BD / auto-increment**: una base de datos central reparte enteros consecutivos — simple, compacto, estrictamente ordenado, pero cada insert golpea un punto de coordinación, y a escala se vuelve cuello de botella y punto único de fallo (mitigaciones: rangos intercalados tipo pares/impares, o asignación por bloques donde cada servicio arrienda rangos de 1000).\n\nLos **UUIDs** (v4: 128 bits aleatorios) no necesitan coordinación — cualquier nodo acuña IDs offline con probabilidad de colisión despreciable. Costos: 16 bytes, feos en URLs, y los valores aleatorios se dispersan por los índices B-tree causando divisiones de páginas y fallos de caché en tablas con muchos inserts. **UUIDv7** lo arregla poniendo un timestamp en milisegundos en los bits altos, haciendo los IDs aproximadamente ordenables y amigables con los índices.\n\nLos **Snowflake IDs** (Twitter) empaquetan `timestamp (41 bits) + ID de máquina (10) + secuencia por ms (12)` en un entero de 64 bits: ordenados por tiempo, compactos, sin coordinación en el camino caliente — al costo de asignar IDs de máquina únicos (vía ZooKeeper/etcd o configuración) y manejar el **desfase de reloj**: si el reloj de un nodo retrocede, debe esperar o negarse a acuñar antes que arriesgar duplicados. Heurística de entrevista: necesitas orden + compacidad a escala → Snowflake/UUIDv7; necesitas cero infraestructura → UUIDv4; sistema pequeño con una sola BD → las secuencias están bien."
+      },
+      "examples": [
+        {
+          "en": "Twitter built Snowflake because tweet IDs had to be 64-bit (for existing APIs) and roughly time-sorted (for timelines) at hundreds of thousands of IDs per second — UUIDs were too big, one DB sequence too slow.",
+          "es": "Twitter construyó Snowflake porque los IDs de tweets debían ser de 64 bits (por las APIs existentes) y aproximadamente ordenados por tiempo (por los timelines) a cientos de miles de IDs por segundo — los UUIDs eran muy grandes, una secuencia de BD muy lenta."
+        },
+        {
+          "en": "Instagram sharded PostgreSQL and generates IDs inside each shard: a PL/pgSQL function combines epoch-milliseconds, the shard ID and a per-shard sequence — Snowflake's layout implemented in the database itself.",
+          "es": "Instagram shardó PostgreSQL y genera IDs dentro de cada shard: una función PL/pgSQL combina milisegundos de época, el ID del shard y una secuencia por shard — el layout de Snowflake implementado en la propia base de datos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each ID generation strategy with its key trade-off.",
+              "es": "Conecta cada estrategia de generación de IDs con su trade-off clave."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "DB auto-increment sequence",
+                  "es": "Secuencia auto-increment de BD"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "UUIDv4",
+                  "es": "UUIDv4"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Snowflake ID",
+                  "es": "Snowflake ID"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "UUIDv7",
+                  "es": "UUIDv7"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Strictly ordered but centralizes every insert on one coordination point",
+                  "es": "Estrictamente ordenado pero centraliza cada insert en un punto de coordinación"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Zero coordination, but 128 random bits fragment B-tree indexes",
+                  "es": "Cero coordinación, pero 128 bits aleatorios fragmentan los índices B-tree"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "64-bit and time-ordered, but needs machine IDs and clock-skew handling",
+                  "es": "64 bits y ordenado por tiempo, pero necesita IDs de máquina y manejo de desfase de reloj"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Timestamp-prefixed UUID: sortable and index-friendly, still 128 bits",
+                  "es": "UUID con prefijo de timestamp: ordenable y amigable con índices, aún 128 bits"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A Snowflake ID generator detects that the machine's clock has jumped backwards by 500ms. What must it do?",
+              "es": "Un generador de Snowflake IDs detecta que el reloj de la máquina retrocedió 500ms. ¿Qué debe hacer?"
+            },
+            "options": [
+              {
+                "en": "Keep generating — the random component prevents collisions",
+                "es": "Seguir generando — el componente aleatorio evita colisiones"
+              },
+              {
+                "en": "Stop issuing IDs (or wait) until the clock passes the last timestamp used — otherwise it may mint duplicates",
+                "es": "Dejar de emitir IDs (o esperar) hasta que el reloj supere el último timestamp usado — de lo contrario puede acuñar duplicados"
+              },
+              {
+                "en": "Subtract 500ms from all future timestamps",
+                "es": "Restar 500ms a todos los timestamps futuros"
+              },
+              {
+                "en": "Switch to UUIDv4 temporarily",
+                "es": "Cambiar a UUIDv4 temporalmente"
+              }
+            ],
+            "explanation": {
+              "en": "Snowflake has no random component — uniqueness comes from (timestamp, machine ID, sequence). Reusing a past timestamp can repeat an already-issued combination, so generators refuse or wait until time catches up.",
+              "es": "Snowflake no tiene componente aleatorio — la unicidad viene de (timestamp, ID de máquina, secuencia). Reusar un timestamp pasado puede repetir una combinación ya emitida, así que los generadores se niegan o esperan hasta que el tiempo se recupere."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "To relieve a hot central sequence, each service instance leases blocks of 1000 IDs from the database (block allocation / hi-lo). What trade-off does this introduce?",
+              "es": "Para aliviar una secuencia central caliente, cada instancia del servicio arrienda bloques de 1000 IDs desde la base de datos (asignación por bloques / hi-lo). ¿Qué trade-off introduce esto?"
+            },
+            "options": [
+              {
+                "en": "The IDs grow beyond 64 bits and no longer fit in a BIGINT column",
+                "es": "Los IDs crecen más allá de 64 bits y ya no caben en una columna BIGINT"
+              },
+              {
+                "en": "Every insert still requires a database round-trip, so nothing is gained",
+                "es": "Cada insert sigue requiriendo un round-trip a la base de datos, así que no se gana nada"
+              },
+              {
+                "en": "IDs can collide when two instances lease blocks at the same time",
+                "es": "Los IDs pueden colisionar cuando dos instancias arriendan bloques al mismo tiempo"
+              },
+              {
+                "en": "Gaps and out-of-order IDs: block remainders are lost on restart, and IDs no longer reflect global insertion order",
+                "es": "Huecos e IDs fuera de orden: los restos de bloque se pierden al reiniciar, y los IDs ya no reflejan el orden global de inserción"
+              }
+            ],
+            "explanation": {
+              "en": "Block leasing is atomic in the database (a single UPDATE claims the range), so collisions can't happen, and the round-trip cost drops to one per 1000 IDs. The real costs: an instance that restarts abandons the unused remainder of its block (gaps), and two instances consuming different blocks interleave, so IDs are unique but not globally time-ordered.",
+              "es": "El arriendo de bloques es atómico en la base de datos (un solo UPDATE reclama el rango), así que las colisiones no pueden ocurrir, y el costo de round-trip baja a uno por cada 1000 IDs. Los costos reales: una instancia que reinicia abandona el resto no usado de su bloque (huecos), y dos instancias consumiendo bloques distintos se intercalan, así que los IDs son únicos pero no están globalmente ordenados por tiempo."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the fundamental requirement for a service to scale horizontally behind a load balancer?",
+          "es": "¿Cuál es el requisito fundamental para que un servicio escale horizontalmente detrás de un balanceador?"
+        },
+        "options": [
+          {
+            "en": "All instances must run on identical hardware",
+            "es": "Todas las instancias deben correr en hardware idéntico"
+          },
+          {
+            "en": "Instances must be stateless (or share state externally), so any instance can serve any request",
+            "es": "Las instancias deben ser stateless (o compartir estado externamente), para que cualquiera atienda cualquier request"
+          },
+          {
+            "en": "Requests must always go to the same instance",
+            "es": "Los requests deben ir siempre a la misma instancia"
+          },
+          {
+            "en": "The database must also be horizontally scaled first",
+            "es": "La base de datos también debe escalarse horizontalmente primero"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "According to the CAP theorem, what is the real decision a system must make during a network partition?",
+          "es": "Según el teorema CAP, ¿cuál es la decisión real que un sistema debe tomar durante una partición de red?"
+        },
+        "options": [
+          {
+            "en": "Availability vs durability",
+            "es": "Disponibilidad vs durabilidad"
+          },
+          {
+            "en": "Latency vs throughput",
+            "es": "Latencia vs throughput"
+          },
+          {
+            "en": "Consistency vs partition tolerance",
+            "es": "Consistencia vs tolerancia a particiones"
+          },
+          {
+            "en": "Consistency vs availability — partition tolerance is not optional",
+            "es": "Consistencia vs disponibilidad — la tolerancia a particiones no es opcional"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which system property does 'read-your-own-writes' consistency guarantee?",
+          "es": "¿Qué propiedad garantiza la consistencia 'read-your-own-writes'?"
+        },
+        "options": [
+          {
+            "en": "Reads always go to the fastest replica",
+            "es": "Las lecturas siempre van a la réplica más rápida"
+          },
+          {
+            "en": "All users see every write immediately",
+            "es": "Todos los usuarios ven cada escritura inmediatamente"
+          },
+          {
+            "en": "Writes are never lost during partitions",
+            "es": "Las escrituras nunca se pierden durante particiones"
+          },
+          {
+            "en": "A user always sees the effects of their own updates, even if others still see stale data",
+            "es": "Un usuario siempre ve los efectos de sus propias actualizaciones, aunque otros aún vean datos obsoletos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a saga, what replaces the rollback of a traditional ACID transaction?",
+          "es": "En una saga, ¿qué reemplaza al rollback de una transacción ACID tradicional?"
+        },
+        "options": [
+          {
+            "en": "Compensating actions that semantically undo the completed steps",
+            "es": "Acciones compensatorias que deshacen semánticamente los pasos completados"
+          },
+          {
+            "en": "The coordinator's abort message in phase two",
+            "es": "El mensaje de abort del coordinador en la fase dos"
+          },
+          {
+            "en": "A global lock held until all services confirm",
+            "es": "Un lock global retenido hasta que todos los servicios confirmen"
+          },
+          {
+            "en": "Automatic database snapshots",
+            "es": "Snapshots automáticos de la base de datos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which operation is idempotent?",
+          "es": "¿Cuál de estas operaciones es idempotente?"
+        },
+        "options": [
+          {
+            "en": "UPDATE accounts SET balance = balance - 100 WHERE id = 42",
+            "es": "UPDATE accounts SET balance = balance - 100 WHERE id = 42"
+          },
+          {
+            "en": "Appending a line to a log file",
+            "es": "Agregar una línea al final de un archivo de log"
+          },
+          {
+            "en": "INSERT INTO clicks (ad_id) VALUES (7)",
+            "es": "INSERT INTO clicks (ad_id) VALUES (7)"
+          },
+          {
+            "en": "UPDATE orders SET status = 'paid' WHERE id = 42",
+            "es": "UPDATE orders SET status = 'paid' WHERE id = 42"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is jitter added to exponential backoff?",
+          "es": "¿Por qué se agrega jitter al backoff exponencial?"
+        },
+        "options": [
+          {
+            "en": "To reduce the total number of retries to one",
+            "es": "Para reducir el total de reintentos a uno"
+          },
+          {
+            "en": "To desynchronize clients so retries spread over time instead of arriving in waves",
+            "es": "Para desincronizar a los clientes y que los reintentos se repartan en el tiempo en vez de llegar en olas"
+          },
+          {
+            "en": "To make retries happen faster on average",
+            "es": "Para que los reintentos ocurran más rápido en promedio"
+          },
+          {
+            "en": "To guarantee at least one retry succeeds",
+            "es": "Para garantizar que al menos un reintento tenga éxito"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A circuit breaker is OPEN. What happens to incoming calls to the protected dependency?",
+          "es": "Un circuit breaker está OPEN. ¿Qué pasa con las llamadas entrantes a la dependencia protegida?"
+        },
+        "options": [
+          {
+            "en": "They fail immediately (or hit a fallback) without reaching the dependency",
+            "es": "Fallan inmediatamente (o van a un fallback) sin llegar a la dependencia"
+          },
+          {
+            "en": "They pass through but with a longer timeout",
+            "es": "Pasan pero con un timeout más largo"
+          },
+          {
+            "en": "They are queued until the dependency recovers",
+            "es": "Se encolan hasta que la dependencia se recupere"
+          },
+          {
+            "en": "They are retried with exponential backoff",
+            "es": "Se reintentan con backoff exponencial"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does the bulkhead pattern isolate to prevent cascading failure?",
+          "es": "¿Qué aísla el patrón bulkhead para prevenir fallos en cascada?"
+        },
+        "options": [
+          {
+            "en": "Resources (thread/connection pools, quotas) per dependency or workload, capping each one's blast radius",
+            "es": "Recursos (pools de threads/conexiones, cuotas) por dependencia o carga, acotando el radio de impacto de cada una"
+          },
+          {
+            "en": "Network traffic between availability zones",
+            "es": "El tráfico de red entre zonas de disponibilidad"
+          },
+          {
+            "en": "Logs from different services",
+            "es": "Los logs de servicios distintos"
+          },
+          {
+            "en": "Database tables into separate schemas",
+            "es": "Las tablas de la base de datos en esquemas separados"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A consumer crashes after processing a message but before acking it. With at-least-once delivery, what is the guaranteed outcome?",
+          "es": "Un consumidor se cae después de procesar un mensaje pero antes del ack. Con entrega al-menos-una-vez, ¿cuál es el resultado garantizado?"
+        },
+        "options": [
+          {
+            "en": "The broker detects the completed work and discards the message",
+            "es": "El broker detecta el trabajo completado y descarta el mensaje"
+          },
+          {
+            "en": "The broker redelivers the message, so it will be processed again unless the consumer is idempotent",
+            "es": "El broker reentrega el mensaje, así que se procesará de nuevo salvo que el consumidor sea idempotente"
+          },
+          {
+            "en": "The message is lost permanently",
+            "es": "El mensaje se pierde permanentemente"
+          },
+          {
+            "en": "The message goes straight to the dead-letter queue",
+            "es": "El mensaje va directo a la dead-letter queue"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What problem does the transactional outbox pattern solve?",
+          "es": "¿Qué problema resuelve el patrón transactional outbox?"
+        },
+        "options": [
+          {
+            "en": "Consumers processing events out of order",
+            "es": "Consumidores procesando eventos fuera de orden"
+          },
+          {
+            "en": "The dual write: making the DB change and the event publication atomic, so no event is lost or orphaned",
+            "es": "La doble escritura: hacer atómicos el cambio en la BD y la publicación del evento, para que ningún evento se pierda o quede huérfano"
+          },
+          {
+            "en": "Brokers running out of disk space",
+            "es": "Brokers quedándose sin espacio en disco"
+          },
+          {
+            "en": "Slow queries on the events table",
+            "es": "Consultas lentas sobre la tabla de eventos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is a Snowflake-style ID often preferred over UUIDv4 for high-volume database primary keys?",
+          "es": "¿Por qué un ID estilo Snowflake suele preferirse sobre UUIDv4 como clave primaria en bases de datos de alto volumen?"
+        },
+        "options": [
+          {
+            "en": "It is impossible for Snowflake IDs to ever collide",
+            "es": "Es imposible que los Snowflake IDs colisionen alguna vez"
+          },
+          {
+            "en": "UUIDs cannot be used as primary keys",
+            "es": "Los UUIDs no pueden usarse como claves primarias"
+          },
+          {
+            "en": "Snowflake IDs are encrypted by default",
+            "es": "Los Snowflake IDs vienen cifrados por defecto"
+          },
+          {
+            "en": "It's a compact 64-bit, roughly time-ordered value, so B-tree inserts stay sequential instead of fragmenting the index",
+            "es": "Es un valor compacto de 64 bits, aproximadamente ordenado por tiempo, así que los inserts en el B-tree quedan secuenciales en vez de fragmentar el índice"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain why exactly-once *delivery* is impossible between distributed systems, and how systems achieve exactly-once *processing* anyway. Name the concrete techniques.",
+          "es": "Explica por qué la *entrega* exactamente-una-vez es imposible entre sistemas distribuidos, y cómo los sistemas logran de todos modos el *procesamiento* exactamente-una-vez. Nombra las técnicas concretas."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must explain the impossibility: an unreliable network makes a lost acknowledgement indistinguishable from a lost message, so senders must retry (duplicates) or not retry (loss). Must describe exactly-once processing as at-least-once delivery plus consumer-side techniques: deduplication by unique event ID recorded atomically with the business change, idempotent handlers, and/or the transactional outbox on the producer side. Bonus: mentions Two Generals problem, Kafka transactions, or idempotency keys for external APIs.",
+          "es": "Debe explicar la imposibilidad: una red no confiable hace que un ack perdido sea indistinguible de un mensaje perdido, así que los emisores deben reintentar (duplicados) o no reintentar (pérdida). Debe describir el procesamiento exactamente-una-vez como entrega al-menos-una-vez más técnicas del lado del consumidor: deduplicación por ID único de evento registrado atómicamente con el cambio de negocio, handlers idempotentes, y/o el outbox transaccional del lado del productor. Bonus: menciona el problema de los Dos Generales, transacciones de Kafka, o claves de idempotencia para APIs externas."
+        },
+        "reference": "Over an unreliable network, a sender that doesn't receive an ack can't tell whether the message or the ack was lost (Two Generals problem). Retrying risks duplicates; not retrying risks loss — so pure exactly-once delivery is unachievable. Systems therefore accept at-least-once delivery and make the *effect* exactly-once: producers use the transactional outbox so events are published atomically with the DB change; consumers record each event ID in a processed-events table inside the same transaction as the business write, so redelivered duplicates hit the unique constraint and are skipped; effects on external APIs pass the event ID as an idempotency key. Kafka's transactions extend this to read-process-write pipelines within Kafka."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your checkout service calls a payment provider that has become slow and flaky. Describe a complete resilience strategy, combining at least three patterns from this course, and explain what each one protects against.",
+          "es": "Tu servicio de checkout llama a un proveedor de pagos que se volvió lento e inestable. Describe una estrategia de resiliencia completa, combinando al menos tres patrones de este curso, y explica de qué protege cada uno."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must combine at least three of: timeouts (bound waiting), retries with exponential backoff + jitter (survive transient failures without retry storms), idempotency keys on the charge (make retries safe against double charging), circuit breaker (fail fast and let the provider recover), bulkhead / dedicated pool (protect other endpoints from thread exhaustion), fallback or queueing (degrade gracefully). Each named pattern must include what it protects against. Bonus: limiting retries to one layer, monitoring/alerting, dead-letter queue for failed charges.",
+          "es": "Debe combinar al menos tres de: timeouts (acotar la espera), reintentos con backoff exponencial + jitter (sobrevivir fallos transitorios sin tormentas de reintentos), claves de idempotencia en el cobro (hacer los reintentos seguros contra el doble cobro), circuit breaker (fallar rápido y dejar recuperarse al proveedor), bulkhead / pool dedicado (proteger otros endpoints del agotamiento de threads), fallback o encolado (degradar con gracia). Cada patrón nombrado debe incluir de qué protege. Bonus: limitar los reintentos a una sola capa, monitoreo/alertas, dead-letter queue para cobros fallidos."
+        },
+        "reference": "First, a strict timeout (e.g. 3s) on the provider call so slow responses can't pin threads indefinitely. The call goes through a dedicated connection pool (bulkhead) so payment slowness can't starve browsing or cart endpoints. Every charge carries an idempotency key, making retries safe against double charging. Retries: at most 2, with exponential backoff and full jitter, only from the checkout service (one layer) to avoid multiplicative retry storms. A circuit breaker per provider trips when the error rate crosses a threshold, failing fast and giving the provider room to recover; while open, checkout degrades gracefully — queue the order as 'payment pending' and process asynchronously, or offer an alternative provider. Alert on breaker state changes and track charge success rate to know when to close manually."
+      }
+    }
+  ]
+}

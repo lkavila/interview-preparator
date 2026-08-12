@@ -1,0 +1,2523 @@
+{
+  "slug": "cs-fundamentals",
+  "order": 1,
+  "icon": "cpu",
+  "title": {
+    "en": "CS Fundamentals",
+    "es": "Fundamentos de CS"
+  },
+  "description": {
+    "en": "Data structures and algorithms asked in every interview: arrays, hash tables, heaps, graphs, complexity and classic patterns.",
+    "es": "Estructuras de datos y algoritmos que preguntan en toda entrevista: arrays, hash tables, heaps, grafos, complejidad y patrones clásicos."
+  },
+  "lessons": [
+    {
+      "slug": "arrays-vs-linked-lists",
+      "question": {
+        "en": "What is the difference between an array and a linked list?",
+        "es": "¿Cuál es la diferencia entre un array y una lista enlazada?"
+      },
+      "definition": {
+        "en": "An **array** stores elements in contiguous memory, so access by index is O(1), but inserting in the middle is O(n) because elements must shift. A **linked list** stores nodes connected by pointers: insertion/deletion at a known node is O(1), but access by position is O(n) because you must traverse.\n\nArrays also benefit from **cache locality** (contiguous memory is faster to read), which is why in practice arrays beat linked lists even in scenarios where big-O looks similar.",
+        "es": "Un **array** guarda elementos en memoria contigua, por lo que acceder por índice es O(1), pero insertar en el medio es O(n) porque hay que desplazar elementos. Una **lista enlazada** guarda nodos conectados por punteros: insertar/eliminar en un nodo conocido es O(1), pero acceder por posición es O(n) porque hay que recorrer.\n\nLos arrays además aprovechan la **localidad de caché** (la memoria contigua se lee más rápido), por eso en la práctica los arrays ganan incluso donde el big-O parece similar."
+      },
+      "examples": [
+        {
+          "en": "A JavaScript `Array` or Python `list` is a dynamic array: perfect for rendering lists in React where you access items by index.",
+          "es": "Un `Array` de JavaScript o `list` de Python es un array dinámico: perfecto para renderizar listas en React accediendo por índice."
+        },
+        {
+          "en": "An LRU cache uses a doubly linked list so it can move a node to the front in O(1) when it's accessed.",
+          "es": "Un caché LRU usa una lista doblemente enlazada para mover un nodo al frente en O(1) cuando se accede."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need random access by index millions of times per second. Which structure do you choose and why?",
+              "es": "Necesitas acceso aleatorio por índice millones de veces por segundo. ¿Qué estructura eliges y por qué?"
+            },
+            "options": [
+              {
+                "en": "Both are equivalent for reads",
+                "es": "Ambas son equivalentes para lecturas"
+              },
+              {
+                "en": "Linked list — O(1) insertion everywhere",
+                "es": "Lista enlazada — inserción O(1) en cualquier parte"
+              },
+              {
+                "en": "Array — O(1) index access and cache locality",
+                "es": "Array — acceso O(1) por índice y localidad de caché"
+              },
+              {
+                "en": "Linked list — pointers are faster than offsets",
+                "es": "Lista enlazada — los punteros son más rápidos que los offsets"
+              }
+            ],
+            "explanation": {
+              "en": "Index access in an array is a single memory offset computation, and contiguity makes CPU caches effective.",
+              "es": "El acceso por índice en un array es un solo cálculo de offset, y la contigüidad hace efectivas las cachés de CPU."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each operation with its complexity in the right structure.",
+              "es": "Conecta cada operación con su complejidad en la estructura correcta."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Array: access by index",
+                  "es": "Array: acceso por índice"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Array: insert at the middle",
+                  "es": "Array: insertar en el medio"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Linked list: insert after a known node",
+                  "es": "Lista enlazada: insertar tras un nodo conocido"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Linked list: access position k",
+                  "es": "Lista enlazada: acceder a la posición k"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "O(1)",
+                  "es": "O(1)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "O(n) — shifts elements",
+                  "es": "O(n) — desplaza elementos"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "O(1) — rewires pointers",
+                  "es": "O(1) — reconecta punteros"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "O(n) — traverses nodes",
+                  "es": "O(n) — recorre nodos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Traversing all n elements is O(n) for both an array and a linked list. Why is the array traversal often several times faster on real hardware?",
+              "es": "Recorrer los n elementos es O(n) tanto para un array como para una lista enlazada. ¿Por qué el recorrido del array suele ser varias veces más rápido en hardware real?"
+            },
+            "options": [
+              {
+                "en": "The compiler eliminates the loop entirely for arrays",
+                "es": "El compilador elimina el bucle por completo para los arrays"
+              },
+              {
+                "en": "Contiguous memory exploits cache lines and prefetching, while each list node hop risks a cache miss",
+                "es": "La memoria contigua aprovecha las líneas de caché y el prefetching, mientras que cada salto entre nodos de la lista arriesga un fallo de caché"
+              },
+              {
+                "en": "Linked list nodes store larger elements, so there is more data to read",
+                "es": "Los nodos de la lista enlazada guardan elementos más grandes, así que hay más datos que leer"
+              },
+              {
+                "en": "Array traversal is actually O(log n) thanks to index arithmetic",
+                "es": "El recorrido del array es en realidad O(log n) gracias a la aritmética de índices"
+              }
+            ],
+            "explanation": {
+              "en": "Big-O hides constants: a cache line fetch brings several contiguous array elements at once and the prefetcher predicts the next ones, whereas pointer-chasing through scattered nodes stalls the CPU on memory.",
+              "es": "El big-O oculta constantes: una línea de caché trae varios elementos contiguos del array de una vez y el prefetcher predice los siguientes, mientras que perseguir punteros entre nodos dispersos detiene la CPU esperando memoria."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "stack-vs-queue",
+      "question": {
+        "en": "What is the difference between a stack and a queue?",
+        "es": "¿Cuál es la diferencia entre una pila (stack) y una cola (queue)?"
+      },
+      "definition": {
+        "en": "A **stack** is LIFO (Last-In, First-Out): the last element pushed is the first popped. A **queue** is FIFO (First-In, First-Out): elements leave in the order they arrived.\n\nBoth support O(1) insert/remove at their ends. Stacks power recursion, undo, and DFS. Queues power task processing, BFS, and message brokers.",
+        "es": "Una **pila** es LIFO (último en entrar, primero en salir): el último elemento apilado es el primero en salir. Una **cola** es FIFO (primero en entrar, primero en salir): los elementos salen en el orden en que llegaron.\n\nAmbas insertan/eliminan en O(1) en sus extremos. Las pilas soportan recursión, undo y DFS. Las colas soportan procesamiento de tareas, BFS y message brokers."
+      },
+      "examples": [
+        {
+          "en": "The JavaScript call stack: each function call is pushed; when it returns, it's popped. A stack overflow is literally this stack growing too much.",
+          "es": "El call stack de JavaScript: cada llamada a función se apila; al retornar, se desapila. Un stack overflow es literalmente esta pila creciendo demasiado."
+        },
+        {
+          "en": "SQS or RabbitMQ deliver messages roughly in FIFO order: producers enqueue jobs, workers dequeue them.",
+          "es": "SQS o RabbitMQ entregan mensajes aproximadamente en orden FIFO: los productores encolan trabajos y los workers los desencolan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You push A, then B, then C onto a stack, then pop twice and print each pop, then push D, then pop everything printing each pop. Arrange the printed output from first to last.",
+              "es": "Apilas A, luego B, luego C en una pila; desapilas dos veces imprimiendo cada pop; apilas D; y desapilas todo imprimiendo cada pop. Ordena la salida impresa de primero a último."
+            },
+            "layout": "list",
+            "items": [
+              {
+                "id": "c",
+                "label": {
+                  "en": "C",
+                  "es": "C"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "B",
+                  "es": "B"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "D",
+                  "es": "D"
+                }
+              },
+              {
+                "id": "a",
+                "label": {
+                  "en": "A",
+                  "es": "A"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "c",
+              "b",
+              "d",
+              "a"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which use case requires a queue rather than a stack?",
+              "es": "¿Qué caso de uso requiere una cola en lugar de una pila?"
+            },
+            "options": [
+              {
+                "en": "Implementing undo in a text editor",
+                "es": "Implementar deshacer (undo) en un editor de texto"
+              },
+              {
+                "en": "Tracking function calls during recursion",
+                "es": "Rastrear llamadas a funciones durante la recursión"
+              },
+              {
+                "en": "Processing background jobs in arrival order",
+                "es": "Procesar trabajos en segundo plano en orden de llegada"
+              },
+              {
+                "en": "Validating balanced parentheses",
+                "es": "Validar paréntesis balanceados"
+              }
+            ],
+            "explanation": {
+              "en": "Job processing must be fair and ordered (FIFO). The other three are classic LIFO/stack problems.",
+              "es": "El procesamiento de trabajos debe ser justo y ordenado (FIFO). Los otros tres son problemas clásicos de pila (LIFO)."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A classic interview follow-up: you implement a queue using two stacks (an in-stack for enqueue, an out-stack for dequeue). What is the cost of dequeue?",
+              "es": "Un follow-up clásico de entrevista: implementas una cola usando dos pilas (una de entrada para encolar, una de salida para desencolar). ¿Cuál es el costo de desencolar?"
+            },
+            "options": [
+              {
+                "en": "O(1) amortized — each element is moved from the in-stack to the out-stack at most once in its lifetime",
+                "es": "O(1) amortizado — cada elemento se mueve de la pila de entrada a la de salida como máximo una vez en su vida"
+              },
+              {
+                "en": "It's impossible: two LIFO structures can never produce FIFO order",
+                "es": "Es imposible: dos estructuras LIFO nunca pueden producir orden FIFO"
+              },
+              {
+                "en": "O(n) on every dequeue, because elements must be transferred each time",
+                "es": "O(n) en cada desencolado, porque hay que transferir los elementos cada vez"
+              },
+              {
+                "en": "O(log n), because each transfer halves the stack",
+                "es": "O(log n), porque cada transferencia parte la pila a la mitad"
+              }
+            ],
+            "explanation": {
+              "en": "The transfer only happens when the out-stack is empty, and reversing the in-stack once puts elements in FIFO order. Charging that one move to each element yields O(1) amortized per operation.",
+              "es": "La transferencia solo ocurre cuando la pila de salida está vacía, e invertir la pila de entrada una vez deja los elementos en orden FIFO. Cargando ese único movimiento a cada elemento, resulta O(1) amortizado por operación."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "hash-table-internals",
+      "question": {
+        "en": "How does a hash table work internally?",
+        "es": "¿Cómo funciona internamente una hash table?"
+      },
+      "definition": {
+        "en": "A **hash table** stores key-value pairs in an internal array of buckets. To insert or look up a key: 1) compute `hash(key)`, 2) map it to a bucket index (usually `hash % capacity`), 3) store/find the entry there.\n\nWhen the **load factor** (entries / buckets) exceeds a threshold (~0.75), the table **resizes**: it allocates a bigger array and re-hashes all entries. That's why lookups stay O(1) on average.",
+        "es": "Una **hash table** guarda pares clave-valor en un array interno de buckets. Para insertar o buscar una clave: 1) calcula `hash(clave)`, 2) la mapea a un índice de bucket (normalmente `hash % capacidad`), 3) guarda/busca la entrada ahí.\n\nCuando el **factor de carga** (entradas / buckets) supera un umbral (~0.75), la tabla se **redimensiona**: reserva un array más grande y re-hashea todas las entradas. Por eso las búsquedas se mantienen O(1) en promedio."
+      },
+      "examples": [
+        {
+          "en": "Python's `dict` and JavaScript objects/`Map` are hash tables — that's why `user.id in seen_ids` checks are O(1).",
+          "es": "El `dict` de Python y los objetos/`Map` de JavaScript son hash tables — por eso chequear `user.id in seen_ids` es O(1)."
+        },
+        {
+          "en": "Redis is essentially a giant networked hash table: GET/SET by key run in O(1).",
+          "es": "Redis es esencialmente una hash table gigante en red: GET/SET por clave corren en O(1)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps a hash table performs to look up a key.",
+              "es": "Ordena los pasos que realiza una hash table para buscar una clave."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "hash",
+                "label": {
+                  "en": "Compute hash(key)",
+                  "es": "Calcular hash(clave)"
+                }
+              },
+              {
+                "id": "index",
+                "label": {
+                  "en": "Map hash to bucket index (hash % capacity)",
+                  "es": "Mapear el hash a un índice de bucket (hash % capacidad)"
+                }
+              },
+              {
+                "id": "bucket",
+                "label": {
+                  "en": "Go to that bucket",
+                  "es": "Ir a ese bucket"
+                }
+              },
+              {
+                "id": "compare",
+                "label": {
+                  "en": "Compare stored keys for equality",
+                  "es": "Comparar las claves guardadas por igualdad"
+                }
+              },
+              {
+                "id": "return",
+                "label": {
+                  "en": "Return the matching value",
+                  "es": "Devolver el valor correspondiente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "hash",
+              "index",
+              "bucket",
+              "compare",
+              "return"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain what the load factor of a hash table is and what happens when it gets too high.",
+              "es": "Explica qué es el factor de carga de una hash table y qué pasa cuando se vuelve muy alto."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define load factor as the ratio of stored entries to buckets/capacity, and explain that a high load factor increases collisions (degrading performance) and triggers a resize/rehash into a larger array.",
+              "es": "Debe definir el factor de carga como la razón entre entradas guardadas y buckets/capacidad, y explicar que un factor alto aumenta las colisiones (degradando el rendimiento) y dispara un redimensionamiento/rehash a un array más grande."
+            },
+            "reference": "Load factor = entries / capacity. When it exceeds a threshold (e.g. 0.75), collisions become frequent and lookups degrade toward O(n), so the table allocates a larger bucket array and re-hashes every entry into it."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When a hash table resizes to a larger bucket array, why must every stored entry be redistributed instead of the buckets being copied over as-is?",
+              "es": "Cuando una hash table se redimensiona a un array de buckets más grande, ¿por qué hay que redistribuir todas las entradas guardadas en lugar de copiar los buckets tal cual?"
+            },
+            "options": [
+              {
+                "en": "To sort the entries so future lookups can use binary search",
+                "es": "Para ordenar las entradas y que las búsquedas futuras usen búsqueda binaria"
+              },
+              {
+                "en": "Because the bucket index is derived from the capacity (hash % capacity), so a new capacity maps keys to different buckets",
+                "es": "Porque el índice de bucket se deriva de la capacidad (hash % capacidad), así que una nueva capacidad mapea las claves a buckets distintos"
+              },
+              {
+                "en": "Because the hash values of the keys change when the table grows",
+                "es": "Porque los valores hash de las claves cambian cuando la tabla crece"
+              },
+              {
+                "en": "To purge duplicate keys accumulated in the old array",
+                "es": "Para depurar claves duplicadas acumuladas en el array anterior"
+              }
+            ],
+            "explanation": {
+              "en": "The hash of a key never changes, but the bucket it lands in is hash modulo capacity. Change the capacity and the mapping changes, so every entry must be re-bucketed — that is the O(n) rehash.",
+              "es": "El hash de una clave nunca cambia, pero el bucket donde cae es hash módulo capacidad. Si cambia la capacidad, cambia el mapeo, así que cada entrada debe reubicarse — ese es el rehash O(n)."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "hash-collisions",
+      "question": {
+        "en": "What happens when two keys produce the same hash?",
+        "es": "¿Qué pasa cuando dos claves producen el mismo hash?"
+      },
+      "definition": {
+        "en": "That's a **collision**, and it's inevitable (infinite keys, finite buckets). Two main strategies handle it:\n\n- **Separate chaining**: each bucket holds a small list (or tree) of entries; colliding entries are appended. Java's HashMap converts long chains into red-black trees.\n- **Open addressing**: on collision, probe other buckets (linear probing, quadratic, double hashing) until a free slot is found. Python's dict uses this.",
+        "es": "Eso es una **colisión**, y es inevitable (claves infinitas, buckets finitos). Hay dos estrategias principales:\n\n- **Encadenamiento (chaining)**: cada bucket contiene una pequeña lista (o árbol) de entradas; las colisiones se agregan ahí. El HashMap de Java convierte cadenas largas en árboles rojo-negro.\n- **Direccionamiento abierto (open addressing)**: ante una colisión, se sondean otros buckets (probing lineal, cuadrático, doble hashing) hasta hallar uno libre. El dict de Python usa esto."
+      },
+      "examples": [
+        {
+          "en": "A crafted set of colliding keys can degrade a service's hash tables to O(n) — the 'hash DoS' attack; languages randomize string hash seeds to prevent it.",
+          "es": "Un conjunto malicioso de claves que colisionan puede degradar las hash tables de un servicio a O(n) — el ataque 'hash DoS'; los lenguajes aleatorizan la semilla del hash de strings para prevenirlo."
+        },
+        {
+          "en": "Java 8 HashMap: if a bucket's chain exceeds 8 entries it becomes a tree, bounding worst-case lookup at O(log n).",
+          "es": "HashMap de Java 8: si la cadena de un bucket supera 8 entradas se convierte en árbol, acotando la peor búsqueda a O(log n)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each collision-handling strategy with its description.",
+              "es": "Conecta cada estrategia de manejo de colisiones con su descripción."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Separate chaining",
+                  "es": "Encadenamiento"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Linear probing",
+                  "es": "Probing lineal"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Double hashing",
+                  "es": "Doble hashing"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Treeified bucket",
+                  "es": "Bucket convertido en árbol"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Each bucket stores a list of colliding entries",
+                  "es": "Cada bucket guarda una lista de entradas en colisión"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Try the next consecutive slot until one is free",
+                  "es": "Probar el siguiente slot consecutivo hasta hallar uno libre"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "A second hash function determines the probe step",
+                  "es": "Una segunda función hash determina el salto de sondeo"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Long chains become O(log n) search trees",
+                  "es": "Cadenas largas se vuelven árboles de búsqueda O(log n)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can't collisions be completely avoided in a general-purpose hash table?",
+              "es": "¿Por qué no se pueden evitar por completo las colisiones en una hash table de propósito general?"
+            },
+            "options": [
+              {
+                "en": "The key space is larger than the number of buckets (pigeonhole principle)",
+                "es": "El espacio de claves es mayor que el número de buckets (principio del palomar)"
+              },
+              {
+                "en": "Collisions only occur with string keys",
+                "es": "Las colisiones solo ocurren con claves de tipo string"
+              },
+              {
+                "en": "Hash functions are random and can't be improved",
+                "es": "Las funciones hash son aleatorias y no se pueden mejorar"
+              },
+              {
+                "en": "Resizing the table causes data loss",
+                "es": "Redimensionar la tabla causa pérdida de datos"
+              }
+            ],
+            "explanation": {
+              "en": "With more possible keys than slots, some keys must share a slot — the pigeonhole principle.",
+              "es": "Con más claves posibles que slots, algunas claves deben compartir slot — el principio del palomar."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In an open-addressing hash table, why does deleting an entry usually leave a special 'tombstone' marker instead of simply emptying the slot?",
+              "es": "En una hash table con direccionamiento abierto, ¿por qué eliminar una entrada suele dejar una marca especial ('tombstone') en lugar de simplemente vaciar el slot?"
+            },
+            "options": [
+              {
+                "en": "An empty slot would break probe sequences: a lookup would stop early and miss keys stored further along the chain of probes",
+                "es": "Un slot vacío rompería las secuencias de sondeo: una búsqueda se detendría antes de tiempo y no encontraría claves guardadas más adelante en la cadena de sondeos"
+              },
+              {
+                "en": "Tombstones speed up future insertions by pre-reserving space",
+                "es": "Los tombstones aceleran inserciones futuras al pre-reservar espacio"
+              },
+              {
+                "en": "The garbage collector requires tombstones to reclaim the memory",
+                "es": "El recolector de basura requiere tombstones para reclamar la memoria"
+              },
+              {
+                "en": "Tombstones avoid having to recompute hash values on the next lookup",
+                "es": "Los tombstones evitan tener que recalcular los valores hash en la siguiente búsqueda"
+              }
+            ],
+            "explanation": {
+              "en": "Probing stops at the first truly empty slot. If deletion emptied a slot in the middle of a probe path, keys inserted after a collision through that slot would become unreachable. Tombstones say 'keep probing past me'.",
+              "es": "El sondeo se detiene en el primer slot realmente vacío. Si al eliminar se vaciara un slot en medio de un camino de sondeo, las claves insertadas tras una colisión a través de ese slot quedarían inalcanzables. El tombstone indica 'sigue sondeando más allá de mí'."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "hash-lookup-complexity",
+      "question": {
+        "en": "What is the average and worst-case complexity of a hash table lookup?",
+        "es": "¿Cuál es la complejidad promedio y en el peor caso de una búsqueda en hash table?"
+      },
+      "definition": {
+        "en": "**Average case: O(1)** — with a good hash function and a healthy load factor, each bucket holds ~1 entry.\n\n**Worst case: O(n)** — if all keys collide into one bucket (bad hash function or adversarial keys), lookup degrades to scanning a list. Java mitigates this by treeifying buckets (O(log n) worst case).\n\nIn interviews, always state both and mention *why* the average holds: uniform hashing + resizing keeps buckets small.",
+        "es": "**Caso promedio: O(1)** — con una buena función hash y un factor de carga sano, cada bucket tiene ~1 entrada.\n\n**Peor caso: O(n)** — si todas las claves colisionan en un bucket (mala función hash o claves adversarias), la búsqueda degenera en recorrer una lista. Java lo mitiga convirtiendo buckets en árboles (peor caso O(log n)).\n\nEn entrevistas, menciona ambos y *por qué* se sostiene el promedio: hashing uniforme + redimensionamiento mantienen los buckets pequeños."
+      },
+      "examples": [
+        {
+          "en": "A rate limiter keyed by user ID relies on O(1) dict lookups to stay fast at 100k requests/second.",
+          "es": "Un rate limiter indexado por ID de usuario depende de búsquedas O(1) en un dict para mantenerse rápido a 100k peticiones/segundo."
+        },
+        {
+          "en": "A production incident: a service slowed down 100x because objects used as keys had a hash function returning a constant — every entry landed in one bucket.",
+          "es": "Incidente real: un servicio se volvió 100 veces más lento porque los objetos usados como clave tenían una función hash que devolvía una constante — todas las entradas caían en un bucket."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A hash table lookup is O(1) on average because...",
+              "es": "Una búsqueda en hash table es O(1) en promedio porque..."
+            },
+            "options": [
+              {
+                "en": "Uniform hashing plus resizing keeps expected bucket size constant",
+                "es": "El hashing uniforme más el redimensionamiento mantienen constante el tamaño esperado del bucket"
+              },
+              {
+                "en": "Keys are stored sorted for binary search",
+                "es": "Las claves se guardan ordenadas para búsqueda binaria"
+              },
+              {
+                "en": "The CPU caches all buckets",
+                "es": "La CPU cachea todos los buckets"
+              },
+              {
+                "en": "Hash functions never collide in practice",
+                "es": "Las funciones hash nunca colisionan en la práctica"
+              }
+            ],
+            "explanation": {
+              "en": "The expected number of entries per bucket stays O(1) when hashing distributes uniformly and the load factor is bounded by resizing.",
+              "es": "El número esperado de entradas por bucket se mantiene O(1) cuando el hash distribuye uniformemente y el factor de carga está acotado por el redimensionamiento."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When does a hash table lookup hit its O(n) worst case?",
+              "es": "¿Cuándo una búsqueda en hash table cae en su peor caso O(n)?"
+            },
+            "options": [
+              {
+                "en": "When all keys collide into the same bucket",
+                "es": "Cuando todas las claves colisionan en el mismo bucket"
+              },
+              {
+                "en": "When the table has just been resized",
+                "es": "Cuando la tabla se acaba de redimensionar"
+              },
+              {
+                "en": "When keys are integers instead of strings",
+                "es": "Cuando las claves son enteros en vez de strings"
+              },
+              {
+                "en": "When the load factor is below 0.5",
+                "es": "Cuando el factor de carga está por debajo de 0.5"
+              }
+            ],
+            "explanation": {
+              "en": "If every key lands in one bucket (bad or adversarial hashing), lookup scans all n entries.",
+              "es": "Si todas las claves caen en un bucket (hashing malo o adversario), la búsqueda recorre las n entradas."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each hash table scenario with the lookup complexity it produces.",
+              "es": "Conecta cada escenario de hash table con la complejidad de búsqueda que produce."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Uniform hash function, load factor kept under ~0.75 by resizing",
+                  "es": "Función hash uniforme, factor de carga bajo ~0.75 gracias al redimensionamiento"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Adversarial keys: everything chains into a single bucket (linked list)",
+                  "es": "Claves adversarias: todo se encadena en un solo bucket (lista enlazada)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Java 8+ HashMap after a long chain is treeified",
+                  "es": "HashMap de Java 8+ después de convertir una cadena larga en árbol"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Hashing the key itself, for a fixed-size key like an int",
+                  "es": "Calcular el hash de la clave misma, para una clave de tamaño fijo como un int"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "O(1) expected per lookup",
+                  "es": "O(1) esperado por búsqueda"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "O(n) — scans every colliding entry",
+                  "es": "O(n) — recorre todas las entradas en colisión"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "O(log n) — search within a red-black tree",
+                  "es": "O(log n) — búsqueda dentro de un árbol rojo-negro"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "O(1) — constant work independent of table size",
+                  "es": "O(1) — trabajo constante independiente del tamaño de la tabla"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "heaps-priority-queues",
+      "question": {
+        "en": "How does a priority queue work, and when would you use a heap instead of sorting?",
+        "es": "¿Cómo funciona una priority queue y cuándo usarías un heap en lugar de ordenar?"
+      },
+      "definition": {
+        "en": "A **priority queue** returns the highest (or lowest) priority element first, regardless of insertion order. It's usually implemented with a **binary heap**: a complete binary tree stored in an array where every parent is smaller (min-heap) than its children.\n\nOperations: peek min O(1), insert O(log n), extract-min O(log n).\n\nUse a heap instead of sorting when you only need the **top element(s) incrementally** or the data **arrives as a stream**: sorting everything costs O(n log n) upfront, a heap gives you the extremes in O(log n) per operation.",
+        "es": "Una **priority queue** devuelve primero el elemento de mayor (o menor) prioridad, sin importar el orden de inserción. Se implementa normalmente con un **heap binario**: un árbol binario completo guardado en un array donde cada padre es menor (min-heap) que sus hijos.\n\nOperaciones: ver el mínimo O(1), insertar O(log n), extraer el mínimo O(log n).\n\nUsa un heap en lugar de ordenar cuando solo necesitas los **elementos extremos de forma incremental** o los datos **llegan en stream**: ordenar todo cuesta O(n log n) de entrada, un heap te da los extremos en O(log n) por operación."
+      },
+      "examples": [
+        {
+          "en": "OS schedulers and Kubernetes pod scheduling pick the next task by priority using heap-like structures.",
+          "es": "Los schedulers de SO y el scheduling de pods de Kubernetes eligen la siguiente tarea por prioridad usando estructuras tipo heap."
+        },
+        {
+          "en": "Dijkstra's shortest path pulls the closest unvisited node from a min-heap on every iteration.",
+          "es": "Dijkstra extrae el nodo no visitado más cercano de un min-heap en cada iteración."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You receive an infinite stream of metrics and must always report the 10 largest seen so far. What's the most efficient approach?",
+              "es": "Recibes un stream infinito de métricas y debes reportar siempre las 10 mayores vistas hasta ahora. ¿Cuál es el enfoque más eficiente?"
+            },
+            "options": [
+              {
+                "en": "Store values in a hash table keyed by size",
+                "es": "Guardar los valores en una hash table indexada por tamaño"
+              },
+              {
+                "en": "Keep a max-heap of all values and extract 10 each time",
+                "es": "Mantener un max-heap con todos los valores y extraer 10 cada vez"
+              },
+              {
+                "en": "Keep a min-heap of size 10; replace the root when a bigger value arrives",
+                "es": "Mantener un min-heap de tamaño 10; reemplazar la raíz cuando llegue un valor mayor"
+              },
+              {
+                "en": "Sort the full history on every new value",
+                "es": "Ordenar todo el historial con cada valor nuevo"
+              }
+            ],
+            "explanation": {
+              "en": "A bounded min-heap of size K gives O(log K) per element and O(K) memory — the standard top-K streaming pattern.",
+              "es": "Un min-heap acotado de tamaño K da O(log K) por elemento y O(K) de memoria — el patrón estándar de top-K en streaming."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of extract-min on a binary min-heap.",
+              "es": "Ordena los pasos de extract-min en un min-heap binario."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "take",
+                "label": {
+                  "en": "Take the root (the minimum)",
+                  "es": "Tomar la raíz (el mínimo)"
+                }
+              },
+              {
+                "id": "move",
+                "label": {
+                  "en": "Move the last element to the root",
+                  "es": "Mover el último elemento a la raíz"
+                }
+              },
+              {
+                "id": "sift",
+                "label": {
+                  "en": "Sift down: swap with the smaller child",
+                  "es": "Hundir (sift down): intercambiar con el hijo menor"
+                }
+              },
+              {
+                "id": "stop",
+                "label": {
+                  "en": "Stop when both children are larger",
+                  "es": "Parar cuando ambos hijos sean mayores"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "take",
+              "move",
+              "sift",
+              "stop"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A binary heap is stored in a plain array with the root at index 0. Where do you find the children of the node at index i?",
+              "es": "Un heap binario se guarda en un array plano con la raíz en el índice 0. ¿Dónde encuentras los hijos del nodo en el índice i?"
+            },
+            "options": [
+              {
+                "en": "Indices i² and i² + 1",
+                "es": "Índices i² e i² + 1"
+              },
+              {
+                "en": "Indices i + 1 and i + 2",
+                "es": "Índices i + 1 e i + 2"
+              },
+              {
+                "en": "Indices 2i + 1 and 2i + 2",
+                "es": "Índices 2i + 1 y 2i + 2"
+              },
+              {
+                "en": "There is no formula — a heap needs explicit child pointers",
+                "es": "No hay fórmula — un heap necesita punteros explícitos a los hijos"
+              }
+            ],
+            "explanation": {
+              "en": "Because the heap is a complete tree, levels pack into the array with no gaps: children of i sit at 2i+1 and 2i+2, and the parent of i is (i−1)/2. No pointers needed — that's why heaps are so memory-efficient.",
+              "es": "Como el heap es un árbol completo, los niveles se empaquetan en el array sin huecos: los hijos de i están en 2i+1 y 2i+2, y el padre de i es (i−1)/2. No se necesitan punteros — por eso los heaps son tan eficientes en memoria."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "bfs-vs-dfs",
+      "question": {
+        "en": "What is the difference between BFS and DFS?",
+        "es": "¿Cuál es la diferencia entre BFS y DFS?"
+      },
+      "definition": {
+        "en": "**BFS (Breadth-First Search)** explores level by level using a **queue**: all neighbors first, then neighbors of neighbors. It finds the **shortest path in unweighted graphs**.\n\n**DFS (Depth-First Search)** goes as deep as possible before backtracking, using a **stack** (or recursion). It's natural for cycle detection, topological sort, and exhausting paths.\n\nBoth are O(V + E). BFS memory can blow up on wide graphs (the frontier); DFS memory is bounded by the depth.",
+        "es": "**BFS (búsqueda en anchura)** explora nivel por nivel usando una **cola**: primero todos los vecinos, luego los vecinos de los vecinos. Encuentra el **camino más corto en grafos sin pesos**.\n\n**DFS (búsqueda en profundidad)** baja lo más profundo posible antes de retroceder, usando una **pila** (o recursión). Es natural para detección de ciclos, orden topológico y agotar caminos.\n\nAmbas son O(V + E). La memoria de BFS puede dispararse en grafos anchos (la frontera); la de DFS está acotada por la profundidad."
+      },
+      "examples": [
+        {
+          "en": "LinkedIn's 'degrees of connection' is a BFS: your direct contacts are level 1, theirs are level 2.",
+          "es": "Los 'grados de conexión' de LinkedIn son un BFS: tus contactos directos son nivel 1, los suyos nivel 2."
+        },
+        {
+          "en": "Detecting circular dependencies in a build system (npm, Gradle) is a DFS looking for back edges.",
+          "es": "Detectar dependencias circulares en un sistema de build (npm, Gradle) es un DFS buscando back edges."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each property with BFS or DFS.",
+              "es": "Conecta cada propiedad con BFS o DFS."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Uses a queue",
+                  "es": "Usa una cola"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Uses a stack / recursion",
+                  "es": "Usa una pila / recursión"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Shortest path in unweighted graphs",
+                  "es": "Camino más corto en grafos sin pesos"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Topological sort and cycle detection",
+                  "es": "Orden topológico y detección de ciclos"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "BFS",
+                  "es": "BFS"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "DFS",
+                  "es": "DFS"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "BFS (level by level)",
+                  "es": "BFS (nivel por nivel)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "DFS (explores deep first)",
+                  "es": "DFS (explora a fondo primero)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You must find the minimum number of hops between two services in an unweighted service-dependency graph. Which traversal?",
+              "es": "Debes hallar el número mínimo de saltos entre dos servicios en un grafo de dependencias sin pesos. ¿Qué recorrido usas?"
+            },
+            "options": [
+              {
+                "en": "BFS — the first time you reach the target is the shortest path",
+                "es": "BFS — la primera vez que llegas al destino es el camino más corto"
+              },
+              {
+                "en": "Binary search over the adjacency matrix",
+                "es": "Búsqueda binaria sobre la matriz de adyacencia"
+              },
+              {
+                "en": "Either, they always give the same result",
+                "es": "Cualquiera, siempre dan el mismo resultado"
+              },
+              {
+                "en": "DFS — it explores every path",
+                "es": "DFS — explora todos los caminos"
+              }
+            ],
+            "explanation": {
+              "en": "BFS visits nodes in increasing distance order, so the first arrival at the target uses the fewest edges.",
+              "es": "BFS visita nodos en orden creciente de distancia, así que la primera llegada al destino usa la menor cantidad de aristas."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You must traverse a very wide but shallow graph (each node has millions of neighbors, maximum depth ~5). Which memory concern is real?",
+              "es": "Debes recorrer un grafo muy ancho pero poco profundo (cada nodo tiene millones de vecinos, profundidad máxima ~5). ¿Qué preocupación de memoria es real?"
+            },
+            "options": [
+              {
+                "en": "DFS will overflow the stack: its memory grows with the number of neighbors",
+                "es": "DFS desbordará la pila: su memoria crece con el número de vecinos"
+              },
+              {
+                "en": "BFS can exhaust memory: its queue holds an entire frontier, which explodes on wide graphs",
+                "es": "BFS puede agotar la memoria: su cola contiene una frontera completa, que explota en grafos anchos"
+              },
+              {
+                "en": "BFS memory is bounded by the depth, so it stays tiny here",
+                "es": "La memoria de BFS está acotada por la profundidad, así que aquí se mantiene mínima"
+              },
+              {
+                "en": "Neither matters — both are O(V + E) in time, so memory is identical",
+                "es": "Ninguna importa — ambas son O(V + E) en tiempo, así que la memoria es idéntica"
+              }
+            ],
+            "explanation": {
+              "en": "BFS keeps the whole current level in its queue — on a wide graph that frontier can be millions of nodes. DFS memory is bounded by the traversal depth (~5 frames here), so it is the safe choice.",
+              "es": "BFS mantiene todo el nivel actual en su cola — en un grafo ancho esa frontera puede ser de millones de nodos. La memoria de DFS está acotada por la profundidad del recorrido (~5 marcos aquí), así que es la opción segura."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cycle-detection",
+      "question": {
+        "en": "How would you detect a cycle in a graph?",
+        "es": "¿Cómo detectarías un ciclo en un grafo?"
+      },
+      "definition": {
+        "en": "**Directed graphs**: run DFS coloring nodes white (unvisited), gray (in the current recursion stack) and black (finished). Finding an edge to a **gray** node is a back edge → cycle. Alternative: Kahn's topological sort — if you can't process all nodes, there's a cycle.\n\n**Undirected graphs**: DFS where visiting an already-visited node that is *not your parent* means a cycle. Union-Find also works: joining two nodes already in the same set reveals a cycle.\n\n**Linked lists**: Floyd's tortoise-and-hare (slow/fast pointers meet if a cycle exists).",
+        "es": "**Grafos dirigidos**: corre DFS coloreando nodos blanco (no visitado), gris (en el stack de recursión actual) y negro (terminado). Encontrar una arista hacia un nodo **gris** es un back edge → ciclo. Alternativa: orden topológico de Kahn — si no puedes procesar todos los nodos, hay ciclo.\n\n**Grafos no dirigidos**: DFS donde visitar un nodo ya visitado que *no es tu padre* indica ciclo. Union-Find también sirve: unir dos nodos que ya están en el mismo conjunto revela un ciclo.\n\n**Listas enlazadas**: tortuga y liebre de Floyd (los punteros lento/rápido se encuentran si hay ciclo)."
+      },
+      "examples": [
+        {
+          "en": "PostgreSQL detects deadlocks by finding cycles in its waits-for graph and kills one transaction to break the cycle.",
+          "es": "PostgreSQL detecta deadlocks encontrando ciclos en su grafo de esperas y mata una transacción para romper el ciclo."
+        },
+        {
+          "en": "`npm install` warns about circular dependencies — a DFS over the package graph found a back edge.",
+          "es": "`npm install` advierte sobre dependencias circulares — un DFS sobre el grafo de paquetes encontró un back edge."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During DFS on a directed graph you find an edge pointing to a node that is currently in the recursion stack (gray). What does this mean?",
+              "es": "Durante un DFS en un grafo dirigido encuentras una arista hacia un nodo que está actualmente en el stack de recursión (gris). ¿Qué significa?"
+            },
+            "options": [
+              {
+                "en": "The graph is disconnected",
+                "es": "El grafo está desconectado"
+              },
+              {
+                "en": "The graph is a tree",
+                "es": "El grafo es un árbol"
+              },
+              {
+                "en": "There is a cycle — it's a back edge",
+                "es": "Hay un ciclo — es un back edge"
+              },
+              {
+                "en": "The node has already been fully processed",
+                "es": "El nodo ya fue procesado por completo"
+              }
+            ],
+            "explanation": {
+              "en": "A gray node is an ancestor in the current DFS path; an edge back to it closes a cycle.",
+              "es": "Un nodo gris es un ancestro en el camino DFS actual; una arista hacia él cierra un ciclo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write a function `hasCycle(head)` that detects whether a singly linked list has a cycle, using O(1) extra memory (Floyd's algorithm). Each node has a `next` property.",
+              "es": "Escribe una función `hasCycle(head)` que detecte si una lista enlazada simple tiene un ciclo, usando O(1) de memoria extra (algoritmo de Floyd). Cada nodo tiene una propiedad `next`."
+            },
+            "language": "javascript",
+            "starter_code": "function hasCycle(head) {\n  // your code\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must use two pointers (slow advancing 1, fast advancing 2), loop while fast and fast.next exist, return true if the pointers meet and false when fast reaches the end. O(1) extra memory: no sets/arrays of visited nodes.",
+              "es": "Debe usar dos punteros (lento avanza 1, rápido avanza 2), iterar mientras existan fast y fast.next, devolver true si los punteros se encuentran y false cuando fast llegue al final. Memoria extra O(1): sin sets/arrays de nodos visitados."
+            },
+            "reference": "function hasCycle(head) {\n  let slow = head, fast = head;\n  while (fast && fast.next) {\n    slow = slow.next;\n    fast = fast.next.next;\n    if (slow === fast) return true;\n  }\n  return false;\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You add edges one by one to an undirected graph using Union-Find (disjoint sets). At what moment does an edge reveal a cycle?",
+              "es": "Agregas aristas una por una a un grafo no dirigido usando Union-Find (conjuntos disjuntos). ¿En qué momento una arista revela un ciclo?"
+            },
+            "options": [
+              {
+                "en": "When one endpoint's set has a higher rank than the other's",
+                "es": "Cuando el conjunto de un extremo tiene mayor rango que el del otro"
+              },
+              {
+                "en": "When the union operation triggers path compression",
+                "es": "Cuando la operación de unión dispara la compresión de caminos"
+              },
+              {
+                "en": "When the edge connects two different sets",
+                "es": "Cuando la arista conecta dos conjuntos diferentes"
+              },
+              {
+                "en": "When both endpoints already belong to the same set — the new edge closes a loop between already-connected nodes",
+                "es": "Cuando ambos extremos ya pertenecen al mismo conjunto — la nueva arista cierra un lazo entre nodos ya conectados"
+              }
+            ],
+            "explanation": {
+              "en": "If find(u) == find(v) before the union, u and v are already connected by some path; adding the edge u–v creates a second path between them, i.e. a cycle. This is exactly how Kruskal's MST algorithm skips edges.",
+              "es": "Si find(u) == find(v) antes de la unión, u y v ya están conectados por algún camino; agregar la arista u–v crea un segundo camino entre ellos, es decir, un ciclo. Así es exactamente como el algoritmo de Kruskal para MST descarta aristas."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "tree-vs-graph",
+      "question": {
+        "en": "What is the difference between a tree and a graph?",
+        "es": "¿Cuál es la diferencia entre un árbol y un grafo?"
+      },
+      "definition": {
+        "en": "A **graph** is a set of nodes connected by edges — no structural constraints: it can have cycles, disconnected parts, and directed or undirected edges.\n\nA **tree** is a restricted graph: **connected, acyclic**, with exactly n−1 edges for n nodes. Rooted trees add hierarchy: every node except the root has exactly one parent.\n\nEvery tree is a graph; not every graph is a tree.",
+        "es": "Un **grafo** es un conjunto de nodos conectados por aristas — sin restricciones estructurales: puede tener ciclos, partes desconectadas y aristas dirigidas o no dirigidas.\n\nUn **árbol** es un grafo restringido: **conexo y acíclico**, con exactamente n−1 aristas para n nodos. Los árboles con raíz agregan jerarquía: todo nodo salvo la raíz tiene exactamente un padre.\n\nTodo árbol es un grafo; no todo grafo es un árbol."
+      },
+      "examples": [
+        {
+          "en": "The DOM and file systems are trees: strict parent-child hierarchy, no cycles.",
+          "es": "El DOM y los sistemas de archivos son árboles: jerarquía estricta padre-hijo, sin ciclos."
+        },
+        {
+          "en": "A microservices dependency map is a general (hopefully acyclic) directed graph — services can share dependencies.",
+          "es": "Un mapa de dependencias de microservicios es un grafo dirigido general (ojalá acíclico) — los servicios pueden compartir dependencias."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which conditions make a connected structure of n nodes a tree? (select all that apply)",
+              "es": "¿Qué condiciones hacen que una estructura conexa de n nodos sea un árbol? (selecciona todas las que apliquen)"
+            },
+            "options": [
+              {
+                "en": "It has exactly n − 1 edges",
+                "es": "Tiene exactamente n − 1 aristas"
+              },
+              {
+                "en": "All edges must be directed",
+                "es": "Todas las aristas deben ser dirigidas"
+              },
+              {
+                "en": "It has no cycles",
+                "es": "No tiene ciclos"
+              },
+              {
+                "en": "Every node has exactly two children",
+                "es": "Todo nodo tiene exactamente dos hijos"
+              }
+            ],
+            "multiple": true,
+            "explanation": {
+              "en": "Connected + acyclic ⇔ connected with n−1 edges. Binary structure and directedness are not required.",
+              "es": "Conexo + acíclico ⇔ conexo con n−1 aristas. La estructura binaria y la dirección no son requisitos."
+            }
+          },
+          "solution": {
+            "correct": [
+              0,
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each real-world structure with tree or graph.",
+              "es": "Conecta cada estructura del mundo real con árbol o grafo."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "File system directories",
+                  "es": "Directorios del sistema de archivos"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Social network friendships",
+                  "es": "Amistades en una red social"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "HTML DOM",
+                  "es": "DOM de HTML"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Road network between cities",
+                  "es": "Red de carreteras entre ciudades"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Tree (single parent hierarchy)",
+                  "es": "Árbol (jerarquía de un solo padre)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Graph (cycles and shared connections)",
+                  "es": "Grafo (ciclos y conexiones compartidas)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Tree (nested elements)",
+                  "es": "Árbol (elementos anidados)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Graph (multiple routes between nodes)",
+                  "es": "Grafo (múltiples rutas entre nodos)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A connected undirected graph has n nodes and exactly n edges. What can you conclude about its structure?",
+              "es": "Un grafo no dirigido conexo tiene n nodos y exactamente n aristas. ¿Qué puedes concluir sobre su estructura?"
+            },
+            "options": [
+              {
+                "en": "It is acyclic but some node has two parents",
+                "es": "Es acíclico pero algún nodo tiene dos padres"
+              },
+              {
+                "en": "It contains exactly one cycle — it has one edge more than a tree needs",
+                "es": "Contiene exactamente un ciclo — tiene una arista más de las que necesita un árbol"
+              },
+              {
+                "en": "It must be disconnected",
+                "es": "Debe estar desconectado"
+              },
+              {
+                "en": "It is a tree",
+                "es": "Es un árbol"
+              }
+            ],
+            "explanation": {
+              "en": "A connected graph on n nodes needs exactly n−1 edges to be a tree (connected and acyclic). One extra edge joins two already-connected nodes, closing exactly one cycle.",
+              "es": "Un grafo conexo de n nodos necesita exactamente n−1 aristas para ser un árbol (conexo y acíclico). Una arista extra une dos nodos ya conectados, cerrando exactamente un ciclo."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "amortized-complexity",
+      "question": {
+        "en": "What is amortized complexity, and why is appending to a dynamic array O(1) amortized?",
+        "es": "¿Qué es la complejidad amortizada y por qué agregar a un array dinámico es O(1) amortizado?"
+      },
+      "definition": {
+        "en": "**Amortized complexity** is the average cost per operation over a *sequence* of operations, even if some individual operations are expensive.\n\nA dynamic array (Python list, JS array, Java ArrayList) doubles its capacity when full. Most appends cost O(1); occasionally one append triggers an O(n) copy. But that O(n) copy happens only after n cheap appends, so the total cost of n appends is O(n) → **O(1) amortized per append**.\n\nKey interview distinction: amortized ≠ average-case. Amortized is a *guarantee over any sequence*; average-case depends on input distribution.",
+        "es": "La **complejidad amortizada** es el costo promedio por operación sobre una *secuencia* de operaciones, aunque algunas operaciones individuales sean caras.\n\nUn array dinámico (list de Python, array de JS, ArrayList de Java) duplica su capacidad al llenarse. La mayoría de los appends cuestan O(1); ocasionalmente uno dispara una copia O(n). Pero esa copia O(n) ocurre solo después de n appends baratos, así que el costo total de n appends es O(n) → **O(1) amortizado por append**.\n\nDistinción clave de entrevista: amortizado ≠ caso promedio. Amortizado es una *garantía sobre cualquier secuencia*; el caso promedio depende de la distribución de la entrada."
+      },
+      "examples": [
+        {
+          "en": "Hash table resizing follows the same argument: occasional O(n) rehash, O(1) amortized inserts.",
+          "es": "El redimensionamiento de una hash table sigue el mismo argumento: rehash O(n) ocasional, inserciones O(1) amortizadas."
+        },
+        {
+          "en": "Latency spikes in production can literally be an amortization artifact: p99 slower than p50 because some requests pay for a resize or a GC pause.",
+          "es": "Los picos de latencia en producción pueden ser literalmente un artefacto de amortización: el p99 más lento que el p50 porque algunas peticiones pagan un resize o una pausa de GC."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A dynamic array of capacity 8 is full and you append one more element. What happens, and what is the cost of that specific operation?",
+              "es": "Un array dinámico de capacidad 8 está lleno y agregas un elemento más. ¿Qué pasa y cuál es el costo de esa operación específica?"
+            },
+            "options": [
+              {
+                "en": "It allocates a bigger array (e.g. 16) and copies the 8 elements — O(n) for this append",
+                "es": "Reserva un array mayor (p. ej. 16) y copia los 8 elementos — O(n) para este append"
+              },
+              {
+                "en": "It compresses the existing elements — O(log n)",
+                "es": "Comprime los elementos existentes — O(log n)"
+              },
+              {
+                "en": "It stores the element in a linked overflow list — O(1)",
+                "es": "Guarda el elemento en una lista de desborde enlazada — O(1)"
+              },
+              {
+                "en": "It rejects the insert",
+                "es": "Rechaza la inserción"
+              }
+            ],
+            "explanation": {
+              "en": "The resize copies all elements, making this one append O(n); the doubling strategy makes appends O(1) amortized.",
+              "es": "El resize copia todos los elementos, haciendo ese append O(n); la estrategia de duplicación hace que los appends sean O(1) amortizados."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "In one or two sentences: why is appending to a dynamic array O(1) amortized even though a single append can cost O(n)?",
+              "es": "En una o dos frases: ¿por qué agregar a un array dinámico es O(1) amortizado aunque un append individual pueda costar O(n)?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that expensive O(n) resizes happen rarely (after ~n cheap appends because capacity doubles), so the total cost of n appends is O(n), averaging O(1) per operation.",
+              "es": "Debe decir que los resizes O(n) caros ocurren rara vez (tras ~n appends baratos porque la capacidad se duplica), así que el costo total de n appends es O(n), promediando O(1) por operación."
+            },
+            "reference": "Because capacity doubles, an O(n) copy happens only after n cheap O(1) appends. The total for n appends is about 2n operations, so each append costs O(1) amortized."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A junior teammate changes a dynamic array to grow by a fixed 10 slots instead of doubling whenever it fills up. What happens to the amortized cost of append?",
+              "es": "Un compañero junior cambia un array dinámico para que crezca en 10 slots fijos en lugar de duplicarse cada vez que se llena. ¿Qué pasa con el costo amortizado del append?"
+            },
+            "options": [
+              {
+                "en": "Nothing — it stays O(1) amortized because resizes are still occasional",
+                "es": "Nada — sigue siendo O(1) amortizado porque los resizes siguen siendo ocasionales"
+              },
+              {
+                "en": "It improves to O(log n) because the copies are smaller",
+                "es": "Mejora a O(log n) porque las copias son más pequeñas"
+              },
+              {
+                "en": "Appends become O(1) worst case, since 10 is a constant",
+                "es": "Los appends pasan a ser O(1) en el peor caso, ya que 10 es una constante"
+              },
+              {
+                "en": "It degrades to O(n) amortized: a resize now fires every 10 appends and each one copies all n elements",
+                "es": "Se degrada a O(n) amortizado: ahora un resize se dispara cada 10 appends y cada uno copia los n elementos"
+              }
+            ],
+            "explanation": {
+              "en": "The O(1) amortized guarantee depends on geometric (multiplicative) growth. With arithmetic growth, inserting n elements triggers ~n/10 resizes copying ~n elements each: O(n²) total, O(n) amortized per append.",
+              "es": "La garantía de O(1) amortizado depende del crecimiento geométrico (multiplicativo). Con crecimiento aritmético, insertar n elementos dispara ~n/10 resizes que copian ~n elementos cada uno: O(n²) en total, O(n) amortizado por append."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "lru-cache",
+      "question": {
+        "en": "How would you implement an LRU cache?",
+        "es": "¿Cómo implementarías un caché LRU?"
+      },
+      "definition": {
+        "en": "An **LRU (Least Recently Used) cache** evicts the entry that hasn't been used for the longest time when it's full. The classic O(1) design combines two structures:\n\n- A **hash map** from key → node, for O(1) lookup.\n- A **doubly linked list** ordering entries by recency: most recent at the head, least recent at the tail.\n\nOn `get`: find the node via the map, move it to the head. On `put`: insert/update at the head; if over capacity, remove the tail node and delete its key from the map. Every operation is O(1).",
+        "es": "Un **caché LRU (Least Recently Used)** expulsa la entrada que lleva más tiempo sin usarse cuando se llena. El diseño clásico O(1) combina dos estructuras:\n\n- Un **hash map** de clave → nodo, para búsqueda O(1).\n- Una **lista doblemente enlazada** ordenando entradas por recencia: la más reciente en la cabeza, la menos reciente en la cola.\n\nEn `get`: encuentra el nodo por el map y muévelo a la cabeza. En `put`: inserta/actualiza en la cabeza; si supera la capacidad, elimina el nodo de la cola y borra su clave del map. Toda operación es O(1)."
+      },
+      "examples": [
+        {
+          "en": "Redis with `maxmemory-policy allkeys-lru` evicts approximately-LRU keys when memory is full.",
+          "es": "Redis con `maxmemory-policy allkeys-lru` expulsa claves aproximadamente LRU cuando se llena la memoria."
+        },
+        {
+          "en": "CPU caches, the browser's back/forward cache and CDN edge caches all apply recency-based eviction.",
+          "es": "Las cachés de CPU, el back/forward cache del navegador y las cachés de borde de un CDN aplican expulsión basada en recencia."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each LRU component with its responsibility.",
+              "es": "Conecta cada componente del LRU con su responsabilidad."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Hash map",
+                  "es": "Hash map"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Doubly linked list",
+                  "es": "Lista doblemente enlazada"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "List head",
+                  "es": "Cabeza de la lista"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "List tail",
+                  "es": "Cola de la lista"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "O(1) lookup from key to node",
+                  "es": "Búsqueda O(1) de clave a nodo"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Keeps recency order with O(1) moves",
+                  "es": "Mantiene el orden de recencia con movimientos O(1)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Most recently used entry",
+                  "es": "Entrada usada más recientemente"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Next entry to evict",
+                  "es": "Próxima entrada a expulsar"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Implement an LRU cache in Python with `get(key)` and `put(key, value)` and a max capacity. You may use `collections.OrderedDict` (or a dict + your own list). Both operations must be O(1).",
+              "es": "Implementa un caché LRU en Python con `get(key)` y `put(key, value)` y una capacidad máxima. Puedes usar `collections.OrderedDict` (o un dict + tu propia lista). Ambas operaciones deben ser O(1)."
+            },
+            "language": "python",
+            "starter_code": "class LRUCache:\n    def __init__(self, capacity: int):\n        pass\n\n    def get(self, key):\n        pass\n\n    def put(self, key, value):\n        pass"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must store capacity; get must return the value and mark the key as most recently used (e.g. move_to_end) or return -1/None if missing; put must insert/update, mark as recent, and evict the least recently used entry (e.g. popitem(last=False)) when over capacity. O(1) operations.",
+              "es": "Debe guardar la capacidad; get debe devolver el valor y marcar la clave como usada recientemente (p. ej. move_to_end) o devolver -1/None si no existe; put debe insertar/actualizar, marcar como reciente y expulsar la entrada menos usada (p. ej. popitem(last=False)) al superar la capacidad. Operaciones O(1)."
+            },
+            "reference": "from collections import OrderedDict\n\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.capacity = capacity\n        self.data = OrderedDict()\n\n    def get(self, key):\n        if key not in self.data:\n            return -1\n        self.data.move_to_end(key)\n        return self.data[key]\n\n    def put(self, key, value):\n        if key in self.data:\n            self.data.move_to_end(key)\n        self.data[key] = value\n        if len(self.data) > self.capacity:\n            self.data.popitem(last=False)"
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps an O(1) LRU cache performs on a `get(key)` that hits (the key exists).",
+              "es": "Ordena los pasos que realiza un caché LRU O(1) en un `get(clave)` que acierta (la clave existe)."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "lookup",
+                "label": {
+                  "en": "Look up the key in the hash map to find its node",
+                  "es": "Buscar la clave en el hash map para encontrar su nodo"
+                }
+              },
+              {
+                "id": "unlink",
+                "label": {
+                  "en": "Unlink the node from its current position in the list",
+                  "es": "Desenlazar el nodo de su posición actual en la lista"
+                }
+              },
+              {
+                "id": "head",
+                "label": {
+                  "en": "Re-insert the node at the head (most recently used)",
+                  "es": "Reinsertar el nodo en la cabeza (usado más recientemente)"
+                }
+              },
+              {
+                "id": "value",
+                "label": {
+                  "en": "Return the node's value",
+                  "es": "Devolver el valor del nodo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "lookup",
+              "unlink",
+              "head",
+              "value"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "binary-search",
+      "question": {
+        "en": "Explain binary search and its complexity.",
+        "es": "Explica la búsqueda binaria y su complejidad."
+      },
+      "definition": {
+        "en": "**Binary search** finds a target in a **sorted** array by halving the search range: compare the middle element; if the target is smaller go left, if larger go right. Each step discards half the candidates → **O(log n)** time, O(1) space (iterative).\n\nClassic pitfalls interviewers watch for: integer overflow in `mid = (lo + hi) / 2` (use `lo + (hi - lo) // 2`), off-by-one boundaries, and forgetting the precondition that data must be sorted.",
+        "es": "La **búsqueda binaria** encuentra un objetivo en un array **ordenado** partiendo el rango a la mitad: compara el elemento del medio; si el objetivo es menor va a la izquierda, si es mayor a la derecha. Cada paso descarta la mitad de los candidatos → tiempo **O(log n)**, espacio O(1) (iterativa).\n\nErrores clásicos que miran los entrevistadores: overflow de enteros en `mid = (lo + hi) / 2` (usa `lo + (hi - lo) // 2`), límites con off-by-one y olvidar la precondición de que los datos estén ordenados."
+      },
+      "examples": [
+        {
+          "en": "Database B-tree indexes apply the same halving idea at each level to locate a key among millions in a handful of steps.",
+          "es": "Los índices B-tree de bases de datos aplican la misma idea de partir a la mitad en cada nivel para localizar una clave entre millones en pocos pasos."
+        },
+        {
+          "en": "`git bisect` binary-searches your commit history to find which commit introduced a bug.",
+          "es": "`git bisect` hace búsqueda binaria en el historial de commits para encontrar cuál introdujo un bug."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write an iterative `binarySearch(arr, target)` that returns the index of `target` in the sorted array `arr`, or -1 if not present.",
+              "es": "Escribe un `binarySearch(arr, target)` iterativo que devuelva el índice de `target` en el array ordenado `arr`, o -1 si no está."
+            },
+            "language": "javascript",
+            "starter_code": "function binarySearch(arr, target) {\n  // your code\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must keep lo/hi bounds, loop while lo <= hi, compute mid, return mid on match, move lo=mid+1 or hi=mid-1 correctly, and return -1 when not found. Iterative (no recursion required but acceptable if correct).",
+              "es": "Debe mantener límites lo/hi, iterar mientras lo <= hi, calcular mid, devolver mid al coincidir, mover lo=mid+1 o hi=mid-1 correctamente y devolver -1 si no se encuentra. Iterativa (la recursión es aceptable si es correcta)."
+            },
+            "reference": "function binarySearch(arr, target) {\n  let lo = 0, hi = arr.length - 1;\n  while (lo <= hi) {\n    const mid = lo + Math.floor((hi - lo) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) lo = mid + 1;\n    else hi = mid - 1;\n  }\n  return -1;\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How many comparisons does binary search need at most for an array of 1,000,000 elements?",
+              "es": "¿Cuántas comparaciones necesita como máximo la búsqueda binaria para un array de 1.000.000 de elementos?"
+            },
+            "options": [
+              {
+                "en": "About 1,000",
+                "es": "Alrededor de 1.000"
+              },
+              {
+                "en": "Exactly 100",
+                "es": "Exactamente 100"
+              },
+              {
+                "en": "About 20 (log2 of 1M)",
+                "es": "Alrededor de 20 (log2 de 1M)"
+              },
+              {
+                "en": "About 500,000",
+                "es": "Alrededor de 500.000"
+              }
+            ],
+            "explanation": {
+              "en": "2^20 ≈ 1,048,576, so ~20 halvings cover a million elements.",
+              "es": "2^20 ≈ 1.048.576, así que ~20 mitades cubren un millón de elementos."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In languages with fixed-size integers (Java, C++), why is `mid = lo + (hi - lo) / 2` preferred over `mid = (lo + hi) / 2` in binary search?",
+              "es": "En lenguajes con enteros de tamaño fijo (Java, C++), ¿por qué se prefiere `mid = lo + (hi - lo) / 2` sobre `mid = (lo + hi) / 2` en la búsqueda binaria?"
+            },
+            "options": [
+              {
+                "en": "It rounds toward `hi`, making the search converge in fewer steps",
+                "es": "Redondea hacia `hi`, haciendo que la búsqueda converja en menos pasos"
+              },
+              {
+                "en": "It is faster because subtraction is cheaper than addition",
+                "es": "Es más rápida porque la resta es más barata que la suma"
+              },
+              {
+                "en": "`lo + hi` can overflow the integer type for large arrays, while `hi - lo` never exceeds the array length",
+                "es": "`lo + hi` puede desbordar el tipo entero en arrays grandes, mientras que `hi - lo` nunca supera la longitud del array"
+              },
+              {
+                "en": "It also works when the array is unsorted",
+                "es": "También funciona cuando el array no está ordenado"
+              }
+            ],
+            "explanation": {
+              "en": "With lo and hi both near 2³¹ − 1, their sum overflows a 32-bit int and mid becomes negative — a famous bug that lived in the JDK's binarySearch for years. Subtracting first keeps every intermediate value in range.",
+              "es": "Con lo y hi cerca de 2³¹ − 1, su suma desborda un int de 32 bits y mid se vuelve negativo — un bug famoso que vivió años en el binarySearch del JDK. Restar primero mantiene todos los valores intermedios dentro del rango."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "top-k-elements",
+      "question": {
+        "en": "How would you find the top K elements of a large dataset — or one that doesn't fit in memory?",
+        "es": "¿Cómo encontrarías los K elementos mayores de un dataset grande — o uno que no cabe en memoria?"
+      },
+      "definition": {
+        "en": "Standard answer: keep a **min-heap of size K** while streaming the data once. For each element: if it's larger than the heap's root, replace the root. Cost: **O(n log K)** time, **O(K)** memory — independent of dataset size, so it works for data that doesn't fit in RAM (read it in chunks/streams).\n\nFor distributed data: compute top-K per partition (map), then merge the partial top-Ks (reduce). Alternatives: quickselect (O(n) average, needs data in memory), or sorting (O(n log n), wasteful if K << n).",
+        "es": "Respuesta estándar: mantén un **min-heap de tamaño K** mientras recorres los datos una vez. Por cada elemento: si es mayor que la raíz del heap, reemplaza la raíz. Costo: **O(n log K)** de tiempo, **O(K)** de memoria — independiente del tamaño del dataset, así que funciona con datos que no caben en RAM (léelos por chunks/streams).\n\nPara datos distribuidos: calcula top-K por partición (map) y luego mezcla los top-K parciales (reduce). Alternativas: quickselect (O(n) promedio, requiere datos en memoria) u ordenar (O(n log n), desperdicio si K << n)."
+      },
+      "examples": [
+        {
+          "en": "'Top 10 trending topics' on social platforms merge per-shard top-K heaps computed over event streams.",
+          "es": "Los 'top 10 tendencias' de redes sociales mezclan heaps top-K por shard calculados sobre streams de eventos."
+        },
+        {
+          "en": "Finding the 100 slowest queries in a 500 GB log file: stream line by line with a size-100 min-heap — no need to load the file.",
+          "es": "Hallar las 100 queries más lentas en un log de 500 GB: recorre línea a línea con un min-heap de tamaño 100 — sin cargar el archivo."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the time and space complexity of finding the top K of n elements with a bounded min-heap?",
+              "es": "¿Cuál es la complejidad de tiempo y espacio de hallar el top K de n elementos con un min-heap acotado?"
+            },
+            "options": [
+              {
+                "en": "O(n log K) time, O(K) space",
+                "es": "O(n log K) de tiempo, O(K) de espacio"
+              },
+              {
+                "en": "O(n²) time, O(1) space",
+                "es": "O(n²) de tiempo, O(1) de espacio"
+              },
+              {
+                "en": "O(K log n) time, O(n) space",
+                "es": "O(K log n) de tiempo, O(n) de espacio"
+              },
+              {
+                "en": "O(n log n) time, O(n) space",
+                "es": "O(n log n) de tiempo, O(n) de espacio"
+              }
+            ],
+            "explanation": {
+              "en": "Each of the n elements may trigger one O(log K) heap operation, and the heap never exceeds K entries.",
+              "es": "Cada uno de los n elementos puede disparar una operación de heap O(log K), y el heap nunca supera K entradas."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You must find the 50 most frequent user IDs in a 2 TB log file using one machine with 8 GB of RAM. Describe your approach.",
+              "es": "Debes hallar los 50 IDs de usuario más frecuentes en un log de 2 TB usando una máquina con 8 GB de RAM. Describe tu enfoque."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must handle the memory constraint: e.g. hash-partition the file into smaller chunks by user ID so each chunk's counts fit in RAM, count per chunk, then merge results with a size-50 min-heap. Streaming + partitioning + bounded heap are the key ideas (approximate structures like count-min sketch are also acceptable).",
+              "es": "Debe manejar la restricción de memoria: p. ej. particionar el archivo por hash del user ID en chunks cuyos conteos quepan en RAM, contar por chunk y mezclar resultados con un min-heap de tamaño 50. Streaming + particionado + heap acotado son las ideas clave (estructuras aproximadas como count-min sketch también son aceptables)."
+            },
+            "reference": "Stream the file once, hash-partitioning lines into e.g. 256 temp files by hash(user_id) % 256 — same ID always lands in the same file. Count frequencies per partition (each fits in RAM), keep a global min-heap of size 50 of (count, id), and after all partitions the heap holds the answer."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When is quickselect a better choice than a bounded min-heap for finding the top K elements?",
+              "es": "¿Cuándo es quickselect una mejor opción que un min-heap acotado para hallar los K elementos mayores?"
+            },
+            "options": [
+              {
+                "en": "Never — the heap is asymptotically better in every scenario",
+                "es": "Nunca — el heap es asintóticamente mejor en todos los escenarios"
+              },
+              {
+                "en": "When the whole dataset fits in memory and you need a one-shot answer: quickselect averages O(n), beating O(n log K)",
+                "es": "Cuando todo el dataset cabe en memoria y necesitas una respuesta única: quickselect promedia O(n), superando O(n log K)"
+              },
+              {
+                "en": "When the data arrives as an unbounded stream",
+                "es": "Cuando los datos llegan como un stream sin fin"
+              },
+              {
+                "en": "When the input array must not be modified, since quickselect never reorders elements",
+                "es": "Cuando el array de entrada no debe modificarse, ya que quickselect nunca reordena elementos"
+              }
+            ],
+            "explanation": {
+              "en": "Quickselect partitions in place until the K-th boundary is placed, averaging O(n) — but it needs random access to all data and mutates the array. Streams or out-of-core data still call for the bounded heap.",
+              "es": "Quickselect particiona in-place hasta ubicar la frontera del K-ésimo, promediando O(n) — pero necesita acceso aleatorio a todos los datos y muta el array. Los streams o datos que no caben en memoria siguen pidiendo el heap acotado."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "merge-vs-quicksort",
+      "question": {
+        "en": "What's the difference between merge sort and quicksort, and when would you prefer a hash-based solution over sorting?",
+        "es": "¿Cuál es la diferencia entre merge sort y quicksort, y cuándo preferirías una solución con hash en lugar de ordenar?"
+      },
+      "definition": {
+        "en": "**Merge sort**: always O(n log n), **stable**, needs O(n) extra memory, great for linked lists and external sorting (data on disk). **Quicksort**: O(n log n) average but O(n²) worst case (bad pivots), in-place, cache-friendly — usually fastest in practice with randomized pivots.\n\nLanguages hedge: Python and Java (objects) use Timsort (merge-based, stable); Java primitives use dual-pivot quicksort.\n\nPrefer a **hash-based solution over sorting** when you only need membership, counting, or duplicate detection: a hash set answers 'have I seen this?' in O(1) per element (O(n) total) versus O(n log n) for sort-then-scan — and it works on streams.",
+        "es": "**Merge sort**: siempre O(n log n), **estable**, requiere O(n) de memoria extra, ideal para listas enlazadas y ordenamiento externo (datos en disco). **Quicksort**: O(n log n) promedio pero O(n²) en el peor caso (malos pivotes), in-place y amigable con la caché — normalmente el más rápido en la práctica con pivotes aleatorios.\n\nLos lenguajes se cubren: Python y Java (objetos) usan Timsort (basado en merge, estable); los primitivos de Java usan quicksort de doble pivote.\n\nPrefiere una **solución con hash en lugar de ordenar** cuando solo necesitas pertenencia, conteo o detección de duplicados: un hash set responde '¿ya vi esto?' en O(1) por elemento (O(n) total) contra O(n log n) de ordenar y escanear — y funciona sobre streams."
+      },
+      "examples": [
+        {
+          "en": "Deduplicating click events in a streaming pipeline uses a hash set (or Redis SETNX) keyed by event ID — no sorting involved.",
+          "es": "Deduplicar eventos de clic en un pipeline de streaming usa un hash set (o SETNX de Redis) por ID de evento — sin ordenar nada."
+        },
+        {
+          "en": "External merge sort is how databases sort result sets larger than memory: sort chunks in RAM, write runs to disk, merge the runs.",
+          "es": "El merge sort externo es como las bases de datos ordenan resultados más grandes que la memoria: ordenan chunks en RAM, escriben corridas a disco y las mezclan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each property with merge sort or quicksort.",
+              "es": "Conecta cada propiedad con merge sort o quicksort."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Guaranteed O(n log n) in the worst case",
+                  "es": "O(n log n) garantizado en el peor caso"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "O(n²) worst case with bad pivots",
+                  "es": "Peor caso O(n²) con malos pivotes"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Stable and great for external sorting",
+                  "es": "Estable e ideal para ordenamiento externo"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "In-place and cache-friendly",
+                  "es": "In-place y amigable con la caché"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Merge sort",
+                  "es": "Merge sort"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Quicksort",
+                  "es": "Quicksort"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Merge sort (preserves equal-key order)",
+                  "es": "Merge sort (preserva el orden de claves iguales)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Quicksort (partitions within the array)",
+                  "es": "Quicksort (particiona dentro del array)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need to detect duplicate event IDs arriving in a stream. Which approach is most efficient?",
+              "es": "Necesitas detectar IDs de eventos duplicados que llegan en un stream. ¿Qué enfoque es más eficiente?"
+            },
+            "options": [
+              {
+                "en": "Sort all events at the end of the day and scan",
+                "es": "Ordenar todos los eventos al final del día y escanear"
+              },
+              {
+                "en": "Store events in a binary search tree and rebalance",
+                "es": "Guardar los eventos en un árbol binario de búsqueda y rebalancear"
+              },
+              {
+                "en": "A hash set of seen IDs — O(1) per event",
+                "es": "Un hash set de IDs vistos — O(1) por evento"
+              },
+              {
+                "en": "Compare each event against all previous ones",
+                "es": "Comparar cada evento contra todos los anteriores"
+              }
+            ],
+            "explanation": {
+              "en": "Membership checks are the textbook case for hashing: O(n) total and it works online, per event, without waiting for all data.",
+              "es": "Los chequeos de pertenencia son el caso de libro para hashing: O(n) total y funciona online, por evento, sin esperar todos los datos."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You sorted support tickets by creation date and now re-sort the same list by customer. Tickets of each customer must remain in date order. What do you need?",
+              "es": "Ordenaste tickets de soporte por fecha de creación y ahora reordenas la misma lista por cliente. Los tickets de cada cliente deben conservar el orden por fecha. ¿Qué necesitas?"
+            },
+            "options": [
+              {
+                "en": "A stable sort (merge sort / Timsort): it preserves the relative order of records with equal keys",
+                "es": "Un ordenamiento estable (merge sort / Timsort): preserva el orden relativo de los registros con claves iguales"
+              },
+              {
+                "en": "Nothing special — every comparison sort preserves the order of equal keys",
+                "es": "Nada especial — todo ordenamiento por comparación preserva el orden de claves iguales"
+              },
+              {
+                "en": "A hash table keyed by customer, since hashing keeps insertion order",
+                "es": "Una hash table indexada por cliente, ya que el hashing conserva el orden de inserción"
+              },
+              {
+                "en": "Quicksort with a randomized pivot to avoid the O(n²) worst case",
+                "es": "Quicksort con pivote aleatorio para evitar el peor caso O(n²)"
+              }
+            ],
+            "explanation": {
+              "en": "Stability is exactly this guarantee: equal keys keep their prior relative order. That's why Python's sorted() and Java's object sort use Timsort — chained multi-key sorts just work. Plain quicksort is not stable.",
+              "es": "La estabilidad es exactamente esta garantía: las claves iguales conservan su orden relativo previo. Por eso sorted() de Python y el sort de objetos de Java usan Timsort — los ordenamientos encadenados por varias claves simplemente funcionan. El quicksort clásico no es estable."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the average complexity of a hash table lookup?",
+          "es": "¿Cuál es la complejidad promedio de una búsqueda en hash table?"
+        },
+        "options": [
+          {
+            "en": "O(log n)",
+            "es": "O(log n)"
+          },
+          {
+            "en": "O(1)",
+            "es": "O(1)"
+          },
+          {
+            "en": "O(n log n)",
+            "es": "O(n log n)"
+          },
+          {
+            "en": "O(n)",
+            "es": "O(n)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which structure finds the shortest path in an unweighted graph?",
+          "es": "¿Qué estrategia encuentra el camino más corto en un grafo sin pesos?"
+        },
+        "options": [
+          {
+            "en": "Binary search",
+            "es": "Búsqueda binaria"
+          },
+          {
+            "en": "A min-heap of all nodes",
+            "es": "Un min-heap con todos los nodos"
+          },
+          {
+            "en": "BFS with a queue",
+            "es": "BFS con una cola"
+          },
+          {
+            "en": "DFS with a stack",
+            "es": "DFS con una pila"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Inserting at the middle of an array of n elements costs...",
+          "es": "Insertar en el medio de un array de n elementos cuesta..."
+        },
+        "options": [
+          {
+            "en": "O(log n) — binary positioning",
+            "es": "O(log n) — posicionamiento binario"
+          },
+          {
+            "en": "O(1) — direct memory write",
+            "es": "O(1) — escritura directa en memoria"
+          },
+          {
+            "en": "O(n) — elements must shift",
+            "es": "O(n) — hay que desplazar elementos"
+          },
+          {
+            "en": "O(n²)",
+            "es": "O(n²)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which two structures combined give an O(1) LRU cache?",
+          "es": "¿Qué dos estructuras combinadas dan un caché LRU O(1)?"
+        },
+        "options": [
+          {
+            "en": "Hash map + doubly linked list",
+            "es": "Hash map + lista doblemente enlazada"
+          },
+          {
+            "en": "Array + binary heap",
+            "es": "Array + heap binario"
+          },
+          {
+            "en": "Two stacks",
+            "es": "Dos pilas"
+          },
+          {
+            "en": "Sorted array + binary search",
+            "es": "Array ordenado + búsqueda binaria"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Appending to a dynamic array is O(1) amortized because...",
+          "es": "Agregar a un array dinámico es O(1) amortizado porque..."
+        },
+        "options": [
+          {
+            "en": "Amortized means average over random inputs",
+            "es": "Amortizado significa promedio sobre entradas aleatorias"
+          },
+          {
+            "en": "Appends never trigger copies",
+            "es": "Los appends nunca disparan copias"
+          },
+          {
+            "en": "The OS preallocates infinite memory",
+            "es": "El SO prereserva memoria infinita"
+          },
+          {
+            "en": "O(n) resizes are rare: capacity doubles, so total cost of n appends is O(n)",
+            "es": "Los resizes O(n) son raros: la capacidad se duplica, así que el costo total de n appends es O(n)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A binary min-heap guarantees...",
+          "es": "Un min-heap binario garantiza..."
+        },
+        "options": [
+          {
+            "en": "Balanced height only if n is a power of 2",
+            "es": "Altura balanceada solo si n es potencia de 2"
+          },
+          {
+            "en": "The minimum is at the root; insert and extract are O(log n)",
+            "es": "El mínimo está en la raíz; insertar y extraer son O(log n)"
+          },
+          {
+            "en": "The array is fully sorted",
+            "es": "El array está completamente ordenado"
+          },
+          {
+            "en": "O(1) search for any element",
+            "es": "Búsqueda O(1) de cualquier elemento"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "During DFS on a directed graph, a cycle exists if you find an edge to a node that is...",
+          "es": "Durante un DFS en un grafo dirigido, hay un ciclo si encuentras una arista hacia un nodo que está..."
+        },
+        "options": [
+          {
+            "en": "Unvisited (white)",
+            "es": "Sin visitar (blanco)"
+          },
+          {
+            "en": "Already fully processed (black)",
+            "es": "Ya procesado por completo (negro)"
+          },
+          {
+            "en": "In the current recursion stack (gray)",
+            "es": "En el stack de recursión actual (gris)"
+          },
+          {
+            "en": "The root of the DFS",
+            "es": "La raíz del DFS"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which statements about a tree are true? (select all that apply)",
+          "es": "¿Qué afirmaciones sobre un árbol son verdaderas? (selecciona todas las que apliquen)"
+        },
+        "options": [
+          {
+            "en": "It is connected and acyclic",
+            "es": "Es conexo y acíclico"
+          },
+          {
+            "en": "Every graph is also a tree",
+            "es": "Todo grafo es también un árbol"
+          },
+          {
+            "en": "It can contain cycles if directed",
+            "es": "Puede contener ciclos si es dirigido"
+          },
+          {
+            "en": "It has n − 1 edges for n nodes",
+            "es": "Tiene n − 1 aristas para n nodos"
+          }
+        ],
+        "multiple": true
+      },
+      "solution": {
+        "correct": [
+          0,
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "For top-K of n elements with K << n, the best complexity is...",
+          "es": "Para el top-K de n elementos con K << n, la mejor complejidad es..."
+        },
+        "options": [
+          {
+            "en": "O(K log n) with a max-heap of everything",
+            "es": "O(K log n) con un max-heap de todo"
+          },
+          {
+            "en": "O(n log n) by sorting",
+            "es": "O(n log n) ordenando"
+          },
+          {
+            "en": "O(n log K) with a bounded min-heap",
+            "es": "O(n log K) con un min-heap acotado"
+          },
+          {
+            "en": "O(n²) comparing pairs",
+            "es": "O(n²) comparando pares"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Quicksort's worst case O(n²) occurs when...",
+          "es": "El peor caso O(n²) de quicksort ocurre cuando..."
+        },
+        "options": [
+          {
+            "en": "It never happens with any input",
+            "es": "Nunca ocurre con ninguna entrada"
+          },
+          {
+            "en": "The array contains negative numbers",
+            "es": "El array contiene números negativos"
+          },
+          {
+            "en": "The array is too large for memory",
+            "es": "El array no cabe en memoria"
+          },
+          {
+            "en": "Pivots repeatedly split the array very unevenly (e.g. sorted input with first-element pivot)",
+            "es": "Los pivotes parten el array de forma muy desigual repetidamente (p. ej. entrada ordenada con pivote en el primer elemento)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which task is a stack (LIFO) the natural fit for?",
+          "es": "¿Para qué tarea es natural una pila (LIFO)?"
+        },
+        "options": [
+          {
+            "en": "Level-order tree traversal",
+            "es": "Recorrido de árbol por niveles"
+          },
+          {
+            "en": "Fair background job processing",
+            "es": "Procesamiento justo de trabajos en segundo plano"
+          },
+          {
+            "en": "Finding shortest paths",
+            "es": "Encontrar caminos más cortos"
+          },
+          {
+            "en": "Validating balanced parentheses",
+            "es": "Validar paréntesis balanceados"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain how you would find the 10 largest values in a stream of data too large to store, and justify the complexity.",
+          "es": "Explica cómo hallarías los 10 valores más grandes en un stream de datos demasiado grande para almacenar, y justifica la complejidad."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe a min-heap of size 10 (compare each incoming value with the root, replace if larger), O(n log 10) ≈ O(n) time and O(10) = O(1) memory, single pass over the stream.",
+          "es": "Debe describir un min-heap de tamaño 10 (comparar cada valor entrante con la raíz, reemplazar si es mayor), tiempo O(n log 10) ≈ O(n) y memoria O(10) = O(1), una sola pasada sobre el stream."
+        },
+        "reference": "Maintain a min-heap with the 10 largest values seen. For each new value, if it exceeds the heap root, pop the root and push the value. Each operation is O(log 10) = O(1), so the whole stream costs O(n) with constant memory."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "What happens internally when two keys collide in a hash table, and how do real implementations keep lookups fast despite collisions?",
+          "es": "¿Qué pasa internamente cuando dos claves colisionan en una hash table, y cómo mantienen rápidas las búsquedas las implementaciones reales a pesar de las colisiones?"
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must explain that both entries map to the same bucket and describe at least one resolution strategy (chaining or open addressing/probing), plus one mitigation that keeps performance: load-factor-based resizing, good/randomized hash functions, or treeifying long chains.",
+          "es": "Debe explicar que ambas entradas caen al mismo bucket y describir al menos una estrategia de resolución (encadenamiento o direccionamiento abierto/probing), más una mitigación que mantiene el rendimiento: resize por factor de carga, funciones hash buenas/aleatorizadas o convertir cadenas largas en árboles."
+        },
+        "reference": "Colliding keys land in the same bucket. With chaining the bucket stores a small list (Java treeifies chains longer than 8 into red-black trees); with open addressing the table probes other slots. Implementations also resize when the load factor passes ~0.75 and randomize hash seeds, keeping expected chains near length 1 and lookups O(1)."
+      }
+    }
+  ]
+}

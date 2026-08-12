@@ -1,0 +1,2481 @@
+{
+  "slug": "python-django",
+  "order": 10,
+  "icon": "python",
+  "title": {
+    "en": "Python & Django",
+    "es": "Python y Django"
+  },
+  "description": {
+    "en": "Python internals and Django questions asked in backend interviews: data structures, generators, decorators, the GIL, asyncio, the ORM, DRF and Celery.",
+    "es": "Internos de Python y preguntas de Django de entrevistas backend: estructuras de datos, generadores, decoradores, el GIL, asyncio, el ORM, DRF y Celery."
+  },
+  "lessons": [
+    {
+      "slug": "list-vs-tuple",
+      "question": {
+        "en": "What is the difference between a list and a tuple in Python?",
+        "es": "¿Cuál es la diferencia entre una lista y una tupla en Python?"
+      },
+      "definition": {
+        "en": "A **list** is mutable: you can append, remove and reassign elements in place. A **tuple** is immutable: once created, its contents cannot be reassigned. Because of that, a tuple of hashable elements is itself **hashable** and can be used as a `dict` key or stored in a `set` — a list never can.\n\nSemantically, lists hold homogeneous sequences of variable length (rows of users), while tuples hold fixed-shape heterogeneous records (a `(lat, lon)` pair). Tuples are also slightly lighter in memory and can be created faster, and immutability makes them safe to share across code without defensive copies.\n\nWatch out: immutability is shallow. A tuple containing a list, like `(1, [2, 3])`, is not hashable and its inner list can still be mutated.",
+        "es": "Una **lista** es mutable: puedes agregar, eliminar y reasignar elementos en el lugar. Una **tupla** es inmutable: una vez creada, su contenido no puede reasignarse. Por eso, una tupla de elementos hasheables es a su vez **hasheable** y puede usarse como clave de un `dict` o guardarse en un `set` — una lista nunca puede.\n\nSemánticamente, las listas contienen secuencias homogéneas de longitud variable (filas de usuarios), mientras que las tuplas contienen registros heterogéneos de forma fija (un par `(lat, lon)`). Las tuplas además ocupan un poco menos de memoria, se crean más rápido, y la inmutabilidad las hace seguras de compartir sin copias defensivas.\n\nOjo: la inmutabilidad es superficial. Una tupla que contiene una lista, como `(1, [2, 3])`, no es hasheable y su lista interna sí puede mutarse."
+      },
+      "examples": [
+        {
+          "en": "Caching by coordinates: `cache[(lat, lon)] = weather` works because the tuple is hashable; a list key would raise `TypeError: unhashable type`.",
+          "es": "Cachear por coordenadas: `cache[(lat, lon)] = weather` funciona porque la tupla es hasheable; una clave de lista lanzaría `TypeError: unhashable type`."
+        },
+        {
+          "en": "A database driver returns each row as a tuple: the shape is fixed by the SELECT columns and callers should not mutate it, while the collection of rows is a list you can filter and sort.",
+          "es": "Un driver de base de datos devuelve cada fila como tupla: la forma la fija el SELECT y quien la consume no debería mutarla, mientras que la colección de filas es una lista que puedes filtrar y ordenar."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can a tuple be used as a dictionary key while a list cannot?",
+              "es": "¿Por qué una tupla puede usarse como clave de diccionario y una lista no?"
+            },
+            "options": [
+              {
+                "en": "Tuples are faster to iterate than lists",
+                "es": "Las tuplas se iteran más rápido que las listas"
+              },
+              {
+                "en": "Dictionaries only accept built-in scalar types as keys",
+                "es": "Los diccionarios solo aceptan tipos escalares nativos como claves"
+              },
+              {
+                "en": "Lists are too large to fit in a hash bucket",
+                "es": "Las listas son demasiado grandes para caber en un bucket del hash"
+              },
+              {
+                "en": "Tuples are immutable, so their hash stays stable for the dict's lifetime",
+                "es": "Las tuplas son inmutables, así que su hash se mantiene estable durante la vida del dict"
+              }
+            ],
+            "explanation": {
+              "en": "Dict keys must be hashable, and a stable hash requires immutability: if a list mutated after insertion, its bucket would no longer match. A tuple of hashable elements can't change, so its hash is reliable.",
+              "es": "Las claves de un dict deben ser hasheables, y un hash estable requiere inmutabilidad: si una lista mutara tras insertarse, su bucket ya no coincidiría. Una tupla de elementos hasheables no puede cambiar, así que su hash es confiable."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each scenario with the right structure and reason.",
+              "es": "Conecta cada escenario con la estructura correcta y su razón."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Key for a coordinates cache",
+                  "es": "Clave para un caché de coordenadas"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Accumulating items in a loop",
+                  "es": "Acumular elementos en un bucle"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Fixed (host, port) config pair",
+                  "es": "Par fijo de configuración (host, port)"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Queue of tasks to reorder and filter",
+                  "es": "Cola de tareas para reordenar y filtrar"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Tuple — hashable, usable as dict key",
+                  "es": "Tupla — hasheable, sirve como clave de dict"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "List — append is the natural operation",
+                  "es": "Lista — append es la operación natural"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Tuple — fixed-shape record nobody should mutate",
+                  "es": "Tupla — registro de forma fija que nadie debería mutar"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "List — needs in-place sort/remove",
+                  "es": "Lista — necesita ordenar/eliminar en el lugar"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Given `t = (1, [2, 3])`, what happens when you run `t[1].append(4)` and then `hash(t)`?",
+              "es": "Dado `t = (1, [2, 3])`, ¿qué pasa al ejecutar `t[1].append(4)` y luego `hash(t)`?"
+            },
+            "options": [
+              {
+                "en": "Both fail — tuples are fully immutable, so their contents can never change",
+                "es": "Ambos fallan — las tuplas son totalmente inmutables, así que su contenido nunca puede cambiar"
+              },
+              {
+                "en": "The append fails but hash(t) works, because the tuple's structure is intact",
+                "es": "El append falla pero hash(t) funciona, porque la estructura de la tupla está intacta"
+              },
+              {
+                "en": "The append succeeds and hash(t) raises TypeError — tuple immutability is shallow, and a tuple holding a list is not hashable",
+                "es": "El append tiene éxito y hash(t) lanza TypeError — la inmutabilidad de la tupla es superficial, y una tupla que contiene una lista no es hasheable"
+              },
+              {
+                "en": "Both succeed — Python hashes the tuple by its identity (id)",
+                "es": "Ambos tienen éxito — Python hashea la tupla por su identidad (id)"
+              }
+            ],
+            "explanation": {
+              "en": "Tuple immutability only fixes which objects the tuple references, not those objects themselves: the inner list can still be mutated. And because a tuple's hash is derived from its elements, holding an unhashable list makes the whole tuple unhashable.",
+              "es": "La inmutabilidad de la tupla solo fija qué objetos referencia, no esos objetos en sí: la lista interna sí puede mutarse. Y como el hash de una tupla se deriva de sus elementos, contener una lista no hasheable hace que toda la tupla sea no hasheable."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "dict-and-set-internals",
+      "question": {
+        "en": "How do Python dictionaries and sets work internally?",
+        "es": "¿Cómo funcionan internamente los diccionarios y sets de Python?"
+      },
+      "definition": {
+        "en": "A `dict` is a **hash table with open addressing**: to store or find a key, Python computes `hash(key)`, maps it to a slot index, and on collision **probes** other slots until it finds the key or an empty slot. Average lookup, insert and delete are O(1). When the table gets ~2/3 full, it resizes and re-hashes everything.\n\nSince CPython 3.7, dicts also **preserve insertion order** (a compact array of entries plus a sparse index table). A `set` uses the same hash-table machinery but stores only keys — that's why membership tests (`x in s`), deduplication, and intersection/union are fast.\n\nConsequences interviewers probe: keys must be hashable and define consistent `__hash__`/`__eq__`, a bad hash function degrades lookups toward O(n), and `dict`/`set` trade memory for speed.",
+        "es": "Un `dict` es una **hash table con direccionamiento abierto**: para guardar o buscar una clave, Python calcula `hash(clave)`, la mapea a un índice de slot y, ante una colisión, **sondea** otros slots hasta hallar la clave o un slot vacío. Buscar, insertar y borrar son O(1) en promedio. Cuando la tabla se llena ~2/3, se redimensiona y se re-hashea todo.\n\nDesde CPython 3.7, los dicts además **preservan el orden de inserción** (un array compacto de entradas más una tabla de índices dispersa). Un `set` usa la misma maquinaria de hash table pero guarda solo claves — por eso las pruebas de pertenencia (`x in s`), la deduplicación y la intersección/unión son rápidas.\n\nConsecuencias que preguntan en entrevistas: las claves deben ser hasheables y definir `__hash__`/`__eq__` consistentes, una mala función hash degrada las búsquedas hacia O(n), y `dict`/`set` cambian memoria por velocidad."
+      },
+      "examples": [
+        {
+          "en": "Deduplicating a million user IDs: `set(ids)` runs in roughly linear time because each membership check is O(1), versus O(n²) with a list.",
+          "es": "Deduplicar un millón de IDs de usuario: `set(ids)` corre en tiempo casi lineal porque cada chequeo de pertenencia es O(1), contra O(n²) con una lista."
+        },
+        {
+          "en": "Feature flags per request: checking `if user.id in beta_users_set` on every request stays O(1) even with hundreds of thousands of entries.",
+          "es": "Feature flags por petición: chequear `if user.id in beta_users_set` en cada petición se mantiene O(1) incluso con cientos de miles de entradas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps CPython performs when you evaluate `d[key]` on a dict.",
+              "es": "Ordena los pasos que realiza CPython al evaluar `d[key]` en un dict."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "hash",
+                "label": {
+                  "en": "Compute hash(key)",
+                  "es": "Calcular hash(key)"
+                }
+              },
+              {
+                "id": "slot",
+                "label": {
+                  "en": "Map hash to a slot index",
+                  "es": "Mapear el hash a un índice de slot"
+                }
+              },
+              {
+                "id": "probe",
+                "label": {
+                  "en": "Probe slots (open addressing) on collision",
+                  "es": "Sondear slots (direccionamiento abierto) ante colisión"
+                }
+              },
+              {
+                "id": "eq",
+                "label": {
+                  "en": "Compare stored key with == to confirm",
+                  "es": "Comparar la clave guardada con == para confirmar"
+                }
+              },
+              {
+                "id": "return",
+                "label": {
+                  "en": "Return the value (or raise KeyError)",
+                  "es": "Devolver el valor (o lanzar KeyError)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "hash",
+              "slot",
+              "probe",
+              "eq",
+              "return"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need to check whether each incoming event ID was already seen, over millions of events. Which structure and why?",
+              "es": "Necesitas comprobar si cada ID de evento entrante ya fue visto, sobre millones de eventos. ¿Qué estructura y por qué?"
+            },
+            "options": [
+              {
+                "en": "A sorted list — binary search is always fastest",
+                "es": "Una lista ordenada — la búsqueda binaria siempre es lo más rápido"
+              },
+              {
+                "en": "A set — O(1) average membership tests via hashing",
+                "es": "Un set — pruebas de pertenencia O(1) en promedio vía hashing"
+              },
+              {
+                "en": "A list — `in` is optimized by the interpreter",
+                "es": "Una lista — el intérprete optimiza `in`"
+              },
+              {
+                "en": "A tuple — immutability makes lookups O(1)",
+                "es": "Una tupla — la inmutabilidad hace las búsquedas O(1)"
+              }
+            ],
+            "explanation": {
+              "en": "`seen` sets are the canonical answer: hashing gives O(1) average membership. A sorted list gives O(log n) lookups but O(n) inserts; lists and tuples scan linearly.",
+              "es": "Los sets `seen` son la respuesta canónica: el hashing da pertenencia O(1) en promedio. Una lista ordenada da búsquedas O(log n) pero inserciones O(n); listas y tuplas escanean linealmente."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A class defines `__eq__` to compare instances by value but does not define `__hash__`. What happens when you use its instances as dict keys in Python 3?",
+              "es": "Una clase define `__eq__` para comparar instancias por valor pero no define `__hash__`. ¿Qué pasa al usar sus instancias como claves de dict en Python 3?"
+            },
+            "options": [
+              {
+                "en": "It works — Python falls back to the default id-based hash",
+                "es": "Funciona — Python recurre al hash por defecto basado en id"
+              },
+              {
+                "en": "TypeError: unhashable type — defining __eq__ sets __hash__ to None unless you define it explicitly",
+                "es": "TypeError: unhashable type — definir __eq__ pone __hash__ en None a menos que lo definas explícitamente"
+              },
+              {
+                "en": "It works, but every lookup degrades to a linear scan of the table",
+                "es": "Funciona, pero cada búsqueda se degrada a un escaneo lineal de la tabla"
+              },
+              {
+                "en": "Python derives a hash automatically from the fields used inside __eq__",
+                "es": "Python deriva un hash automáticamente de los campos usados dentro de __eq__"
+              }
+            ],
+            "explanation": {
+              "en": "The hash/equality contract requires that equal objects have equal hashes. The default id-based hash would break that contract for a value-based __eq__, so Python 3 disables hashing (__hash__ = None) and forces you to define a consistent __hash__ yourself.",
+              "es": "El contrato hash/igualdad exige que objetos iguales tengan hashes iguales. El hash por defecto basado en id rompería ese contrato con un __eq__ por valor, así que Python 3 deshabilita el hashing (__hash__ = None) y te obliga a definir un __hash__ consistente."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "generators-and-iterators",
+      "question": {
+        "en": "What are generators and iterators, and what does lazy evaluation buy you?",
+        "es": "¿Qué son los generadores e iteradores, y qué te aporta la evaluación perezosa?"
+      },
+      "definition": {
+        "en": "An **iterator** is any object implementing `__iter__` and `__next__`; it produces values one at a time and raises `StopIteration` when exhausted. A **generator** is the easiest way to write one: a function with `yield` returns a generator object that runs lazily — its body executes only up to the next `yield` each time a value is requested, then **pauses, keeping its local state**.\n\nLazy evaluation means values are computed **on demand**, so you can process files or query results far larger than RAM, build pipelines (`sum(x*x for x in nums if x % 2 == 0)`) that never materialize intermediate lists, and even represent infinite sequences.\n\nThe trade-offs: a generator is single-use (once exhausted it stays empty), has no `len()`, and can't be indexed — if you need to iterate twice, materialize it with `list()` or recreate it.",
+        "es": "Un **iterador** es cualquier objeto que implementa `__iter__` y `__next__`; produce valores de uno en uno y lanza `StopIteration` al agotarse. Un **generador** es la forma más fácil de escribir uno: una función con `yield` devuelve un objeto generador que corre de forma perezosa — su cuerpo se ejecuta solo hasta el siguiente `yield` cada vez que se pide un valor, y luego **se pausa conservando su estado local**.\n\nLa evaluación perezosa significa que los valores se calculan **bajo demanda**: puedes procesar archivos o resultados de consultas mucho más grandes que la RAM, construir pipelines (`sum(x*x for x in nums if x % 2 == 0)`) que nunca materializan listas intermedias, e incluso representar secuencias infinitas.\n\nLos trade-offs: un generador es de un solo uso (una vez agotado queda vacío), no tiene `len()` y no se puede indexar — si necesitas iterar dos veces, materialízalo con `list()` o recréalo."
+      },
+      "examples": [
+        {
+          "en": "Parsing a 20 GB log file: `for line in open('app.log')` streams line by line through a generator-like file object, keeping memory flat instead of loading the whole file.",
+          "es": "Parsear un log de 20 GB: `for line in open('app.log')` transmite línea por línea a través de un objeto archivo tipo generador, manteniendo la memoria plana en vez de cargar todo el archivo."
+        },
+        {
+          "en": "Django's `QuerySet.iterator()` streams rows from the database cursor instead of caching them all, exactly the generator pattern applied to ORM results.",
+          "es": "El `QuerySet.iterator()` de Django transmite filas desde el cursor de la base de datos en vez de cachearlas todas: exactamente el patrón de generador aplicado a resultados del ORM."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write a generator `read_in_batches(items, batch_size)` that yields lists of at most `batch_size` elements from the iterable `items`, without ever materializing the full input. Example: `list(read_in_batches(range(5), 2))` → `[[0, 1], [2, 3], [4]]`.",
+              "es": "Escribe un generador `read_in_batches(items, batch_size)` que produzca (yield) listas de a lo sumo `batch_size` elementos del iterable `items`, sin materializar nunca la entrada completa. Ejemplo: `list(read_in_batches(range(5), 2))` → `[[0, 1], [2, 3], [4]]`."
+            },
+            "language": "python",
+            "starter_code": "def read_in_batches(items, batch_size):\n    # your code — must use yield\n    pass"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must be a generator (uses yield), accumulate items into a batch list, yield the batch when it reaches batch_size and reset it, and yield the final partial batch after the loop if non-empty. Must iterate the input once without converting it entirely to a list.",
+              "es": "Debe ser un generador (usa yield), acumular elementos en una lista batch, hacer yield del batch al llegar a batch_size y reiniciarlo, y hacer yield del batch parcial final tras el bucle si no está vacío. Debe iterar la entrada una sola vez sin convertirla completa a lista."
+            },
+            "reference": "def read_in_batches(items, batch_size):\n    batch = []\n    for item in items:\n        batch.append(item)\n        if len(batch) == batch_size:\n            yield batch\n            batch = []\n    if batch:\n        yield batch"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What does this print?\n\n```python\ndef gen():\n    yield 1\n    yield 2\n\ng = gen()\nprint(sum(g), sum(g))\n```",
+              "es": "¿Qué imprime esto?\n\n```python\ndef gen():\n    yield 1\n    yield 2\n\ng = gen()\nprint(sum(g), sum(g))\n```"
+            },
+            "options": [
+              {
+                "en": "3 3 — generators restart on each iteration",
+                "es": "3 3 — los generadores se reinician en cada iteración"
+              },
+              {
+                "en": "It raises StopIteration on the second sum",
+                "es": "Lanza StopIteration en el segundo sum"
+              },
+              {
+                "en": "3 0 — the generator is exhausted after the first sum",
+                "es": "3 0 — el generador queda agotado tras el primer sum"
+              },
+              {
+                "en": "1 2 — sum takes one value at a time",
+                "es": "1 2 — sum toma un valor a la vez"
+              }
+            ],
+            "explanation": {
+              "en": "Generators are single-use iterators: the first `sum` consumes both values; the second `sum` iterates an exhausted generator and gets 0 (sum of nothing). No exception — `StopIteration` is handled by the loop protocol.",
+              "es": "Los generadores son iteradores de un solo uso: el primer `sum` consume ambos valores; el segundo `sum` itera un generador agotado y obtiene 0 (suma de nada). No hay excepción — el protocolo de iteración maneja `StopIteration`."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the practical difference between `sum(x * x for x in range(10**8))` and `sum([x * x for x in range(10**8)])`?",
+              "es": "¿Cuál es la diferencia práctica entre `sum(x * x for x in range(10**8))` y `sum([x * x for x in range(10**8)])`?"
+            },
+            "options": [
+              {
+                "en": "The list version is lazier because lists pre-allocate their memory",
+                "es": "La versión con lista es más perezosa porque las listas preasignan su memoria"
+              },
+              {
+                "en": "The generator version is wrong: sum cannot consume a generator",
+                "es": "La versión con generador es incorrecta: sum no puede consumir un generador"
+              },
+              {
+                "en": "None — Python compiles both to the same bytecode",
+                "es": "Ninguna — Python compila ambos al mismo bytecode"
+              },
+              {
+                "en": "Same result, but the generator expression keeps memory flat by producing one value at a time, while the list comprehension materializes all 10^8 values first",
+                "es": "El mismo resultado, pero la expresión generadora mantiene la memoria plana produciendo un valor a la vez, mientras la comprensión de lista materializa primero los 10^8 valores"
+              }
+            ],
+            "explanation": {
+              "en": "A generator expression feeds sum lazily: each square is computed, consumed and discarded, so memory stays constant. The list comprehension builds the entire 10^8-element list in RAM before sum even starts — often enough to exhaust memory.",
+              "es": "Una expresión generadora alimenta a sum perezosamente: cada cuadrado se calcula, se consume y se descarta, así que la memoria se mantiene constante. La comprensión de lista construye la lista completa de 10^8 elementos en RAM antes de que sum siquiera empiece — a menudo suficiente para agotar la memoria."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "decorators",
+      "question": {
+        "en": "What is a decorator and how do you write one?",
+        "es": "¿Qué es un decorador y cómo se escribe uno?"
+      },
+      "definition": {
+        "en": "A **decorator** is a callable that takes a function and returns a replacement (usually a wrapper adding behavior). The `@decorator` syntax is just sugar for `func = decorator(func)`. It works because Python functions are first-class objects: they can be passed, returned and closed over.\n\nThe standard recipe: an outer function receives `func`, defines an inner `wrapper(*args, **kwargs)` that does extra work and calls `func(*args, **kwargs)`, and returns the wrapper. Always apply `functools.wraps(func)` on the wrapper so the decorated function keeps its `__name__`, docstring and signature metadata.\n\nDecorators with arguments (like `@retry(times=3)`) add one more level: a factory that receives the arguments and returns the actual decorator.",
+        "es": "Un **decorador** es un callable que recibe una función y devuelve un reemplazo (normalmente un wrapper que agrega comportamiento). La sintaxis `@decorator` es solo azúcar para `func = decorator(func)`. Funciona porque las funciones en Python son objetos de primera clase: se pueden pasar, devolver y capturar en closures.\n\nLa receta estándar: una función externa recibe `func`, define un `wrapper(*args, **kwargs)` interno que hace el trabajo extra y llama `func(*args, **kwargs)`, y devuelve el wrapper. Aplica siempre `functools.wraps(func)` al wrapper para que la función decorada conserve su `__name__`, docstring y metadatos de firma.\n\nLos decoradores con argumentos (como `@retry(times=3)`) agregan un nivel más: una fábrica que recibe los argumentos y devuelve el decorador real."
+      },
+      "examples": [
+        {
+          "en": "Django's `@login_required` wraps a view: if `request.user` is anonymous it redirects to login, otherwise it calls the original view — cross-cutting auth without touching view logic.",
+          "es": "El `@login_required` de Django envuelve una vista: si `request.user` es anónimo redirige al login, si no llama a la vista original — autenticación transversal sin tocar la lógica de la vista."
+        },
+        {
+          "en": "`functools.lru_cache` memoizes expensive pure functions (e.g. config parsing or Fibonacci in interviews) by caching results per argument tuple.",
+          "es": "`functools.lru_cache` memoiza funciones puras costosas (p. ej. parseo de configuración o Fibonacci en entrevistas) cacheando resultados por tupla de argumentos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write a decorator `timed` that measures how long the decorated function takes and prints `\"{name} took {seconds:.4f}s\"` before returning the function's result. It must work with any arguments and preserve the function's metadata.",
+              "es": "Escribe un decorador `timed` que mida cuánto tarda la función decorada e imprima `\"{name} took {seconds:.4f}s\"` antes de devolver el resultado de la función. Debe funcionar con cualquier argumento y preservar los metadatos de la función."
+            },
+            "language": "python",
+            "starter_code": "import functools\nimport time\n\ndef timed(func):\n    # your code\n    pass\n\n@timed\ndef slow_add(a, b):\n    time.sleep(0.1)\n    return a + b"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define a wrapper accepting *args/**kwargs, record time before and after calling func (time.perf_counter or time.time), print the elapsed time with the function name, return func's result, decorate the wrapper with functools.wraps(func), and return the wrapper from timed.",
+              "es": "Debe definir un wrapper que acepte *args/**kwargs, registrar el tiempo antes y después de llamar a func (time.perf_counter o time.time), imprimir el tiempo transcurrido con el nombre de la función, devolver el resultado de func, decorar el wrapper con functools.wraps(func) y devolver el wrapper desde timed."
+            },
+            "reference": "import functools\nimport time\n\ndef timed(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        elapsed = time.perf_counter() - start\n        print(f\"{func.__name__} took {elapsed:.4f}s\")\n        return result\n    return wrapper"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why should a decorator's wrapper use `functools.wraps(func)`?",
+              "es": "¿Por qué el wrapper de un decorador debería usar `functools.wraps(func)`?"
+            },
+            "options": [
+              {
+                "en": "It is required or the @ syntax raises a SyntaxError",
+                "es": "Es obligatorio o la sintaxis @ lanza un SyntaxError"
+              },
+              {
+                "en": "It prevents the wrapped function from being garbage collected",
+                "es": "Evita que la función envuelta sea recolectada por el garbage collector"
+              },
+              {
+                "en": "It copies __name__, __doc__ and other metadata so introspection and debugging still see the original function",
+                "es": "Copia __name__, __doc__ y otros metadatos para que la introspección y el debugging sigan viendo la función original"
+              },
+              {
+                "en": "It makes the wrapper run faster by caching results",
+                "es": "Hace que el wrapper corra más rápido cacheando resultados"
+              }
+            ],
+            "explanation": {
+              "en": "Without wraps, the decorated function reports the wrapper's name and docstring, which breaks debugging, documentation tools and some frameworks. wraps copies the metadata over; it has nothing to do with speed or syntax.",
+              "es": "Sin wraps, la función decorada reporta el nombre y docstring del wrapper, lo que rompe el debugging, las herramientas de documentación y algunos frameworks. wraps copia los metadatos; no tiene que ver con velocidad ni sintaxis."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "For a decorator that takes arguments, like `@retry(times=3)`, what must the expression `retry(times=3)` return?",
+              "es": "Para un decorador con argumentos, como `@retry(times=3)`, ¿qué debe devolver la expresión `retry(times=3)`?"
+            },
+            "options": [
+              {
+                "en": "Nothing — the @ syntax passes the arguments and the function in a single call",
+                "es": "Nada — la sintaxis @ pasa los argumentos y la función en una sola llamada"
+              },
+              {
+                "en": "The wrapped function directly, with the retry logic already applied",
+                "es": "La función envuelta directamente, con la lógica de reintentos ya aplicada"
+              },
+              {
+                "en": "The actual decorator — a callable that will receive the function and return the wrapper (three nested levels in total)",
+                "es": "El decorador real — un callable que recibirá la función y devolverá el wrapper (tres niveles anidados en total)"
+              },
+              {
+                "en": "A subclass of functools.partial bound to the arguments",
+                "es": "Una subclase de functools.partial ligada a los argumentos"
+              }
+            ],
+            "explanation": {
+              "en": "With arguments, Python evaluates retry(times=3) first and applies its result: func = retry(times=3)(func). So retry is a factory that captures the arguments and returns the real decorator, which in turn returns the wrapper — hence the three levels.",
+              "es": "Con argumentos, Python evalúa primero retry(times=3) y aplica su resultado: func = retry(times=3)(func). Así que retry es una fábrica que captura los argumentos y devuelve el decorador real, que a su vez devuelve el wrapper — de ahí los tres niveles."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "context-managers",
+      "question": {
+        "en": "How do context managers and the with statement work?",
+        "es": "¿Cómo funcionan los context managers y la sentencia with?"
+      },
+      "definition": {
+        "en": "A **context manager** guarantees setup/teardown around a block. `with cm as x:` calls `cm.__enter__()` (its return value is bound to `x`), runs the block, and **always** calls `cm.__exit__(exc_type, exc, tb)` — even if the block raises. If `__exit__` returns `True`, the exception is suppressed; otherwise it propagates.\n\nThis is how Python guarantees files get closed, locks get released and transactions get committed or rolled back, without try/finally boilerplate at every call site.\n\nThe quick way to write one is `@contextlib.contextmanager` on a generator: code before `yield` is the setup, the yielded value is what `as` receives, and code after `yield` (usually inside `try/finally`) is the teardown.",
+        "es": "Un **context manager** garantiza inicialización/limpieza alrededor de un bloque. `with cm as x:` llama a `cm.__enter__()` (su valor de retorno se asigna a `x`), ejecuta el bloque y **siempre** llama a `cm.__exit__(exc_type, exc, tb)` — incluso si el bloque lanza una excepción. Si `__exit__` devuelve `True`, la excepción se suprime; si no, se propaga.\n\nAsí garantiza Python que los archivos se cierren, los locks se liberen y las transacciones se confirmen o reviertan, sin repetir try/finally en cada punto de uso.\n\nLa forma rápida de escribir uno es `@contextlib.contextmanager` sobre un generador: el código antes del `yield` es la inicialización, el valor cedido es lo que recibe `as`, y el código después del `yield` (normalmente dentro de `try/finally`) es la limpieza."
+      },
+      "examples": [
+        {
+          "en": "`with open(path) as f:` closes the file descriptor even if parsing raises halfway — critical in servers where leaked descriptors eventually exhaust the process limit.",
+          "es": "`with open(path) as f:` cierra el descriptor de archivo aunque el parseo falle a la mitad — crítico en servidores donde los descriptores fugados agotan el límite del proceso."
+        },
+        {
+          "en": "Django's `with transaction.atomic():` is a context manager: it opens a transaction on `__enter__` and commits or rolls back on `__exit__` depending on whether an exception occurred.",
+          "es": "El `with transaction.atomic():` de Django es un context manager: abre una transacción en `__enter__` y confirma o revierte en `__exit__` según haya ocurrido una excepción o no."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Inside `with lock:` the block raises a ValueError. What happens to the lock and the exception?",
+              "es": "Dentro de `with lock:` el bloque lanza un ValueError. ¿Qué pasa con el lock y la excepción?"
+            },
+            "options": [
+              {
+                "en": "The lock stays held because the block did not finish",
+                "es": "El lock queda tomado porque el bloque no terminó"
+              },
+              {
+                "en": "The exception is always swallowed by the with statement",
+                "es": "La sentencia with siempre se traga la excepción"
+              },
+              {
+                "en": "__enter__ is called again to retry the block",
+                "es": "__enter__ se llama de nuevo para reintentar el bloque"
+              },
+              {
+                "en": "__exit__ runs, the lock is released, and the ValueError propagates",
+                "es": "__exit__ se ejecuta, el lock se libera y el ValueError se propaga"
+              }
+            ],
+            "explanation": {
+              "en": "with guarantees __exit__ runs no matter how the block ends, so the lock is released. A lock's __exit__ returns a falsy value, so the exception continues to propagate.",
+              "es": "with garantiza que __exit__ se ejecute sin importar cómo termine el bloque, así que el lock se libera. El __exit__ de un lock devuelve un valor falsy, así que la excepción sigue propagándose."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Using `contextlib.contextmanager`, write a context manager `temp_env(key, value)` that sets the environment variable `key` to `value` for the duration of the with block and restores the previous value (or removes the variable if it did not exist) afterwards, even if the block raises.",
+              "es": "Usando `contextlib.contextmanager`, escribe un context manager `temp_env(key, value)` que fije la variable de entorno `key` en `value` durante el bloque with y restaure el valor anterior (o elimine la variable si no existía) al salir, incluso si el bloque lanza una excepción."
+            },
+            "language": "python",
+            "starter_code": "import contextlib\nimport os\n\n@contextlib.contextmanager\ndef temp_env(key, value):\n    # your code\n    pass"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must save the previous value with os.environ.get(key) before overwriting, set os.environ[key] = value, yield inside a try block, and in finally restore the old value or delete the key (del/pop) if it did not exist before. The restore must happen even when the block raises.",
+              "es": "Debe guardar el valor anterior con os.environ.get(key) antes de sobrescribir, asignar os.environ[key] = value, hacer yield dentro de un try, y en el finally restaurar el valor anterior o borrar la clave (del/pop) si no existía. La restauración debe ocurrir incluso si el bloque lanza una excepción."
+            },
+            "reference": "import contextlib\nimport os\n\n@contextlib.contextmanager\ndef temp_env(key, value):\n    old = os.environ.get(key)\n    os.environ[key] = value\n    try:\n        yield\n    finally:\n        if old is None:\n            os.environ.pop(key, None)\n        else:\n            os.environ[key] = old"
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order what happens when the body of `with open(path) as f:` raises an exception.",
+              "es": "Ordena lo que sucede cuando el cuerpo de `with open(path) as f:` lanza una excepción."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "enter",
+                "label": {
+                  "en": "with evaluates open(path) and calls __enter__ on the file object",
+                  "es": "with evalúa open(path) y llama a __enter__ en el objeto archivo"
+                }
+              },
+              {
+                "id": "bind",
+                "label": {
+                  "en": "The value returned by __enter__ is bound to f",
+                  "es": "El valor devuelto por __enter__ se asigna a f"
+                }
+              },
+              {
+                "id": "raise",
+                "label": {
+                  "en": "The block executes and raises the exception",
+                  "es": "El bloque se ejecuta y lanza la excepción"
+                }
+              },
+              {
+                "id": "exit",
+                "label": {
+                  "en": "__exit__ runs with the exception details and closes the file",
+                  "es": "__exit__ se ejecuta con los detalles de la excepción y cierra el archivo"
+                }
+              },
+              {
+                "id": "propagate",
+                "label": {
+                  "en": "__exit__ returns a falsy value, so the exception propagates",
+                  "es": "__exit__ devuelve un valor falsy, así que la excepción se propaga"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "enter",
+              "bind",
+              "raise",
+              "exit",
+              "propagate"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "the-gil",
+      "question": {
+        "en": "What is the GIL, and when do you use threads, processes or asyncio?",
+        "es": "¿Qué es el GIL, y cuándo usas threads, procesos o asyncio?"
+      },
+      "definition": {
+        "en": "The **GIL** (Global Interpreter Lock) is a mutex in CPython that lets only **one thread execute Python bytecode at a time**. It simplifies memory management (reference counting) but means threads cannot run Python code in parallel on multiple cores.\n\nThe decision rule interviewers want: for **CPU-bound** work (parsing, image processing, ML preprocessing) use **multiprocessing** — each process has its own interpreter and GIL, so cores are actually used. For **I/O-bound** work (HTTP calls, DB queries) threads work fine because the GIL is **released while waiting on I/O**; **asyncio** handles the same I/O-bound case with a single thread and much lower overhead when you have thousands of concurrent connections.\n\nNote: C extensions like NumPy release the GIL during heavy computation, which is why threaded NumPy code can still scale.",
+        "es": "El **GIL** (Global Interpreter Lock) es un mutex de CPython que permite que solo **un thread ejecute bytecode de Python a la vez**. Simplifica la gestión de memoria (conteo de referencias) pero implica que los threads no pueden ejecutar código Python en paralelo en varios núcleos.\n\nLa regla de decisión que buscan los entrevistadores: para trabajo **CPU-bound** (parseo, procesamiento de imágenes, preprocesamiento de ML) usa **multiprocessing** — cada proceso tiene su propio intérprete y GIL, así que los núcleos sí se aprovechan. Para trabajo **I/O-bound** (llamadas HTTP, consultas a BD) los threads funcionan bien porque el GIL **se libera mientras se espera I/O**; **asyncio** cubre el mismo caso I/O-bound con un solo thread y mucho menos overhead cuando tienes miles de conexiones concurrentes.\n\nNota: extensiones en C como NumPy liberan el GIL durante cómputos pesados, por eso el código NumPy con threads sí puede escalar."
+      },
+      "examples": [
+        {
+          "en": "A scraper fetching 500 URLs speeds up massively with threads or asyncio (GIL released during network waits), but hashing 500 large files with pure Python only scales with multiprocessing.",
+          "es": "Un scraper que descarga 500 URLs acelera muchísimo con threads o asyncio (el GIL se libera en las esperas de red), pero hashear 500 archivos grandes en Python puro solo escala con multiprocessing."
+        },
+        {
+          "en": "Gunicorn runs Django with multiple worker processes precisely because of the GIL: several processes serve requests in parallel across cores, each with threads for concurrent I/O.",
+          "es": "Gunicorn corre Django con varios procesos worker precisamente por el GIL: varios procesos atienden peticiones en paralelo entre núcleos, cada uno con threads para I/O concurrente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each workload with the right concurrency model.",
+              "es": "Conecta cada carga de trabajo con el modelo de concurrencia adecuado."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Resizing 10,000 images in pure Python",
+                  "es": "Redimensionar 10.000 imágenes en Python puro"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Calling 30 slow external APIs from a script",
+                  "es": "Llamar a 30 APIs externas lentas desde un script"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "A chat server holding 50,000 open websockets",
+                  "es": "Un servidor de chat con 50.000 websockets abiertos"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Serving a Django app on an 8-core machine",
+                  "es": "Servir una app Django en una máquina de 8 núcleos"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "multiprocessing — CPU-bound, needs real cores",
+                  "es": "multiprocessing — CPU-bound, necesita núcleos reales"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Threads — I/O-bound, GIL released while waiting",
+                  "es": "Threads — I/O-bound, el GIL se libera al esperar"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "asyncio — massive concurrent I/O in one thread",
+                  "es": "asyncio — I/O concurrente masivo en un solo thread"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Multiple worker processes (e.g. Gunicorn)",
+                  "es": "Varios procesos worker (p. ej. Gunicorn)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does a thread pool still speed up a Python program that downloads many files, despite the GIL?",
+              "es": "¿Por qué un pool de threads sí acelera un programa Python que descarga muchos archivos, a pesar del GIL?"
+            },
+            "options": [
+              {
+                "en": "Downloads are CPU-bound, and the GIL parallelizes CPU work",
+                "es": "Las descargas son CPU-bound y el GIL paraleliza el trabajo de CPU"
+              },
+              {
+                "en": "It doesn't — threads never help in Python",
+                "es": "No lo acelera — los threads nunca ayudan en Python"
+              },
+              {
+                "en": "Each thread gets its own copy of the interpreter",
+                "es": "Cada thread recibe su propia copia del intérprete"
+              },
+              {
+                "en": "The GIL is released while a thread blocks on network I/O, so other threads run in the meantime",
+                "es": "El GIL se libera mientras un thread está bloqueado en I/O de red, así que otros threads corren mientras tanto"
+              }
+            ],
+            "explanation": {
+              "en": "Blocking I/O calls release the GIL, so while one thread waits on a socket, others make progress. That's why threads help I/O-bound work but not pure-Python CPU-bound work.",
+              "es": "Las llamadas de I/O bloqueantes liberan el GIL, así que mientras un thread espera en un socket, otros avanzan. Por eso los threads ayudan con trabajo I/O-bound pero no con trabajo CPU-bound en Python puro."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A threaded program doing heavy NumPy matrix multiplication saturates all CPU cores, while the equivalent pure-Python math with threads does not. Why?",
+              "es": "Un programa con threads que hace multiplicación de matrices pesada con NumPy satura todos los núcleos de CPU, mientras que la matemática equivalente en Python puro con threads no. ¿Por qué?"
+            },
+            "options": [
+              {
+                "en": "The GIL only affects objects smaller than an array",
+                "es": "El GIL solo afecta a objetos más pequeños que un array"
+              },
+              {
+                "en": "NumPy runs in a separate process with its own GIL",
+                "es": "NumPy corre en un proceso separado con su propio GIL"
+              },
+              {
+                "en": "NumPy's C code releases the GIL during the computation, so threads run truly in parallel inside native code",
+                "es": "El código en C de NumPy libera el GIL durante el cómputo, así que los threads corren en paralelo real dentro de código nativo"
+              },
+              {
+                "en": "Matrix multiplication is I/O-bound, so the GIL does not apply",
+                "es": "La multiplicación de matrices es I/O-bound, así que el GIL no aplica"
+              }
+            ],
+            "explanation": {
+              "en": "The GIL constrains Python bytecode execution, but C extensions may release it while doing long native computations that don't touch Python objects. NumPy does exactly that, so multiple threads can crunch numbers on different cores simultaneously.",
+              "es": "El GIL restringe la ejecución de bytecode de Python, pero las extensiones en C pueden liberarlo mientras hacen cómputos nativos largos que no tocan objetos de Python. NumPy hace exactamente eso, así que varios threads pueden calcular en distintos núcleos simultáneamente."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "asyncio-fundamentals",
+      "question": {
+        "en": "How does asyncio work: event loop, await, and when does async actually help?",
+        "es": "¿Cómo funciona asyncio: event loop, await, y cuándo ayuda realmente lo asíncrono?"
+      },
+      "definition": {
+        "en": "**asyncio** is cooperative concurrency on a single thread. An `async def` function returns a **coroutine**; the **event loop** runs coroutines and, every time one hits `await` on a pending operation, **suspends it and switches** to another ready coroutine. Nothing runs in parallel — tasks interleave at await points.\n\n`await` marks the exact places where a coroutine may yield control. Calling a coroutine without awaiting it does nothing; to run coroutines concurrently you schedule them, e.g. `asyncio.gather(fetch(a), fetch(b))` or `asyncio.create_task(...)`.\n\nAsync helps when you have **many concurrent I/O waits** (thousands of sockets, slow APIs) — it removes thread overhead. It does **not** help CPU-bound code, and one blocking call (e.g. `time.sleep`, a sync DB driver) inside a coroutine **freezes the whole event loop**, which is the classic production mistake.",
+        "es": "**asyncio** es concurrencia cooperativa en un solo thread. Una función `async def` devuelve una **corrutina**; el **event loop** ejecuta corrutinas y, cada vez que una llega a un `await` sobre una operación pendiente, **la suspende y cambia** a otra corrutina lista. Nada corre en paralelo — las tareas se intercalan en los puntos de await.\n\n`await` marca los lugares exactos donde una corrutina puede ceder el control. Llamar una corrutina sin await no hace nada; para ejecutar corrutinas concurrentemente hay que planificarlas, p. ej. `asyncio.gather(fetch(a), fetch(b))` o `asyncio.create_task(...)`.\n\nAsync ayuda cuando tienes **muchas esperas de I/O concurrentes** (miles de sockets, APIs lentas) — elimina el overhead de threads. **No** ayuda con código CPU-bound, y una llamada bloqueante (p. ej. `time.sleep`, un driver de BD síncrono) dentro de una corrutina **congela todo el event loop**: el error clásico en producción."
+      },
+      "examples": [
+        {
+          "en": "FastAPI handles thousands of concurrent requests on one process: each request handler awaits the database and HTTP clients, so the loop serves others during those waits.",
+          "es": "FastAPI atiende miles de peticiones concurrentes en un proceso: cada handler hace await sobre la base de datos y clientes HTTP, así el loop atiende otras durante esas esperas."
+        },
+        {
+          "en": "Aggregating three microservice calls: `results = await asyncio.gather(get_user(), get_orders(), get_recs())` takes roughly the time of the slowest call instead of the sum of all three.",
+          "es": "Agregar tres llamadas a microservicios: `results = await asyncio.gather(get_user(), get_orders(), get_recs())` tarda aproximadamente lo que la llamada más lenta, en vez de la suma de las tres."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order what happens when the event loop runs `await asyncio.gather(fetch_a(), fetch_b())` where both coroutines await a network call.",
+              "es": "Ordena lo que sucede cuando el event loop ejecuta `await asyncio.gather(fetch_a(), fetch_b())` donde ambas corrutinas esperan (await) una llamada de red."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "schedule",
+                "label": {
+                  "en": "gather schedules both coroutines as tasks",
+                  "es": "gather planifica ambas corrutinas como tareas"
+                }
+              },
+              {
+                "id": "runa",
+                "label": {
+                  "en": "fetch_a runs until its network await and suspends",
+                  "es": "fetch_a corre hasta su await de red y se suspende"
+                }
+              },
+              {
+                "id": "runb",
+                "label": {
+                  "en": "The loop switches to fetch_b, which also suspends on I/O",
+                  "es": "El loop cambia a fetch_b, que también se suspende en I/O"
+                }
+              },
+              {
+                "id": "io",
+                "label": {
+                  "en": "The loop waits; the OS signals which sockets are ready",
+                  "es": "El loop espera; el SO avisa qué sockets están listos"
+                }
+              },
+              {
+                "id": "resume",
+                "label": {
+                  "en": "Each coroutine resumes as its response arrives",
+                  "es": "Cada corrutina se reanuda cuando llega su respuesta"
+                }
+              },
+              {
+                "id": "results",
+                "label": {
+                  "en": "gather returns both results together",
+                  "es": "gather devuelve ambos resultados juntos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "schedule",
+              "runa",
+              "runb",
+              "io",
+              "resume",
+              "results"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A coroutine in your async web app calls `time.sleep(5)` instead of `await asyncio.sleep(5)`. What is the effect?",
+              "es": "Una corrutina de tu app web asíncrona llama a `time.sleep(5)` en vez de `await asyncio.sleep(5)`. ¿Cuál es el efecto?"
+            },
+            "options": [
+              {
+                "en": "asyncio detects the blocking call and moves it to a thread",
+                "es": "asyncio detecta la llamada bloqueante y la mueve a un thread"
+              },
+              {
+                "en": "Only that request is delayed; others continue normally",
+                "es": "Solo esa petición se retrasa; las demás continúan con normalidad"
+              },
+              {
+                "en": "The entire event loop blocks for 5 seconds — no other request makes progress",
+                "es": "Todo el event loop se bloquea 5 segundos — ninguna otra petición avanza"
+              },
+              {
+                "en": "Python raises a RuntimeError for calling sync code in a coroutine",
+                "es": "Python lanza un RuntimeError por llamar código síncrono en una corrutina"
+              }
+            ],
+            "explanation": {
+              "en": "asyncio is cooperative: control is only yielded at await points. A blocking sync call never yields, so the single thread — and every task on the loop — stalls until it returns. Blocking work must go through await or run_in_executor.",
+              "es": "asyncio es cooperativo: el control solo se cede en los puntos de await. Una llamada síncrona bloqueante nunca cede, así que el único thread — y todas las tareas del loop — se detienen hasta que retorna. El trabajo bloqueante debe pasar por await o run_in_executor."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You call `fetch_data()` (an `async def` function) without `await` and never schedule it as a task. What actually happens?",
+              "es": "Llamas a `fetch_data()` (una función `async def`) sin `await` y nunca la planificas como tarea. ¿Qué sucede realmente?"
+            },
+            "options": [
+              {
+                "en": "It runs in a background thread managed by asyncio",
+                "es": "Se ejecuta en un thread en segundo plano gestionado por asyncio"
+              },
+              {
+                "en": "Its body never runs — you just get a coroutine object, and Python warns 'coroutine was never awaited'",
+                "es": "Su cuerpo nunca se ejecuta — solo obtienes un objeto corrutina, y Python advierte 'coroutine was never awaited'"
+              },
+              {
+                "en": "The event loop detects the call and schedules it automatically",
+                "es": "El event loop detecta la llamada y la planifica automáticamente"
+              },
+              {
+                "en": "It runs synchronously, blocking until it finishes",
+                "es": "Se ejecuta síncronamente, bloqueando hasta terminar"
+              }
+            ],
+            "explanation": {
+              "en": "Calling an async def function only creates a coroutine object; no code inside runs until it is awaited or wrapped in a task (asyncio.create_task / gather). Forgetting the await is a classic silent bug — the RuntimeWarning at garbage collection is the only clue.",
+              "es": "Llamar a una función async def solo crea un objeto corrutina; nada de su código corre hasta que se le hace await o se envuelve en una tarea (asyncio.create_task / gather). Olvidar el await es un bug silencioso clásico — el RuntimeWarning al recolectar basura es la única pista."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "mutable-defaults-and-copy",
+      "question": {
+        "en": "Why are mutable default arguments dangerous, and what is the difference between shallow and deep copy?",
+        "es": "¿Por qué son peligrosos los argumentos por defecto mutables, y cuál es la diferencia entre copia superficial y profunda?"
+      },
+      "definition": {
+        "en": "Default argument values are evaluated **once, at function definition time**, and stored on the function object. So `def add(item, items=[])` shares **one list across every call** that omits the argument — items accumulate between unrelated calls. The idiom: default to `None` and create the list inside (`items = [] if items is None else items`).\n\n**Shallow copy** (`list(x)`, `x.copy()`, `copy.copy`) creates a new outer container but keeps references to the **same inner objects** — mutating a nested list through the copy also changes the original. **Deep copy** (`copy.deepcopy`) recursively clones the whole structure.\n\nBoth gotchas share the same root cause: Python variables are references to objects, and assignment or shallow copying never duplicates nested data.",
+        "es": "Los valores por defecto se evalúan **una sola vez, al definirse la función**, y quedan guardados en el objeto función. Así, `def add(item, items=[])` comparte **una única lista entre todas las llamadas** que omiten el argumento — los elementos se acumulan entre llamadas sin relación. El idiom: usar `None` como defecto y crear la lista adentro (`items = [] if items is None else items`).\n\nLa **copia superficial** (`list(x)`, `x.copy()`, `copy.copy`) crea un contenedor externo nuevo pero conserva referencias a los **mismos objetos internos** — mutar una lista anidada a través de la copia también cambia el original. La **copia profunda** (`copy.deepcopy`) clona recursivamente toda la estructura.\n\nAmbos gotchas comparten la misma causa raíz: las variables en Python son referencias a objetos, y ni la asignación ni la copia superficial duplican los datos anidados."
+      },
+      "examples": [
+        {
+          "en": "A bug report: 'the API returns tags from other users' — caused by `def build_response(tags=[])` accumulating tags across requests in a long-lived worker process.",
+          "es": "Un reporte de bug: 'la API devuelve tags de otros usuarios' — causado por `def build_response(tags=[])` acumulando tags entre peticiones en un proceso worker de larga vida."
+        },
+        {
+          "en": "Cloning a config dict with `dict(config)` before tweaking `config_copy['db']['host']` still mutates the original, because the nested `db` dict is shared — deepcopy (or an explicit rebuild) is needed.",
+          "es": "Clonar un dict de configuración con `dict(config)` y luego modificar `config_copy['db']['host']` sigue mutando el original, porque el dict anidado `db` está compartido — se necesita deepcopy (o reconstruirlo explícitamente)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "This function has the classic mutable-default-argument bug: calls that omit `history` share state. Fix it so each call without `history` gets a fresh list, keeping the same signature behavior for callers that do pass a list.",
+              "es": "Esta función tiene el clásico bug del argumento por defecto mutable: las llamadas que omiten `history` comparten estado. Corrígela para que cada llamada sin `history` reciba una lista nueva, manteniendo el comportamiento para quienes sí pasan una lista."
+            },
+            "language": "python",
+            "starter_code": "def record_event(event, history=[]):\n    history.append(event)\n    return history\n\n# record_event(\"a\") -> [\"a\"]\n# record_event(\"b\") -> should be [\"b\"], but returns [\"a\", \"b\"]!"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must change the default to None (def record_event(event, history=None)), create a new list inside the function when history is None, still append the event and return the list. Callers passing their own list must keep working (the passed list is mutated).",
+              "es": "Debe cambiar el defecto a None (def record_event(event, history=None)), crear una lista nueva dentro de la función cuando history sea None, seguir agregando el evento y devolver la lista. Quienes pasen su propia lista deben seguir funcionando (la lista pasada se muta)."
+            },
+            "reference": "def record_event(event, history=None):\n    if history is None:\n        history = []\n    history.append(event)\n    return history"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "```python\nimport copy\na = [[1, 2], [3, 4]]\nb = copy.copy(a)\nb[0].append(99)\n```\nWhat is `a` afterwards?",
+              "es": "```python\nimport copy\na = [[1, 2], [3, 4]]\nb = copy.copy(a)\nb[0].append(99)\n```\n¿Cuánto vale `a` después?"
+            },
+            "options": [
+              {
+                "en": "[[1, 2], [3, 4]] — b is fully independent",
+                "es": "[[1, 2], [3, 4]] — b es totalmente independiente"
+              },
+              {
+                "en": "[[99, 1, 2], [3, 4]] — append inserts at the front",
+                "es": "[[99, 1, 2], [3, 4]] — append inserta al principio"
+              },
+              {
+                "en": "[[1, 2, 99], [3, 4]] — shallow copy shares the inner lists",
+                "es": "[[1, 2, 99], [3, 4]] — la copia superficial comparte las listas internas"
+              },
+              {
+                "en": "It raises an error: copies are read-only",
+                "es": "Lanza un error: las copias son de solo lectura"
+              }
+            ],
+            "explanation": {
+              "en": "copy.copy duplicates only the outer list; a[0] and b[0] are the same inner list object, so appending through b is visible in a. copy.deepcopy would make them independent.",
+              "es": "copy.copy duplica solo la lista externa; a[0] y b[0] son el mismo objeto de lista interna, así que agregar a través de b se ve en a. copy.deepcopy las haría independientes."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A long-running service defines `def log_event(msg, when=datetime.now()):` and every logged event shows the same timestamp from days ago. Why?",
+              "es": "Un servicio de larga ejecución define `def log_event(msg, when=datetime.now()):` y cada evento registrado muestra el mismo timestamp de hace días. ¿Por qué?"
+            },
+            "options": [
+              {
+                "en": "Default values are evaluated once, at function definition time — the timestamp was frozen when the module was imported",
+                "es": "Los valores por defecto se evalúan una sola vez, al definirse la función — el timestamp quedó congelado cuando se importó el módulo"
+              },
+              {
+                "en": "The GIL prevents the clock from updating between calls",
+                "es": "El GIL impide que el reloj se actualice entre llamadas"
+              },
+              {
+                "en": "datetime.now() caches its result internally for performance",
+                "es": "datetime.now() cachea su resultado internamente por rendimiento"
+              },
+              {
+                "en": "Keyword defaults are shared between all modules that import the function",
+                "es": "Los defaults de keyword se comparten entre todos los módulos que importan la función"
+              }
+            ],
+            "explanation": {
+              "en": "This is the same root cause as the mutable default list: the default expression runs exactly once, when def executes at import time, and the resulting value is stored on the function object. The fix is the same idiom — default to None and compute datetime.now() inside the body.",
+              "es": "Es la misma causa raíz que la lista por defecto mutable: la expresión del default se ejecuta exactamente una vez, cuando def corre al importar, y el valor resultante queda guardado en el objeto función. La solución es el mismo idiom — usar None por defecto y calcular datetime.now() dentro del cuerpo."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "type-hints-modern-python",
+      "question": {
+        "en": "How do type hints work in Python and why use them?",
+        "es": "¿Cómo funcionan los type hints en Python y por qué usarlos?"
+      },
+      "definition": {
+        "en": "Type hints (`def send(user: User, retries: int = 3) -> bool:`) are **annotations, not enforcement**: CPython ignores them at runtime. Their value comes from tooling — **static checkers** (mypy, pyright) catch type errors before running, IDEs autocomplete better, and frameworks read them: FastAPI builds validation from parameter types and pydantic validates data against annotated models.\n\nModern syntax (3.10+): built-in generics (`list[str]`, `dict[str, int]`), unions with `|` (`int | None` instead of `Optional[int]`), and `TypedDict`, `Protocol`, `Literal` for shaping dicts, structural typing and constrained values. `dataclasses` use annotations to generate `__init__` and `__eq__`.\n\nIn interviews, the key points are: hints are optional and gradual, they don't slow the program, and their payoff is scale — large codebases refactor safely because the checker flags every broken call site.",
+        "es": "Los type hints (`def send(user: User, retries: int = 3) -> bool:`) son **anotaciones, no imposiciones**: CPython los ignora en tiempo de ejecución. Su valor viene del tooling — los **verificadores estáticos** (mypy, pyright) detectan errores de tipos antes de ejecutar, los IDEs autocompletan mejor, y los frameworks los leen: FastAPI construye la validación desde los tipos de los parámetros y pydantic valida datos contra modelos anotados.\n\nSintaxis moderna (3.10+): genéricos nativos (`list[str]`, `dict[str, int]`), uniones con `|` (`int | None` en vez de `Optional[int]`), y `TypedDict`, `Protocol`, `Literal` para dar forma a dicts, tipado estructural y valores restringidos. Los `dataclasses` usan las anotaciones para generar `__init__` y `__eq__`.\n\nEn entrevistas, lo clave: los hints son opcionales y graduales, no ralentizan el programa, y su beneficio es la escala — las bases de código grandes se refactorizan con seguridad porque el checker marca cada punto de llamada roto."
+      },
+      "examples": [
+        {
+          "en": "This app's own backend: FastAPI reads `def login(payload: LoginRequest)` and automatically parses, validates and documents the request body from the pydantic model's annotations.",
+          "es": "El propio backend de esta app: FastAPI lee `def login(payload: LoginRequest)` y automáticamente parsea, valida y documenta el cuerpo de la petición desde las anotaciones del modelo pydantic."
+        },
+        {
+          "en": "Renaming a field on a core model in a 200k-line codebase: mypy in CI lists every call site that still uses the old type, turning a risky refactor into a checklist.",
+          "es": "Renombrar un campo de un modelo central en una base de 200k líneas: mypy en CI lista cada punto de llamada que aún usa el tipo viejo, convirtiendo un refactor riesgoso en una checklist."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What happens at runtime when you call `greet(42)` given `def greet(name: str) -> str: return 'hi ' + name`?",
+              "es": "¿Qué pasa en tiempo de ejecución al llamar `greet(42)` dado `def greet(name: str) -> str: return 'hi ' + name`?"
+            },
+            "options": [
+              {
+                "en": "A warning is printed but the function returns normally",
+                "es": "Se imprime una advertencia pero la función retorna con normalidad"
+              },
+              {
+                "en": "The call proceeds; it fails with TypeError at the string concatenation, not because of the hint",
+                "es": "La llamada procede; falla con TypeError en la concatenación de strings, no por el hint"
+              },
+              {
+                "en": "Python coerces 42 to '42' automatically",
+                "es": "Python convierte 42 en '42' automáticamente"
+              },
+              {
+                "en": "Python rejects the call immediately because 42 is not a str",
+                "es": "Python rechaza la llamada de inmediato porque 42 no es un str"
+              }
+            ],
+            "explanation": {
+              "en": "Hints are not enforced by the interpreter. The error only appears when 'hi ' + 42 executes. A static checker like mypy would have flagged the call before running.",
+              "es": "El intérprete no aplica los hints. El error solo aparece cuando se ejecuta 'hi ' + 42. Un checker estático como mypy habría marcado la llamada antes de ejecutar."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each modern typing construct with what it expresses.",
+              "es": "Conecta cada construcción moderna de tipado con lo que expresa."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "int | None",
+                  "es": "int | None"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "list[str]",
+                  "es": "list[str]"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Literal[\"asc\", \"desc\"]",
+                  "es": "Literal[\"asc\", \"desc\"]"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Protocol",
+                  "es": "Protocol"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "A value that may be an int or missing (None)",
+                  "es": "Un valor que puede ser int o faltar (None)"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "A list whose elements are all strings",
+                  "es": "Una lista cuyos elementos son todos strings"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Only these exact string values are allowed",
+                  "es": "Solo se permiten exactamente esos valores de string"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Structural typing: anything with the right methods fits",
+                  "es": "Tipado estructural: encaja cualquier cosa con los métodos correctos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API boundary receives untrusted JSON. Which statement correctly compares plain type hints with a pydantic model for this job?",
+              "es": "Tu frontera de API recibe JSON no confiable. ¿Qué afirmación compara correctamente los type hints simples con un modelo pydantic para esta tarea?"
+            },
+            "options": [
+              {
+                "en": "Plain hints are enough — CPython rejects arguments of the wrong type at call time",
+                "es": "Los hints simples bastan — CPython rechaza argumentos del tipo incorrecto al llamar"
+              },
+              {
+                "en": "pydantic and mypy do the same job, just at different speeds",
+                "es": "pydantic y mypy hacen el mismo trabajo, solo que a distintas velocidades"
+              },
+              {
+                "en": "pydantic works by running mypy inside the live server process",
+                "es": "pydantic funciona ejecutando mypy dentro del proceso del servidor en vivo"
+              },
+              {
+                "en": "Plain hints are only checked statically by tools like mypy; pydantic actually validates and coerces the data at runtime, which is what an untrusted boundary needs",
+                "es": "Los hints simples solo los verifican estáticamente herramientas como mypy; pydantic realmente valida y convierte los datos en tiempo de ejecución, que es lo que necesita una frontera no confiable"
+              }
+            ],
+            "explanation": {
+              "en": "Static checkers analyze source code before execution and can't see what arrives over the network at runtime. pydantic reads the same annotations but enforces them on live data — parsing, coercing and rejecting invalid payloads — which is why FastAPI pairs both: mypy for internal code, pydantic at the boundary.",
+              "es": "Los verificadores estáticos analizan el código fuente antes de ejecutar y no pueden ver lo que llega por la red en tiempo de ejecución. pydantic lee las mismas anotaciones pero las aplica sobre datos vivos — parseando, convirtiendo y rechazando payloads inválidos — por eso FastAPI combina ambos: mypy para el código interno, pydantic en la frontera."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "django-orm-querysets",
+      "question": {
+        "en": "How do Django QuerySets work, and what is the N+1 query problem?",
+        "es": "¿Cómo funcionan los QuerySets de Django y qué es el problema N+1?"
+      },
+      "definition": {
+        "en": "A **QuerySet is lazy**: `Book.objects.filter(year=2024)` builds a query description but hits the database only when you **evaluate** it — iterating, `list()`, `len()`, slicing with a step, `bool()`, or template rendering. Chaining `.filter().exclude().order_by()` just refines the SQL; evaluated results are then **cached** on the QuerySet, so iterating twice runs one query.\n\nThe **N+1 problem**: you fetch N rows with one query, then access a related object on each row (`book.author.name`), and the ORM lazily fires **one extra query per row** — 1 + N queries total. With 500 books that's 501 round trips, and it's invisible in code review because the loop looks innocent.\n\nDetection and fix: inspect queries with `django-debug-toolbar` or `connection.queries`, then use `select_related` / `prefetch_related` to load the related data upfront.",
+        "es": "Un **QuerySet es perezoso**: `Book.objects.filter(year=2024)` construye una descripción de consulta pero solo toca la base de datos cuando se **evalúa** — al iterar, con `list()`, `len()`, slicing con paso, `bool()` o al renderizar en un template. Encadenar `.filter().exclude().order_by()` solo refina el SQL; los resultados evaluados quedan **cacheados** en el QuerySet, así que iterar dos veces ejecuta una sola consulta.\n\nEl **problema N+1**: traes N filas con una consulta y luego accedes a un objeto relacionado en cada fila (`book.author.name`), y el ORM dispara perezosamente **una consulta extra por fila** — 1 + N consultas en total. Con 500 libros son 501 viajes a la base, y es invisible en code review porque el bucle parece inocente.\n\nDetección y solución: inspecciona las consultas con `django-debug-toolbar` o `connection.queries`, y usa `select_related` / `prefetch_related` para cargar los datos relacionados de antemano."
+      },
+      "examples": [
+        {
+          "en": "An endpoint listing 200 orders renders `order.customer.email` in the serializer: production logs show 201 queries per request and p95 latency of 2 s until select_related drops it to 1 query.",
+          "es": "Un endpoint que lista 200 pedidos renderiza `order.customer.email` en el serializer: los logs de producción muestran 201 consultas por petición y una latencia p95 de 2 s hasta que select_related lo baja a 1 consulta."
+        },
+        {
+          "en": "`if queryset:` in a view evaluates the whole QuerySet just to check emptiness; `queryset.exists()` asks the database with a cheap LIMIT 1 query instead.",
+          "es": "`if queryset:` en una vista evalúa todo el QuerySet solo para comprobar si está vacío; `queryset.exists()` se lo pregunta a la base con una consulta barata LIMIT 1."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How many database queries does this code run?\n\n```python\nqs = Book.objects.filter(year=2024)\nqs = qs.exclude(draft=True)\nbooks = list(qs)\ncount = len(books)\n```",
+              "es": "¿Cuántas consultas a la base de datos ejecuta este código?\n\n```python\nqs = Book.objects.filter(year=2024)\nqs = qs.exclude(draft=True)\nbooks = list(qs)\ncount = len(books)\n```"
+            },
+            "options": [
+              {
+                "en": "4 — every line touches the database",
+                "es": "4 — cada línea toca la base de datos"
+              },
+              {
+                "en": "3 — one per filter, exclude and list",
+                "es": "3 — una por filter, exclude y list"
+              },
+              {
+                "en": "1 — only list(qs) evaluates; filter/exclude build SQL and len uses the list in memory",
+                "es": "1 — solo list(qs) evalúa; filter/exclude construyen SQL y len usa la lista en memoria"
+              },
+              {
+                "en": "2 — list runs one query and len runs a COUNT",
+                "es": "2 — list ejecuta una consulta y len ejecuta un COUNT"
+              }
+            ],
+            "explanation": {
+              "en": "QuerySets are lazy: filter and exclude only refine the pending SQL. list(qs) triggers the single query, and len(books) operates on a plain Python list.",
+              "es": "Los QuerySets son perezosos: filter y exclude solo refinan el SQL pendiente. list(qs) dispara la única consulta y len(books) opera sobre una lista normal de Python."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain the N+1 query problem in Django with a concrete example, and name at least one way to detect it and one way to fix it.",
+              "es": "Explica el problema de consultas N+1 en Django con un ejemplo concreto, y menciona al menos una forma de detectarlo y una de solucionarlo."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that one query fetches N rows and accessing a related field on each row lazily triggers one additional query per row (1 + N total), give an example like iterating books and reading book.author. Must mention a detection method (django-debug-toolbar, connection.queries, query logging) and a fix (select_related for FK/OneToOne or prefetch_related for many-to-many/reverse relations).",
+              "es": "Debe explicar que una consulta trae N filas y que acceder a un campo relacionado en cada fila dispara perezosamente una consulta adicional por fila (1 + N en total), con un ejemplo como iterar libros y leer book.author. Debe mencionar un método de detección (django-debug-toolbar, connection.queries, logging de consultas) y una solución (select_related para FK/OneToOne o prefetch_related para many-to-many/relaciones inversas)."
+            },
+            "reference": "Fetching 100 books with Book.objects.all() is one query, but a loop reading book.author.name triggers a separate SELECT per book because the FK is loaded lazily — 101 queries. Detect it with django-debug-toolbar or by inspecting connection.queries in development. Fix it with Book.objects.select_related('author') (a JOIN, for FK/OneToOne) or prefetch_related for many-to-many and reverse FK relations, which batches the related lookup into one extra query."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A view iterates the same QuerySet variable twice — once to render the items and once to compute a summary. How many SQL queries run?",
+              "es": "Una vista itera la misma variable QuerySet dos veces — una para renderizar los ítems y otra para calcular un resumen. ¿Cuántas consultas SQL se ejecutan?"
+            },
+            "options": [
+              {
+                "en": "It depends on the database backend's isolation level",
+                "es": "Depende del nivel de aislamiento del backend de base de datos"
+              },
+              {
+                "en": "One — the first evaluation caches the results on the QuerySet, and the second loop reuses that cache",
+                "es": "Una — la primera evaluación cachea los resultados en el QuerySet, y el segundo bucle reutiliza ese caché"
+              },
+              {
+                "en": "Two — every for loop over a QuerySet hits the database",
+                "es": "Dos — cada bucle for sobre un QuerySet toca la base de datos"
+              },
+              {
+                "en": "Zero — QuerySets only query when list() is called explicitly",
+                "es": "Cero — los QuerySets solo consultan cuando se llama list() explícitamente"
+              }
+            ],
+            "explanation": {
+              "en": "After the first full evaluation, the QuerySet stores its result cache and later iterations reuse it. Careful with the variations: calling .iterator() disables the cache, and re-building the queryset (e.g. calling .all() again or re-filtering) creates a new one that queries again.",
+              "es": "Tras la primera evaluación completa, el QuerySet guarda su caché de resultados y las iteraciones posteriores lo reutilizan. Cuidado con las variantes: llamar .iterator() desactiva el caché, y reconstruir el queryset (p. ej. llamar .all() de nuevo o volver a filtrar) crea uno nuevo que consulta otra vez."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "select-related-vs-prefetch-related",
+      "question": {
+        "en": "What is the difference between select_related and prefetch_related?",
+        "es": "¿Cuál es la diferencia entre select_related y prefetch_related?"
+      },
+      "definition": {
+        "en": "**`select_related`** follows **forward ForeignKey and OneToOne** relations using a SQL **JOIN**: one single query returns each row together with its related object. It cannot handle 'many' relations because a JOIN would duplicate rows.\n\n**`prefetch_related`** handles **ManyToMany and reverse ForeignKey** relations (`author.book_set`) by running a **second query** (`WHERE id IN (...)`) and stitching the objects together in Python. Two queries total, regardless of N.\n\nRule of thumb: relation points to **one** object → `select_related`; relation points to **many** objects → `prefetch_related`. They compose (`.select_related('author').prefetch_related('tags')`), and `Prefetch(queryset=...)` lets you filter or annotate what gets prefetched.",
+        "es": "**`select_related`** sigue relaciones **ForeignKey directas y OneToOne** usando un **JOIN** de SQL: una sola consulta devuelve cada fila junto con su objeto relacionado. No puede manejar relaciones 'a muchos' porque el JOIN duplicaría filas.\n\n**`prefetch_related`** maneja relaciones **ManyToMany y ForeignKey inversas** (`author.book_set`) ejecutando una **segunda consulta** (`WHERE id IN (...)`) y uniendo los objetos en Python. Dos consultas en total, sin importar N.\n\nRegla práctica: la relación apunta a **un** objeto → `select_related`; apunta a **muchos** objetos → `prefetch_related`. Se componen (`.select_related('author').prefetch_related('tags')`), y `Prefetch(queryset=...)` permite filtrar o anotar lo que se precarga."
+      },
+      "examples": [
+        {
+          "en": "An order list showing `order.customer.name`: `Order.objects.select_related('customer')` turns 1+N queries into a single JOIN.",
+          "es": "Un listado de pedidos que muestra `order.customer.name`: `Order.objects.select_related('customer')` convierte 1+N consultas en un solo JOIN."
+        },
+        {
+          "en": "A blog index showing each post's tags (ManyToMany): `Post.objects.prefetch_related('tags')` runs 2 queries total instead of one tags query per post.",
+          "es": "Un índice de blog que muestra los tags de cada post (ManyToMany): `Post.objects.prefetch_related('tags')` ejecuta 2 consultas en total en vez de una consulta de tags por post."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "This view causes an N+1 problem: `article.author` (ForeignKey) triggers one query per article, and `article.tags.all()` (ManyToMany) triggers another. Rewrite the queryset line to fix both with the appropriate optimizations.",
+              "es": "Esta vista causa un problema N+1: `article.author` (ForeignKey) dispara una consulta por artículo, y `article.tags.all()` (ManyToMany) dispara otra. Reescribe la línea del queryset para arreglar ambos con las optimizaciones apropiadas."
+            },
+            "language": "python",
+            "starter_code": "def article_list(request):\n    articles = Article.objects.filter(published=True)  # fix this line\n    data = [\n        {\n            \"title\": a.title,\n            \"author\": a.author.name,\n            \"tags\": [t.name for t in a.tags.all()],\n        }\n        for a in articles\n    ]\n    return JsonResponse({\"articles\": data})"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must add select_related('author') for the ForeignKey (single object → JOIN) and prefetch_related('tags') for the ManyToMany (many objects → second query), keeping the filter(published=True). Using prefetch_related for author or select_related for tags is wrong.",
+              "es": "Debe agregar select_related('author') para la ForeignKey (un objeto → JOIN) y prefetch_related('tags') para la ManyToMany (muchos objetos → segunda consulta), conservando el filter(published=True). Usar prefetch_related para author o select_related para tags es incorrecto."
+            },
+            "reference": "def article_list(request):\n    articles = (\n        Article.objects.filter(published=True)\n        .select_related(\"author\")\n        .prefetch_related(\"tags\")\n    )\n    data = [\n        {\n            \"title\": a.title,\n            \"author\": a.author.name,\n            \"tags\": [t.name for t in a.tags.all()],\n        }\n        for a in articles\n    ]\n    return JsonResponse({\"articles\": data})"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why can't select_related be used for a ManyToMany relation like `post.tags`?",
+              "es": "¿Por qué no puede usarse select_related para una relación ManyToMany como `post.tags`?"
+            },
+            "options": [
+              {
+                "en": "select_related only works with raw SQL",
+                "es": "select_related solo funciona con SQL crudo"
+              },
+              {
+                "en": "A JOIN against a 'many' relation would duplicate each post row per tag; prefetch_related solves it with a separate query instead",
+                "es": "Un JOIN contra una relación 'a muchos' duplicaría cada fila del post por cada tag; prefetch_related lo resuelve con una consulta separada"
+              },
+              {
+                "en": "It can — the two methods are interchangeable",
+                "es": "Sí puede — los dos métodos son intercambiables"
+              },
+              {
+                "en": "ManyToMany fields cannot be queried through the ORM",
+                "es": "Los campos ManyToMany no pueden consultarse a través del ORM"
+              }
+            ],
+            "explanation": {
+              "en": "select_related builds a JOIN, which only makes sense when each row has at most one related object (FK/OneToOne). For to-many relations, prefetch_related runs a second IN query and joins the objects in Python.",
+              "es": "select_related construye un JOIN, que solo tiene sentido cuando cada fila tiene a lo sumo un objeto relacionado (FK/OneToOne). Para relaciones a-muchos, prefetch_related ejecuta una segunda consulta IN y une los objetos en Python."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each ORM access pattern with the right optimization and the reason it fits.",
+              "es": "Conecta cada patrón de acceso del ORM con la optimización correcta y la razón por la que encaja."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "order.customer — forward ForeignKey",
+                  "es": "order.customer — ForeignKey directa"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "post.tags — ManyToMany",
+                  "es": "post.tags — ManyToMany"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "author.book_set — reverse ForeignKey",
+                  "es": "author.book_set — ForeignKey inversa"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Prefetch('reviews', queryset=Review.objects.filter(approved=True))",
+                  "es": "Prefetch('reviews', queryset=Review.objects.filter(approved=True))"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "select_related — a JOIN works because each row has exactly one related object",
+                  "es": "select_related — un JOIN funciona porque cada fila tiene exactamente un objeto relacionado"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "prefetch_related — a second IN query, since each post has many tags",
+                  "es": "prefetch_related — una segunda consulta IN, ya que cada post tiene muchos tags"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "prefetch_related — many children per parent, stitched together in Python",
+                  "es": "prefetch_related — muchos hijos por padre, unidos en Python"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Customizes what gets prefetched — filters or annotates the related rows",
+                  "es": "Personaliza lo que se precarga — filtra o anota las filas relacionadas"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "migrations-and-middleware",
+      "question": {
+        "en": "How do Django migrations work, and what does the request/response cycle with middleware look like?",
+        "es": "¿Cómo funcionan las migraciones de Django y cómo es el ciclo petición/respuesta con middleware?"
+      },
+      "definition": {
+        "en": "**Migrations** version your database schema: `makemigrations` diffs your models against the recorded migration history and generates Python operation files; `migrate` applies pending ones, tracking state in the `django_migrations` table. Migrations declare `dependencies`, can be reversed, and `RunPython` handles data migrations. In production the classic pitfall is a migration that locks a huge table or a deploy where new code runs before its migration.\n\nThe **request/response cycle**: the WSGI/ASGI server hands the request to Django, which passes it **down through the middleware stack** (security, sessions, auth, CSRF...), then the **URL router** matches a path to a **view**, the view uses the ORM/business logic and returns a response, which travels **back up through the middleware in reverse order** before going to the client.\n\nEach middleware can short-circuit (e.g. auth returning 401) or modify request and response — it's Django's onion architecture.",
+        "es": "Las **migraciones** versionan el esquema de tu base de datos: `makemigrations` compara tus modelos contra el historial registrado y genera archivos de operaciones en Python; `migrate` aplica las pendientes, registrando el estado en la tabla `django_migrations`. Las migraciones declaran `dependencies`, pueden revertirse, y `RunPython` maneja migraciones de datos. En producción el error clásico es una migración que bloquea una tabla enorme o un deploy donde el código nuevo corre antes que su migración.\n\nEl **ciclo petición/respuesta**: el servidor WSGI/ASGI entrega la petición a Django, que la pasa **hacia abajo por la pila de middleware** (seguridad, sesiones, auth, CSRF...), luego el **router de URLs** asocia la ruta a una **vista**, la vista usa el ORM/lógica de negocio y devuelve una respuesta, que viaja **de regreso por el middleware en orden inverso** antes de ir al cliente.\n\nCada middleware puede cortar el circuito (p. ej. auth devolviendo 401) o modificar petición y respuesta — es la arquitectura de cebolla de Django."
+      },
+      "examples": [
+        {
+          "en": "Adding a NOT NULL column to a 50M-row table: doing it in one migration locks the table; the safe pattern is add nullable → backfill in batches → alter to NOT NULL, in separate deploys.",
+          "es": "Agregar una columna NOT NULL a una tabla de 50M de filas: hacerlo en una sola migración bloquea la tabla; el patrón seguro es agregar nullable → rellenar por lotes → alterar a NOT NULL, en deploys separados."
+        },
+        {
+          "en": "A custom middleware that assigns a request ID and logs total duration wraps everything else: it sees the request first and the response last, ideal for tracing.",
+          "es": "Un middleware propio que asigna un request ID y loggea la duración total envuelve todo lo demás: ve la petición primero y la respuesta al final, ideal para tracing."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the Django request lifecycle from the moment a request arrives to the response leaving.",
+              "es": "Ordena el ciclo de vida de una petición en Django desde que llega hasta que sale la respuesta."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "server",
+                "label": {
+                  "en": "WSGI/ASGI server receives the HTTP request",
+                  "es": "El servidor WSGI/ASGI recibe la petición HTTP"
+                }
+              },
+              {
+                "id": "mw-in",
+                "label": {
+                  "en": "Middleware stack processes the request (top-down)",
+                  "es": "La pila de middleware procesa la petición (de arriba abajo)"
+                }
+              },
+              {
+                "id": "router",
+                "label": {
+                  "en": "URL router matches the path to a view",
+                  "es": "El router de URLs asocia la ruta a una vista"
+                }
+              },
+              {
+                "id": "view",
+                "label": {
+                  "en": "The view runs, using the ORM for data",
+                  "es": "La vista se ejecuta, usando el ORM para los datos"
+                }
+              },
+              {
+                "id": "mw-out",
+                "label": {
+                  "en": "The response passes back through middleware (bottom-up)",
+                  "es": "La respuesta vuelve por el middleware (de abajo arriba)"
+                }
+              },
+              {
+                "id": "client",
+                "label": {
+                  "en": "The response is sent to the client",
+                  "es": "La respuesta se envía al cliente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "server",
+              "mw-in",
+              "router",
+              "view",
+              "mw-out",
+              "client"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What does `python manage.py makemigrations` actually do?",
+              "es": "¿Qué hace realmente `python manage.py makemigrations`?"
+            },
+            "options": [
+              {
+                "en": "Deletes and recreates all tables from the models",
+                "es": "Borra y recrea todas las tablas desde los modelos"
+              },
+              {
+                "en": "Rolls the schema back to the previous migration",
+                "es": "Revierte el esquema a la migración anterior"
+              },
+              {
+                "en": "Compares models against migration history and writes new migration files — without touching the database",
+                "es": "Compara los modelos contra el historial de migraciones y escribe nuevos archivos de migración — sin tocar la base de datos"
+              },
+              {
+                "en": "Applies all pending migrations to the database",
+                "es": "Aplica todas las migraciones pendientes a la base de datos"
+              }
+            ],
+            "explanation": {
+              "en": "makemigrations only generates migration files by diffing models vs. recorded state. It's migrate that executes them against the database and records them in django_migrations.",
+              "es": "makemigrations solo genera archivos de migración comparando modelos contra el estado registrado. Es migrate el que los ejecuta contra la base y los registra en django_migrations."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During a rolling deploy, new application code can reach some servers before (or after) `migrate` runs. What is the safe practice?",
+              "es": "Durante un deploy progresivo (rolling), el código nuevo puede llegar a algunos servidores antes (o después) de que corra `migrate`. ¿Cuál es la práctica segura?"
+            },
+            "options": [
+              {
+                "en": "Have every web server run migrate at startup so code and schema always match",
+                "es": "Hacer que cada servidor web ejecute migrate al arrancar para que código y esquema siempre coincidan"
+              },
+              {
+                "en": "Always run migrations after the deploy finishes, never before",
+                "es": "Ejecutar siempre las migraciones después de terminar el deploy, nunca antes"
+              },
+              {
+                "en": "Take the site offline for every schema change, no exceptions",
+                "es": "Poner el sitio fuera de línea para cada cambio de esquema, sin excepciones"
+              },
+              {
+                "en": "Make each migration compatible with the previous code version — e.g. add columns as nullable first, and remove all code references before dropping a column — so either order works",
+                "es": "Hacer cada migración compatible con la versión anterior del código — p. ej. agregar columnas como nullable primero, y eliminar todas las referencias en el código antes de borrar una columna — para que cualquier orden funcione"
+              }
+            ],
+            "explanation": {
+              "en": "During a rolling deploy old and new code coexist against one database, so migrations must be backwards-compatible (the expand/contract pattern): additive changes ship first, destructive ones only after no running code depends on them. Fixed ordering or migrate-on-startup doesn't remove the coexistence window, and permanent downtime is not a scalable answer.",
+              "es": "Durante un deploy progresivo el código viejo y el nuevo coexisten contra una misma base, así que las migraciones deben ser retrocompatibles (el patrón expand/contract): los cambios aditivos salen primero, los destructivos solo cuando ningún código en ejecución depende de ellos. Fijar el orden o migrar al arrancar no elimina la ventana de coexistencia, y el downtime permanente no es una respuesta escalable."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "drf-serializers-auth-transactions",
+      "question": {
+        "en": "In Django REST Framework, how do serializers, authentication and transactions (atomic) work?",
+        "es": "En Django REST Framework, ¿cómo funcionan los serializers, la autenticación y las transacciones (atomic)?"
+      },
+      "definition": {
+        "en": "A DRF **serializer** converts between model instances and JSON in both directions and **validates** input: `serializer.is_valid()` runs field validators, `validate_<field>` methods and cross-field `validate()`; then `serializer.save()` calls `create()` or `update()`. `ModelSerializer` generates fields from the model. Nested and read-only fields are where most interview follow-ups go.\n\n**Authentication** answers 'who is calling' (SessionAuthentication, TokenAuthentication, JWT) and sets `request.user`; **permissions** then answer 'may they do this' (`IsAuthenticated`, custom `has_object_permission`). They run before the view body.\n\n**`transaction.atomic`** wraps a block in a database transaction: everything commits together or rolls back on exception. Use it when a request writes multiple related rows (order + items + stock decrement) so partial failures can't corrupt data. `ATOMIC_REQUESTS = True` wraps every request in a transaction.",
+        "es": "Un **serializer** de DRF convierte entre instancias de modelos y JSON en ambas direcciones y **valida** la entrada: `serializer.is_valid()` ejecuta los validadores de campo, los métodos `validate_<field>` y el `validate()` entre campos; luego `serializer.save()` llama a `create()` o `update()`. `ModelSerializer` genera los campos desde el modelo. Los campos anidados y de solo lectura son donde van la mayoría de las repreguntas de entrevista.\n\nLa **autenticación** responde 'quién llama' (SessionAuthentication, TokenAuthentication, JWT) y asigna `request.user`; los **permisos** responden 'puede hacer esto' (`IsAuthenticated`, `has_object_permission` personalizado). Corren antes del cuerpo de la vista.\n\n**`transaction.atomic`** envuelve un bloque en una transacción de base de datos: todo se confirma junto o se revierte ante una excepción. Úsalo cuando una petición escribe varias filas relacionadas (pedido + ítems + descuento de stock) para que un fallo parcial no corrompa los datos. `ATOMIC_REQUESTS = True` envuelve cada petición en una transacción."
+      },
+      "examples": [
+        {
+          "en": "A checkout endpoint creates an Order, its OrderItems and decrements stock inside `with transaction.atomic():` — if stock underflows and raises, no orphan order is left behind.",
+          "es": "Un endpoint de checkout crea una Order, sus OrderItems y descuenta stock dentro de `with transaction.atomic():` — si el stock queda en negativo y lanza excepción, no queda ningún pedido huérfano."
+        },
+        {
+          "en": "A mobile API uses JWT: the client sends `Authorization: Bearer <token>`, DRF's authentication class validates the signature and sets request.user before any permission or view code runs.",
+          "es": "Una API móvil usa JWT: el cliente envía `Authorization: Bearer <token>`, la clase de autenticación de DRF valida la firma y asigna request.user antes de que corra cualquier permiso o código de vista."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A view creates an Order row and then its 3 OrderItem rows; creating the second item raises an exception. Without transaction.atomic, what state is the database left in?",
+              "es": "Una vista crea una fila Order y luego sus 3 filas OrderItem; crear el segundo ítem lanza una excepción. Sin transaction.atomic, ¿en qué estado queda la base de datos?"
+            },
+            "options": [
+              {
+                "en": "Everything is rolled back automatically by Django",
+                "es": "Django revierte todo automáticamente"
+              },
+              {
+                "en": "The database blocks until the items are fixed",
+                "es": "La base de datos se bloquea hasta que se corrijan los ítems"
+              },
+              {
+                "en": "The Order and the first item persist — inconsistent partial data",
+                "es": "La Order y el primer ítem persisten — datos parciales inconsistentes"
+              },
+              {
+                "en": "Nothing was written because writes are buffered until the response",
+                "es": "No se escribió nada porque las escrituras se acumulan hasta la respuesta"
+              }
+            ],
+            "explanation": {
+              "en": "In autocommit mode (Django's default) every save commits immediately, so the order and first item survive the failure. Wrapping the block in transaction.atomic makes the whole operation commit or roll back as a unit.",
+              "es": "En modo autocommit (el defecto de Django) cada save confirma de inmediato, así que la orden y el primer ítem sobreviven al fallo. Envolver el bloque en transaction.atomic hace que toda la operación se confirme o revierta como unidad."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain the difference between authentication and permissions in DRF, and describe the path a request takes through them before reaching the view.",
+              "es": "Explica la diferencia entre autenticación y permisos en DRF, y describe el camino que recorre una petición a través de ellos antes de llegar a la vista."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must distinguish authentication (identifies who is calling — validates credentials/token/session and sets request.user) from permissions (decides whether that identity may perform the action, e.g. IsAuthenticated or object-level checks). Must state the order: authentication classes run first, then permission checks, and only if both pass does the view body execute; otherwise DRF returns 401/403.",
+              "es": "Debe distinguir autenticación (identifica quién llama — valida credenciales/token/sesión y asigna request.user) de permisos (deciden si esa identidad puede realizar la acción, p. ej. IsAuthenticated o chequeos a nivel de objeto). Debe indicar el orden: primero corren las clases de autenticación, luego los chequeos de permisos, y solo si ambos pasan se ejecuta el cuerpo de la vista; si no, DRF devuelve 401/403."
+            },
+            "reference": "Authentication establishes identity: DRF iterates the view's authentication classes (session, token, JWT), validates the credentials and sets request.user (401 if credentials are invalid). Permissions then authorize the action: classes like IsAuthenticated or custom has_permission/has_object_permission decide whether this user may proceed (403 if denied). Only after both stages does the view body run."
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps DRF takes when a POST payload becomes a persisted object via `serializer = OrderSerializer(data=request.data)`.",
+              "es": "Ordena los pasos que sigue DRF cuando un payload POST se convierte en un objeto persistido vía `serializer = OrderSerializer(data=request.data)`."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "receive",
+                "label": {
+                  "en": "The serializer is instantiated with the raw request data",
+                  "es": "El serializer se instancia con los datos crudos de la petición"
+                }
+              },
+              {
+                "id": "fields",
+                "label": {
+                  "en": "is_valid() runs field validators and validate_<field> methods",
+                  "es": "is_valid() ejecuta los validadores de campo y los métodos validate_<field>"
+                }
+              },
+              {
+                "id": "cross",
+                "label": {
+                  "en": "The cross-field validate() method checks the object as a whole",
+                  "es": "El método validate() entre campos revisa el objeto como un todo"
+                }
+              },
+              {
+                "id": "save",
+                "label": {
+                  "en": "save() dispatches to create() or update() to persist the instance",
+                  "es": "save() delega en create() o update() para persistir la instancia"
+                }
+              },
+              {
+                "id": "output",
+                "label": {
+                  "en": "The saved instance is re-serialized into the response JSON",
+                  "es": "La instancia guardada se vuelve a serializar en el JSON de la respuesta"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "receive",
+              "fields",
+              "cross",
+              "save",
+              "output"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "celery-and-caching",
+      "question": {
+        "en": "How do Celery background tasks and Django caching work?",
+        "es": "¿Cómo funcionan las tareas en segundo plano con Celery y el caching en Django?"
+      },
+      "definition": {
+        "en": "**Celery** moves slow work out of the request cycle. The web process calls `task.delay(args)`, which only **enqueues a message** in a broker (Redis/RabbitMQ) and returns immediately; separate **worker** processes consume the queue and execute the task, optionally storing results in a backend. Key practices: pass **IDs, not model instances** (the object may change before execution), make tasks **idempotent** because retries mean at-least-once delivery, and configure retry/backoff for flaky dependencies.\n\n**Django caching** stores computed results in a fast backend (Redis/Memcached) at several levels: per-view (`@cache_page`), template fragments, or the low-level API (`cache.get`/`cache.set` with a TTL). The hard part is **invalidation**: stale data vs. recomputation cost, which is why TTLs plus explicit invalidation on writes (or key versioning) is the common pattern.\n\nTogether they cover the two big latency tools: don't do slow work in the request (Celery), don't repeat work you already did (cache).",
+        "es": "**Celery** saca el trabajo lento del ciclo de la petición. El proceso web llama `task.delay(args)`, que solo **encola un mensaje** en un broker (Redis/RabbitMQ) y retorna de inmediato; procesos **worker** separados consumen la cola y ejecutan la tarea, opcionalmente guardando resultados en un backend. Prácticas clave: pasar **IDs, no instancias de modelos** (el objeto puede cambiar antes de ejecutarse), hacer las tareas **idempotentes** porque los reintentos implican entrega at-least-once, y configurar retry/backoff para dependencias inestables.\n\nEl **caching de Django** guarda resultados calculados en un backend rápido (Redis/Memcached) en varios niveles: por vista (`@cache_page`), fragmentos de template, o la API de bajo nivel (`cache.get`/`cache.set` con TTL). Lo difícil es la **invalidación**: datos obsoletos vs. costo de recalcular; por eso el patrón común es TTLs más invalidación explícita en escrituras (o versionado de claves).\n\nJuntos cubren las dos grandes herramientas de latencia: no hagas trabajo lento en la petición (Celery), no repitas trabajo ya hecho (caché)."
+      },
+      "examples": [
+        {
+          "en": "User registration returns in 50 ms because the welcome email goes through `send_welcome_email.delay(user.id)` — a Celery worker sends it seconds later, and a retry policy covers SMTP hiccups.",
+          "es": "El registro de usuario responde en 50 ms porque el email de bienvenida pasa por `send_welcome_email.delay(user.id)` — un worker de Celery lo envía segundos después, y una política de reintentos cubre los fallos de SMTP."
+        },
+        {
+          "en": "A product page hammered by traffic caches its expensive aggregation with `cache.set(f'product:{pk}:stats', stats, 300)` and invalidates the key when a review is written.",
+          "es": "Una página de producto con mucho tráfico cachea su agregación costosa con `cache.set(f'product:{pk}:stats', stats, 300)` e invalida la clave cuando se escribe una reseña."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each component or practice with its role in a Celery + caching setup.",
+              "es": "Conecta cada componente o práctica con su rol en una configuración de Celery + caching."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Broker (Redis/RabbitMQ)",
+                  "es": "Broker (Redis/RabbitMQ)"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Celery worker",
+                  "es": "Worker de Celery"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Idempotent task design",
+                  "es": "Diseño de tareas idempotentes"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "TTL on cache keys",
+                  "es": "TTL en las claves de caché"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Queues task messages between web and workers",
+                  "es": "Encola mensajes de tareas entre la web y los workers"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Separate process that consumes and executes tasks",
+                  "es": "Proceso separado que consume y ejecuta tareas"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Makes at-least-once retries safe to repeat",
+                  "es": "Hace que los reintentos at-least-once sean seguros de repetir"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Bounds how stale cached data can get",
+                  "es": "Acota cuán obsoletos pueden quedar los datos cacheados"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why should you pass `user.id` to a Celery task instead of the `user` model instance?",
+              "es": "¿Por qué deberías pasar `user.id` a una tarea de Celery en vez de la instancia del modelo `user`?"
+            },
+            "options": [
+              {
+                "en": "Model instances are too large for Redis to store",
+                "es": "Las instancias de modelos son demasiado grandes para Redis"
+              },
+              {
+                "en": "The instance is serialized at enqueue time and may be stale or unserializable; the ID lets the worker fetch fresh data",
+                "es": "La instancia se serializa al encolar y puede quedar obsoleta o no ser serializable; el ID permite al worker traer datos frescos"
+              },
+              {
+                "en": "Passing instances would run the task synchronously",
+                "es": "Pasar instancias haría que la tarea corra síncronamente"
+              },
+              {
+                "en": "Celery only accepts integer arguments",
+                "es": "Celery solo acepta argumentos enteros"
+              }
+            ],
+            "explanation": {
+              "en": "Task arguments travel through the broker as serialized messages (JSON by default). A snapshot of the model can be outdated by the time the worker runs — or fail to serialize at all. Passing the ID and re-fetching guarantees current data.",
+              "es": "Los argumentos viajan por el broker como mensajes serializados (JSON por defecto). Una instantánea del modelo puede estar desactualizada cuando el worker corra — o directamente no serializarse. Pasar el ID y volver a consultar garantiza datos actuales."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A hot cache key expires and hundreds of concurrent requests recompute the expensive value at the same time (a cache stampede). Which mitigation is correct?",
+              "es": "Una clave de caché muy consultada expira y cientos de peticiones concurrentes recalculan el valor costoso al mismo tiempo (una estampida de caché). ¿Qué mitigación es correcta?"
+            },
+            "options": [
+              {
+                "en": "Recompute in every request but with a faster serializer to absorb the load",
+                "es": "Recalcular en cada petición pero con un serializer más rápido para absorber la carga"
+              },
+              {
+                "en": "Let a single request recompute the value — using a lock or jittered/staggered TTLs — while the rest keep serving slightly stale data",
+                "es": "Dejar que una sola petición recalcule el valor — usando un lock o TTLs con jitter/escalonados — mientras el resto sigue sirviendo datos ligeramente obsoletos"
+              },
+              {
+                "en": "Disable caching for hot keys, since they change too often to cache",
+                "es": "Desactivar el caché para las claves calientes, ya que cambian demasiado para cachearse"
+              },
+              {
+                "en": "Lower the TTL so the key expires more often and stays fresher",
+                "es": "Bajar el TTL para que la clave expire más seguido y esté más fresca"
+              }
+            ],
+            "explanation": {
+              "en": "A stampede happens because many workers see the same miss simultaneously. The fixes make regeneration exclusive (a short-lived lock, serving stale data while one request refreshes) or de-synchronize expirations (TTL jitter). Lowering the TTL makes expirations — and stampedes — more frequent, and dropping the cache re-creates the very load it prevented.",
+              "es": "La estampida ocurre porque muchos workers ven el mismo fallo de caché a la vez. Las soluciones hacen exclusiva la regeneración (un lock de corta vida, servir datos obsoletos mientras una petición refresca) o desincronizan las expiraciones (jitter en el TTL). Bajar el TTL hace las expiraciones — y las estampidas — más frecuentes, y quitar el caché recrea justo la carga que evitaba."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which of these can be used as a dictionary key?",
+          "es": "¿Cuál de estos puede usarse como clave de diccionario?"
+        },
+        "options": [
+          {
+            "en": "{'x': 1} — a small dict",
+            "es": "{'x': 1} — un dict pequeño"
+          },
+          {
+            "en": "{1, 2} — a set of ints",
+            "es": "{1, 2} — un set de enteros"
+          },
+          {
+            "en": "(1, 2, 'a') — a tuple of hashable elements",
+            "es": "(1, 2, 'a') — una tupla de elementos hasheables"
+          },
+          {
+            "en": "[1, 2] — a list of ints",
+            "es": "[1, 2] — una lista de enteros"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What gives Python dict lookups O(1) average complexity?",
+          "es": "¿Qué le da a las búsquedas en un dict de Python complejidad O(1) en promedio?"
+        },
+        "options": [
+          {
+            "en": "A linked list of entries scanned by the C interpreter",
+            "es": "Una lista enlazada de entradas que escanea el intérprete en C"
+          },
+          {
+            "en": "Caching the last accessed key",
+            "es": "Cachear la última clave accedida"
+          },
+          {
+            "en": "Keeping keys sorted for binary search",
+            "es": "Mantener las claves ordenadas para búsqueda binaria"
+          },
+          {
+            "en": "Hashing the key to jump directly to a slot in an internal table",
+            "es": "Hashear la clave para saltar directamente a un slot de una tabla interna"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the main benefit of a generator over building a full list?",
+          "es": "¿Cuál es el beneficio principal de un generador frente a construir una lista completa?"
+        },
+        "options": [
+          {
+            "en": "It can be iterated multiple times without recreating it",
+            "es": "Puede iterarse varias veces sin recrearlo"
+          },
+          {
+            "en": "It computes each value faster than a list would",
+            "es": "Calcula cada valor más rápido que una lista"
+          },
+          {
+            "en": "It supports random access by index",
+            "es": "Soporta acceso aleatorio por índice"
+          },
+          {
+            "en": "It produces values on demand, keeping memory usage constant even for huge or infinite sequences",
+            "es": "Produce valores bajo demanda, manteniendo el uso de memoria constante incluso para secuencias enormes o infinitas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is `@my_decorator` above `def f(): ...` equivalent to?",
+          "es": "¿A qué equivale `@my_decorator` sobre `def f(): ...`?"
+        },
+        "options": [
+          {
+            "en": "f.decorator = my_decorator",
+            "es": "f.decorator = my_decorator"
+          },
+          {
+            "en": "f = my_decorator(f())",
+            "es": "f = my_decorator(f())"
+          },
+          {
+            "en": "f = my_decorator(f)",
+            "es": "f = my_decorator(f)"
+          },
+          {
+            "en": "my_decorator.register(f)",
+            "es": "my_decorator.register(f)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "When an exception is raised inside a `with` block, what does Python guarantee?",
+          "es": "Cuando se lanza una excepción dentro de un bloque `with`, ¿qué garantiza Python?"
+        },
+        "options": [
+          {
+            "en": "The exception is always suppressed",
+            "es": "La excepción siempre se suprime"
+          },
+          {
+            "en": "The block is rolled back to its first statement",
+            "es": "El bloque se revierte a su primera sentencia"
+          },
+          {
+            "en": "__enter__ is called again to retry",
+            "es": "__enter__ se llama de nuevo para reintentar"
+          },
+          {
+            "en": "__exit__ is called with the exception details, so cleanup always runs",
+            "es": "__exit__ se llama con los detalles de la excepción, así que la limpieza siempre se ejecuta"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Your pure-Python data processing job pegs one CPU core while seven sit idle, even with 8 threads. Why?",
+          "es": "Tu trabajo de procesamiento de datos en Python puro satura un núcleo de CPU mientras siete quedan ociosos, incluso con 8 threads. ¿Por qué?"
+        },
+        "options": [
+          {
+            "en": "The OS scheduler ignores Python threads",
+            "es": "El planificador del SO ignora los threads de Python"
+          },
+          {
+            "en": "Threads need asyncio to use multiple cores",
+            "es": "Los threads necesitan asyncio para usar varios núcleos"
+          },
+          {
+            "en": "Python threads only run on core 0 by design",
+            "es": "Los threads de Python solo corren en el núcleo 0 por diseño"
+          },
+          {
+            "en": "The GIL lets only one thread execute Python bytecode at a time; use multiprocessing for CPU-bound work",
+            "es": "El GIL permite que solo un thread ejecute bytecode de Python a la vez; usa multiprocessing para trabajo CPU-bound"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In asyncio, what does `await` do inside a coroutine?",
+          "es": "En asyncio, ¿qué hace `await` dentro de una corrutina?"
+        },
+        "options": [
+          {
+            "en": "It suspends the coroutine at that point, letting the event loop run other tasks until the awaited result is ready",
+            "es": "Suspende la corrutina en ese punto, dejando que el event loop ejecute otras tareas hasta que el resultado esperado esté listo"
+          },
+          {
+            "en": "It converts the coroutine into a regular function",
+            "es": "Convierte la corrutina en una función normal"
+          },
+          {
+            "en": "It spawns a new thread to run the awaited call",
+            "es": "Crea un nuevo thread para ejecutar la llamada esperada"
+          },
+          {
+            "en": "It blocks the whole process until the call finishes",
+            "es": "Bloquea todo el proceso hasta que la llamada termina"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "```python\ndef f(x, acc=[]):\n    acc.append(x)\n    return acc\n\nf(1)\nprint(f(2))\n```\nWhat is printed?",
+          "es": "```python\ndef f(x, acc=[]):\n    acc.append(x)\n    return acc\n\nf(1)\nprint(f(2))\n```\n¿Qué se imprime?"
+        },
+        "options": [
+          {
+            "en": "It raises UnboundLocalError",
+            "es": "Lanza UnboundLocalError"
+          },
+          {
+            "en": "[1, 2] — the default list is created once and shared across calls",
+            "es": "[1, 2] — la lista por defecto se crea una vez y se comparte entre llamadas"
+          },
+          {
+            "en": "[2, 1] — defaults are stacked in reverse",
+            "es": "[2, 1] — los defectos se apilan en orden inverso"
+          },
+          {
+            "en": "[2] — each call gets a fresh default list",
+            "es": "[2] — cada llamada recibe una lista por defecto nueva"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "When does `Book.objects.filter(year=2024)` actually query the database?",
+          "es": "¿Cuándo consulta realmente la base de datos `Book.objects.filter(year=2024)`?"
+        },
+        "options": [
+          {
+            "en": "Never — filter() operates on objects already in memory",
+            "es": "Nunca — filter() opera sobre objetos ya en memoria"
+          },
+          {
+            "en": "Only when the QuerySet is evaluated — iterated, listed, sliced, or checked for truthiness",
+            "es": "Solo cuando el QuerySet se evalúa — al iterarlo, convertirlo a lista, hacer slicing o comprobar su veracidad"
+          },
+          {
+            "en": "Immediately when filter() is called",
+            "es": "Inmediatamente al llamar filter()"
+          },
+          {
+            "en": "When the view function returns",
+            "es": "Cuando la función de vista retorna"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "You render each post's ManyToMany tags in a list endpoint. Which optimization is correct?",
+          "es": "Renderizas los tags ManyToMany de cada post en un endpoint de listado. ¿Qué optimización es la correcta?"
+        },
+        "options": [
+          {
+            "en": "select_related('tags') — a JOIN works for any relation",
+            "es": "select_related('tags') — un JOIN sirve para cualquier relación"
+          },
+          {
+            "en": "iterator() — streaming rows avoids the N+1 problem",
+            "es": "iterator() — transmitir filas evita el problema N+1"
+          },
+          {
+            "en": "prefetch_related('tags') — a second IN query joined in Python, since each post has many tags",
+            "es": "prefetch_related('tags') — una segunda consulta IN unida en Python, ya que cada post tiene muchos tags"
+          },
+          {
+            "en": "only('tags') — restricting columns removes the extra queries",
+            "es": "only('tags') — restringir columnas elimina las consultas extra"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What happens when a view raises an exception inside `with transaction.atomic():` after several .save() calls?",
+          "es": "¿Qué pasa cuando una vista lanza una excepción dentro de `with transaction.atomic():` después de varios .save()?"
+        },
+        "options": [
+          {
+            "en": "All writes in the block are rolled back — the database keeps its previous state",
+            "es": "Todas las escrituras del bloque se revierten — la base de datos conserva su estado anterior"
+          },
+          {
+            "en": "Django retries the block automatically up to three times",
+            "es": "Django reintenta el bloque automáticamente hasta tres veces"
+          },
+          {
+            "en": "Writes before the exception are kept; later ones are skipped",
+            "es": "Las escrituras previas a la excepción se conservan; las posteriores se omiten"
+          },
+          {
+            "en": "The exception is swallowed and the transaction commits",
+            "es": "La excepción se traga y la transacción se confirma"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your Django endpoint that lists 300 invoices with their customer names takes 3 seconds. You suspect a query problem. Explain what is likely happening and how you would confirm and fix it.",
+          "es": "Tu endpoint de Django que lista 300 facturas con los nombres de sus clientes tarda 3 segundos. Sospechas un problema de consultas. Explica qué está pasando probablemente y cómo lo confirmarías y lo arreglarías."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must identify the N+1 problem: one query for invoices plus one lazy query per invoice for the customer FK (~301 queries). Must mention a confirmation method (django-debug-toolbar, connection.queries, or query logging/counting) and the fix: select_related('customer') since it's a forward FK (a JOIN, single query). Bonus: mentioning prefetch_related for to-many relations or measuring after the fix.",
+          "es": "Debe identificar el problema N+1: una consulta para las facturas más una consulta perezosa por factura para la FK del cliente (~301 consultas). Debe mencionar un método de confirmación (django-debug-toolbar, connection.queries o logging/conteo de consultas) y la solución: select_related('customer') al ser una FK directa (un JOIN, una sola consulta). Bonus: mencionar prefetch_related para relaciones a-muchos o medir después del arreglo."
+        },
+        "reference": "Rendering invoice.customer.name lazily fires one SELECT per invoice on top of the initial list query — the N+1 problem, ~301 queries here. Confirm with django-debug-toolbar or by inspecting len(connection.queries) in development. Fix with Invoice.objects.select_related('customer'), which JOINs the customer in the same single query since it's a forward ForeignKey; for to-many relations you'd use prefetch_related instead. Re-measure to verify the query count drops to 1."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Explain how the GIL influences the choice between threads, processes and asyncio in Python. Give one example workload for each.",
+          "es": "Explica cómo influye el GIL en la elección entre threads, procesos y asyncio en Python. Da un ejemplo de carga de trabajo para cada uno."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must explain that the GIL allows only one thread to execute Python bytecode at a time, so threads don't parallelize CPU-bound pure-Python code but do help I/O-bound work because the GIL is released during blocking I/O. Must map: multiprocessing for CPU-bound (own interpreter/GIL per process), threads for moderate I/O-bound concurrency, asyncio for large-scale I/O concurrency on one thread. Must include a plausible example per model.",
+          "es": "Debe explicar que el GIL permite que solo un thread ejecute bytecode de Python a la vez, por lo que los threads no paralelizan código CPU-bound en Python puro pero sí ayudan con trabajo I/O-bound porque el GIL se libera durante el I/O bloqueante. Debe mapear: multiprocessing para CPU-bound (intérprete/GIL propio por proceso), threads para concurrencia I/O-bound moderada, asyncio para concurrencia de I/O a gran escala en un thread. Debe incluir un ejemplo plausible por modelo."
+        },
+        "reference": "The GIL is a CPython mutex that lets only one thread run Python bytecode at a time. CPU-bound pure-Python work therefore doesn't scale with threads — use multiprocessing, where each process has its own interpreter and GIL (e.g. resizing thousands of images). Threads still help I/O-bound work because blocking I/O releases the GIL (e.g. calling a few dozen external APIs concurrently). asyncio also targets I/O-bound work but multiplexes thousands of waits on a single thread with an event loop, making it ideal for very high connection counts (e.g. a websocket chat server)."
+      }
+    }
+  ]
+}

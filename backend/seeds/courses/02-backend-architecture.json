@@ -1,0 +1,1667 @@
+{
+  "slug": "backend-architecture",
+  "order": 2,
+  "icon": "server",
+  "title": {
+    "en": "Backend Architecture",
+    "es": "Arquitectura Backend"
+  },
+  "description": {
+    "en": "How real backends are designed and defended in interviews: layers, gateways, scaling under pressure, idempotency, caching and failure handling.",
+    "es": "Cómo se diseñan y defienden backends reales en entrevistas: capas, gateways, escalado bajo presión, idempotencia, caching y manejo de fallos."
+  },
+  "lessons": [
+    {
+      "slug": "layered-architecture",
+      "question": {
+        "en": "How is a backend API typically structured in layers, and what is each layer responsible for?",
+        "es": "¿Cómo se estructura típicamente una API backend en capas y de qué se encarga cada capa?"
+      },
+      "definition": {
+        "en": "The classic structure is **controller → service → repository**. The **controller** (or handler) owns the HTTP boundary: it parses and validates the request, calls the right service, and maps the result to a status code and response body. It contains no business rules. The **service** layer owns the business logic: invariants, orchestration across repositories and external systems, and transactions. The **repository** layer owns persistence: it translates domain operations into SQL (or another store's API) and hides the database from everyone else.\n\nThe payoff is **separation of concerns**: you can unit-test business logic without HTTP or a database, swap PostgreSQL details without touching services, and change API shapes without rewriting rules. The classic smell interviewers probe for is business logic leaking into controllers (untestable) or raw SQL scattered across services (unswappable).",
+        "es": "La estructura clásica es **controller → service → repository**. El **controller** (o handler) es dueño de la frontera HTTP: parsea y valida la request, llama al service correcto y traduce el resultado a un status code y un body de respuesta. No contiene reglas de negocio. La capa de **service** es dueña de la lógica de negocio: invariantes, orquestación entre repositorios y sistemas externos, y transacciones. La capa de **repository** es dueña de la persistencia: traduce operaciones del dominio a SQL (o al API de otro store) y esconde la base de datos del resto.\n\nLa ganancia es la **separación de responsabilidades**: puedes testear la lógica de negocio sin HTTP ni base de datos, cambiar detalles de PostgreSQL sin tocar los services, y cambiar la forma del API sin reescribir reglas. El olor clásico que buscan los entrevistadores es lógica de negocio filtrada en los controllers (no testeable) o SQL crudo regado por los services (imposible de reemplazar)."
+      },
+      "examples": [
+        {
+          "en": "In a Spring Boot or NestJS codebase you literally see `@Controller`, `@Service` and `@Repository` classes — the framework encodes the layering as annotations/decorators.",
+          "es": "En un codebase de Spring Boot o NestJS ves literalmente clases `@Controller`, `@Service` y `@Repository` — el framework codifica las capas como anotaciones/decoradores."
+        },
+        {
+          "en": "A payments team swaps PostgreSQL for CockroachDB by rewriting only the repository layer; controllers and services don't change because they never touched SQL directly.",
+          "es": "Un equipo de pagos reemplaza PostgreSQL por CockroachDB reescribiendo solo la capa de repository; los controllers y services no cambian porque nunca tocaron SQL directamente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the layers a `POST /orders` request passes through in a layered backend.",
+              "es": "Ordena las capas por las que pasa una request `POST /orders` en un backend por capas."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "client",
+                "label": {
+                  "en": "Client sends HTTP request",
+                  "es": "El cliente envía la request HTTP"
+                }
+              },
+              {
+                "id": "controller",
+                "label": {
+                  "en": "Controller: parse and validate input",
+                  "es": "Controller: parsear y validar la entrada"
+                }
+              },
+              {
+                "id": "service",
+                "label": {
+                  "en": "Service: apply business rules",
+                  "es": "Service: aplicar reglas de negocio"
+                }
+              },
+              {
+                "id": "repository",
+                "label": {
+                  "en": "Repository: translate to SQL",
+                  "es": "Repository: traducir a SQL"
+                }
+              },
+              {
+                "id": "db",
+                "label": {
+                  "en": "Database persists the order",
+                  "es": "La base de datos persiste la orden"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "client",
+              "controller",
+              "service",
+              "repository",
+              "db"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A teammate puts the 'orders over $500 require manager approval' rule inside the HTTP controller. Why is this a problem?",
+              "es": "Un compañero pone la regla 'órdenes de más de $500 requieren aprobación de un manager' dentro del controller HTTP. ¿Por qué es un problema?"
+            },
+            "options": [
+              {
+                "en": "HTTP frameworks forbid conditional logic",
+                "es": "Los frameworks HTTP prohíben lógica condicional"
+              },
+              {
+                "en": "It's fine — controllers are the standard place for business rules",
+                "es": "No es problema — los controllers son el lugar estándar para reglas de negocio"
+              },
+              {
+                "en": "Business rules in controllers can't be reused by other entry points (jobs, queues) and can't be tested without HTTP",
+                "es": "Las reglas de negocio en controllers no se pueden reutilizar desde otros puntos de entrada (jobs, colas) ni testear sin HTTP"
+              },
+              {
+                "en": "Controllers run slower than services",
+                "es": "Los controllers corren más lento que los services"
+              }
+            ],
+            "explanation": {
+              "en": "If a background job or message consumer also creates orders, it bypasses the controller and the rule. Rules belong in the service layer, which every entry point shares.",
+              "es": "Si un job en segundo plano o un consumidor de mensajes también crea órdenes, se salta el controller y la regla. Las reglas van en la capa de service, que todos los puntos de entrada comparten."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A use case must create an order and decrement inventory atomically, using two different repositories. Which layer should open and commit the database transaction?",
+              "es": "Un caso de uso debe crear una orden y decrementar el inventario de forma atómica, usando dos repositorios distintos. ¿Qué capa debería abrir y confirmar la transacción de base de datos?"
+            },
+            "options": [
+              {
+                "en": "The controller — it sees the full request, so it should wrap everything in a transaction",
+                "es": "El controller — ve la request completa, así que debería envolver todo en una transacción"
+              },
+              {
+                "en": "The database itself, via a trigger that links the two tables",
+                "es": "La propia base de datos, vía un trigger que enlaza las dos tablas"
+              },
+              {
+                "en": "Each repository — every repository commits its own write independently",
+                "es": "Cada repository — cada repositorio confirma su propia escritura de forma independiente"
+              },
+              {
+                "en": "The service — the transaction must span the whole business operation, and the service is the layer that orchestrates both repositories",
+                "es": "El service — la transacción debe abarcar toda la operación de negocio, y el service es la capa que orquesta ambos repositorios"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The transaction boundary must match the business operation boundary. If each repository committed independently, a crash between the two writes would leave an order without its inventory decrement. The service orchestrates both repositories, so it owns the transaction; the controller stays out of persistence concerns.",
+              "es": "El límite de la transacción debe coincidir con el límite de la operación de negocio. Si cada repository confirmara por separado, un crash entre las dos escrituras dejaría una orden sin su decremento de inventario. El service orquesta ambos repositorios, así que es dueño de la transacción; el controller queda fuera de las preocupaciones de persistencia."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "api-gateway",
+      "question": {
+        "en": "What is an API Gateway and what problems does it solve?",
+        "es": "¿Qué es un API Gateway y qué problemas resuelve?"
+      },
+      "definition": {
+        "en": "An **API Gateway** is the single entry point in front of your backend services. Clients talk to the gateway; the gateway routes each request to the right internal service. Its value is centralizing **cross-cutting concerns** so every service doesn't reimplement them: authentication and token validation, rate limiting, TLS termination, request routing, retries, and observability (logging, metrics, tracing headers).\n\nIt also **decouples clients from your internal topology**: you can split a monolith into services, move endpoints, or run canary deployments without clients noticing, because the public URL surface stays stable. The trade-offs to mention in an interview: the gateway is a potential single point of failure (so it must be replicated), it adds a network hop of latency, and it can become a dumping ground for business logic if the team isn't disciplined.",
+        "es": "Un **API Gateway** es el punto de entrada único delante de tus servicios backend. Los clientes hablan con el gateway; el gateway enruta cada request al servicio interno correcto. Su valor es centralizar **responsabilidades transversales** para que cada servicio no las reimplemente: autenticación y validación de tokens, rate limiting, terminación de TLS, enrutamiento de requests, reintentos y observabilidad (logs, métricas, headers de tracing).\n\nTambién **desacopla a los clientes de tu topología interna**: puedes partir un monolito en servicios, mover endpoints o hacer canary deployments sin que los clientes lo noten, porque la superficie pública de URLs se mantiene estable. Los trade-offs para mencionar en entrevista: el gateway es un posible punto único de fallo (hay que replicarlo), agrega un salto de red de latencia y puede volverse un basurero de lógica de negocio si el equipo no es disciplinado."
+      },
+      "examples": [
+        {
+          "en": "AWS API Gateway or Kong sits in front of dozens of microservices: it validates JWTs and throttles abusive clients before a single request reaches your code.",
+          "es": "AWS API Gateway o Kong se paran delante de decenas de microservicios: validan JWTs y limitan clientes abusivos antes de que una sola request llegue a tu código."
+        },
+        {
+          "en": "Netflix's Zuul gateway routes each device type (TV, mobile, web) to tailored backends and lets them shift traffic gradually during deployments.",
+          "es": "El gateway Zuul de Netflix enruta cada tipo de dispositivo (TV, móvil, web) a backends a medida y les permite mover tráfico gradualmente durante deployments."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each API Gateway responsibility with the problem it solves.",
+              "es": "Conecta cada responsabilidad del API Gateway con el problema que resuelve."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Rate limiting",
+                  "es": "Rate limiting"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Central authentication",
+                  "es": "Autenticación centralizada"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Request routing",
+                  "es": "Enrutamiento de requests"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "TLS termination",
+                  "es": "Terminación de TLS"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "One abusive client exhausting backend capacity",
+                  "es": "Un cliente abusivo agotando la capacidad del backend"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Every service reimplementing token validation",
+                  "es": "Cada servicio reimplementando la validación de tokens"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Clients coupled to internal service topology",
+                  "es": "Clientes acoplados a la topología interna de servicios"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Each service managing its own certificates",
+                  "es": "Cada servicio gestionando sus propios certificados"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the main architectural risk of introducing an API Gateway, and how is it mitigated?",
+              "es": "¿Cuál es el principal riesgo arquitectónico de introducir un API Gateway y cómo se mitiga?"
+            },
+            "options": [
+              {
+                "en": "It becomes a single point of failure — run multiple replicas behind a load balancer",
+                "es": "Se convierte en un punto único de fallo — correr múltiples réplicas detrás de un load balancer"
+              },
+              {
+                "en": "It duplicates the database — shard by client",
+                "es": "Duplica la base de datos — shardear por cliente"
+              },
+              {
+                "en": "It makes services stateful — add sticky sessions",
+                "es": "Vuelve los servicios stateful — agregar sticky sessions"
+              },
+              {
+                "en": "It prevents HTTPS — terminate TLS at each service instead",
+                "es": "Impide HTTPS — terminar TLS en cada servicio"
+              }
+            ],
+            "explanation": {
+              "en": "All traffic flows through the gateway, so if it dies everything dies. Replication plus health-checked load balancing removes the single point of failure; latency overhead is the other cost to acknowledge.",
+              "es": "Todo el tráfico pasa por el gateway, así que si muere, muere todo. Replicación más load balancing con health checks elimina el punto único de fallo; la latencia extra es el otro costo a reconocer."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A teammate proposes implementing the rule 'campaigns over $10k require finance approval' inside the API Gateway, since 'all requests pass through it anyway'. Why is this an anti-pattern?",
+              "es": "Un compañero propone implementar la regla 'campañas de más de $10k requieren aprobación de finanzas' dentro del API Gateway, ya que 'igual todas las requests pasan por ahí'. ¿Por qué es un anti-patrón?"
+            },
+            "options": [
+              {
+                "en": "The gateway can only apply rules to GET requests, not POST or PUT",
+                "es": "El gateway solo puede aplicar reglas a requests GET, no a POST ni PUT"
+              },
+              {
+                "en": "It's domain business logic — it belongs in the service that owns campaigns; the gateway should stay limited to cross-cutting concerns like auth, routing and rate limiting",
+                "es": "Es lógica de negocio del dominio — pertenece al servicio dueño de las campañas; el gateway debe limitarse a responsabilidades transversales como auth, enrutamiento y rate limiting"
+              },
+              {
+                "en": "Gateways are technically unable to inspect request bodies, so the rule cannot be implemented there",
+                "es": "Los gateways son técnicamente incapaces de inspeccionar el body de las requests, así que la regla no se puede implementar ahí"
+              },
+              {
+                "en": "Business rules in the gateway execute twice, once per direction of the request",
+                "es": "Las reglas de negocio en el gateway se ejecutan dos veces, una por cada dirección de la request"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "The gateway becoming a dumping ground for business logic is the classic discipline failure with this component. Domain rules end up far from the domain's tests, data and owners, and internal traffic that doesn't cross the gateway (jobs, service-to-service calls) silently bypasses them. Keep the gateway on cross-cutting concerns only.",
+              "es": "Que el gateway se vuelva un basurero de lógica de negocio es la falla de disciplina clásica con este componente. Las reglas del dominio quedan lejos de los tests, datos y dueños del dominio, y el tráfico interno que no cruza el gateway (jobs, llamadas entre servicios) se las salta silenciosamente. Mantén el gateway solo con responsabilidades transversales."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "campaign-system-design",
+      "question": {
+        "en": "Design a backend for managing advertising campaigns: how would you structure the flow from client to analytics?",
+        "es": "Diseña un backend para gestionar campañas publicitarias: ¿cómo estructurarías el flujo desde el cliente hasta analytics?"
+      },
+      "definition": {
+        "en": "A solid baseline: **Client → API Gateway → Campaign Service → PostgreSQL → Message Broker → Processing → Analytics**. The gateway authenticates advertisers and rate-limits. The **Campaign Service** owns campaign CRUD and business rules (budgets, dates, targeting) and writes to **PostgreSQL** as the source of truth — campaign data is relational and needs transactions.\n\nThe key decision is **separating the write path from downstream work**. After committing a change, the service publishes an event (e.g. `campaign.updated`) to a **message broker** (Kafka, RabbitMQ). Asynchronous **processing** consumers then update ad-serving caches, recompute budgets, and feed **analytics** — without adding latency to the advertiser's request. This buys you decoupling (analytics being down never blocks campaign creation) and independent scaling of each stage. Mention the **outbox pattern** for publishing events atomically with the DB commit, so you never commit a row but lose its event.",
+        "es": "Una base sólida: **Cliente → API Gateway → Campaign Service → PostgreSQL → Message Broker → Processing → Analytics**. El gateway autentica anunciantes y aplica rate limiting. El **Campaign Service** es dueño del CRUD de campañas y de las reglas de negocio (presupuestos, fechas, targeting) y escribe en **PostgreSQL** como fuente de la verdad — los datos de campañas son relacionales y necesitan transacciones.\n\nLa decisión clave es **separar el camino de escritura del trabajo posterior**. Tras confirmar un cambio, el servicio publica un evento (p. ej. `campaign.updated`) a un **message broker** (Kafka, RabbitMQ). Consumidores asíncronos de **processing** actualizan los caches de ad-serving, recalculan presupuestos y alimentan **analytics** — sin agregar latencia a la request del anunciante. Esto te da desacoplamiento (que analytics esté caído nunca bloquea crear campañas) y escalado independiente de cada etapa. Menciona el **patrón outbox** para publicar eventos atómicamente con el commit de la DB, y así nunca confirmar una fila perdiendo su evento."
+      },
+      "examples": [
+        {
+          "en": "Meta's Ads Manager works this way: saving a campaign returns fast, while budget pacing, review pipelines and reporting dashboards update asynchronously from event streams.",
+          "es": "El Ads Manager de Meta funciona así: guardar una campaña responde rápido, mientras el pacing de presupuesto, los pipelines de revisión y los dashboards de reporting se actualizan de forma asíncrona desde streams de eventos."
+        },
+        {
+          "en": "An ad-tech startup publishes `campaign.updated` events to Kafka; one consumer group refreshes the ad-serving cache while another loads events into a warehouse for analytics — neither slows down the API.",
+          "es": "Una startup de ad-tech publica eventos `campaign.updated` a Kafka; un consumer group refresca el cache de ad-serving mientras otro carga eventos a un warehouse para analytics — ninguno frena el API."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the components a campaign update flows through, from the advertiser's click to the analytics dashboard.",
+              "es": "Ordena los componentes por los que fluye una actualización de campaña, desde el clic del anunciante hasta el dashboard de analytics."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "client",
+                "label": {
+                  "en": "Client (advertiser UI)",
+                  "es": "Cliente (UI del anunciante)"
+                }
+              },
+              {
+                "id": "gateway",
+                "label": {
+                  "en": "API Gateway: auth + rate limiting",
+                  "es": "API Gateway: auth + rate limiting"
+                }
+              },
+              {
+                "id": "service",
+                "label": {
+                  "en": "Campaign Service: business rules",
+                  "es": "Campaign Service: reglas de negocio"
+                }
+              },
+              {
+                "id": "postgres",
+                "label": {
+                  "en": "PostgreSQL: source of truth",
+                  "es": "PostgreSQL: fuente de la verdad"
+                }
+              },
+              {
+                "id": "broker",
+                "label": {
+                  "en": "Message Broker: campaign events",
+                  "es": "Message Broker: eventos de campaña"
+                }
+              },
+              {
+                "id": "processing",
+                "label": {
+                  "en": "Processing: async consumers",
+                  "es": "Processing: consumidores asíncronos"
+                }
+              },
+              {
+                "id": "analytics",
+                "label": {
+                  "en": "Analytics: reports and dashboards",
+                  "es": "Analytics: reportes y dashboards"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "client",
+              "gateway",
+              "service",
+              "postgres",
+              "broker",
+              "processing",
+              "analytics"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "In this campaign architecture, why publish events to a message broker after writing to PostgreSQL instead of having the Campaign Service call the analytics system synchronously?",
+              "es": "En esta arquitectura de campañas, ¿por qué publicar eventos a un message broker después de escribir en PostgreSQL en lugar de que el Campaign Service llame al sistema de analytics de forma síncrona?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must mention decoupling/fault isolation (analytics downtime doesn't block or fail campaign writes) and at least one of: lower request latency for the advertiser, independent scaling of consumers, buffering/absorbing traffic spikes, or ability to add new consumers without changing the service. Bonus: outbox pattern or at-least-once delivery.",
+              "es": "Debe mencionar desacoplamiento/aislamiento de fallos (una caída de analytics no bloquea ni falla las escrituras de campañas) y al menos uno de: menor latencia de la request para el anunciante, escalado independiente de los consumidores, amortiguar picos de tráfico, o poder agregar nuevos consumidores sin cambiar el servicio. Bonus: patrón outbox o entrega at-least-once."
+            },
+            "reference": "A synchronous call couples the write path to analytics availability and latency: if analytics is slow or down, campaign updates fail or crawl. Publishing an event after the commit decouples them — the broker buffers spikes, consumers process at their own pace and scale independently, and new consumers (billing, audit) can subscribe without touching the Campaign Service. With the outbox pattern the event is stored in the same DB transaction as the change and relayed to the broker, guaranteeing no committed change ever loses its event."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The Campaign Service commits a campaign update to PostgreSQL and then, as a separate step, publishes `campaign.updated` to the broker. What failure scenario does the outbox pattern eliminate?",
+              "es": "El Campaign Service confirma una actualización de campaña en PostgreSQL y luego, como paso separado, publica `campaign.updated` al broker. ¿Qué escenario de fallo elimina el patrón outbox?"
+            },
+            "options": [
+              {
+                "en": "The service crashing after the DB commit but before publishing, leaving a durable change that downstream systems never hear about",
+                "es": "Que el servicio crashee después del commit en la DB pero antes de publicar, dejando un cambio durable del que los sistemas posteriores nunca se enteran"
+              },
+              {
+                "en": "Consumers processing `campaign.updated` events out of chronological order",
+                "es": "Que los consumidores procesen eventos `campaign.updated` fuera de orden cronológico"
+              },
+              {
+                "en": "PostgreSQL rejecting the commit when the broker is under heavy load",
+                "es": "Que PostgreSQL rechace el commit cuando el broker está bajo carga pesada"
+              },
+              {
+                "en": "The broker delivering the same event twice to a consumer group",
+                "es": "Que el broker entregue el mismo evento dos veces a un consumer group"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Writing to the DB and publishing to the broker are two systems that cannot share one transaction, so a crash between them silently drops the event. The outbox pattern stores the event in an outbox table inside the same DB transaction as the change; a relay then publishes it to the broker. It guarantees no committed change loses its event — it does not prevent duplicates (delivery stays at-least-once) or enforce ordering.",
+              "es": "Escribir en la DB y publicar al broker son dos sistemas que no pueden compartir una transacción, así que un crash entre ambos pierde el evento silenciosamente. El patrón outbox guarda el evento en una tabla outbox dentro de la misma transacción de DB que el cambio; un relay luego lo publica al broker. Garantiza que ningún cambio confirmado pierda su evento — no previene duplicados (la entrega sigue siendo at-least-once) ni impone orden."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "traffic-spike-100x",
+      "question": {
+        "en": "Traffic to your API suddenly increases 100x. How do you protect the system?",
+        "es": "El tráfico a tu API aumenta de repente 100x. ¿Cómo proteges el sistema?"
+      },
+      "definition": {
+        "en": "The first goal is **survival, not serving everyone**: a system that serves 70% of requests correctly beats one that collapses trying to serve 100%. The defense has layers. At the edge: **rate limiting** and throttling per client, and a **CDN/cache** to absorb read traffic before it touches your services. In the middle: **autoscaling** stateless services horizontally (which only works if they're actually stateless), and **queues** to convert write spikes into a steady processing rate.\n\nWhen load still exceeds capacity, you apply **load shedding** (reject low-priority requests fast with 429/503 instead of queueing them into timeout death) and **graceful degradation** (serve cached or partial responses, disable expensive features). **Circuit breakers** stop a struggling dependency from dragging everything down, and **backpressure** propagates 'slow down' signals upstream. The classic trap to name: the database usually can't scale 100x on demand — protect it with caches, connection pools and read replicas, or it becomes the bottleneck that kills you.",
+        "es": "El primer objetivo es **sobrevivir, no atender a todos**: un sistema que sirve el 70% de las requests correctamente es mejor que uno que colapsa intentando servir el 100%. La defensa tiene capas. En el borde: **rate limiting** y throttling por cliente, y un **CDN/cache** para absorber tráfico de lectura antes de que toque tus servicios. En el medio: **autoscaling** horizontal de servicios stateless (que solo funciona si de verdad son stateless), y **colas** para convertir picos de escritura en una tasa de procesamiento estable.\n\nCuando la carga aún supera la capacidad, aplicas **load shedding** (rechazar rápido requests de baja prioridad con 429/503 en lugar de encolarlas hasta morir por timeout) y **degradación controlada** (servir respuestas cacheadas o parciales, apagar features caras). Los **circuit breakers** evitan que una dependencia en problemas arrastre todo, y el **backpressure** propaga señales de 'más despacio' hacia arriba. La trampa clásica a nombrar: la base de datos normalmente no puede escalar 100x bajo demanda — protégela con caches, connection pools y read replicas, o se vuelve el cuello de botella que te mata."
+      },
+      "examples": [
+        {
+          "en": "Ticketmaster-style flash sales put buyers in a virtual waiting room (a queue) so the checkout backend processes a steady flow instead of a stampede.",
+          "es": "Las ventas flash tipo Ticketmaster ponen a los compradores en una sala de espera virtual (una cola) para que el backend de checkout procese un flujo estable en vez de una estampida."
+        },
+        {
+          "en": "During traffic surges Netflix degrades gracefully: personalized recommendation rows are replaced with cached popular titles, and users barely notice.",
+          "es": "Durante picos de tráfico Netflix degrada con gracia: las filas de recomendaciones personalizadas se reemplazan con títulos populares cacheados, y los usuarios apenas lo notan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each protection mechanism with what it does during a traffic spike.",
+              "es": "Conecta cada mecanismo de protección con lo que hace durante un pico de tráfico."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Rate limiting",
+                  "es": "Rate limiting"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Load shedding",
+                  "es": "Load shedding"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Circuit breaker",
+                  "es": "Circuit breaker"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Queue between services",
+                  "es": "Cola entre servicios"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Caps requests per client before they enter the system",
+                  "es": "Limita las requests por cliente antes de que entren al sistema"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Rejects excess work fast instead of timing out slowly",
+                  "es": "Rechaza el trabajo excedente rápido en lugar de morir lento por timeouts"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Stops calling a failing dependency so it can recover",
+                  "es": "Deja de llamar a una dependencia que falla para que se recupere"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Buffers a burst into a steady processing rate",
+                  "es": "Amortigua una ráfaga en una tasa de procesamiento estable"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your stateless API autoscaled from 4 to 60 pods during a spike, but latency got worse. What is the most likely cause?",
+              "es": "Tu API stateless autoescaló de 4 a 60 pods durante un pico, pero la latencia empeoró. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "Stateless services get slower the more replicas exist",
+                "es": "Los servicios stateless se vuelven más lentos cuantas más réplicas existen"
+              },
+              {
+                "en": "The database became the bottleneck — 60 pods now compete for the same connections and I/O",
+                "es": "La base de datos se volvió el cuello de botella — 60 pods ahora compiten por las mismas conexiones e I/O"
+              },
+              {
+                "en": "Autoscaling always reduces latency, so the metrics must be wrong",
+                "es": "El autoscaling siempre reduce la latencia, así que las métricas deben estar mal"
+              },
+              {
+                "en": "Kubernetes charges latency per pod",
+                "es": "Kubernetes cobra latencia por pod"
+              }
+            ],
+            "explanation": {
+              "en": "Scaling the stateless tier just moves the pressure downstream. The shared database can't scale horizontally on demand, so more pods mean more contention — this is why caches, pools and replicas matter.",
+              "es": "Escalar la capa stateless solo mueve la presión hacia abajo. La base de datos compartida no escala horizontalmente bajo demanda, así que más pods significan más contención — por eso importan los caches, pools y réplicas."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During overload, why is it better to reject excess requests immediately with 429/503 than to let them wait in an unbounded queue for a free worker?",
+              "es": "Durante una sobrecarga, ¿por qué es mejor rechazar de inmediato las requests excedentes con 429/503 que dejarlas esperar en una cola sin límite hasta que se libere un worker?"
+            },
+            "options": [
+              {
+                "en": "Rejected clients never retry, so total load always drops to zero",
+                "es": "Los clientes rechazados nunca reintentan, así que la carga total siempre baja a cero"
+              },
+              {
+                "en": "Queued requests hold memory and connections while they wait, and most exceed the client's timeout anyway — fast rejection frees capacity for requests you can actually serve in time",
+                "es": "Las requests encoladas retienen memoria y conexiones mientras esperan, y la mayoría supera el timeout del cliente de todas formas — rechazar rápido libera capacidad para las requests que sí puedes atender a tiempo"
+              },
+              {
+                "en": "HTTP does not allow a server to hold requests in a queue",
+                "es": "HTTP no permite que un servidor retenga requests en una cola"
+              },
+              {
+                "en": "Browsers cache 429 responses, which permanently reduces future traffic",
+                "es": "Los navegadores cachean las respuestas 429, lo que reduce permanentemente el tráfico futuro"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "An unbounded queue under overload produces the worst outcome: every request consumes resources for seconds and then dies at the client's timeout, so you burn full capacity serving nobody. Shedding load fast keeps latency low for the requests you accept and gives clients an honest signal to back off and retry later.",
+              "es": "Una cola sin límite bajo sobrecarga produce el peor resultado: cada request consume recursos durante segundos y luego muere en el timeout del cliente, así que quemas toda la capacidad sin atender a nadie. Rechazar carga rápido mantiene la latencia baja para las requests que aceptas y da a los clientes una señal honesta para esperar y reintentar después."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "idempotency-duplicate-events",
+      "question": {
+        "en": "How do you prevent duplicate events from being processed twice, end to end?",
+        "es": "¿Cómo evitas que eventos duplicados se procesen dos veces, de punta a punta?"
+      },
+      "definition": {
+        "en": "Duplicates are unavoidable: clients retry after timeouts, and brokers like Kafka or SQS deliver **at-least-once**. Since you can't prevent duplicates from arriving, you make processing them harmless — **idempotent**. The standard tool is an **idempotency key**: the *producer* of the operation generates a unique ID (e.g. a UUID per checkout attempt), and every downstream step uses it to detect 'I already did this'.\n\nAt the API layer: the client sends `Idempotency-Key`; the server stores the key with the stored response and returns that same response on retries instead of re-executing. At the consumer layer: keep a table of processed event IDs, and insert the ID **in the same database transaction** as the side effects — if the event was already processed, the unique constraint fails and you skip it. That transactional coupling is the crux: checking a cache and then writing separately leaves a window where a crash lets the duplicate through. Alternatively, make the operation naturally idempotent (`UPSERT`, `SET status = 'paid'`) so replays converge to the same state.",
+        "es": "Los duplicados son inevitables: los clientes reintentan tras timeouts, y brokers como Kafka o SQS entregan **at-least-once**. Como no puedes evitar que lleguen duplicados, haces que procesarlos sea inofensivo — **idempotente**. La herramienta estándar es la **idempotency key**: el *productor* de la operación genera un ID único (p. ej. un UUID por intento de checkout), y cada paso posterior lo usa para detectar 'esto ya lo hice'.\n\nEn la capa de API: el cliente envía `Idempotency-Key`; el servidor guarda la key junto con la respuesta y devuelve esa misma respuesta en los reintentos en lugar de re-ejecutar. En la capa de consumidores: mantén una tabla de IDs de eventos procesados, e inserta el ID **en la misma transacción de base de datos** que los efectos secundarios — si el evento ya se procesó, la restricción de unicidad falla y lo saltas. Ese acople transaccional es el punto clave: chequear un cache y luego escribir por separado deja una ventana donde un crash deja pasar el duplicado. Alternativamente, haz la operación naturalmente idempotente (`UPSERT`, `SET status = 'paid'`) para que las repeticiones converjan al mismo estado."
+      },
+      "examples": [
+        {
+          "en": "Stripe requires an `Idempotency-Key` header on payment requests: if your request times out and you retry, the customer is charged exactly once and you get the original response back.",
+          "es": "Stripe exige un header `Idempotency-Key` en las requests de pago: si tu request da timeout y reintentas, al cliente se le cobra exactamente una vez y recibes la respuesta original."
+        },
+        {
+          "en": "An ad-impression consumer inserts `event_id` into a `processed_events` table with a unique constraint, in the same transaction as the billing update — a redelivered Kafka message hits the constraint and is skipped.",
+          "es": "Un consumidor de impresiones de ads inserta `event_id` en una tabla `processed_events` con restricción de unicidad, en la misma transacción que la actualización de facturación — un mensaje de Kafka reentregado choca con la restricción y se salta."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Who should generate the idempotency key for a payment request, and why?",
+              "es": "¿Quién debería generar la idempotency key para una request de pago, y por qué?"
+            },
+            "options": [
+              {
+                "en": "The database, via auto-increment — so keys are ordered",
+                "es": "La base de datos, vía auto-increment — para que las keys estén ordenadas"
+              },
+              {
+                "en": "The server, on each request — so keys are always fresh",
+                "es": "El servidor, en cada request — para que las keys siempre sean nuevas"
+              },
+              {
+                "en": "The load balancer, per connection — so keys map to servers",
+                "es": "El load balancer, por conexión — para que las keys mapeen a servidores"
+              },
+              {
+                "en": "The client, once per logical operation — so every retry of that operation carries the same key",
+                "es": "El cliente, una vez por operación lógica — para que cada reintento de esa operación lleve la misma key"
+              }
+            ],
+            "explanation": {
+              "en": "If the server generated the key, a retried request would get a *new* key and look like a new operation — defeating the purpose. The originator of the intent must mint the key once and reuse it on every retry.",
+              "es": "Si el servidor generara la key, una request reintentada recibiría una key *nueva* y parecería una operación nueva — anulando el propósito. Quien origina la intención debe crear la key una vez y reutilizarla en cada reintento."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A Kafka consumer charges advertisers for ad impressions. Explain how you would make it safe against duplicate deliveries, and why checking Redis for the event ID before processing is not enough.",
+              "es": "Un consumidor de Kafka cobra a los anunciantes por impresiones de ads. Explica cómo lo harías seguro contra entregas duplicadas, y por qué chequear el event ID en Redis antes de procesar no es suficiente."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose recording the processed event ID and applying the billing side effect atomically — e.g. inserting the event ID into a table with a unique constraint in the same DB transaction as the charge (or an equivalent transactional/upsert approach). Must explain the Redis flaw: the check and the side effect are not atomic, so a crash between them (or between processing and marking) lets a redelivered event be processed twice; Redis can also lose data.",
+              "es": "Debe proponer registrar el event ID procesado y aplicar el efecto de facturación de forma atómica — p. ej. insertar el event ID en una tabla con restricción de unicidad en la misma transacción de DB que el cobro (o un enfoque transaccional/upsert equivalente). Debe explicar la falla de Redis: el chequeo y el efecto secundario no son atómicos, así que un crash entre ambos (o entre procesar y marcar) permite que un evento reentregado se procese dos veces; Redis además puede perder datos."
+            },
+            "reference": "Store a `processed_events(event_id UNIQUE)` row in the same PostgreSQL transaction that inserts the charge. On redelivery the insert violates the unique constraint, the transaction rolls back, and the consumer acks and skips. A Redis pre-check is not atomic with the side effect: if the consumer crashes after charging but before marking the event (or vice versa), the retry either double-charges or drops the event. Only a transactional check-and-write — or a naturally idempotent operation like an UPSERT keyed by event_id — closes that window."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these operations is naturally idempotent — safe to replay on a duplicate delivery even without a processed-events check?",
+              "es": "¿Cuál de estas operaciones es naturalmente idempotente — segura de repetir ante una entrega duplicada incluso sin un chequeo de eventos procesados?"
+            },
+            "options": [
+              {
+                "en": "UPDATE counters SET views = views + 1 WHERE page = 'home'",
+                "es": "UPDATE counters SET views = views + 1 WHERE page = 'home'"
+              },
+              {
+                "en": "INSERT INTO charges (account_id, amount) VALUES (7, 100)",
+                "es": "INSERT INTO charges (account_id, amount) VALUES (7, 100)"
+              },
+              {
+                "en": "UPDATE accounts SET balance = balance - 100 WHERE id = 7",
+                "es": "UPDATE accounts SET balance = balance - 100 WHERE id = 7"
+              },
+              {
+                "en": "UPDATE orders SET status = 'paid' WHERE id = 42",
+                "es": "UPDATE orders SET status = 'paid' WHERE id = 42"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Setting an absolute value converges to the same state no matter how many times it runs — replaying `status = 'paid'` changes nothing. Relative updates (`balance - 100`, `views + 1`) accumulate their effect on every replay, and a bare INSERT creates a new row each time. Those need an idempotency mechanism (unique event ID, UPSERT) to be replay-safe.",
+              "es": "Asignar un valor absoluto converge al mismo estado sin importar cuántas veces se ejecute — repetir `status = 'paid'` no cambia nada. Las actualizaciones relativas (`balance - 100`, `views + 1`) acumulan su efecto en cada repetición, y un INSERT a secas crea una fila nueva cada vez. Esas necesitan un mecanismo de idempotencia (event ID único, UPSERT) para ser seguras ante repeticiones."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "postgres-unavailable-degradation",
+      "question": {
+        "en": "PostgreSQL becomes unavailable. What happens to your service and how do you degrade gracefully?",
+        "es": "PostgreSQL queda no disponible. ¿Qué pasa con tu servicio y cómo degradas con gracia?"
+      },
+      "definition": {
+        "en": "Without preparation, the failure cascades: queries hang until timeout, connection pools fill with stuck requests, worker threads exhaust, and your service dies *with* the database. The first line of defense is failing fast: **aggressive query timeouts**, bounded connection pools, and a **circuit breaker** that stops hammering the DB after repeated failures, giving it room to recover (retries with exponential backoff and jitter, or you create a retry storm).\n\nThen you degrade by path. **Reads**: serve from cache — even stale data — and fall back to read replicas if only the primary is down. **Writes**: if the business allows, accept them into a **queue** and apply them when the DB returns (eventual consistency); if not — payments, balance checks — reject fast with a clear 503 and let clients retry. The interview-winning nuance is *partial* degradation: campaign creation might go read-only while ad serving keeps running from its cache, so one dependency failure doesn't take down the whole product.",
+        "es": "Sin preparación, el fallo cae en cascada: las queries cuelgan hasta el timeout, los connection pools se llenan de requests atascadas, los threads se agotan y tu servicio muere *junto con* la base de datos. La primera línea de defensa es fallar rápido: **timeouts agresivos de query**, connection pools acotados y un **circuit breaker** que deja de golpear la DB tras fallos repetidos, dándole espacio para recuperarse (reintentos con exponential backoff y jitter, o creas una tormenta de reintentos).\n\nLuego degradas por camino. **Lecturas**: servir desde cache — incluso datos viejos — y caer a read replicas si solo el primary está caído. **Escrituras**: si el negocio lo permite, aceptarlas en una **cola** y aplicarlas cuando la DB vuelva (consistencia eventual); si no — pagos, chequeos de saldo — rechazar rápido con un 503 claro y dejar que los clientes reintenten. El matiz que gana entrevistas es la degradación *parcial*: la creación de campañas puede pasar a solo-lectura mientras el ad serving sigue funcionando desde su cache, para que el fallo de una dependencia no tumbe todo el producto."
+      },
+      "examples": [
+        {
+          "en": "GitHub has shipped read-only mode during database incidents: you can browse repositories and read issues, but pushes and writes are rejected until the primary recovers.",
+          "es": "GitHub ha activado modo solo-lectura durante incidentes de base de datos: puedes navegar repositorios y leer issues, pero los pushes y escrituras se rechazan hasta que el primary se recupera."
+        },
+        {
+          "en": "An ad server keeps delivering ads from its in-memory targeting cache during a 10-minute PostgreSQL outage — new campaigns can't be created, but revenue-generating delivery never stops.",
+          "es": "Un ad server sigue entregando ads desde su cache de targeting en memoria durante una caída de PostgreSQL de 10 minutos — no se pueden crear campañas nuevas, pero la entrega que genera ingresos nunca se detiene."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each degradation technique with the failure it addresses when PostgreSQL is down.",
+              "es": "Conecta cada técnica de degradación con el fallo que ataca cuando PostgreSQL está caído."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Circuit breaker on DB calls",
+                  "es": "Circuit breaker en llamadas a la DB"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Serve stale data from cache",
+                  "es": "Servir datos viejos desde cache"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Queue writes for later replay",
+                  "es": "Encolar escrituras para aplicarlas después"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Backoff with jitter on retries",
+                  "es": "Backoff con jitter en los reintentos"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Threads and connections exhausted by hanging queries",
+                  "es": "Threads y conexiones agotados por queries colgadas"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Read endpoints returning errors for data you already had",
+                  "es": "Endpoints de lectura devolviendo errores por datos que ya tenías"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Losing user submissions that could tolerate delay",
+                  "es": "Perder envíos de usuarios que podían tolerar demora"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "A retry storm crushing the DB as it tries to recover",
+                  "es": "Una tormenta de reintentos aplastando la DB mientras intenta recuperarse"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During a DB outage, which write should NOT be queued for later processing?",
+              "es": "Durante una caída de la DB, ¿qué escritura NO debería encolarse para procesarse después?"
+            },
+            "options": [
+              {
+                "en": "An analytics event recording a page view",
+                "es": "Un evento de analytics registrando una vista de página"
+              },
+              {
+                "en": "A withdrawal that requires checking the current account balance",
+                "es": "Un retiro que requiere verificar el saldo actual de la cuenta"
+              },
+              {
+                "en": "A user updating their profile bio",
+                "es": "Un usuario actualizando la bio de su perfil"
+              },
+              {
+                "en": "A newsletter subscription request",
+                "es": "Una solicitud de suscripción a un newsletter"
+              }
+            ],
+            "explanation": {
+              "en": "Queueing means accepting the operation before validating it against current state. A withdrawal depends on the live balance — accepting it blind risks overdrafts. The other three are tolerant of delay and need no strong precondition.",
+              "es": "Encolar significa aceptar la operación antes de validarla contra el estado actual. Un retiro depende del saldo en vivo — aceptarlo a ciegas arriesga sobregiros. Las otras tres toleran demora y no requieren precondiciones fuertes."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the failure cascade when PostgreSQL stops responding and the service has no timeouts or circuit breaker.",
+              "es": "Ordena la cascada de fallos cuando PostgreSQL deja de responder y el servicio no tiene timeouts ni circuit breaker."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "outage",
+                "label": {
+                  "en": "PostgreSQL stops responding to queries",
+                  "es": "PostgreSQL deja de responder a las queries"
+                }
+              },
+              {
+                "id": "hang",
+                "label": {
+                  "en": "In-flight queries hang instead of failing fast",
+                  "es": "Las queries en curso se cuelgan en lugar de fallar rápido"
+                }
+              },
+              {
+                "id": "pool",
+                "label": {
+                  "en": "The connection pool fills up with stuck requests",
+                  "es": "El connection pool se llena de requests atascadas"
+                }
+              },
+              {
+                "id": "threads",
+                "label": {
+                  "en": "Worker threads exhaust waiting on connections",
+                  "es": "Los worker threads se agotan esperando conexiones"
+                }
+              },
+              {
+                "id": "down",
+                "label": {
+                  "en": "The whole service stops responding, even endpoints that don't need the DB",
+                  "es": "Todo el servicio deja de responder, incluso endpoints que no necesitan la DB"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "outage",
+              "hang",
+              "pool",
+              "threads",
+              "down"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "caching-targeting-config",
+      "question": {
+        "en": "How would you cache targeting/configuration data, and how do you invalidate it when it changes?",
+        "es": "¿Cómo cachearías datos de targeting/configuración y cómo los invalidas cuando cambian?"
+      },
+      "definition": {
+        "en": "Targeting and configuration data is the ideal caching case: **read millions of times per second, written rarely**, and slightly stale values are usually tolerable. The standard pattern is **cache-aside**: on read, check the cache; on miss, load from PostgreSQL and populate the cache with a **TTL**. For hot-path serving, add an in-process layer in front of Redis (local memory → Redis → DB), since even a Redis round trip is too slow at ad-serving rates.\n\nInvalidation combines two mechanisms. The **TTL is the safety net**: it bounds the maximum staleness even if every other mechanism fails. **Event-driven invalidation** is the fast path: when config changes, publish an event (via the message broker) and have every instance evict or update the affected keys within milliseconds. Two pitfalls worth naming: with multiple service instances, each has its own local cache, so invalidation must be *broadcast* (e.g. Redis pub/sub) — and a hot key expiring can trigger a **thundering herd** of simultaneous DB reads, mitigated with locking, request coalescing, or background refresh before expiry.",
+        "es": "Los datos de targeting y configuración son el caso ideal de caching: **se leen millones de veces por segundo, se escriben rara vez**, y valores ligeramente viejos suelen ser tolerables. El patrón estándar es **cache-aside**: al leer, consulta el cache; si no está, carga desde PostgreSQL y puebla el cache con un **TTL**. Para el hot path de serving, agrega una capa in-process delante de Redis (memoria local → Redis → DB), porque hasta un round trip a Redis es demasiado lento a tasas de ad-serving.\n\nLa invalidación combina dos mecanismos. El **TTL es la red de seguridad**: acota la obsolescencia máxima aunque todo lo demás falle. La **invalidación por eventos** es el camino rápido: cuando la config cambia, publica un evento (vía el message broker) y que cada instancia desaloje o actualice las keys afectadas en milisegundos. Dos trampas que vale nombrar: con múltiples instancias del servicio, cada una tiene su propio cache local, así que la invalidación debe ser *broadcast* (p. ej. Redis pub/sub) — y una key caliente que expira puede disparar una **thundering herd** de lecturas simultáneas a la DB, mitigada con locks, coalescing de requests o refresh en segundo plano antes de expirar."
+      },
+      "examples": [
+        {
+          "en": "Feature-flag systems like LaunchDarkly keep flags in an in-memory cache per SDK instance and push changes via streaming — evaluation is local and instant, updates propagate in seconds.",
+          "es": "Los sistemas de feature flags como LaunchDarkly mantienen los flags en un cache en memoria por instancia del SDK y empujan cambios vía streaming — la evaluación es local e instantánea, los cambios se propagan en segundos."
+        },
+        {
+          "en": "An ad server loads targeting rules into local memory with a 60-second TTL and subscribes to `campaign.updated` events to evict changed campaigns immediately instead of waiting out the TTL.",
+          "es": "Un ad server carga reglas de targeting en memoria local con TTL de 60 segundos y se suscribe a eventos `campaign.updated` para desalojar campañas cambiadas de inmediato en lugar de esperar el TTL."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a cache-aside read for targeting data (cache miss case).",
+              "es": "Ordena los pasos de una lectura cache-aside de datos de targeting (caso de cache miss)."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "request",
+                "label": {
+                  "en": "Service needs targeting config",
+                  "es": "El servicio necesita config de targeting"
+                }
+              },
+              {
+                "id": "check",
+                "label": {
+                  "en": "Check the cache for the key",
+                  "es": "Consultar la key en el cache"
+                }
+              },
+              {
+                "id": "miss",
+                "label": {
+                  "en": "Cache miss detected",
+                  "es": "Se detecta el cache miss"
+                }
+              },
+              {
+                "id": "load",
+                "label": {
+                  "en": "Load the value from PostgreSQL",
+                  "es": "Cargar el valor desde PostgreSQL"
+                }
+              },
+              {
+                "id": "populate",
+                "label": {
+                  "en": "Write it to the cache with a TTL",
+                  "es": "Escribirlo al cache con un TTL"
+                }
+              },
+              {
+                "id": "return",
+                "label": {
+                  "en": "Return the value to the caller",
+                  "es": "Devolver el valor al llamador"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "request",
+              "check",
+              "miss",
+              "load",
+              "populate",
+              "return"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You cache targeting rules in each service instance's local memory. An advertiser updates their campaign, but some instances keep serving the old rules for minutes. What's the right fix?",
+              "es": "Cacheas reglas de targeting en la memoria local de cada instancia del servicio. Un anunciante actualiza su campaña, pero algunas instancias siguen sirviendo las reglas viejas por minutos. ¿Cuál es el fix correcto?"
+            },
+            "options": [
+              {
+                "en": "Broadcast an invalidation event (e.g. Redis pub/sub) so every instance evicts the key, keeping the TTL as a safety net",
+                "es": "Emitir un evento de invalidación (p. ej. Redis pub/sub) para que cada instancia desaloje la key, manteniendo el TTL como red de seguridad"
+              },
+              {
+                "en": "Invalidate the cache only on the instance that handled the update request",
+                "es": "Invalidar el cache solo en la instancia que atendió la request de actualización"
+              },
+              {
+                "en": "Set the TTL to 24 hours to reduce database load",
+                "es": "Subir el TTL a 24 horas para reducir la carga en la base de datos"
+              },
+              {
+                "en": "Remove the TTL so entries never expire",
+                "es": "Quitar el TTL para que las entradas nunca expiren"
+              }
+            ],
+            "explanation": {
+              "en": "The update landed on one instance, but every instance holds its own copy. Only a broadcast reaches them all; the TTL remains as the bound on staleness if an instance misses the event.",
+              "es": "La actualización llegó a una instancia, pero cada instancia tiene su propia copia. Solo un broadcast las alcanza a todas; el TTL queda como cota de obsolescencia si una instancia se pierde el evento."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each caching concept with its role in a config-caching setup.",
+              "es": "Conecta cada concepto de caching con su rol en un esquema de cacheo de configuración."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "TTL",
+                  "es": "TTL"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Cache-aside",
+                  "es": "Cache-aside"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Thundering herd",
+                  "es": "Thundering herd"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Request coalescing",
+                  "es": "Coalescing de requests"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "A hot key expires and thousands of requests hit the database simultaneously",
+                  "es": "Una key caliente expira y miles de requests golpean la base de datos simultáneamente"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Bounds the maximum staleness even if every invalidation event is missed",
+                  "es": "Acota la obsolescencia máxima aunque todos los eventos de invalidación se pierdan"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Collapses concurrent misses for the same key into a single database load",
+                  "es": "Colapsa los misses concurrentes de la misma key en una sola carga a la base de datos"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "On a miss, load the value from the database and populate the cache",
+                  "es": "Ante un miss, cargar el valor desde la base de datos y poblar el cache"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "2",
+              "b": "4",
+              "c": "1",
+              "d": "3"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "campaign-expiry-invariants",
+      "question": {
+        "en": "How do you guarantee an ad is never delivered after its campaign expired?",
+        "es": "¿Cómo garantizas que un ad nunca se entregue después de que su campaña expiró?"
+      },
+      "definition": {
+        "en": "This is a **time-based invariant**, and the key insight is that caches can't be trusted to enforce it. A cached campaign with a 60-second TTL can be served for up to 60 seconds after expiry — the TTL bounds *staleness*, it doesn't enforce *business time*. The robust design: store `ends_at` in PostgreSQL as the **source of truth**, and — critically — **cache the timestamp along with the campaign data**, so the delivery path checks `now < ends_at` on every single request, even when the data comes from cache. The invariant check travels with the data instead of relying on the cache being fresh.\n\nDefense in depth completes the answer: a scheduled job (or a delayed message that fires exactly at `ends_at`) marks campaigns expired and broadcasts invalidation events to evict them from caches proactively; and the last write point (billing/impression recording) re-validates against the source of truth, so anything that slips through delivery is caught before money moves. Mention **clock skew** between servers (NTP sync, or a small safety margin on the comparison) to show senior-level awareness.",
+        "es": "Este es un **invariante basado en tiempo**, y la idea clave es que no puedes confiar en los caches para hacerlo cumplir. Una campaña cacheada con TTL de 60 segundos puede servirse hasta 60 segundos después de expirar — el TTL acota la *obsolescencia*, no impone el *tiempo de negocio*. El diseño robusto: guarda `ends_at` en PostgreSQL como **fuente de la verdad**, y — crucialmente — **cachea el timestamp junto con los datos de la campaña**, para que el camino de entrega verifique `now < ends_at` en cada request, incluso cuando los datos vienen del cache. El chequeo del invariante viaja con los datos en lugar de depender de que el cache esté fresco.\n\nLa defensa en profundidad completa la respuesta: un job programado (o un mensaje diferido que dispara exactamente en `ends_at`) marca campañas como expiradas y emite eventos de invalidación para desalojarlas de los caches proactivamente; y el último punto de escritura (facturación/registro de impresiones) re-valida contra la fuente de la verdad, así lo que se escape en la entrega se atrapa antes de que se mueva dinero. Menciona el **clock skew** entre servidores (sincronización NTP, o un pequeño margen de seguridad en la comparación) para mostrar criterio senior."
+      },
+      "examples": [
+        {
+          "en": "Google Ads enforces budgets and end dates at multiple layers; when a layer lags, over-delivered impressions are reconciled and not billed — the source of truth wins at billing time.",
+          "es": "Google Ads impone presupuestos y fechas de fin en múltiples capas; cuando una capa se atrasa, las impresiones sobre-entregadas se reconcilian y no se facturan — la fuente de la verdad gana al facturar."
+        },
+        {
+          "en": "An ad server embeds `ends_at` inside each cached campaign object: even if invalidation events are delayed, the per-request `now < ends_at` check stops delivery the instant the campaign expires.",
+          "es": "Un ad server incluye `ends_at` dentro de cada objeto de campaña cacheado: aunque los eventos de invalidación se demoren, el chequeo `now < ends_at` por request corta la entrega en el instante en que la campaña expira."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Campaigns are cached with a 60-second TTL. A campaign expires at 12:00:00 and was cached at 11:59:59. Without extra safeguards, until when can ads be delivered?",
+              "es": "Las campañas se cachean con TTL de 60 segundos. Una campaña expira a las 12:00:00 y se cacheó a las 11:59:59. Sin salvaguardas extra, ¿hasta cuándo pueden entregarse ads?"
+            },
+            "options": [
+              {
+                "en": "Never — TTLs prevent expired data from being served",
+                "es": "Nunca — los TTLs impiden servir datos expirados"
+              },
+              {
+                "en": "11:59:59 — caching stops at write time",
+                "es": "11:59:59 — el caching se detiene al momento de escribir"
+              },
+              {
+                "en": "12:00:59 — the cached entry lives out its full TTL regardless of the campaign's end time",
+                "es": "12:00:59 — la entrada cacheada vive su TTL completo sin importar la fecha de fin de la campaña"
+              },
+              {
+                "en": "12:00:00 — the cache expires entries at the campaign's end time automatically",
+                "es": "12:00:00 — el cache expira las entradas en la fecha de fin de la campaña automáticamente"
+              }
+            ],
+            "explanation": {
+              "en": "The TTL counts from when the entry was cached, not from the campaign's end time. The cache happily serves the 'active' snapshot until 12:00:59 — which is exactly why the delivery path must check `now < ends_at` itself.",
+              "es": "El TTL cuenta desde que la entrada se cacheó, no desde la fecha de fin de la campaña. El cache sirve feliz el snapshot 'activo' hasta las 12:00:59 — exactamente por eso el camino de entrega debe verificar `now < ends_at` por sí mismo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Design the mechanism that guarantees no ad is served after its campaign expires, in a system where the ad server reads campaigns from a cache. Cover the cache, the source of truth, and what happens if an expired impression slips through.",
+              "es": "Diseña el mecanismo que garantiza que ningún ad se sirva después de que su campaña expire, en un sistema donde el ad server lee campañas desde un cache. Cubre el cache, la fuente de la verdad y qué pasa si una impresión expirada se escapa."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must include: (1) storing the expiry timestamp (ends_at) in the database as source of truth AND caching it with the campaign data so the serving path checks now < ends_at on every request; (2) recognition that TTL alone cannot enforce the invariant. Bonus points for: proactive invalidation via scheduled job or delayed/expiry events, re-validation at billing time as a final safety net, and mentioning clock skew.",
+              "es": "Debe incluir: (1) guardar el timestamp de expiración (ends_at) en la base de datos como fuente de la verdad Y cachearlo junto con los datos de la campaña para que el camino de serving verifique now < ends_at en cada request; (2) reconocer que el TTL por sí solo no puede imponer el invariante. Puntos bonus por: invalidación proactiva vía job programado o eventos diferidos/de expiración, re-validación al facturar como última red de seguridad, y mencionar clock skew."
+            },
+            "reference": "Store `ends_at` in PostgreSQL as the source of truth and include it in every cached campaign object. The ad server checks `now < ends_at` on each delivery request, so even a stale cache entry cannot serve an expired campaign — the TTL only bounds how long dead entries occupy memory, it doesn't enforce the invariant. Additionally, a scheduler (or a delayed message firing at `ends_at`) marks the campaign expired and broadcasts a cache invalidation event. Finally, the impression/billing pipeline re-validates expiry against the source of truth and discards or refunds anything that slipped through, and servers stay NTP-synced (with a small safety margin) to handle clock skew."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During an incident, invalidation events were delayed and a few impressions for an expired campaign slipped past the ad server's checks. What is the correct last line of defense?",
+              "es": "Durante un incidente, los eventos de invalidación se retrasaron y algunas impresiones de una campaña expirada se escaparon de los chequeos del ad server. ¿Cuál es la última línea de defensa correcta?"
+            },
+            "options": [
+              {
+                "en": "Trust the ad server's check — if the impressions were delivered, they must have been valid",
+                "es": "Confiar en el chequeo del ad server — si las impresiones se entregaron, deben haber sido válidas"
+              },
+              {
+                "en": "Delete the campaign row from PostgreSQL so any later lookup for it fails",
+                "es": "Borrar la fila de la campaña de PostgreSQL para que cualquier consulta posterior falle"
+              },
+              {
+                "en": "Re-validate every impression against ends_at in the source of truth at billing time, and discard or refund the expired ones",
+                "es": "Re-validar cada impresión contra ends_at en la fuente de la verdad al momento de facturar, y descartar o reembolsar las expiradas"
+              },
+              {
+                "en": "Shorten the cache TTL to one second so delivery checks can never be stale again",
+                "es": "Bajar el TTL del cache a un segundo para que los chequeos de entrega nunca vuelvan a estar desactualizados"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Defense in depth means the invariant is enforced again at the last write point, where money actually moves. Billing re-checks `ends_at` against the source of truth and reconciles anything that slipped through delivery. A one-second TTL would hammer the database without closing the window, and deleting the row destroys the historical data billing needs.",
+              "es": "Defensa en profundidad significa que el invariante se vuelve a imponer en el último punto de escritura, donde realmente se mueve el dinero. Facturación re-verifica `ends_at` contra la fuente de la verdad y reconcilia lo que se escapó en la entrega. Un TTL de un segundo machacaría la base de datos sin cerrar la ventana, y borrar la fila destruye los datos históricos que facturación necesita."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a layered backend, which layer should contain the business rules?",
+          "es": "En un backend por capas, ¿qué capa debe contener las reglas de negocio?"
+        },
+        "options": [
+          {
+            "en": "The database, via triggers",
+            "es": "La base de datos, vía triggers"
+          },
+          {
+            "en": "The controller layer",
+            "es": "La capa de controller"
+          },
+          {
+            "en": "The repository layer",
+            "es": "La capa de repository"
+          },
+          {
+            "en": "The service layer",
+            "es": "La capa de service"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which is NOT a typical responsibility of an API Gateway?",
+          "es": "¿Cuál NO es una responsabilidad típica de un API Gateway?"
+        },
+        "options": [
+          {
+            "en": "Authenticating requests and validating tokens",
+            "es": "Autenticar requests y validar tokens"
+          },
+          {
+            "en": "Rate limiting per client",
+            "es": "Rate limiting por cliente"
+          },
+          {
+            "en": "Executing the domain's business logic",
+            "es": "Ejecutar la lógica de negocio del dominio"
+          },
+          {
+            "en": "Routing requests to internal services",
+            "es": "Enrutar requests a los servicios internos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In the campaign architecture, why does the Campaign Service write to PostgreSQL before publishing an event to the broker?",
+          "es": "En la arquitectura de campañas, ¿por qué el Campaign Service escribe en PostgreSQL antes de publicar un evento al broker?"
+        },
+        "options": [
+          {
+            "en": "Brokers cannot receive messages before a database write",
+            "es": "Los brokers no pueden recibir mensajes antes de una escritura en base de datos"
+          },
+          {
+            "en": "PostgreSQL is the source of truth — the event announces a change that is already durable",
+            "es": "PostgreSQL es la fuente de la verdad — el evento anuncia un cambio que ya es durable"
+          },
+          {
+            "en": "Events are faster to publish after a commit",
+            "es": "Los eventos se publican más rápido después de un commit"
+          },
+          {
+            "en": "PostgreSQL requires it for replication",
+            "es": "PostgreSQL lo requiere para la replicación"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does load shedding mean during a traffic spike?",
+          "es": "¿Qué significa load shedding durante un pico de tráfico?"
+        },
+        "options": [
+          {
+            "en": "Rejecting excess or low-priority requests quickly to protect the rest of the system",
+            "es": "Rechazar rápido las requests excedentes o de baja prioridad para proteger el resto del sistema"
+          },
+          {
+            "en": "Restarting services to clear memory",
+            "es": "Reiniciar los servicios para liberar memoria"
+          },
+          {
+            "en": "Moving all traffic to a bigger server",
+            "es": "Mover todo el tráfico a un servidor más grande"
+          },
+          {
+            "en": "Compressing responses to reduce bandwidth",
+            "es": "Comprimir las respuestas para reducir el ancho de banda"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Your stateless API autoscales during a 100x spike but the system still degrades. Which component is the most likely bottleneck?",
+          "es": "Tu API stateless autoescala durante un pico de 100x pero el sistema igual se degrada. ¿Qué componente es el cuello de botella más probable?"
+        },
+        "options": [
+          {
+            "en": "The container image registry",
+            "es": "El registry de imágenes de contenedores"
+          },
+          {
+            "en": "The shared database, which can't scale horizontally on demand",
+            "es": "La base de datos compartida, que no escala horizontalmente bajo demanda"
+          },
+          {
+            "en": "The CI/CD pipeline",
+            "es": "El pipeline de CI/CD"
+          },
+          {
+            "en": "The DNS resolver",
+            "es": "El resolver de DNS"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why must the client (not the server) generate the idempotency key?",
+          "es": "¿Por qué debe generar la idempotency key el cliente (y no el servidor)?"
+        },
+        "options": [
+          {
+            "en": "Only the client knows a retry is the same logical operation, so it must reuse the same key",
+            "es": "Solo el cliente sabe que un reintento es la misma operación lógica, así que debe reutilizar la misma key"
+          },
+          {
+            "en": "Servers cannot generate UUIDs",
+            "es": "Los servidores no pueden generar UUIDs"
+          },
+          {
+            "en": "It reduces server CPU usage",
+            "es": "Reduce el uso de CPU del servidor"
+          },
+          {
+            "en": "Client-generated keys are more secure",
+            "es": "Las keys generadas por el cliente son más seguras"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A consumer must process each event at most once. Which approach actually closes the duplicate window?",
+          "es": "Un consumidor debe procesar cada evento como máximo una vez. ¿Qué enfoque cierra de verdad la ventana de duplicados?"
+        },
+        "options": [
+          {
+            "en": "Check Redis for the event ID before processing, then process",
+            "es": "Chequear el event ID en Redis antes de procesar, y luego procesar"
+          },
+          {
+            "en": "Configure the broker to deliver each message exactly once, always",
+            "es": "Configurar el broker para entregar cada mensaje exactamente una vez, siempre"
+          },
+          {
+            "en": "Log every event ID and review the logs daily",
+            "es": "Loggear cada event ID y revisar los logs a diario"
+          },
+          {
+            "en": "Insert the event ID into a unique-constrained table in the same transaction as the side effects",
+            "es": "Insertar el event ID en una tabla con restricción de unicidad en la misma transacción que los efectos secundarios"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "PostgreSQL goes down. Which behavior shows graceful degradation for READ traffic?",
+          "es": "PostgreSQL se cae. ¿Qué comportamiento muestra degradación con gracia para el tráfico de LECTURA?"
+        },
+        "options": [
+          {
+            "en": "Retrying every failed query in a tight loop",
+            "es": "Reintentar cada query fallida en un loop cerrado"
+          },
+          {
+            "en": "Restarting the API service repeatedly",
+            "es": "Reiniciar el servicio de API repetidamente"
+          },
+          {
+            "en": "Letting every query hang until its timeout",
+            "es": "Dejar que cada query cuelgue hasta su timeout"
+          },
+          {
+            "en": "Serving slightly stale data from cache instead of returning errors",
+            "es": "Servir datos ligeramente viejos desde cache en lugar de devolver errores"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In cache invalidation for config data, what role does the TTL play when you also have event-driven invalidation?",
+          "es": "En la invalidación de cache para datos de config, ¿qué rol cumple el TTL cuando además tienes invalidación por eventos?"
+        },
+        "options": [
+          {
+            "en": "It's the safety net that bounds maximum staleness if an invalidation event is missed",
+            "es": "Es la red de seguridad que acota la obsolescencia máxima si un evento de invalidación se pierde"
+          },
+          {
+            "en": "It guarantees data is never stale",
+            "es": "Garantiza que los datos nunca estén viejos"
+          },
+          {
+            "en": "It replaces the need for invalidation events entirely",
+            "es": "Reemplaza por completo la necesidad de eventos de invalidación"
+          },
+          {
+            "en": "It only controls memory usage, never freshness",
+            "es": "Solo controla el uso de memoria, nunca la frescura"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the most reliable way to guarantee an ad is never served after its campaign's end time?",
+          "es": "¿Cuál es la forma más confiable de garantizar que un ad nunca se sirva después de la fecha de fin de su campaña?"
+        },
+        "options": [
+          {
+            "en": "Rely on the nightly cleanup job to remove expired campaigns",
+            "es": "Confiar en el job nocturno de limpieza que elimina campañas expiradas"
+          },
+          {
+            "en": "Set the cache TTL equal to 60 seconds",
+            "es": "Poner el TTL del cache en 60 segundos"
+          },
+          {
+            "en": "Delete the campaign row from PostgreSQL at expiry",
+            "es": "Borrar la fila de la campaña de PostgreSQL al expirar"
+          },
+          {
+            "en": "Cache ends_at with the campaign data and check now < ends_at on every delivery request",
+            "es": "Cachear ends_at junto con los datos de la campaña y verificar now < ends_at en cada request de entrega"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your API's traffic grows 100x in five minutes. Describe, in order, the mechanisms you would rely on to keep the system alive, and state which component you expect to become the bottleneck.",
+          "es": "El tráfico de tu API crece 100x en cinco minutos. Describe, en orden, los mecanismos en los que te apoyarías para mantener el sistema vivo, y di qué componente esperas que se vuelva el cuello de botella."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must mention at least three concrete mechanisms among: rate limiting/throttling at the edge, CDN/caching for reads, horizontal autoscaling of stateless services, queues to buffer writes, load shedding, graceful degradation, circuit breakers. Must identify the database (or another shared stateful store) as the expected bottleneck and mention protecting it (cache, replicas, connection pooling).",
+          "es": "Debe mencionar al menos tres mecanismos concretos entre: rate limiting/throttling en el borde, CDN/caching para lecturas, autoscaling horizontal de servicios stateless, colas para amortiguar escrituras, load shedding, degradación controlada, circuit breakers. Debe identificar la base de datos (u otro store compartido con estado) como el cuello de botella esperado y mencionar cómo protegerla (cache, réplicas, connection pooling)."
+        },
+        "reference": "First, rate limiting at the gateway caps abusive clients, and a CDN plus caches absorb most read traffic. Stateless services autoscale horizontally while queues buffer write bursts into a steady rate. If load still exceeds capacity, load shedding rejects low-priority requests fast and features degrade gracefully (cached/partial responses). Circuit breakers isolate struggling dependencies. The bottleneck will be the database — it can't scale 100x on demand — so it's protected with caches, read replicas and bounded connection pools."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A payment request times out and the client retries it. Explain end to end how idempotency keys ensure the customer is charged exactly once.",
+          "es": "Una request de pago da timeout y el cliente la reintenta. Explica de punta a punta cómo las idempotency keys aseguran que al cliente se le cobre exactamente una vez."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must explain: the client generates the key once per logical operation and sends the same key on retries; the server stores the key (with the operation result) and detects repeats, returning the stored response instead of re-executing the charge. Bonus: the key-check and side effect must be atomic (unique constraint/transaction), and keys have a retention window.",
+          "es": "Debe explicar: el cliente genera la key una vez por operación lógica y envía la misma key en los reintentos; el servidor guarda la key (con el resultado de la operación) y detecta repeticiones, devolviendo la respuesta guardada en lugar de re-ejecutar el cobro. Bonus: el chequeo de la key y el efecto secundario deben ser atómicos (restricción de unicidad/transacción), y las keys tienen una ventana de retención."
+        },
+        "reference": "The client generates a unique idempotency key (e.g. a UUID) when the user initiates the payment and sends it in a header. The server atomically records the key — for example inserting it with a unique constraint in the same transaction that creates the charge — and stores the response. If the response is lost to a timeout and the client retries with the same key, the server finds the key already recorded and returns the stored response without charging again. The atomic check-and-write is what closes the race between two concurrent retries; keys are retained long enough to cover any realistic retry window."
+      }
+    }
+  ]
+}

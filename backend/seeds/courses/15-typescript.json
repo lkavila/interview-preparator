@@ -1,0 +1,2085 @@
+{
+  "slug": "typescript",
+  "order": 15,
+  "icon": "braces",
+  "title": {
+    "en": "TypeScript",
+    "es": "TypeScript"
+  },
+  "description": {
+    "en": "The TypeScript type system as asked in senior interviews: generics, narrowing, utility types, discriminated unions, strictness and React typing.",
+    "es": "El sistema de tipos de TypeScript como lo preguntan en entrevistas senior: genéricos, narrowing, utility types, uniones discriminadas, strict mode y tipado de React."
+  },
+  "lessons": [
+    {
+      "slug": "type-vs-interface",
+      "question": {
+        "en": "What is the difference between `type` and `interface` in TypeScript, and when do you choose each?",
+        "es": "¿Cuál es la diferencia entre `type` e `interface` en TypeScript, y cuándo eliges cada uno?"
+      },
+      "definition": {
+        "en": "An **interface** declares the shape of an object and supports **declaration merging**: two `interface Foo` declarations in the same scope merge into one. A **type alias** can name *any* type — unions, tuples, primitives, mapped and conditional types — but cannot be reopened once declared.\n\nFor object shapes they are nearly interchangeable: both support `extends`/intersection, generics and `implements`. The practical differences: interfaces merge (essential for augmenting third-party modules like `express.Request`), and error messages often preserve interface names better. Type aliases are required for unions (`type Status = 'a' | 'b'`), template literal types, and conditional types.\n\nA common senior-level convention: use `interface` for public object contracts (props, API payloads, library surfaces) because merging enables consumer augmentation, and `type` for everything the interface syntax cannot express. Consistency matters more than the choice itself.",
+        "es": "Una **interface** declara la forma de un objeto y soporta **declaration merging**: dos declaraciones de `interface Foo` en el mismo scope se fusionan en una. Un **type alias** puede nombrar *cualquier* tipo — uniones, tuplas, primitivos, mapped y conditional types — pero no puede reabrirse una vez declarado.\n\nPara formas de objetos son casi intercambiables: ambos soportan `extends`/intersección, genéricos e `implements`. Las diferencias prácticas: las interfaces se fusionan (esencial para aumentar módulos de terceros como `express.Request`), y los mensajes de error suelen conservar mejor el nombre de la interface. Los type aliases son obligatorios para uniones (`type Status = 'a' | 'b'`), template literal types y conditional types.\n\nUna convención común a nivel senior: usar `interface` para contratos públicos de objetos (props, payloads de API, superficies de librerías) porque el merging permite que el consumidor los aumente, y `type` para todo lo que la sintaxis de interface no puede expresar. La consistencia importa más que la elección en sí."
+      },
+      "examples": [
+        {
+          "en": "Express middleware that attaches `req.user` relies on declaration merging: apps declare `interface Request { user?: AuthUser }` inside `declare global { namespace Express { ... } }` to extend the library's own interface.",
+          "es": "El middleware de Express que agrega `req.user` depende del declaration merging: las apps declaran `interface Request { user?: AuthUser }` dentro de `declare global { namespace Express { ... } }` para extender la interface de la librería."
+        },
+        {
+          "en": "API clients model server responses with type aliases because they need unions: `type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }` cannot be written as an interface.",
+          "es": "Los clientes de API modelan las respuestas del servidor con type aliases porque necesitan uniones: `type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }` no puede escribirse como interface."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You need to model `type Status = 'pending' | 'active' | 'closed'`. Why must this be a type alias and not an interface?",
+              "es": "Necesitas modelar `type Status = 'pending' | 'active' | 'closed'`. ¿Por qué debe ser un type alias y no una interface?"
+            },
+            "options": [
+              {
+                "en": "Interfaces are deprecated in modern TypeScript",
+                "es": "Las interfaces están deprecadas en TypeScript moderno"
+              },
+              {
+                "en": "Interfaces can only describe object shapes, not unions of literals",
+                "es": "Las interfaces solo describen formas de objetos, no uniones de literales"
+              },
+              {
+                "en": "Type aliases compile faster than interfaces",
+                "es": "Los type aliases compilan más rápido que las interfaces"
+              },
+              {
+                "en": "Interfaces cannot contain string values",
+                "es": "Las interfaces no pueden contener valores string"
+              }
+            ],
+            "explanation": {
+              "en": "An interface always declares an object-like shape (or callable/indexable structure). Unions, primitives, tuples and literal combinations require a type alias.",
+              "es": "Una interface siempre declara una forma tipo objeto (o estructura llamable/indexable). Las uniones, primitivos, tuplas y combinaciones de literales requieren un type alias."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each capability with the construct that supports it.",
+              "es": "Conecta cada capacidad con la construcción que la soporta."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Declaration merging (reopening the same name)",
+                  "es": "Declaration merging (reabrir el mismo nombre)"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Naming a union like `A | B`",
+                  "es": "Nombrar una unión como `A | B`"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Conditional types with `extends ? :`",
+                  "es": "Conditional types con `extends ? :`"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Describing an object shape a class can `implements`",
+                  "es": "Describir una forma de objeto que una clase puede `implements`"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Only interface",
+                  "es": "Solo interface"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Only type alias",
+                  "es": "Solo type alias"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Only type alias (advanced type-level logic)",
+                  "es": "Solo type alias (lógica avanzada a nivel de tipos)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Both interface and type alias",
+                  "es": "Tanto interface como type alias"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A library ships `interface Config`. Your app writes a second `declare module` block declaring `interface Config { plugins?: string[] }`. What happens?",
+              "es": "Una librería expone `interface Config`. Tu app escribe un segundo bloque `declare module` declarando `interface Config { plugins?: string[] }`. ¿Qué pasa?"
+            },
+            "options": [
+              {
+                "en": "A compile error: duplicate identifier `Config`",
+                "es": "Error de compilación: identificador duplicado `Config`"
+              },
+              {
+                "en": "The declarations merge — `Config` now also has an optional `plugins` member",
+                "es": "Las declaraciones se fusionan — `Config` ahora también tiene el miembro opcional `plugins`"
+              },
+              {
+                "en": "Your declaration silently replaces the library's `Config`",
+                "es": "Tu declaración reemplaza silenciosamente el `Config` de la librería"
+              },
+              {
+                "en": "Nothing — module declarations cannot touch library types",
+                "es": "Nada — las declaraciones de módulo no pueden tocar tipos de librerías"
+              }
+            ],
+            "explanation": {
+              "en": "Interface declarations with the same name in the same (module-augmented) scope merge their members. This is how apps extend library types without forking them.",
+              "es": "Las declaraciones de interface con el mismo nombre en el mismo scope (aumentado por módulo) fusionan sus miembros. Así las apps extienden tipos de librerías sin hacer fork."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "generics-and-constraints",
+      "question": {
+        "en": "How do generics and generic constraints work, and why is `<T extends X>` better than accepting `X` directly?",
+        "es": "¿Cómo funcionan los genéricos y sus constraints, y por qué `<T extends X>` es mejor que aceptar `X` directamente?"
+      },
+      "definition": {
+        "en": "A **generic** is a type parameter that lets a function or type preserve the relationship between its inputs and outputs: `function first<T>(xs: T[]): T` returns exactly the element type it received, instead of collapsing to `unknown` or `any`. The compiler **infers** `T` at each call site, so callers rarely spell it out.\n\nA **constraint** (`<T extends HasId>`) restricts what `T` can be while keeping the *specific* type flowing through. This is the crucial difference from typing the parameter as `HasId` directly: with a constraint, passing a `User` returns a `User`; with the plain parameter type, the result is widened to `HasId` and the caller loses every extra property.\n\nSeniors are expected to know `keyof` constraints too: `function get<T, K extends keyof T>(obj: T, key: K): T[K]` types property access precisely, making invalid keys a compile error. Overusing generics where a plain type suffices is a known smell — a type parameter that appears only once in a signature usually adds nothing.",
+        "es": "Un **genérico** es un parámetro de tipo que permite a una función o tipo preservar la relación entre sus entradas y salidas: `function first<T>(xs: T[]): T` devuelve exactamente el tipo de elemento que recibió, en lugar de colapsar a `unknown` o `any`. El compilador **infiere** `T` en cada llamada, así que quien llama rara vez lo escribe.\n\nUn **constraint** (`<T extends HasId>`) restringe lo que `T` puede ser mientras mantiene fluyendo el tipo *específico*. Esta es la diferencia crucial frente a tipar el parámetro como `HasId` directamente: con el constraint, pasar un `User` devuelve un `User`; con el tipo plano, el resultado se ensancha a `HasId` y quien llama pierde todas las propiedades extra.\n\nA nivel senior se espera conocer también los constraints con `keyof`: `function get<T, K extends keyof T>(obj: T, key: K): T[K]` tipa el acceso a propiedades con precisión, convirtiendo las claves inválidas en error de compilación. Abusar de genéricos donde basta un tipo plano es un smell conocido — un parámetro de tipo que aparece una sola vez en la firma normalmente no aporta nada."
+      },
+      "examples": [
+        {
+          "en": "React Query's `useQuery<TData, TError>` threads the fetcher's return type through to `data`, so `data.items` autocompletes without a single cast in application code.",
+          "es": "El `useQuery<TData, TError>` de React Query hace fluir el tipo de retorno del fetcher hasta `data`, así `data.items` autocompleta sin un solo cast en el código de la aplicación."
+        },
+        {
+          "en": "An ORM like Prisma generates `findUnique<T extends UserFindUniqueArgs>` so the shape of the returned row narrows to exactly the fields you selected — `select: { email: true }` yields a type with only `email`.",
+          "es": "Un ORM como Prisma genera `findUnique<T extends UserFindUniqueArgs>` para que la forma de la fila devuelta se estreche exactamente a los campos que seleccionaste — `select: { email: true }` produce un tipo solo con `email`."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Implement `pluck` so that it extracts the values of a given key from an array of objects, fully type-safe: `pluck(users, 'email')` must return `string[]` and `pluck(users, 'height')` must be a compile error if `height` doesn't exist. Use a generic constraint with `keyof`.",
+              "es": "Implementa `pluck` de modo que extraiga los valores de una clave dada desde un array de objetos, con seguridad de tipos total: `pluck(users, 'email')` debe devolver `string[]` y `pluck(users, 'height')` debe ser error de compilación si `height` no existe. Usa un constraint genérico con `keyof`."
+            },
+            "language": "typescript",
+            "starter_code": "// Make this fully generic and type-safe.\n// pluck(users, 'email') -> string[]\n// pluck(users, 'notAKey') -> compile error\nfunction pluck(items: any[], key: string): any[] {\n  return items.map((item) => item[key]);\n}\n\nconst users = [\n  { id: 1, email: 'ana@example.com' },\n  { id: 2, email: 'bob@example.com' },\n];\n\nconst emails = pluck(users, 'email');\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "The signature must be generic over the element type and the key: something like `function pluck<T, K extends keyof T>(items: T[], key: K): T[K][]`. It must not use `any`. The body maps over items returning `item[key]`. Bonus: mentions that `K extends keyof T` is what turns invalid keys into compile errors.",
+              "es": "La firma debe ser genérica sobre el tipo del elemento y la clave: algo como `function pluck<T, K extends keyof T>(items: T[], key: K): T[K][]`. No debe usar `any`. El cuerpo mapea los items devolviendo `item[key]`. Bonus: menciona que `K extends keyof T` es lo que convierte claves inválidas en errores de compilación."
+            },
+            "reference": "function pluck<T, K extends keyof T>(items: T[], key: K): T[K][] {\n  return items.map((item) => item[key]);\n}\n\nconst users = [\n  { id: 1, email: 'ana@example.com' },\n  { id: 2, email: 'bob@example.com' },\n];\n\nconst emails = pluck(users, 'email'); // string[]\n// pluck(users, 'height'); // compile error: 'height' is not 'id' | 'email'"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Given `function save<T extends { id: string }>(entity: T): T` and `const u = save(user)` where `user: User`, what is the type of `u`?",
+              "es": "Dado `function save<T extends { id: string }>(entity: T): T` y `const u = save(user)` donde `user: User`, ¿cuál es el tipo de `u`?"
+            },
+            "options": [
+              {
+                "en": "`any` — constraints disable inference",
+                "es": "`any` — los constraints desactivan la inferencia"
+              },
+              {
+                "en": "`{ id: string }` — the constraint replaces the argument type",
+                "es": "`{ id: string }` — el constraint reemplaza el tipo del argumento"
+              },
+              {
+                "en": "`User` — T is inferred as the specific argument type and flows to the return",
+                "es": "`User` — T se infiere como el tipo específico del argumento y fluye al retorno"
+              },
+              {
+                "en": "`unknown` — generics erase type information",
+                "es": "`unknown` — los genéricos borran la información de tipos"
+              }
+            ],
+            "explanation": {
+              "en": "The constraint only limits which types are accepted; inference still binds `T = User`, so the full `User` type (with all its extra properties) is preserved in the return.",
+              "es": "El constraint solo limita qué tipos se aceptan; la inferencia igual asigna `T = User`, así que el tipo `User` completo (con todas sus propiedades extra) se preserva en el retorno."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which signature is a design smell where the generic adds no value?",
+              "es": "¿Qué firma es un smell de diseño donde el genérico no aporta valor?"
+            },
+            "options": [
+              {
+                "en": "`function merge<A, B>(a: A, b: B): A & B`",
+                "es": "`function merge<A, B>(a: A, b: B): A & B`"
+              },
+              {
+                "en": "`function first<T>(xs: T[]): T`",
+                "es": "`function first<T>(xs: T[]): T`"
+              },
+              {
+                "en": "`function get<T, K extends keyof T>(o: T, k: K): T[K]`",
+                "es": "`function get<T, K extends keyof T>(o: T, k: K): T[K]`"
+              },
+              {
+                "en": "`function log<T>(value: T): void`",
+                "es": "`function log<T>(value: T): void`"
+              }
+            ],
+            "explanation": {
+              "en": "In `log<T>(value: T): void` the type parameter appears only once and relates nothing to nothing — `log(value: unknown): void` expresses the same contract more honestly.",
+              "es": "En `log<T>(value: T): void` el parámetro de tipo aparece una sola vez y no relaciona nada con nada — `log(value: unknown): void` expresa el mismo contrato de forma más honesta."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "union-types-and-narrowing",
+      "question": {
+        "en": "What is type narrowing and which mechanisms does TypeScript use to narrow union types?",
+        "es": "¿Qué es el type narrowing y qué mecanismos usa TypeScript para estrechar tipos unión?"
+      },
+      "definition": {
+        "en": "**Narrowing** is control-flow analysis: the compiler tracks runtime checks and shrinks a union type inside each branch. Given `string | number`, after `if (typeof x === 'string')` the type of `x` is `string` in that block and `number` in the `else`. The main narrowing tools are `typeof` (primitives), `instanceof` (class instances), the `in` operator (property presence), equality checks against literals, and truthiness checks.\n\nWhen built-in operators aren't enough, you write a **type predicate** (user-defined type guard): `function isUser(v: unknown): v is User` tells the compiler that a `true` return narrows the argument to `User`. Predicates are trust boundaries — the compiler believes your `is` claim, so the body must actually verify it.\n\nA senior nuance: narrowing applies to `const` variables and parameters, but is *reset* across function boundaries — a check outside a callback does not narrow inside it, because the callback may run later when the value changed. That's why extracting to a local `const` before the callback is the standard fix.",
+        "es": "El **narrowing** es análisis de flujo de control: el compilador rastrea chequeos en tiempo de ejecución y reduce un tipo unión dentro de cada rama. Dado `string | number`, tras `if (typeof x === 'string')` el tipo de `x` es `string` en ese bloque y `number` en el `else`. Las herramientas principales son `typeof` (primitivos), `instanceof` (instancias de clases), el operador `in` (presencia de propiedad), comparaciones de igualdad contra literales y chequeos de truthiness.\n\nCuando los operadores nativos no bastan, escribes un **type predicate** (type guard definido por el usuario): `function isUser(v: unknown): v is User` le dice al compilador que un retorno `true` estrecha el argumento a `User`. Los predicates son fronteras de confianza — el compilador cree tu afirmación `is`, así que el cuerpo debe verificarla de verdad.\n\nUn matiz senior: el narrowing aplica a variables `const` y parámetros, pero se *reinicia* al cruzar fronteras de función — un chequeo fuera de un callback no estrecha dentro de él, porque el callback puede ejecutarse después, cuando el valor cambió. Por eso extraer a una `const` local antes del callback es el arreglo estándar."
+      },
+      "examples": [
+        {
+          "en": "Webhook handlers narrow on the event name: `if (event.type === 'invoice.paid')` narrows a Stripe event union so `event.data.object` is typed as an invoice, not a 40-way union.",
+          "es": "Los handlers de webhooks estrechan por el nombre del evento: `if (event.type === 'invoice.paid')` estrecha una unión de eventos de Stripe para que `event.data.object` se tipe como invoice, no como una unión de 40 casos."
+        },
+        {
+          "en": "Zod's `safeParse` returns `{ success: true, data } | { success: false, error }`; checking `result.success` narrows so `result.data` only exists on the success branch — the compiler enforces you handled validation failure.",
+          "es": "El `safeParse` de Zod devuelve `{ success: true, data } | { success: false, error }`; chequear `result.success` estrecha de modo que `result.data` solo existe en la rama de éxito — el compilador te obliga a manejar el fallo de validación."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`function f(x: string | string[] | null)`. Inside `if (x && typeof x === 'object')`, what is the type of `x`?",
+              "es": "`function f(x: string | string[] | null)`. Dentro de `if (x && typeof x === 'object')`, ¿cuál es el tipo de `x`?"
+            },
+            "options": [
+              {
+                "en": "`string | string[]` — only null is removed",
+                "es": "`string | string[]` — solo se elimina null"
+              },
+              {
+                "en": "`object` — typeof widens the type",
+                "es": "`object` — typeof ensancha el tipo"
+              },
+              {
+                "en": "`string[]` — truthiness removed `null`, and `typeof 'object'` removed `string`",
+                "es": "`string[]` — el truthiness eliminó `null` y `typeof 'object'` eliminó `string`"
+              },
+              {
+                "en": "`string[] | null` — typeof cannot see null",
+                "es": "`string[] | null` — typeof no puede ver null"
+              }
+            ],
+            "explanation": {
+              "en": "The `x &&` truthiness check eliminates `null` first (important because `typeof null === 'object'`), then the typeof check keeps only the array member of the union.",
+              "es": "El chequeo de truthiness `x &&` elimina `null` primero (importante porque `typeof null === 'object'`), y luego el typeof conserva solo el miembro array de la unión."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps to safely process `input: unknown` from a webhook into a typed `Order` using a type guard.",
+              "es": "Ordena los pasos para procesar de forma segura un `input: unknown` de un webhook hasta un `Order` tipado usando un type guard."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "receive",
+                "label": {
+                  "en": "Receive payload typed as unknown",
+                  "es": "Recibir el payload tipado como unknown"
+                }
+              },
+              {
+                "id": "guard",
+                "label": {
+                  "en": "Call isOrder(input), a predicate returning `input is Order`",
+                  "es": "Llamar isOrder(input), un predicate que retorna `input is Order`"
+                }
+              },
+              {
+                "id": "checks",
+                "label": {
+                  "en": "Inside the guard, verify required fields at runtime",
+                  "es": "Dentro del guard, verificar los campos requeridos en runtime"
+                }
+              },
+              {
+                "id": "narrow",
+                "label": {
+                  "en": "In the true branch, the compiler narrows input to Order",
+                  "es": "En la rama true, el compilador estrecha input a Order"
+                }
+              },
+              {
+                "id": "use",
+                "label": {
+                  "en": "Use input.total and other Order fields with full typing",
+                  "es": "Usar input.total y otros campos de Order con tipado completo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "receive",
+              "guard",
+              "checks",
+              "narrow",
+              "use"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does this fail? `if (user.name) { setTimeout(() => greet(user.name), 100) }` — the compiler still says `user.name` may be undefined inside the callback.",
+              "es": "¿Por qué falla esto? `if (user.name) { setTimeout(() => greet(user.name), 100) }` — el compilador sigue diciendo que `user.name` puede ser undefined dentro del callback."
+            },
+            "options": [
+              {
+                "en": "The if-check only narrows primitive types, and name is an object",
+                "es": "El if solo estrecha tipos primitivos, y name es un objeto"
+              },
+              {
+                "en": "Narrowing doesn't cross function boundaries: the property could be mutated before the callback runs, so extract it to a const first",
+                "es": "El narrowing no cruza fronteras de función: la propiedad podría mutarse antes de que corra el callback, así que primero extráela a una const"
+              },
+              {
+                "en": "Optional properties can never be narrowed",
+                "es": "Las propiedades opcionales nunca pueden estrecharse"
+              },
+              {
+                "en": "setTimeout erases all types in its callback",
+                "es": "setTimeout borra todos los tipos dentro de su callback"
+              }
+            ],
+            "explanation": {
+              "en": "Control-flow narrowing on a mutable property is invalidated inside closures that may execute later. Assigning `const name = user.name` inside the if-block captures the narrowed value.",
+              "es": "El narrowing por flujo de control sobre una propiedad mutable se invalida dentro de closures que pueden ejecutarse después. Asignar `const name = user.name` dentro del if captura el valor estrechado."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "utility-types",
+      "question": {
+        "en": "What do Partial, Pick, Omit, Record and ReturnType do, and how do they reduce type duplication?",
+        "es": "¿Qué hacen Partial, Pick, Omit, Record y ReturnType, y cómo reducen la duplicación de tipos?"
+      },
+      "definition": {
+        "en": "Utility types are built-in type transformers that let you **derive** types from a single source of truth instead of copy-pasting shapes. `Partial<T>` makes every property optional (update payloads), `Pick<T, K>` keeps only the listed keys, `Omit<T, K>` removes them, `Record<K, V>` builds an object type with keys `K` and values `V`, and `ReturnType<F>` extracts what a function returns.\n\nThe design win is maintenance: if `User` gains a field, `Partial<User>`, `Omit<User, 'password'>` and `ReturnType<typeof loadUser>` all update automatically. Hand-written duplicates silently drift — the classic bug is a DTO that no longer matches the entity it mirrors.\n\nSeniors should know these are not magic: `Partial` is just the mapped type `{ [K in keyof T]?: T[K] }`, and `Omit<T, K>` is `Pick<T, Exclude<keyof T, K>>`. Knowing the implementations tells you their edge cases — for instance, `Omit` collapses union types because `keyof` of a union only keeps common keys.",
+        "es": "Los utility types son transformadores de tipos integrados que te permiten **derivar** tipos desde una única fuente de verdad en lugar de copiar y pegar formas. `Partial<T>` hace opcional cada propiedad (payloads de update), `Pick<T, K>` conserva solo las claves listadas, `Omit<T, K>` las elimina, `Record<K, V>` construye un tipo objeto con claves `K` y valores `V`, y `ReturnType<F>` extrae lo que devuelve una función.\n\nLa ganancia de diseño es el mantenimiento: si `User` gana un campo, `Partial<User>`, `Omit<User, 'password'>` y `ReturnType<typeof loadUser>` se actualizan solos. Los duplicados escritos a mano se desincronizan en silencio — el bug clásico es un DTO que ya no coincide con la entidad que refleja.\n\nA nivel senior conviene saber que no son magia: `Partial` es solo el mapped type `{ [K in keyof T]?: T[K] }`, y `Omit<T, K>` es `Pick<T, Exclude<keyof T, K>>`. Conocer las implementaciones revela sus casos límite — por ejemplo, `Omit` colapsa las uniones porque `keyof` de una unión solo conserva las claves comunes."
+      },
+      "examples": [
+        {
+          "en": "A REST API defines `type UpdateUserDto = Partial<Omit<User, 'id' | 'createdAt'>>`: clients may send any subset of editable fields, and immutable columns are excluded at the type level.",
+          "es": "Una API REST define `type UpdateUserDto = Partial<Omit<User, 'id' | 'createdAt'>>`: los clientes pueden enviar cualquier subconjunto de campos editables, y las columnas inmutables quedan excluidas a nivel de tipos."
+        },
+        {
+          "en": "Redux codebases derive state types from selectors with `ReturnType<typeof selectCart>`, so refactoring the store shape propagates to every consumer without manual edits.",
+          "es": "Los proyectos con Redux derivan tipos de estado desde selectores con `ReturnType<typeof selectCart>`, así refactorizar la forma del store se propaga a cada consumidor sin ediciones manuales."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each requirement with the utility type that solves it (given `interface User { id: string; name: string; password: string }`).",
+              "es": "Conecta cada requisito con el utility type que lo resuelve (dado `interface User { id: string; name: string; password: string }`)."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "PATCH payload where every field is optional",
+                  "es": "Payload de PATCH donde todo campo es opcional"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Public profile with everything except password",
+                  "es": "Perfil público con todo excepto password"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Cache mapping user ids to User objects",
+                  "es": "Caché que mapea ids de usuario a objetos User"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "The type a factory function produces, without naming it",
+                  "es": "El tipo que produce una función factory, sin nombrarlo"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Partial<User>",
+                  "es": "Partial<User>"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Omit<User, 'password'>",
+                  "es": "Omit<User, 'password'>"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Record<string, User>",
+                  "es": "Record<string, User>"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "ReturnType<typeof createUser>",
+                  "es": "ReturnType<typeof createUser>"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which expression correctly types \"a User without password, where the remaining fields are all optional\"?",
+              "es": "¿Qué expresión tipa correctamente \"un User sin password, donde los campos restantes son todos opcionales\"?"
+            },
+            "options": [
+              {
+                "en": "`Omit<Partial<User>, User>`",
+                "es": "`Omit<Partial<User>, User>`"
+              },
+              {
+                "en": "`Pick<User, 'password'> & Partial<User>`",
+                "es": "`Pick<User, 'password'> & Partial<User>`"
+              },
+              {
+                "en": "`Record<User, 'password'>`",
+                "es": "`Record<User, 'password'>`"
+              },
+              {
+                "en": "`Partial<Omit<User, 'password'>>`",
+                "es": "`Partial<Omit<User, 'password'>>`"
+              }
+            ],
+            "explanation": {
+              "en": "Compose inside-out: first remove `password` with `Omit`, then make the survivors optional with `Partial`. The other options misuse the second type argument or invert the composition.",
+              "es": "Se compone de adentro hacia afuera: primero elimina `password` con `Omit`, luego haz opcionales los que quedan con `Partial`. Las otras opciones usan mal el segundo argumento de tipo o invierten la composición."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`Partial<T>` is implemented as which mapped type?",
+              "es": "`Partial<T>` se implementa como ¿cuál mapped type?"
+            },
+            "options": [
+              {
+                "en": "`{ [K in keyof T]: T[K] | undefined }`",
+                "es": "`{ [K in keyof T]: T[K] | undefined }`"
+              },
+              {
+                "en": "`{ [K in T]?: keyof T }`",
+                "es": "`{ [K in T]?: keyof T }`"
+              },
+              {
+                "en": "`{ readonly [K in keyof T]: T[K] }`",
+                "es": "`{ readonly [K in keyof T]: T[K] }`"
+              },
+              {
+                "en": "`{ [K in keyof T]?: T[K] }`",
+                "es": "`{ [K in keyof T]?: T[K] }`"
+              }
+            ],
+            "explanation": {
+              "en": "The `?` modifier makes each mapped property optional. Note the subtle difference from option A: `| undefined` allows an explicit undefined value but still *requires* the key to be present (under exactOptionalPropertyTypes semantics).",
+              "es": "El modificador `?` hace opcional cada propiedad mapeada. Nota la diferencia sutil con la opción A: `| undefined` permite un valor undefined explícito pero sigue *exigiendo* que la clave esté presente (bajo la semántica de exactOptionalPropertyTypes)."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "unknown-vs-any-vs-never",
+      "question": {
+        "en": "What is the difference between unknown, any and never, and when is each appropriate?",
+        "es": "¿Cuál es la diferencia entre unknown, any y never, y cuándo es apropiado cada uno?"
+      },
+      "definition": {
+        "en": "`any` **disables** type checking in both directions: anything is assignable to `any`, and `any` is assignable to anything. One `any` leaks — `const id = (data as any).user.id` silently gives `id` type `any`, and everything computed from it inherits the infection. `unknown` is the safe counterpart: everything is assignable *to* `unknown`, but you cannot use or assign an `unknown` value until you narrow it with a guard or validation.\n\n`never` is the empty type — no value ever inhabits it. It appears as the return type of functions that always throw, as the type of an exhausted union after all cases are handled, and as the result of impossible intersections like `string & number`. Nothing is assignable to `never` (except `never` itself), which is exactly what makes exhaustiveness checks work.\n\nThe senior guideline: `unknown` at every boundary where data enters the system (HTTP bodies, `JSON.parse`, message queues, `catch` clauses), `never` for exhaustiveness and unreachable code, and `any` essentially never in new code — with `noImplicitAny` on so it can't sneak in.",
+        "es": "`any` **desactiva** el chequeo de tipos en ambas direcciones: todo es asignable a `any`, y `any` es asignable a todo. Un solo `any` se fuga — `const id = (data as any).user.id` le da silenciosamente a `id` el tipo `any`, y todo lo computado a partir de él hereda la infección. `unknown` es la contraparte segura: todo es asignable *a* `unknown`, pero no puedes usar ni asignar un valor `unknown` hasta estrecharlo con un guard o validación.\n\n`never` es el tipo vacío — ningún valor lo habita jamás. Aparece como tipo de retorno de funciones que siempre lanzan, como el tipo de una unión agotada tras manejar todos los casos, y como resultado de intersecciones imposibles como `string & number`. Nada es asignable a `never` (excepto `never` mismo), que es exactamente lo que hace funcionar los chequeos de exhaustividad.\n\nLa pauta senior: `unknown` en cada frontera por donde entran datos al sistema (bodies HTTP, `JSON.parse`, colas de mensajes, cláusulas `catch`), `never` para exhaustividad y código inalcanzable, y `any` esencialmente nunca en código nuevo — con `noImplicitAny` activado para que no se cuele."
+      },
+      "examples": [
+        {
+          "en": "Since TypeScript 4.4, `catch (e)` can be typed `unknown` (with useUnknownInCatchVariables): production error handlers must check `e instanceof Error` before touching `e.message`, eliminating a whole class of crashes on non-Error throws.",
+          "es": "Desde TypeScript 4.4, `catch (e)` puede tiparse `unknown` (con useUnknownInCatchVariables): los manejadores de errores en producción deben chequear `e instanceof Error` antes de tocar `e.message`, eliminando toda una clase de crashes cuando se lanza algo que no es Error."
+        },
+        {
+          "en": "API gateways type `JSON.parse(body)` as `unknown` and pass it through a Zod/io-ts schema; the validated output is the only place a concrete type appears, so malformed payloads can't reach business logic.",
+          "es": "Los API gateways tipan `JSON.parse(body)` como `unknown` y lo pasan por un esquema de Zod/io-ts; la salida validada es el único lugar donde aparece un tipo concreto, así los payloads malformados no llegan a la lógica de negocio."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A function receives the parsed body of an HTTP request. Which parameter type forces every caller path to validate before use?",
+              "es": "Una función recibe el body parseado de una petición HTTP. ¿Qué tipo de parámetro obliga a validar antes de usar en todos los caminos?"
+            },
+            "options": [
+              {
+                "en": "`any` — it accepts anything so it's the most flexible",
+                "es": "`any` — acepta cualquier cosa así que es lo más flexible"
+              },
+              {
+                "en": "`object` — HTTP bodies are always objects",
+                "es": "`object` — los bodies HTTP siempre son objetos"
+              },
+              {
+                "en": "`never` — it rejects unvalidated input",
+                "es": "`never` — rechaza input no validado"
+              },
+              {
+                "en": "`unknown` — it accepts anything but cannot be used until narrowed",
+                "es": "`unknown` — acepta cualquier cosa pero no puede usarse hasta estrecharlo"
+              }
+            ],
+            "explanation": {
+              "en": "`unknown` is the top type with teeth: assignment in is free, but every use requires narrowing. `any` would compile even if you never validate; `never` would accept no argument at all.",
+              "es": "`unknown` es el tipo tope con dientes: la asignación de entrada es libre, pero cada uso requiere narrowing. `any` compilaría aunque nunca valides; `never` no aceptaría ningún argumento."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In which situation does the compiler itself infer `never`?",
+              "es": "¿En qué situación el propio compilador infiere `never`?"
+            },
+            "options": [
+              {
+                "en": "Any function that returns undefined",
+                "es": "Cualquier función que devuelve undefined"
+              },
+              {
+                "en": "The type of an empty object literal `{}`",
+                "es": "El tipo de un objeto literal vacío `{}`"
+              },
+              {
+                "en": "In the default branch of a switch after every member of a union has been handled",
+                "es": "En la rama default de un switch después de manejar todos los miembros de una unión"
+              },
+              {
+                "en": "A variable declared without an initializer",
+                "es": "Una variable declarada sin inicializador"
+              }
+            ],
+            "explanation": {
+              "en": "Once all union members are narrowed away, the remaining type is `never` — the compiler proved the branch is unreachable. That inference is the foundation of exhaustiveness checks.",
+              "es": "Cuando todos los miembros de la unión fueron estrechados, el tipo restante es `never` — el compilador probó que la rama es inalcanzable. Esa inferencia es la base de los chequeos de exhaustividad."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your team inherits a codebase with hundreds of `any`s. Explain why `any` is dangerous (mention how it propagates), why `unknown` is the safer replacement at input boundaries, and describe a realistic incremental migration strategy.",
+              "es": "Tu equipo hereda un codebase con cientos de `any`. Explica por qué `any` es peligroso (menciona cómo se propaga), por qué `unknown` es el reemplazo más seguro en las fronteras de entrada, y describe una estrategia realista de migración incremental."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that any disables checking in both directions and propagates through everything derived from it; that unknown accepts any value but forces narrowing/validation before use, making it right for boundaries like JSON.parse or HTTP bodies. The migration plan should be incremental: enable noImplicitAny (and ideally strict) possibly per-package or with error baselines, replace boundary anys with unknown plus guards/schema validation (e.g. Zod), fix high-traffic modules first, and prevent regressions via lint rules like no-explicit-any in CI.",
+              "es": "Debe explicar que any desactiva el chequeo en ambas direcciones y se propaga por todo lo derivado de él; que unknown acepta cualquier valor pero obliga a estrechar/validar antes de usar, ideal para fronteras como JSON.parse o bodies HTTP. El plan de migración debe ser incremental: activar noImplicitAny (idealmente strict) por paquete o con baselines de errores, reemplazar anys de frontera por unknown más guards/validación de esquema (p. ej. Zod), arreglar primero los módulos de mayor tráfico, y prevenir regresiones con reglas de lint como no-explicit-any en CI."
+            },
+            "reference": "any turns off type checking bidirectionally: any value can flow in, and the any flows out into every expression that touches it, so one any in a data source silently untypes whole call chains. unknown is the safe top type — it also accepts everything, but the compiler forbids using it until you narrow (typeof/instanceof/custom guard) or validate with a schema library, which is exactly the discipline you want where external data enters (HTTP bodies, JSON.parse, queue messages, catch clauses). A realistic migration: 1) turn on noImplicitAny/strict in tsconfig, using project references or per-directory configs to do it area by area, or a baseline file to freeze existing errors; 2) replace explicit any at boundaries with unknown and add Zod (or similar) schemas so validated types flow inward; 3) prioritize shared utilities and high-churn modules; 4) add @typescript-eslint/no-explicit-any and fail CI on new violations so the count only goes down."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "discriminated-unions",
+      "question": {
+        "en": "What is a discriminated union and how do you get compile-time exhaustiveness checking with it?",
+        "es": "¿Qué es una unión discriminada y cómo consigues chequeo de exhaustividad en compilación con ella?"
+      },
+      "definition": {
+        "en": "A **discriminated union** is a union of object types that share one common literal-typed property — the **discriminant** (often `type`, `kind` or `status`). Checking that property narrows the whole object: `if (shape.kind === 'circle')` gives you access to `shape.radius` and hides `shape.side`. This makes illegal states unrepresentable — a `{ status: 'error' }` variant simply has no `data` field, instead of an all-optional bag where `data` and `error` can coexist.\n\n**Exhaustiveness checking** is the payoff: in a `switch` over the discriminant, the `default` branch sees the remaining type as `never` once every case is handled. Assigning it there — `const _exhaustive: never = shape` — or calling an `assertNever(shape)` helper turns \"someone added a variant and forgot a switch\" into a compile error at every switch in the codebase.\n\nSeniors reach for this pattern to model state machines (request lifecycle, payment status), event/message types, and reducer actions. The alternative — optional fields with implicit invariants documented in comments — is where production null-crashes come from.",
+        "es": "Una **unión discriminada** es una unión de tipos objeto que comparten una propiedad común de tipo literal — el **discriminante** (usualmente `type`, `kind` o `status`). Chequear esa propiedad estrecha el objeto completo: `if (shape.kind === 'circle')` te da acceso a `shape.radius` y oculta `shape.side`. Esto hace irrepresentables los estados ilegales — una variante `{ status: 'error' }` simplemente no tiene campo `data`, en lugar de una bolsa de opcionales donde `data` y `error` pueden coexistir.\n\nEl **chequeo de exhaustividad** es la recompensa: en un `switch` sobre el discriminante, la rama `default` ve el tipo restante como `never` cuando todos los casos están manejados. Asignarlo ahí — `const _exhaustive: never = shape` — o llamar a un helper `assertNever(shape)` convierte \"alguien agregó una variante y olvidó un switch\" en un error de compilación en cada switch del codebase.\n\nLos seniors usan este patrón para modelar máquinas de estados (ciclo de vida de requests, estados de pago), tipos de eventos/mensajes y acciones de reducers. La alternativa — campos opcionales con invariantes implícitas documentadas en comentarios — es de donde salen los null-crashes en producción."
+      },
+      "examples": [
+        {
+          "en": "Redux reducers switch on `action.type`; because actions form a discriminated union, each case gets a precisely-typed payload and adding a new action without handling it can fail compilation via assertNever.",
+          "es": "Los reducers de Redux hacen switch sobre `action.type`; como las acciones forman una unión discriminada, cada case recibe un payload tipado con precisión y agregar una acción nueva sin manejarla puede fallar la compilación vía assertNever."
+        },
+        {
+          "en": "Payment systems model `type Payment = { status: 'pending' } | { status: 'captured'; receiptUrl: string } | { status: 'failed'; reason: string }` — the type system guarantees you can't read `receiptUrl` on a failed payment.",
+          "es": "Los sistemas de pagos modelan `type Payment = { status: 'pending' } | { status: 'captured'; receiptUrl: string } | { status: 'failed'; reason: string }` — el sistema de tipos garantiza que no puedes leer `receiptUrl` en un pago fallido."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Refactor `RequestState` from an all-optional interface into a discriminated union with variants 'idle', 'loading', 'success' (with `data: string[]`) and 'error' (with `message: string`). Then implement `render` with a switch that is exhaustively checked using a `never` assignment or an `assertNever` helper in the default branch.",
+              "es": "Refactoriza `RequestState` de una interface todo-opcional a una unión discriminada con variantes 'idle', 'loading', 'success' (con `data: string[]`) y 'error' (con `message: string`). Luego implementa `render` con un switch chequeado exhaustivamente usando una asignación a `never` o un helper `assertNever` en la rama default."
+            },
+            "language": "typescript",
+            "starter_code": "// This shape allows illegal states: loading=true with data AND error set.\ninterface RequestState {\n  loading?: boolean;\n  data?: string[];\n  error?: string;\n}\n\nfunction render(state: RequestState): string {\n  if (state.loading) return 'spinner';\n  if (state.error) return 'error: ' + state.error;\n  return 'list of ' + (state.data ? state.data.length : 0);\n}\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define a union of 4 object types sharing a literal discriminant (e.g. `status: 'idle' | 'loading' | 'success' | 'error'`), where only 'success' carries data and only 'error' carries message. render must switch on the discriminant, return something for every case, and the default branch must assign the value to never (or call assertNever) so a future variant becomes a compile error. No optional-field soup, no any, no type assertions.",
+              "es": "Debe definir una unión de 4 tipos objeto que compartan un discriminante literal (p. ej. `status: 'idle' | 'loading' | 'success' | 'error'`), donde solo 'success' lleva data y solo 'error' lleva message. render debe hacer switch sobre el discriminante, devolver algo en cada case, y la rama default debe asignar el valor a never (o llamar assertNever) para que una variante futura sea error de compilación. Sin sopa de campos opcionales, sin any, sin type assertions."
+            },
+            "reference": "type RequestState =\n  | { status: 'idle' }\n  | { status: 'loading' }\n  | { status: 'success'; data: string[] }\n  | { status: 'error'; message: string };\n\nfunction assertNever(x: never): never {\n  throw new Error('Unhandled variant: ' + JSON.stringify(x));\n}\n\nfunction render(state: RequestState): string {\n  switch (state.status) {\n    case 'idle':\n      return 'idle';\n    case 'loading':\n      return 'spinner';\n    case 'success':\n      return 'list of ' + state.data.length;\n    case 'error':\n      return 'error: ' + state.message;\n    default:\n      return assertNever(state);\n  }\n}"
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order what happens, from code to compile error, when a teammate adds a new variant to a discriminated union handled with assertNever.",
+              "es": "Ordena lo que sucede, del código al error de compilación, cuando un compañero agrega una variante nueva a una unión discriminada manejada con assertNever."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "add",
+                "label": {
+                  "en": "A new variant { status: 'cancelled' } is added to the union",
+                  "es": "Se agrega una variante nueva { status: 'cancelled' } a la unión"
+                }
+              },
+              {
+                "id": "switch",
+                "label": {
+                  "en": "An existing switch handles only the old cases",
+                  "es": "Un switch existente maneja solo los cases antiguos"
+                }
+              },
+              {
+                "id": "residual",
+                "label": {
+                  "en": "In default, the narrowed type is now { status: 'cancelled' }, not never",
+                  "es": "En default, el tipo estrechado ahora es { status: 'cancelled' }, no never"
+                }
+              },
+              {
+                "id": "error",
+                "label": {
+                  "en": "assertNever's never parameter rejects it: compile error",
+                  "es": "El parámetro never de assertNever lo rechaza: error de compilación"
+                }
+              },
+              {
+                "id": "fix",
+                "label": {
+                  "en": "The developer adds the missing case and the build is green again",
+                  "es": "El desarrollador agrega el case faltante y el build vuelve a verde"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "add",
+              "switch",
+              "residual",
+              "error",
+              "fix"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What makes a property work as a discriminant for narrowing?",
+              "es": "¿Qué hace que una propiedad funcione como discriminante para el narrowing?"
+            },
+            "options": [
+              {
+                "en": "It must be named exactly `type` or `kind`",
+                "es": "Debe llamarse exactamente `type` o `kind`"
+              },
+              {
+                "en": "It must be a readonly property",
+                "es": "Debe ser una propiedad readonly"
+              },
+              {
+                "en": "It must exist in every variant with a literal type that differs between variants",
+                "es": "Debe existir en todas las variantes con un tipo literal distinto entre variantes"
+              },
+              {
+                "en": "It must be a string — numbers and booleans cannot discriminate",
+                "es": "Debe ser string — números y booleanos no pueden discriminar"
+              }
+            ],
+            "explanation": {
+              "en": "Any shared property typed with unit/literal types (string literals, number literals, true/false) works — the name is convention. If it were typed as plain `string`, comparing it couldn't distinguish variants.",
+              "es": "Cualquier propiedad compartida tipada con tipos literales/unitarios (literales string, literales numéricos, true/false) funciona — el nombre es convención. Si fuera un `string` plano, compararla no podría distinguir variantes."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "mapped-and-conditional-types",
+      "question": {
+        "en": "How do mapped types and conditional types work, and what does `infer` do?",
+        "es": "¿Cómo funcionan los mapped types y los conditional types, y qué hace `infer`?"
+      },
+      "definition": {
+        "en": "A **mapped type** iterates over the keys of another type and transforms each property: `{ [K in keyof T]: Transform<T[K]> }`. Modifiers add or strip `?` and `readonly` (`-?` removes optionality — that's how `Required<T>` works), and `as` remaps keys with template literal types (for example, remapping each key K to a capitalized getter name), which is how getter interfaces like `{ getName: () => string }` are derived from `{ name: string }`.\n\nA **conditional type** branches at the type level: `T extends U ? X : Y`. Combined with **`infer`**, it can extract pieces of a type by pattern matching: `type ReturnType<F> = F extends (...args: any[]) => infer R ? R : never` — `infer R` declares a type variable bound to whatever sits in the return position. `Awaited`, `Parameters` and `ReturnType` are all built this way.\n\nThe senior-level subtlety is **distribution**: when the checked type is a *naked* type parameter, conditionals distribute over unions — `Exclude<'a' | 'b', 'a'>` evaluates per member and yields `'b'`. Wrapping both sides in tuples (`[T] extends [U]`) disables distribution when you want to treat the union as one unit.",
+        "es": "Un **mapped type** itera sobre las claves de otro tipo y transforma cada propiedad: `{ [K in keyof T]: Transform<T[K]> }`. Los modificadores agregan o quitan `?` y `readonly` (`-?` elimina la opcionalidad — así funciona `Required<T>`), y `as` remapea claves con template literal types (por ejemplo, remapeando cada clave K a un nombre de getter capitalizado), que es como se derivan interfaces de getters tipo `{ getName: () => string }` a partir de `{ name: string }`.\n\nUn **conditional type** ramifica a nivel de tipos: `T extends U ? X : Y`. Combinado con **`infer`**, puede extraer piezas de un tipo por pattern matching: `type ReturnType<F> = F extends (...args: any[]) => infer R ? R : never` — `infer R` declara una variable de tipo ligada a lo que esté en la posición de retorno. `Awaited`, `Parameters` y `ReturnType` están construidos así.\n\nLa sutileza de nivel senior es la **distribución**: cuando el tipo chequeado es un parámetro de tipo *desnudo*, los condicionales se distribuyen sobre uniones — `Exclude<'a' | 'b', 'a'>` se evalúa por miembro y produce `'b'`. Envolver ambos lados en tuplas (`[T] extends [U]`) desactiva la distribución cuando quieres tratar la unión como una unidad."
+      },
+      "examples": [
+        {
+          "en": "tRPC and Prisma infer their entire client API surface with conditional types and `infer`: the type of `client.user.findMany()` is computed from your schema, with zero code generation for the types consumers see.",
+          "es": "tRPC y Prisma infieren toda la superficie de su API cliente con conditional types e `infer`: el tipo de `client.user.findMany()` se computa desde tu esquema, sin generación de código para los tipos que ve el consumidor."
+        },
+        {
+          "en": "Form libraries derive error shapes from value shapes with a mapped type: `type Errors<T> = { [K in keyof T]?: T[K] extends object ? Errors<T[K]> : string }` mirrors nesting automatically for every form in the app.",
+          "es": "Las librerías de formularios derivan la forma de los errores desde la forma de los valores con un mapped type: `type Errors<T> = { [K in keyof T]?: T[K] extends object ? Errors<T[K]> : string }` refleja el anidamiento automáticamente para cada formulario de la app."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What does `type Mutable<T> = { -readonly [K in keyof T]: T[K] }` do?",
+              "es": "¿Qué hace `type Mutable<T> = { -readonly [K in keyof T]: T[K] }`?"
+            },
+            "options": [
+              {
+                "en": "Marks every property readonly",
+                "es": "Marca cada propiedad como readonly"
+              },
+              {
+                "en": "Strips the readonly modifier from every property, producing a writable copy of the shape",
+                "es": "Quita el modificador readonly de cada propiedad, produciendo una copia escribible de la forma"
+              },
+              {
+                "en": "Makes every property optional",
+                "es": "Hace opcional cada propiedad"
+              },
+              {
+                "en": "Removes properties that were readonly",
+                "es": "Elimina las propiedades que eran readonly"
+              }
+            ],
+            "explanation": {
+              "en": "The `-readonly` syntax removes the modifier while mapping (just like `-?` removes optionality in `Required<T>`). Properties are kept, only their mutability changes.",
+              "es": "La sintaxis `-readonly` elimina el modificador durante el mapeo (igual que `-?` elimina la opcionalidad en `Required<T>`). Las propiedades se conservan, solo cambia su mutabilidad."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What does `type ElementType<T> = T extends (infer U)[] ? U : T` evaluate to for `ElementType<string[]>` and `ElementType<number>`?",
+              "es": "¿Qué produce `type ElementType<T> = T extends (infer U)[] ? U : T` para `ElementType<string[]>` y `ElementType<number>`?"
+            },
+            "options": [
+              {
+                "en": "`string` and `number` — infer extracts the element type, and non-arrays fall through unchanged",
+                "es": "`string` y `number` — infer extrae el tipo del elemento, y los no-arrays pasan sin cambios"
+              },
+              {
+                "en": "`unknown` for both — infer cannot see through arrays",
+                "es": "`unknown` para ambos — infer no puede ver a través de arrays"
+              },
+              {
+                "en": "A compile error — infer is only allowed on function types",
+                "es": "Error de compilación — infer solo se permite en tipos de función"
+              },
+              {
+                "en": "`string[]` and `never` — infer wraps types in arrays",
+                "es": "`string[]` y `never` — infer envuelve los tipos en arrays"
+              }
+            ],
+            "explanation": {
+              "en": "`infer U` pattern-matches the array element position: `string[]` matches with `U = string`. `number` doesn't match the array pattern, so the false branch returns `T` itself.",
+              "es": "`infer U` hace pattern matching en la posición del elemento del array: `string[]` matchea con `U = string`. `number` no matchea el patrón de array, así que la rama falsa devuelve el propio `T`."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write two type-level utilities: 1) `Nullable<T>` — a mapped type where every property of T also accepts null; 2) `UnwrapPromise<T>` — a conditional type using `infer` that turns `Promise<X>` into `X` and leaves other types untouched. Include the two test aliases compiling correctly.",
+              "es": "Escribe dos utilidades a nivel de tipos: 1) `Nullable<T>` — un mapped type donde cada propiedad de T también acepta null; 2) `UnwrapPromise<T>` — un conditional type que use `infer` para convertir `Promise<X>` en `X` y dejar intactos los demás tipos. Incluye los dos alias de prueba compilando correctamente."
+            },
+            "language": "typescript",
+            "starter_code": "// 1) Nullable<T>: every property of T also accepts null.\n// type Nullable<T> = ...\n\n// 2) UnwrapPromise<T>: Promise<X> -> X, anything else -> itself.\n// type UnwrapPromise<T> = ...\n\ninterface User {\n  id: number;\n  name: string;\n}\n\n// Should compile:\n// type NullableUser = Nullable<User>; // { id: number | null; name: string | null }\n// type A = UnwrapPromise<Promise<User>>; // User\n// type B = UnwrapPromise<string>; // string\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Nullable must be a mapped type over keyof T adding `| null` to each property type: `{ [K in keyof T]: T[K] | null }`. UnwrapPromise must be a conditional type with infer: `T extends Promise<infer U> ? U : T`. Both test aliases must type-check as commented. Bonus: candidate notes that the built-in Awaited<T> also unwraps nested promises recursively.",
+              "es": "Nullable debe ser un mapped type sobre keyof T agregando `| null` a cada tipo de propiedad: `{ [K in keyof T]: T[K] | null }`. UnwrapPromise debe ser un conditional type con infer: `T extends Promise<infer U> ? U : T`. Ambos alias de prueba deben chequear como indican los comentarios. Bonus: el candidato nota que el Awaited<T> nativo además desenvuelve promesas anidadas recursivamente."
+            },
+            "reference": "type Nullable<T> = { [K in keyof T]: T[K] | null };\n\ntype UnwrapPromise<T> = T extends Promise<infer U> ? U : T;\n\ninterface User {\n  id: number;\n  name: string;\n}\n\ntype NullableUser = Nullable<User>; // { id: number | null; name: string | null }\ntype A = UnwrapPromise<Promise<User>>; // User\ntype B = UnwrapPromise<string>; // string\n// Note: the built-in Awaited<T> additionally unwraps nested Promise<Promise<X>> recursively."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "enums-and-const-assertions",
+      "question": {
+        "en": "How do enums compare with union types and `as const` objects, and why do many teams avoid enums?",
+        "es": "¿Cómo se comparan los enums con los union types y los objetos `as const`, y por qué muchos equipos evitan los enums?"
+      },
+      "definition": {
+        "en": "An **enum** is one of the few TypeScript features that emits runtime code: `enum Role { Admin, User }` compiles to a lookup object. Numeric enums are notoriously loose historically (numbers were assignable to them before TS 5.0, and reverse mappings add surprise keys); string enums are **nominal** — you must write `Role.Admin`, a plain `'admin'` string is rejected even though the values match. `const enum` inlines values at compile time but breaks under `isolatedModules`/single-file transpilers (Babel, esbuild), which is why many style guides ban it.\n\nThe **`as const` assertion** offers an alternative: it freezes a literal to its narrowest type — `{ Admin: 'admin' } as const` has type `{ readonly Admin: 'admin' }` instead of `{ Admin: string }`. From it you derive the union: `type Role = typeof ROLES[keyof typeof ROLES]` gives `'admin' | 'user'` with zero extra runtime code beyond the object you wanted anyway.\n\nThe trade-off in interviews: plain string literal unions are the lightest (no runtime artifact, structural, great inference); `as const` objects add iterable runtime values plus the derived union; enums give nominal typing and refactor-friendly renames but couple your types to emitted JavaScript. Most modern style guides prefer unions or `as const`.",
+        "es": "Un **enum** es una de las pocas características de TypeScript que emite código en runtime: `enum Role { Admin, User }` compila a un objeto de lookup. Los enums numéricos son históricamente laxos (los números eran asignables a ellos antes de TS 5.0, y el mapeo inverso agrega claves sorpresa); los enums de string son **nominales** — debes escribir `Role.Admin`, un string plano `'admin'` se rechaza aunque los valores coincidan. `const enum` inlinea valores en compilación pero se rompe con `isolatedModules`/transpiladores de archivo único (Babel, esbuild), por eso muchas guías de estilo lo prohíben.\n\nLa **aserción `as const`** ofrece una alternativa: congela un literal a su tipo más estrecho — `{ Admin: 'admin' } as const` tiene tipo `{ readonly Admin: 'admin' }` en lugar de `{ Admin: string }`. De ahí derivas la unión: `type Role = typeof ROLES[keyof typeof ROLES]` da `'admin' | 'user'` sin código runtime extra más allá del objeto que igual querías.\n\nEl trade-off en entrevistas: las uniones de literales string son lo más liviano (sin artefacto runtime, estructurales, gran inferencia); los objetos `as const` agregan valores iterables en runtime más la unión derivada; los enums dan tipado nominal y renombres amigables al refactor pero acoplan tus tipos al JavaScript emitido. La mayoría de guías modernas prefiere uniones o `as const`."
+      },
+      "examples": [
+        {
+          "en": "Design systems export `const SIZES = ['sm', 'md', 'lg'] as const; type Size = typeof SIZES[number]` — components get the `'sm' | 'md' | 'lg'` union for props while Storybook iterates the array to render every variant.",
+          "es": "Los design systems exportan `const SIZES = ['sm', 'md', 'lg'] as const; type Size = typeof SIZES[number]` — los componentes obtienen la unión `'sm' | 'md' | 'lg'` para props mientras Storybook itera el array para renderizar cada variante."
+        },
+        {
+          "en": "Teams using Babel or esbuild for transpilation ban `const enum` outright: those tools compile one file at a time and cannot inline cross-file enum values, producing runtime reference errors.",
+          "es": "Los equipos que transpilan con Babel o esbuild prohíben `const enum` de plano: esas herramientas compilan un archivo a la vez y no pueden inlinear valores de enums entre archivos, produciendo errores de referencia en runtime."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the inferred type of `config` in `const config = { retries: 3, mode: 'fast' } as const`?",
+              "es": "¿Cuál es el tipo inferido de `config` en `const config = { retries: 3, mode: 'fast' } as const`?"
+            },
+            "options": [
+              {
+                "en": "`{ retries: number; mode: string }`",
+                "es": "`{ retries: number; mode: string }`"
+              },
+              {
+                "en": "`Readonly<Record<string, unknown>>`",
+                "es": "`Readonly<Record<string, unknown>>`"
+              },
+              {
+                "en": "`{ retries: 3; mode: 'fast' }` but still mutable",
+                "es": "`{ retries: 3; mode: 'fast' }` pero aún mutable"
+              },
+              {
+                "en": "`{ readonly retries: 3; readonly mode: 'fast' }`",
+                "es": "`{ readonly retries: 3; readonly mode: 'fast' }`"
+              }
+            ],
+            "explanation": {
+              "en": "`as const` does two things: it keeps each value at its literal type (3, 'fast') instead of widening to number/string, and it marks every property readonly (arrays become readonly tuples).",
+              "es": "`as const` hace dos cosas: mantiene cada valor en su tipo literal (3, 'fast') en lugar de ensanchar a number/string, y marca cada propiedad como readonly (los arrays se vuelven tuplas readonly)."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your build pipeline transpiles files one at a time with esbuild (isolatedModules). Which construct is unsafe to use?",
+              "es": "Tu pipeline transpila archivos de a uno con esbuild (isolatedModules). ¿Qué construcción es insegura de usar?"
+            },
+            "options": [
+              {
+                "en": "Objects with `as const`",
+                "es": "Objetos con `as const`"
+              },
+              {
+                "en": "String literal unions",
+                "es": "Uniones de literales string"
+              },
+              {
+                "en": "Regular string enums",
+                "es": "Enums de string normales"
+              },
+              {
+                "en": "`const enum` — its cross-file inlining needs whole-program compilation",
+                "es": "`const enum` — su inlining entre archivos requiere compilación de programa completo"
+              }
+            ],
+            "explanation": {
+              "en": "`const enum` values are erased and inlined by tsc using type information from other files. Single-file transpilers lack that information, so imported const enum members become undefined references at runtime.",
+              "es": "Los valores de `const enum` se borran y se inlinean por tsc usando información de tipos de otros archivos. Los transpiladores de archivo único no tienen esa información, así que los miembros importados de un const enum se vuelven referencias undefined en runtime."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "With `enum Status { Active = 'ACTIVE' }` and `function f(s: Status)`, why does `f('ACTIVE')` fail to compile?",
+              "es": "Con `enum Status { Active = 'ACTIVE' }` y `function f(s: Status)`, ¿por qué `f('ACTIVE')` no compila?"
+            },
+            "options": [
+              {
+                "en": "The enum value is 'Active', not 'ACTIVE'",
+                "es": "El valor del enum es 'Active', no 'ACTIVE'"
+              },
+              {
+                "en": "String enums are nominally typed: only `Status.Active` is assignable, not a structurally equal string literal",
+                "es": "Los enums de string tienen tipado nominal: solo `Status.Active` es asignable, no un literal string estructuralmente igual"
+              },
+              {
+                "en": "String enums require a cast to string first",
+                "es": "Los enums de string requieren primero un cast a string"
+              },
+              {
+                "en": "f expects a number because enums are numeric by default",
+                "es": "f espera un número porque los enums son numéricos por defecto"
+              }
+            ],
+            "explanation": {
+              "en": "This is a deliberate exception to structural typing: string enum members form their own nominal type. It gives stricter guarantees but is also why unions are often more ergonomic for APIs.",
+              "es": "Es una excepción deliberada al tipado estructural: los miembros de un enum de string forman su propio tipo nominal. Da garantías más estrictas, pero también es la razón por la que las uniones suelen ser más ergonómicas para APIs."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "declaration-files",
+      "question": {
+        "en": "What are .d.ts declaration files and how do you type an untyped third-party module?",
+        "es": "¿Qué son los archivos de declaración .d.ts y cómo tipas un módulo de terceros sin tipos?"
+      },
+      "definition": {
+        "en": "A **declaration file** (`.d.ts`) contains only type information — no executable code. It describes the shape of JavaScript so the compiler can type-check calls into it. Libraries either ship their own declarations (a `types` field in package.json, common for anything compiled from TypeScript with `declaration: true`) or are covered by the community **DefinitelyTyped** repository, installed as `@types/<package>` and resolved automatically by the compiler.\n\nWhen a dependency has neither, imports fail with *\"Could not find a declaration file for module 'x'\"*. The escape hatches, in increasing quality: `declare module 'x'` with no body (everything becomes `any` — a shorthand/ambient declaration), or a real ambient declaration in your own `.d.ts` describing the functions you actually use. **Module augmentation** — `declare module 'express-serve-static-core' { interface Request { user?: AuthUser } }` — merges new members into a library's existing types instead of replacing them.\n\nSenior details worth knowing: your global/ambient files must be visible to the compiler (via `include`, or `typeRoots` for custom type packages); a `.d.ts` with a top-level `import`/`export` becomes a *module* and its former globals stop being ambient — a classic gotcha; and `@types/*` major versions should track the runtime package's major version.",
+        "es": "Un **archivo de declaración** (`.d.ts`) contiene solo información de tipos — nada de código ejecutable. Describe la forma de JavaScript para que el compilador pueda chequear las llamadas hacia él. Las librerías o traen sus propias declaraciones (campo `types` en package.json, común en todo lo compilado desde TypeScript con `declaration: true`) o están cubiertas por el repositorio comunitario **DefinitelyTyped**, instalado como `@types/<paquete>` y resuelto automáticamente por el compilador.\n\nCuando una dependencia no tiene ninguna de las dos, los imports fallan con *\"Could not find a declaration file for module 'x'\"*. Las salidas, en calidad creciente: `declare module 'x'` sin cuerpo (todo se vuelve `any` — una declaración ambient abreviada), o una declaración ambient real en tu propio `.d.ts` describiendo las funciones que de verdad usas. La **module augmentation** — `declare module 'express-serve-static-core' { interface Request { user?: AuthUser } }` — fusiona miembros nuevos en los tipos existentes de una librería en lugar de reemplazarlos.\n\nDetalles senior que conviene saber: tus archivos globales/ambient deben ser visibles para el compilador (vía `include`, o `typeRoots` para paquetes de tipos propios); un `.d.ts` con un `import`/`export` de nivel superior se convierte en *módulo* y sus antiguos globales dejan de ser ambient — un gotcha clásico; y la versión mayor de `@types/*` debe seguir la versión mayor del paquete de runtime."
+      },
+      "examples": [
+        {
+          "en": "Adding `req.user` after JWT auth middleware is the canonical augmentation: apps ship a `types/express.d.ts` that augments the Express Request interface, and every route handler sees the property with its real type.",
+          "es": "Agregar `req.user` tras un middleware de auth JWT es la augmentation canónica: las apps incluyen un `types/express.d.ts` que aumenta la interface Request de Express, y cada route handler ve la propiedad con su tipo real."
+        },
+        {
+          "en": "Importing assets in bundler setups needs ambient declarations: `declare module '*.svg' { const url: string; export default url }` is why `import logo from './logo.svg'` type-checks in Vite and webpack projects.",
+          "es": "Importar assets en setups con bundler requiere declaraciones ambient: `declare module '*.svg' { const url: string; export default url }` es la razón por la que `import logo from './logo.svg'` chequea tipos en proyectos con Vite y webpack."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You import an npm package and get \"Could not find a declaration file for module 'legacy-lib'\". Order the escalation from first attempt to last resort.",
+              "es": "Importas un paquete de npm y aparece \"Could not find a declaration file for module 'legacy-lib'\". Ordena la escalada del primer intento al último recurso."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "bundled",
+                "label": {
+                  "en": "Check if the package bundles its own types (types field / .d.ts inside)",
+                  "es": "Revisar si el paquete trae sus propios tipos (campo types / .d.ts adentro)"
+                }
+              },
+              {
+                "id": "dt",
+                "label": {
+                  "en": "Try installing @types/legacy-lib from DefinitelyTyped",
+                  "es": "Intentar instalar @types/legacy-lib de DefinitelyTyped"
+                }
+              },
+              {
+                "id": "ambient",
+                "label": {
+                  "en": "Write your own .d.ts declaring the API surface you actually use",
+                  "es": "Escribir tu propio .d.ts declarando la superficie de API que realmente usas"
+                }
+              },
+              {
+                "id": "shorthand",
+                "label": {
+                  "en": "As a stopgap, add a bodyless `declare module 'legacy-lib'` (everything becomes any)",
+                  "es": "Como parche, agregar un `declare module 'legacy-lib'` sin cuerpo (todo se vuelve any)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "bundled",
+              "dt",
+              "ambient",
+              "shorthand"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your global `declare module '*.svg'` declarations stopped working after a teammate edited the .d.ts file. What's the most likely cause?",
+              "es": "Tus declaraciones globales `declare module '*.svg'` dejaron de funcionar después de que un compañero editó el archivo .d.ts. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "Wildcard module declarations were removed from TypeScript",
+                "es": "Las declaraciones de módulo con comodín se eliminaron de TypeScript"
+              },
+              {
+                "en": "They added a top-level import/export, turning the ambient file into a module so its declarations are no longer global",
+                "es": "Agregaron un import/export de nivel superior, convirtiendo el archivo ambient en módulo, por lo que sus declaraciones ya no son globales"
+              },
+              {
+                "en": "SVG imports always require @types/svg",
+                "es": "Los imports de SVG siempre requieren @types/svg"
+              },
+              {
+                "en": ".d.ts files must be named exactly globals.d.ts",
+                "es": "Los archivos .d.ts deben llamarse exactamente globals.d.ts"
+              }
+            ],
+            "explanation": {
+              "en": "A file with any top-level import or export is a module: its contents are scoped, not ambient. The fix is moving imports inside `declare module` blocks or using `import type` within the block.",
+              "es": "Un archivo con cualquier import o export de nivel superior es un módulo: su contenido queda con scope, no ambient. El arreglo es mover los imports dentro de los bloques `declare module` o usar `import type` dentro del bloque."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the difference between writing `declare module 'express-serve-static-core' { interface Request { user?: AuthUser } }` and declaring your own `interface Request` in a regular file?",
+              "es": "¿Cuál es la diferencia entre escribir `declare module 'express-serve-static-core' { interface Request { user?: AuthUser } }` y declarar tu propia `interface Request` en un archivo normal?"
+            },
+            "options": [
+              {
+                "en": "The first replaces the library's Request entirely",
+                "es": "La primera reemplaza por completo el Request de la librería"
+              },
+              {
+                "en": "No difference — interfaces always merge globally",
+                "es": "Ninguna — las interfaces siempre se fusionan globalmente"
+              },
+              {
+                "en": "The first merges into the library's Request via module augmentation; the second creates an unrelated local type",
+                "es": "La primera se fusiona con el Request de la librería vía module augmentation; la segunda crea un tipo local sin relación"
+              },
+              {
+                "en": "The second is preferred because augmentation is deprecated",
+                "es": "La segunda es preferible porque la augmentation está deprecada"
+              }
+            ],
+            "explanation": {
+              "en": "Declaration merging only happens within the same declaration scope. Module augmentation re-enters the library's module scope so your members merge into the real Request that middleware and handlers use.",
+              "es": "El declaration merging solo ocurre dentro del mismo scope de declaración. La module augmentation reingresa al scope del módulo de la librería para que tus miembros se fusionen con el Request real que usan middleware y handlers."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "strict-compiler-flags",
+      "question": {
+        "en": "What does strict mode enable in tsconfig, and what specifically does strictNullChecks change?",
+        "es": "¿Qué habilita el modo strict en tsconfig, y qué cambia específicamente strictNullChecks?"
+      },
+      "definition": {
+        "en": "`\"strict\": true` is an umbrella flag enabling a family of checks. The big ones: **strictNullChecks** (null/undefined are no longer members of every type — `string` means string, and nullable values must be `string | null` and narrowed before use), **noImplicitAny** (parameters and variables the compiler can't infer must be annotated instead of silently becoming `any`), **strictFunctionTypes** (function parameters are checked contravariantly, catching unsound callback assignments), and **strictPropertyInitialization** (class properties must be definitely assigned in the constructor or marked with `!`).\n\n`strictNullChecks` is the one with the biggest real-world impact: it turns the billion-dollar mistake into a compile error. `array.find(...)` returns `T | undefined`, `map.get(key)` returns `V | undefined`, and the compiler forces a check, `?.`, `??`, or an explicit early return before you dereference. The non-null assertion `x!` opts out — it's a promise to the compiler, and every incident retro with `Cannot read properties of undefined` next to a `!` reads the same way.\n\nFor legacy migrations, seniors should know the incremental levers: enable flags one at a time, use `// @ts-expect-error` (which errors when it becomes unnecessary — prefer it over `@ts-ignore`), split the codebase with project references, or freeze a baseline of existing errors and forbid new ones in CI.",
+        "es": "`\"strict\": true` es un flag paraguas que habilita una familia de chequeos. Los grandes: **strictNullChecks** (null/undefined dejan de ser miembros de todo tipo — `string` significa string, y los valores anulables deben ser `string | null` y estrecharse antes de usarse), **noImplicitAny** (los parámetros y variables que el compilador no puede inferir deben anotarse en vez de volverse `any` en silencio), **strictFunctionTypes** (los parámetros de funciones se chequean contravariantemente, atrapando asignaciones no sólidas de callbacks) y **strictPropertyInitialization** (las propiedades de clase deben asignarse con certeza en el constructor o marcarse con `!`).\n\n`strictNullChecks` es el de mayor impacto en el mundo real: convierte el error del billón de dólares en error de compilación. `array.find(...)` devuelve `T | undefined`, `map.get(key)` devuelve `V | undefined`, y el compilador exige un chequeo, `?.`, `??` o un early return explícito antes de desreferenciar. La aserción non-null `x!` es la salida — es una promesa al compilador, y cada retro de incidente con `Cannot read properties of undefined` junto a un `!` se lee igual.\n\nPara migraciones legacy, un senior debe conocer las palancas incrementales: habilitar flags de a uno, usar `// @ts-expect-error` (que da error cuando se vuelve innecesario — preferible a `@ts-ignore`), dividir el codebase con project references, o congelar un baseline de errores existentes y prohibir nuevos en CI."
+      },
+      "examples": [
+        {
+          "en": "VS Code's own codebase migrated to strictNullChecks incrementally over years using a separate tsconfig listing the already-clean files, growing that list file by file while CI blocked regressions.",
+          "es": "El propio codebase de VS Code migró a strictNullChecks incrementalmente durante años usando un tsconfig aparte que listaba los archivos ya limpios, ampliando esa lista archivo por archivo mientras CI bloqueaba regresiones."
+        },
+        {
+          "en": "With strictNullChecks on, `users.find(u => u.id === id).email` fails to compile — production code must handle the not-found case, which is exactly the crash this flag exists to prevent.",
+          "es": "Con strictNullChecks activo, `users.find(u => u.id === id).email` no compila — el código de producción debe manejar el caso no-encontrado, que es exactamente el crash que este flag existe para prevenir."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "With strictNullChecks enabled, what is the return type of `[1, 2, 3].find(n => n > 2)` and what does the compiler force you to do?",
+              "es": "Con strictNullChecks activado, ¿cuál es el tipo de retorno de `[1, 2, 3].find(n => n > 2)` y qué te obliga a hacer el compilador?"
+            },
+            "options": [
+              {
+                "en": "`unknown` — strict mode erases inference",
+                "es": "`unknown` — el modo strict borra la inferencia"
+              },
+              {
+                "en": "`number | undefined` — you must narrow (check, ?., ??) before using it as a number",
+                "es": "`number | undefined` — debes estrechar (chequeo, ?., ??) antes de usarlo como número"
+              },
+              {
+                "en": "`number` — find always succeeds on non-empty arrays",
+                "es": "`number` — find siempre tiene éxito en arrays no vacíos"
+              },
+              {
+                "en": "`number | null` — you must compare against null",
+                "es": "`number | null` — debes comparar contra null"
+              }
+            ],
+            "explanation": {
+              "en": "find returns undefined when nothing matches, and strictNullChecks makes that visible in the type. Without the flag, the undefined silently disappears and surfaces as a runtime crash instead.",
+              "es": "find devuelve undefined cuando nada coincide, y strictNullChecks lo hace visible en el tipo. Sin el flag, el undefined desaparece en silencio y aparece después como crash en runtime."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each strict-family flag with what it catches.",
+              "es": "Conecta cada flag de la familia strict con lo que detecta."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "strictNullChecks",
+                  "es": "strictNullChecks"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "noImplicitAny",
+                  "es": "noImplicitAny"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "strictPropertyInitialization",
+                  "es": "strictPropertyInitialization"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "strictFunctionTypes",
+                  "es": "strictFunctionTypes"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Dereferencing values that may be null or undefined",
+                  "es": "Desreferenciar valores que pueden ser null o undefined"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Parameters whose type the compiler silently gave up on",
+                  "es": "Parámetros cuyo tipo el compilador abandonó en silencio"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Class fields never assigned in the constructor",
+                  "es": "Campos de clase nunca asignados en el constructor"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Unsound callback assignments via parameter bivariance",
+                  "es": "Asignaciones no sólidas de callbacks por bivarianza de parámetros"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During a strict-mode migration, why is `// @ts-expect-error` preferred over `// @ts-ignore`?",
+              "es": "Durante una migración a modo strict, ¿por qué se prefiere `// @ts-expect-error` sobre `// @ts-ignore`?"
+            },
+            "options": [
+              {
+                "en": "It fails the build when the error it suppresses no longer exists, so stale suppressions clean themselves up",
+                "es": "Falla el build cuando el error que suprime ya no existe, así las supresiones obsoletas se limpian solas"
+              },
+              {
+                "en": "It makes the error a warning instead of suppressing it",
+                "es": "Convierte el error en warning en lugar de suprimirlo"
+              },
+              {
+                "en": "It works in .js files while @ts-ignore does not",
+                "es": "Funciona en archivos .js mientras que @ts-ignore no"
+              },
+              {
+                "en": "It suppresses errors in the whole file, not just one line",
+                "es": "Suprime errores en todo el archivo, no solo en una línea"
+              }
+            ],
+            "explanation": {
+              "en": "@ts-expect-error is self-expiring: once the underlying code is fixed, the directive itself becomes an error, forcing removal. @ts-ignore comments rot silently for years.",
+              "es": "@ts-expect-error se auto-expira: cuando el código subyacente se arregla, la propia directiva se vuelve un error, forzando su eliminación. Los comentarios @ts-ignore se pudren en silencio durante años."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "typing-react",
+      "question": {
+        "en": "How do you type React components, hooks and events correctly in TypeScript?",
+        "es": "¿Cómo tipas correctamente componentes, hooks y eventos de React en TypeScript?"
+      },
+      "definition": {
+        "en": "Type component props with an explicit interface and annotate the *props parameter*, not the component: `function Button({ onClick }: ButtonProps)`. The once-ubiquitous `React.FC` is now discouraged by most style guides: it historically implied `children` whether you wanted them or not, and it blocks generic components. When children are needed, declare them: `children: React.ReactNode` (the broadest renderable type — prefer it over `JSX.Element`, which is only a single element).\n\nHooks lean on inference: `useState(0)` infers `number`; you annotate only when the initial value doesn't tell the whole story — `useState<User | null>(null)` is the canonical case. `useRef<HTMLInputElement>(null)` produces the read-only ref DOM elements need, and `useReducer` gets full narrowing when actions are a discriminated union. Events use React's synthetic types: `React.ChangeEvent<HTMLInputElement>`, `React.FormEvent<HTMLFormElement>`, `React.MouseEvent<HTMLButtonElement>`.\n\nTwo senior patterns round it out: `ComponentProps<typeof Button>` extracts another component's props so wrappers stay in sync without exporting prop types, and extending `ComponentPropsWithoutRef<'button'>` lets a design-system button accept every native button attribute while adding its own.",
+        "es": "Tipa las props de componentes con una interface explícita y anota el *parámetro de props*, no el componente: `function Button({ onClick }: ButtonProps)`. El otrora omnipresente `React.FC` hoy está desaconsejado por la mayoría de guías: históricamente implicaba `children` los quisieras o no, y bloquea los componentes genéricos. Cuando necesitas children, decláralos: `children: React.ReactNode` (el tipo renderizable más amplio — prefiérelo sobre `JSX.Element`, que es solo un elemento único).\n\nLos hooks se apoyan en la inferencia: `useState(0)` infiere `number`; anotas solo cuando el valor inicial no cuenta toda la historia — `useState<User | null>(null)` es el caso canónico. `useRef<HTMLInputElement>(null)` produce la ref de solo lectura que necesitan los elementos DOM, y `useReducer` obtiene narrowing completo cuando las acciones son una unión discriminada. Los eventos usan los tipos sintéticos de React: `React.ChangeEvent<HTMLInputElement>`, `React.FormEvent<HTMLFormElement>`, `React.MouseEvent<HTMLButtonElement>`.\n\nDos patrones senior completan el cuadro: `ComponentProps<typeof Button>` extrae las props de otro componente para que los wrappers se mantengan sincronizados sin exportar tipos de props, y extender `ComponentPropsWithoutRef<'button'>` permite que un botón de design system acepte todos los atributos nativos de button mientras agrega los suyos."
+      },
+      "examples": [
+        {
+          "en": "Design-system buttons extend native props: `interface ButtonProps extends ComponentPropsWithoutRef<'button'> { variant: 'primary' | 'ghost' }` — consumers keep `disabled`, `aria-*` and `onClick` fully typed for free.",
+          "es": "Los botones de design system extienden las props nativas: `interface ButtonProps extends ComponentPropsWithoutRef<'button'> { variant: 'primary' | 'ghost' }` — los consumidores conservan `disabled`, `aria-*` y `onClick` completamente tipados gratis."
+        },
+        {
+          "en": "Data-fetching components model state as `useState<User | null>(null)` plus a discriminated request union; forgetting the null annotation infers `null` as the only possible state and `setUser(fetched)` stops compiling — a bug caught before the first render.",
+          "es": "Los componentes que traen datos modelan el estado como `useState<User | null>(null)` más una unión discriminada de request; olvidar la anotación de null infiere `null` como el único estado posible y `setUser(fetched)` deja de compilar — un bug atrapado antes del primer render."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Type this untyped React component: define a props interface (label required, initial optional number defaulting to 0, onChange callback receiving the new count), type the useState hook, and type the click handler's event parameter.",
+              "es": "Tipa este componente React sin tipos: define una interface de props (label requerido, initial numérico opcional con default 0, callback onChange que recibe el nuevo count), tipa el hook useState y tipa el parámetro de evento del click handler."
+            },
+            "language": "typescript",
+            "starter_code": "import { useState } from 'react';\n\n// Add proper TypeScript types to this component.\nexport function Counter({ label, initial = 0, onChange }) {\n  const [count, setCount] = useState(initial);\n\n  function handleClick(event) {\n    event.preventDefault();\n    const next = count + 1;\n    setCount(next);\n    onChange(next);\n  }\n\n  return (\n    <button onClick={handleClick}>\n      {label}: {count}\n    </button>\n  );\n}\n"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define an interface/type with label: string, initial?: number, onChange: (next: number) => void, and annotate the destructured props parameter with it. useState should infer number from `initial` (explicit useState<number> also acceptable). The event must be typed React.MouseEvent<HTMLButtonElement> (or MouseEvent imported from react). Must NOT use React.FC with implicit children or `any`.",
+              "es": "Debe definir una interface/type con label: string, initial?: number, onChange: (next: number) => void, y anotar con ella el parámetro de props desestructurado. useState debe inferir number desde `initial` (también es aceptable useState<number> explícito). El evento debe tiparse React.MouseEvent<HTMLButtonElement> (o MouseEvent importado de react). NO debe usar React.FC con children implícitos ni `any`."
+            },
+            "reference": "import { useState, type MouseEvent } from 'react';\n\ninterface CounterProps {\n  label: string;\n  initial?: number;\n  onChange: (next: number) => void;\n}\n\nexport function Counter({ label, initial = 0, onChange }: CounterProps) {\n  const [count, setCount] = useState(initial); // inferred as number\n\n  function handleClick(event: MouseEvent<HTMLButtonElement>) {\n    event.preventDefault();\n    const next = count + 1;\n    setCount(next);\n    onChange(next);\n  }\n\n  return (\n    <button onClick={handleClick}>\n      {label}: {count}\n    </button>\n  );\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`const [user, setUser] = useState(null)` then later `setUser(fetchedUser)` fails to compile. Why?",
+              "es": "`const [user, setUser] = useState(null)` y luego `setUser(fetchedUser)` no compila. ¿Por qué?"
+            },
+            "options": [
+              {
+                "en": "setUser only accepts functions, not values",
+                "es": "setUser solo acepta funciones, no valores"
+              },
+              {
+                "en": "useState inferred the state type as `null` from the initial value, so it needs an explicit `useState<User | null>(null)`",
+                "es": "useState infirió el tipo del estado como `null` desde el valor inicial, así que necesita un `useState<User | null>(null)` explícito"
+              },
+              {
+                "en": "React state can never start as null",
+                "es": "El estado de React nunca puede iniciar como null"
+              },
+              {
+                "en": "fetchedUser must be cast to any first",
+                "es": "fetchedUser debe castearse a any primero"
+              }
+            ],
+            "explanation": {
+              "en": "Inference only sees the initial value. When the initial value is a degenerate case (null, empty array), pass the full union as the type argument so future states are representable.",
+              "es": "La inferencia solo ve el valor inicial. Cuando el valor inicial es un caso degenerado (null, array vacío), pasa la unión completa como argumento de tipo para que los estados futuros sean representables."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You're wrapping a third-party `<DataGrid>` and want your wrapper to accept exactly its props plus a `title`. What's the idiomatic approach?",
+              "es": "Estás envolviendo un `<DataGrid>` de terceros y quieres que tu wrapper acepte exactamente sus props más un `title`. ¿Cuál es el enfoque idiomático?"
+            },
+            "options": [
+              {
+                "en": "Use React.FC<DataGrid> as the wrapper type",
+                "es": "Usar React.FC<DataGrid> como tipo del wrapper"
+              },
+              {
+                "en": "Retype the grid's 40 props by hand in your own interface",
+                "es": "Retipar a mano las 40 props del grid en tu propia interface"
+              },
+              {
+                "en": "Accept `props: any` and spread it through",
+                "es": "Aceptar `props: any` y hacer spread"
+              },
+              {
+                "en": "`interface Props extends ComponentProps<typeof DataGrid> { title: string }` — derive the props so they stay in sync",
+                "es": "`interface Props extends ComponentProps<typeof DataGrid> { title: string }` — derivar las props para que se mantengan sincronizadas"
+              }
+            ],
+            "explanation": {
+              "en": "ComponentProps extracts the props type from any component (or intrinsic element). When the library updates its props, your wrapper updates automatically — no drift, no any.",
+              "es": "ComponentProps extrae el tipo de props de cualquier componente (o elemento intrínseco). Cuando la librería actualiza sus props, tu wrapper se actualiza automáticamente — sin desincronización, sin any."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "structural-typing",
+      "question": {
+        "en": "How does TypeScript's structural typing work, and what are excess property checks and branded types?",
+        "es": "¿Cómo funciona el tipado estructural de TypeScript, y qué son los excess property checks y los branded types?"
+      },
+      "definition": {
+        "en": "TypeScript compatibility is **structural**: a value is assignable to a type if it has (at least) the required members with compatible types — names of types are irrelevant. Two independently declared interfaces with the same shape are interchangeable, and an object with *extra* properties is generally assignable to a narrower type (width subtyping). This mirrors how JavaScript actually behaves and is the opposite of Java/C#'s nominal systems.\n\nThe major carve-out is **excess property checking**: when you assign a *fresh object literal* directly against a known type, unknown properties are errors — `const p: Point = { x: 1, y: 2, z: 3 }` fails even though the same object passed through a variable would be fine. It's a lint-like typo-catcher on literals, not a change to the underlying structural rules, and it's why `{ colour: 'red' }` against a type with `color` gets caught.\n\nStructural typing has a famous blind spot: `UserId` and `OrderId` both aliasing `string` are freely interchangeable, so `getOrder(userId)` compiles. **Branded (nominal) types** close it: `type UserId = string & { readonly __brand: 'UserId' }` makes the compiler treat them as distinct while runtime values stay plain strings, usually minted by a small constructor function.",
+        "es": "La compatibilidad en TypeScript es **estructural**: un valor es asignable a un tipo si tiene (al menos) los miembros requeridos con tipos compatibles — los nombres de los tipos son irrelevantes. Dos interfaces declaradas independientemente con la misma forma son intercambiables, y un objeto con propiedades *extra* es en general asignable a un tipo más estrecho (width subtyping). Esto refleja cómo se comporta JavaScript realmente y es lo opuesto a los sistemas nominales de Java/C#.\n\nLa gran excepción es el **excess property checking**: cuando asignas un *objeto literal fresco* directamente contra un tipo conocido, las propiedades desconocidas son errores — `const p: Point = { x: 1, y: 2, z: 3 }` falla aunque el mismo objeto pasado por una variable sería válido. Es un cazador de typos estilo lint sobre literales, no un cambio a las reglas estructurales, y por eso `{ colour: 'red' }` contra un tipo con `color` se detecta.\n\nEl tipado estructural tiene un punto ciego famoso: `UserId` y `OrderId`, ambos alias de `string`, son intercambiables libremente, así que `getOrder(userId)` compila. Los **branded types** (nominales) lo cierran: `type UserId = string & { readonly __brand: 'UserId' }` hace que el compilador los trate como distintos mientras los valores en runtime siguen siendo strings planos, normalmente creados por una pequeña función constructora."
+      },
+      "examples": [
+        {
+          "en": "Payment and banking codebases brand their identifiers and units — `Cents`, `AccountId`, `Iban` — so `transfer(from: AccountId, to: AccountId, amount: Cents)` cannot receive a raw string or a euros-as-number by accident; entire classes of money bugs become compile errors.",
+          "es": "Los codebases de pagos y banca marcan sus identificadores y unidades — `Cents`, `AccountId`, `Iban` — para que `transfer(from: AccountId, to: AccountId, amount: Cents)` no pueda recibir un string crudo o euros-como-número por accidente; clases enteras de bugs de dinero se vuelven errores de compilación."
+        },
+        {
+          "en": "Any object with `then(onFulfilled, onRejected)` is structurally a `PromiseLike` — which is exactly how `await` interoperates with old jQuery deferreds and Bluebird promises without those libraries ever implementing a TypeScript interface.",
+          "es": "Cualquier objeto con `then(onFulfilled, onRejected)` es estructuralmente un `PromiseLike` — que es exactamente como `await` interopera con los viejos deferreds de jQuery y las promesas de Bluebird sin que esas librerías implementaran jamás una interface de TypeScript."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`interface Point { x: number; y: number }`. Why does `const p: Point = { x: 1, y: 2, z: 3 }` fail while `const tmp = { x: 1, y: 2, z: 3 }; const p: Point = tmp` compiles?",
+              "es": "`interface Point { x: number; y: number }`. ¿Por qué `const p: Point = { x: 1, y: 2, z: 3 }` falla mientras `const tmp = { x: 1, y: 2, z: 3 }; const p: Point = tmp` compila?"
+            },
+            "options": [
+              {
+                "en": "Interfaces reject extra properties but type aliases accept them",
+                "es": "Las interfaces rechazan propiedades extra pero los type aliases las aceptan"
+              },
+              {
+                "en": "Excess property checks apply only to fresh literals; via a variable, ordinary structural width-subtyping allows extra members",
+                "es": "Los excess property checks aplican solo a literales frescos; vía variable, el width-subtyping estructural normal permite miembros extra"
+              },
+              {
+                "en": "The variable assignment erases the z property at runtime",
+                "es": "La asignación a variable borra la propiedad z en runtime"
+              },
+              {
+                "en": "It's a known compiler bug with object literals",
+                "es": "Es un bug conocido del compilador con objetos literales"
+              }
+            ],
+            "explanation": {
+              "en": "A fresh literal assigned directly to a typed target triggers the stricter excess-property check (a typo guard). Once the object flows through a variable, only the normal structural rule applies: has at least x and y — compatible.",
+              "es": "Un literal fresco asignado directamente a un destino tipado dispara el chequeo más estricto de propiedades excedentes (un guardia anti-typos). Cuando el objeto pasa por una variable, aplica solo la regla estructural normal: tiene al menos x e y — compatible."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`type UserId = string; type OrderId = string;` — `getOrder(someUserId)` compiles even though it expects an OrderId. What fixes this at the type level?",
+              "es": "`type UserId = string; type OrderId = string;` — `getOrder(someUserId)` compila aunque espera un OrderId. ¿Qué lo arregla a nivel de tipos?"
+            },
+            "options": [
+              {
+                "en": "Branding: `type UserId = string & { readonly __brand: 'UserId' }` so the aliases stop being mutually assignable",
+                "es": "Branding: `type UserId = string & { readonly __brand: 'UserId' }` para que los alias dejen de ser mutuamente asignables"
+              },
+              {
+                "en": "Enabling strictNullChecks",
+                "es": "Activar strictNullChecks"
+              },
+              {
+                "en": "Declaring both as interfaces instead of type aliases",
+                "es": "Declarar ambos como interfaces en lugar de type aliases"
+              },
+              {
+                "en": "Converting the ids to classes with private constructors only",
+                "es": "Convertir los ids a clases solo con constructores privados"
+              }
+            ],
+            "explanation": {
+              "en": "Aliases of the same primitive are structurally identical, so they interchange freely. The brand adds a phantom property that exists only in the type system, making each id nominally distinct at zero runtime cost.",
+              "es": "Los alias del mismo primitivo son estructuralmente idénticos, así que se intercambian libremente. El brand agrega una propiedad fantasma que existe solo en el sistema de tipos, haciendo cada id nominalmente distinto con costo cero en runtime."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Explain structural typing versus nominal typing, using TypeScript and Java as contrasting examples. Include one concrete benefit of structural typing and one real bug it permits that a nominal system would catch.",
+              "es": "Explica el tipado estructural versus el nominal, usando TypeScript y Java como ejemplos contrastantes. Incluye un beneficio concreto del tipado estructural y un bug real que permite y que un sistema nominal atraparía."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must state that structural typing decides compatibility by shape/members (TypeScript) while nominal typing requires the declared type name/explicit relationship (Java implements/extends). A valid benefit: interop with plain objects and third-party code without implementing interfaces (e.g. PromiseLike, duck-typed configs, easy test doubles). A valid bug: two semantically different types with the same shape interchange freely, e.g. UserId/OrderId both string, or Meters/Seconds both number — with branded types as the known mitigation. Bonus: mentions excess property checks as a literal-only exception.",
+              "es": "Debe indicar que el tipado estructural decide compatibilidad por forma/miembros (TypeScript) mientras el nominal exige el nombre del tipo declarado/relación explícita (implements/extends de Java). Beneficio válido: interoperar con objetos planos y código de terceros sin implementar interfaces (p. ej. PromiseLike, configs duck-typed, test doubles fáciles). Bug válido: dos tipos semánticamente distintos con la misma forma se intercambian libremente, p. ej. UserId/OrderId ambos string, o Meters/Seconds ambos number — con branded types como mitigación conocida. Bonus: menciona los excess property checks como excepción solo para literales."
+            },
+            "reference": "Structural typing (TypeScript) judges compatibility by shape: any value with the required members of type T is a T, regardless of what it was declared as. Nominal typing (Java, C#) judges by name: a class is a Comparable only if it explicitly declares `implements Comparable`. The structural approach matches JavaScript's duck-typed reality — any object with a compatible then() works with await (PromiseLike), test doubles need no ceremony, and independently-authored types interoperate. The cost is that semantic distinctions with identical shapes vanish: `type UserId = string` and `type OrderId = string` interchange silently, so passing a user id to getOrder compiles and fails in production. Nominal systems catch that by name. TypeScript's mitigations are branded types (`string & { __brand: 'UserId' }`), which simulate nominal ids at zero runtime cost, and excess property checks, which add literal-only strictness against typos."
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which of these can be expressed with a type alias but NOT with an interface?",
+          "es": "¿Cuál de estos puede expresarse con un type alias pero NO con una interface?"
+        },
+        "options": [
+          {
+            "en": "A union such as `'draft' | 'published'`",
+            "es": "Una unión como `'draft' | 'published'`"
+          },
+          {
+            "en": "A generic object type",
+            "es": "Un tipo objeto genérico"
+          },
+          {
+            "en": "An object shape with methods",
+            "es": "Una forma de objeto con métodos"
+          },
+          {
+            "en": "A shape a class can implement",
+            "es": "Una forma que una clase puede implementar"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the key advantage of `function wrap<T extends Entity>(e: T): T` over `function wrap(e: Entity): Entity`?",
+          "es": "¿Cuál es la ventaja clave de `function wrap<T extends Entity>(e: T): T` sobre `function wrap(e: Entity): Entity`?"
+        },
+        "options": [
+          {
+            "en": "It accepts more types than the non-generic version",
+            "es": "Acepta más tipos que la versión no genérica"
+          },
+          {
+            "en": "It runs faster because generics are erased",
+            "es": "Corre más rápido porque los genéricos se borran"
+          },
+          {
+            "en": "It allows the function to mutate its argument",
+            "es": "Permite que la función mute su argumento"
+          },
+          {
+            "en": "The specific argument type is preserved in the return instead of widening to Entity",
+            "es": "El tipo específico del argumento se preserva en el retorno en lugar de ensancharse a Entity"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "For `x: Date | string`, which check narrows x to `Date`?",
+          "es": "Para `x: Date | string`, ¿qué chequeo estrecha x a `Date`?"
+        },
+        "options": [
+          {
+            "en": "`'length' in x`",
+            "es": "`'length' in x`"
+          },
+          {
+            "en": "`x instanceof Date`",
+            "es": "`x instanceof Date`"
+          },
+          {
+            "en": "`x === Date`",
+            "es": "`x === Date`"
+          },
+          {
+            "en": "`typeof x === 'Date'`",
+            "es": "`typeof x === 'Date'`"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which type correctly models a PATCH endpoint body for `Article` that must never include `id`?",
+          "es": "¿Qué tipo modela correctamente el body de un endpoint PATCH para `Article` que nunca debe incluir `id`?"
+        },
+        "options": [
+          {
+            "en": "`Pick<Article, 'id'>`",
+            "es": "`Pick<Article, 'id'>`"
+          },
+          {
+            "en": "`Record<Article, 'id'>`",
+            "es": "`Record<Article, 'id'>`"
+          },
+          {
+            "en": "`Partial<Omit<Article, 'id'>>`",
+            "es": "`Partial<Omit<Article, 'id'>>`"
+          },
+          {
+            "en": "`Omit<Article, Partial<'id'>>`",
+            "es": "`Omit<Article, Partial<'id'>>`"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is `unknown` preferred over `any` for the result of `JSON.parse`?",
+          "es": "¿Por qué se prefiere `unknown` sobre `any` para el resultado de `JSON.parse`?"
+        },
+        "options": [
+          {
+            "en": "unknown is faster at runtime",
+            "es": "unknown es más rápido en runtime"
+          },
+          {
+            "en": "unknown preserves the original JSON schema",
+            "es": "unknown preserva el esquema JSON original"
+          },
+          {
+            "en": "unknown forces validation/narrowing before any use, while any silently disables checking and propagates",
+            "es": "unknown obliga a validar/estrechar antes de cualquier uso, mientras any desactiva el chequeo en silencio y se propaga"
+          },
+          {
+            "en": "any rejects null values while unknown accepts them",
+            "es": "any rechaza valores null mientras unknown los acepta"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In an exhaustive switch over a discriminated union, what type does the discriminated value have in the default branch when all cases are handled?",
+          "es": "En un switch exhaustivo sobre una unión discriminada, ¿qué tipo tiene el valor discriminado en la rama default cuando todos los cases están manejados?"
+        },
+        "options": [
+          {
+            "en": "never",
+            "es": "never"
+          },
+          {
+            "en": "undefined",
+            "es": "undefined"
+          },
+          {
+            "en": "the full union",
+            "es": "la unión completa"
+          },
+          {
+            "en": "unknown",
+            "es": "unknown"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does `type Keys<T> = { [K in keyof T as T[K] extends Function ? never : K]: T[K] }` produce?",
+          "es": "¿Qué produce `type Keys<T> = { [K in keyof T as T[K] extends Function ? never : K]: T[K] }`?"
+        },
+        "options": [
+          {
+            "en": "A copy of T with all method/function properties removed via key remapping",
+            "es": "Una copia de T sin las propiedades función/método, vía remapeo de claves"
+          },
+          {
+            "en": "A compile error: `as` is not valid in mapped types",
+            "es": "Error de compilación: `as` no es válido en mapped types"
+          },
+          {
+            "en": "T with every property converted to a function",
+            "es": "T con cada propiedad convertida a función"
+          },
+          {
+            "en": "A union of T's method names",
+            "es": "Una unión de los nombres de métodos de T"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the type of `directions` in `const directions = ['north', 'south'] as const`?",
+          "es": "¿Cuál es el tipo de `directions` en `const directions = ['north', 'south'] as const`?"
+        },
+        "options": [
+          {
+            "en": "`readonly ['north', 'south']` — a readonly tuple of literals",
+            "es": "`readonly ['north', 'south']` — una tupla readonly de literales"
+          },
+          {
+            "en": "`Array<'north' | 'south'>`",
+            "es": "`Array<'north' | 'south'>`"
+          },
+          {
+            "en": "`string[]`",
+            "es": "`string[]`"
+          },
+          {
+            "en": "`('north' | 'south')[]` and mutable",
+            "es": "`('north' | 'south')[]` y mutable"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A dependency ships no types and DefinitelyTyped has no @types package. What is the highest-quality fix?",
+          "es": "Una dependencia no trae tipos y DefinitelyTyped no tiene paquete @types. ¿Cuál es el arreglo de mayor calidad?"
+        },
+        "options": [
+          {
+            "en": "Add `skipLibCheck: true` to tsconfig",
+            "es": "Agregar `skipLibCheck: true` al tsconfig"
+          },
+          {
+            "en": "Write your own .d.ts with an ambient `declare module` describing the API you use",
+            "es": "Escribir tu propio .d.ts con un `declare module` ambient que describa la API que usas"
+          },
+          {
+            "en": "Downgrade the package until types appear",
+            "es": "Bajar la versión del paquete hasta que aparezcan tipos"
+          },
+          {
+            "en": "Cast every import to any at each call site",
+            "es": "Castear cada import a any en cada uso"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which bug class does strictNullChecks specifically turn into a compile error?",
+          "es": "¿Qué clase de bug convierte específicamente strictNullChecks en error de compilación?"
+        },
+        "options": [
+          {
+            "en": "Dereferencing values like `map.get(k)` or `arr.find(...)` without handling their undefined case",
+            "es": "Desreferenciar valores como `map.get(k)` o `arr.find(...)` sin manejar su caso undefined"
+          },
+          {
+            "en": "Off-by-one errors in loops",
+            "es": "Errores de off-by-one en bucles"
+          },
+          {
+            "en": "Race conditions in async code",
+            "es": "Condiciones de carrera en código async"
+          },
+          {
+            "en": "Passing arguments in the wrong order",
+            "es": "Pasar argumentos en el orden incorrecto"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a React component, which is the correct type for a text input's change event handler parameter?",
+          "es": "En un componente React, ¿cuál es el tipo correcto para el parámetro del handler de cambio de un input de texto?"
+        },
+        "options": [
+          {
+            "en": "`Event`",
+            "es": "`Event`"
+          },
+          {
+            "en": "`InputEvent<string>`",
+            "es": "`InputEvent<string>`"
+          },
+          {
+            "en": "`React.ChangeEvent<HTMLInputElement>`",
+            "es": "`React.ChangeEvent<HTMLInputElement>`"
+          },
+          {
+            "en": "`React.MouseEvent<HTMLInputElement>`",
+            "es": "`React.MouseEvent<HTMLInputElement>`"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your API can respond with success data or a typed error. Design the TypeScript types for this result and explain how callers are forced to handle both cases, including how exhaustiveness stays guaranteed when a new variant is added later.",
+          "es": "Tu API puede responder con datos de éxito o con un error tipado. Diseña los tipos de TypeScript para este resultado y explica cómo se obliga a quienes llaman a manejar ambos casos, incluyendo cómo se garantiza la exhaustividad cuando luego se agrega una variante nueva."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must propose a discriminated union (e.g. { ok: true; data: T } | { ok: false; error: E } or a status/kind discriminant), explain that accessing data/error requires narrowing on the discriminant so both branches must be handled, and describe exhaustiveness via switch + never/assertNever in the default branch so adding a variant breaks compilation at every unhandled switch. Bonus: generics for the payload, or comparison with throwing exceptions (invisible in types).",
+          "es": "Debe proponer una unión discriminada (p. ej. { ok: true; data: T } | { ok: false; error: E } o un discriminante status/kind), explicar que acceder a data/error requiere estrechar por el discriminante de modo que ambas ramas deben manejarse, y describir la exhaustividad vía switch + never/assertNever en la rama default para que agregar una variante rompa la compilación en cada switch sin manejar. Bonus: genéricos para el payload, o comparación con lanzar excepciones (invisibles en los tipos)."
+        },
+        "reference": "type ApiResult<T, E = ApiError> =\n  | { ok: true; data: T }\n  | { ok: false; error: E };\n\nCallers cannot touch result.data until they check result.ok — the discriminant narrows the union, so the compiler forces both branches to exist. For richer unions ({ status: 'success' } | { status: 'unauthorized' } | { status: 'rate_limited' }), handlers switch on status and put `const _x: never = result` (or assertNever(result)) in default. When a new variant like { status: 'timeout' } is added, every switch that doesn't handle it fails to compile, turning a silent runtime gap into a build error. Unlike thrown exceptions, the error path is visible in the signature and cannot be forgotten."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A teammate claims: \"TypeScript types disappear at runtime, so they can't prevent real production bugs.\" Argue against this with at least three concrete mechanisms where the type system prevents runtime failures, and one honest limitation where types alone are not enough.",
+          "es": "Un compañero afirma: \"Los tipos de TypeScript desaparecen en runtime, así que no pueden prevenir bugs reales de producción.\" Argumenta en contra con al menos tres mecanismos concretos donde el sistema de tipos previene fallos en runtime, y una limitación honesta donde los tipos por sí solos no bastan."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must concede type erasure but give at least three concrete prevention mechanisms, e.g.: strictNullChecks forcing undefined/null handling (find, map.get); discriminated unions + exhaustiveness making unhandled variants compile errors; narrowing/unknown forcing validation at boundaries; generics preserving types end-to-end so wrong-shape data can't flow; branded types preventing id/unit mix-ups. Must name a real limitation: runtime data from outside (HTTP, JSON) needs runtime validation (Zod/io-ts), or assertions/any can lie, or logic bugs within correct types.",
+          "es": "Debe conceder el type erasure pero dar al menos tres mecanismos concretos de prevención, p. ej.: strictNullChecks obligando a manejar undefined/null (find, map.get); uniones discriminadas + exhaustividad convirtiendo variantes sin manejar en errores de compilación; narrowing/unknown forzando validación en las fronteras; genéricos preservando tipos de extremo a extremo para que datos con forma incorrecta no fluyan; branded types previniendo confusiones de ids/unidades. Debe nombrar una limitación real: los datos externos en runtime (HTTP, JSON) requieren validación en runtime (Zod/io-ts), o que assertions/any pueden mentir, o bugs de lógica dentro de tipos correctos."
+        },
+        "reference": "Types are erased, but the errors they catch happen before deploy, which is the point. Concretely: 1) strictNullChecks makes every map.get/array.find return T | undefined, so the not-found path must be written — the top JavaScript crash class eliminated at compile time. 2) Discriminated unions with assertNever make forgotten variants a build failure: add a 'timeout' status and every unhandled switch goes red. 3) unknown at boundaries forces narrowing or schema validation before untrusted data flows inward. 4) Branded types stop a UserId from being passed where an OrderId belongs — real money-moving bugs. The honest limitation: the compiler only knows what you told it. Data crossing the runtime boundary (HTTP responses, JSON.parse, env vars) matches its declared type only if you validate it at runtime with something like Zod, and escape hatches (as-casts, any, !) let developers lie to the checker — so types must be paired with boundary validation and lint rules that keep the escape hatches shut."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1627 @@
+{
+  "slug": "redis-caching",
+  "order": 6,
+  "icon": "bolt",
+  "title": {
+    "en": "Redis & Caching",
+    "es": "Redis y Caching"
+  },
+  "description": {
+    "en": "Caching patterns every backend interview covers: cache-aside, invalidation, TTLs, stampedes, rate limiting, distributed locks and Redis pitfalls.",
+    "es": "Patrones de caching que cubre toda entrevista de backend: cache-aside, invalidación, TTLs, estampidas, rate limiting, locks distribuidos y trampas de Redis."
+  },
+  "lessons": [
+    {
+      "slug": "why-redis",
+      "question": {
+        "en": "What problems does Redis solve, and when would you use it instead of PostgreSQL?",
+        "es": "¿Qué problemas resuelve Redis y cuándo lo usarías en lugar de PostgreSQL?"
+      },
+      "definition": {
+        "en": "**Redis** is an in-memory key-value store. Because data lives in RAM and each operation is a simple command on a key, reads and writes take microseconds — typically 10-100x faster than a relational database that must parse SQL, plan a query and touch disk pages.\n\nIt's not a Postgres replacement: it trades durability and rich querying (joins, constraints, transactions over many rows) for raw speed and simple data structures (strings, hashes, lists, sets, sorted sets). You reach for Redis for **hot, ephemeral or derived data**: caches, sessions, rate-limit counters, leaderboards, queues and pub/sub.\n\nThe interview answer: PostgreSQL is the **source of truth**; Redis sits in front of it (or beside it) to absorb read traffic and store short-lived state that would be wasteful to persist relationally.",
+        "es": "**Redis** es un almacén clave-valor en memoria. Como los datos viven en RAM y cada operación es un comando simple sobre una clave, las lecturas y escrituras toman microsegundos — típicamente 10-100x más rápido que una base relacional que debe parsear SQL, planear la consulta y tocar páginas en disco.\n\nNo reemplaza a Postgres: sacrifica durabilidad y consultas ricas (joins, constraints, transacciones sobre muchas filas) a cambio de velocidad pura y estructuras de datos simples (strings, hashes, listas, sets, sorted sets). Usas Redis para **datos calientes, efímeros o derivados**: cachés, sesiones, contadores de rate limit, leaderboards, colas y pub/sub.\n\nLa respuesta de entrevista: PostgreSQL es la **fuente de verdad**; Redis se pone delante (o al lado) para absorber tráfico de lectura y guardar estado de corta vida que sería un desperdicio persistir relacionalmente."
+      },
+      "examples": [
+        {
+          "en": "Twitter caches rendered timelines in Redis: recomputing a timeline from SQL on every request would melt the database, but serving it from RAM takes microseconds.",
+          "es": "Twitter cachea timelines ya renderizados en Redis: recalcular un timeline desde SQL en cada request derretiría la base de datos, pero servirlo desde RAM toma microsegundos."
+        },
+        {
+          "en": "Web session storage: a session token maps to a small blob of user state with a TTL. Redis handles millions of these lookups per second; Postgres would treat each one as a full query.",
+          "es": "Almacenamiento de sesiones web: un token de sesión mapea a un pequeño blob de estado del usuario con TTL. Redis maneja millones de estas búsquedas por segundo; Postgres trataría cada una como una consulta completa."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which workload is the STRONGEST case for Redis over PostgreSQL?",
+              "es": "¿Qué carga de trabajo es el caso MÁS fuerte para Redis sobre PostgreSQL?"
+            },
+            "options": [
+              {
+                "en": "Ad-hoc reports joining five tables",
+                "es": "Reportes ad-hoc que hacen join de cinco tablas"
+              },
+              {
+                "en": "Financial transactions requiring ACID guarantees",
+                "es": "Transacciones financieras que requieren garantías ACID"
+              },
+              {
+                "en": "Session tokens read on every request, expiring after 30 minutes",
+                "es": "Tokens de sesión leídos en cada request, que expiran a los 30 minutos"
+              },
+              {
+                "en": "A product catalog that must never lose a record",
+                "es": "Un catálogo de productos que jamás debe perder un registro"
+              }
+            ],
+            "explanation": {
+              "en": "Sessions are hot, ephemeral, looked up by key and have a natural TTL — exactly Redis's sweet spot. The other three need durability, joins or ACID, which are Postgres territory.",
+              "es": "Las sesiones son calientes, efímeras, se buscan por clave y tienen un TTL natural — exactamente el punto fuerte de Redis. Las otras tres necesitan durabilidad, joins o ACID, que son territorio de Postgres."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each Redis data structure with its classic use case.",
+              "es": "Conecta cada estructura de datos de Redis con su caso de uso clásico."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "String with TTL",
+                  "es": "String con TTL"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Sorted set (ZSET)",
+                  "es": "Sorted set (ZSET)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "List (LPUSH/BRPOP)",
+                  "es": "Lista (LPUSH/BRPOP)"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Hash",
+                  "es": "Hash"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Cached API response or session blob",
+                  "es": "Respuesta de API cacheada o blob de sesión"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Leaderboard ranked by score",
+                  "es": "Leaderboard ordenado por puntaje"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Simple job queue between services",
+                  "es": "Cola simple de trabajos entre servicios"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Object with fields updated individually (user profile)",
+                  "es": "Objeto con campos actualizados individualmente (perfil de usuario)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Redis runs commands on a single main thread. Why does it still achieve sub-millisecond latency and very high throughput?",
+              "es": "Redis ejecuta los comandos en un único hilo principal. ¿Por qué aun así logra latencias de submilisegundos y un throughput muy alto?"
+            },
+            "options": [
+              {
+                "en": "Data lives in RAM and each command is tiny, so one event loop serves hundreds of thousands of ops per second without locks or context switches",
+                "es": "Los datos viven en RAM y cada comando es diminuto, así que un solo event loop atiende cientos de miles de operaciones por segundo sin locks ni cambios de contexto"
+              },
+              {
+                "en": "Clients batch all commands into MULTI transactions by default",
+                "es": "Los clientes agrupan todos los comandos en transacciones MULTI por defecto"
+              },
+              {
+                "en": "It spawns a dedicated background thread for every connected client",
+                "es": "Crea un hilo de fondo dedicado para cada cliente conectado"
+              },
+              {
+                "en": "The operating system automatically spreads the event loop across all CPU cores",
+                "es": "El sistema operativo distribuye automáticamente el event loop entre todos los núcleos de CPU"
+              }
+            ],
+            "explanation": {
+              "en": "In-memory operations are so cheap that the bottleneck is usually the network, not the CPU, and a single thread eliminates lock contention entirely. The interview-relevant flip side: one slow command (like KEYS on a large dataset) blocks every other client until it finishes.",
+              "es": "Las operaciones en memoria son tan baratas que el cuello de botella suele ser la red, no la CPU, y un solo hilo elimina por completo la contención por locks. La otra cara relevante en entrevistas: un comando lento (como KEYS sobre un dataset grande) bloquea a todos los demás clientes hasta terminar."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cache-aside-pattern",
+      "question": {
+        "en": "How does the cache-aside pattern work, and how do read-through and write-through differ?",
+        "es": "¿Cómo funciona el patrón cache-aside y en qué se diferencian read-through y write-through?"
+      },
+      "definition": {
+        "en": "In **cache-aside** (lazy loading), the *application* manages the cache. On read: check the cache; on a **hit**, return it; on a **miss**, query the database, write the result into the cache (with a TTL), and return it. On write: update the database and invalidate (or update) the cache entry.\n\n**Read-through** moves the miss logic into the cache layer itself: the app always asks the cache, and the cache fetches from the database on a miss. **Write-through** writes to the cache and the cache synchronously writes to the database, keeping both consistent at the cost of write latency. **Write-behind** acknowledges the write from cache and flushes to the database asynchronously — fast but risky if the cache dies.\n\nCache-aside is the default in interviews because it's simple, resilient (a cache failure just means slower reads), and only caches data that's actually requested.",
+        "es": "En **cache-aside** (carga perezosa), la *aplicación* administra el caché. En lectura: consulta el caché; si hay **hit**, lo devuelve; si hay **miss**, consulta la base de datos, escribe el resultado en el caché (con TTL) y lo devuelve. En escritura: actualiza la base de datos e invalida (o actualiza) la entrada del caché.\n\n**Read-through** mueve la lógica del miss a la capa de caché: la app siempre le pregunta al caché, y el caché busca en la base de datos ante un miss. **Write-through** escribe en el caché y el caché escribe sincrónicamente en la base de datos, manteniendo ambos consistentes a costa de latencia de escritura. **Write-behind** confirma la escritura desde el caché y la vuelca a la base de datos de forma asíncrona — rápido pero riesgoso si el caché muere.\n\nCache-aside es el patrón por defecto en entrevistas porque es simple, resiliente (si el caché falla solo hay lecturas más lentas) y solo cachea datos que realmente se piden."
+      },
+      "examples": [
+        {
+          "en": "A product API: `GET /products/42` first tries `GET product:42` in Redis; on a miss it runs the SQL query, does `SET product:42 <json> EX 300`, and returns. 95%+ of traffic never touches Postgres.",
+          "es": "Una API de productos: `GET /products/42` primero intenta `GET product:42` en Redis; ante un miss ejecuta la consulta SQL, hace `SET product:42 <json> EX 300` y responde. Más del 95% del tráfico nunca toca Postgres."
+        },
+        {
+          "en": "DynamoDB Accelerator (DAX) is a managed read-through/write-through cache: application code calls the same API and DAX transparently handles misses and writes.",
+          "es": "DynamoDB Accelerator (DAX) es un caché read-through/write-through administrado: el código de la aplicación llama a la misma API y DAX maneja los misses y las escrituras de forma transparente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a cache-aside READ that results in a cache miss.",
+              "es": "Ordena los pasos de una LECTURA cache-aside que resulta en un cache miss."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "request",
+                "label": {
+                  "en": "App receives the read request",
+                  "es": "La app recibe la petición de lectura"
+                }
+              },
+              {
+                "id": "check",
+                "label": {
+                  "en": "App checks the cache for the key",
+                  "es": "La app consulta la clave en el caché"
+                }
+              },
+              {
+                "id": "miss",
+                "label": {
+                  "en": "Cache returns a miss (key absent)",
+                  "es": "El caché devuelve un miss (clave ausente)"
+                }
+              },
+              {
+                "id": "db",
+                "label": {
+                  "en": "App queries the database",
+                  "es": "La app consulta la base de datos"
+                }
+              },
+              {
+                "id": "populate",
+                "label": {
+                  "en": "App writes the result into the cache with a TTL",
+                  "es": "La app escribe el resultado en el caché con un TTL"
+                }
+              },
+              {
+                "id": "respond",
+                "label": {
+                  "en": "App returns the data to the client",
+                  "es": "La app devuelve los datos al cliente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "request",
+              "check",
+              "miss",
+              "db",
+              "populate",
+              "respond"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the key difference between cache-aside and read-through?",
+              "es": "¿Cuál es la diferencia clave entre cache-aside y read-through?"
+            },
+            "options": [
+              {
+                "en": "Read-through never expires entries, cache-aside always does",
+                "es": "Read-through nunca expira entradas, cache-aside siempre lo hace"
+              },
+              {
+                "en": "Cache-aside only works with Redis, read-through only with Memcached",
+                "es": "Cache-aside solo funciona con Redis, read-through solo con Memcached"
+              },
+              {
+                "en": "There is no difference, they are synonyms",
+                "es": "No hay diferencia, son sinónimos"
+              },
+              {
+                "en": "In cache-aside the application loads data on a miss; in read-through the cache layer itself fetches from the database",
+                "es": "En cache-aside la aplicación carga los datos ante un miss; en read-through la propia capa de caché busca en la base de datos"
+              }
+            ],
+            "explanation": {
+              "en": "The distinction is who owns miss-handling: the application (cache-aside) or the cache layer (read-through). TTLs and specific technologies are orthogonal.",
+              "es": "La distinción es quién maneja el miss: la aplicación (cache-aside) o la capa de caché (read-through). Los TTLs y las tecnologías concretas son ortogonales."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A team moves from write-through to write-behind (write-back) caching to reduce write latency. What NEW risk have they accepted?",
+              "es": "Un equipo pasa de caching write-through a write-behind (write-back) para reducir la latencia de escritura. ¿Qué NUEVO riesgo aceptaron?"
+            },
+            "options": [
+              {
+                "en": "Cache entries can no longer use TTLs",
+                "es": "Las entradas del caché ya no pueden usar TTLs"
+              },
+              {
+                "en": "The database can no longer accept direct queries",
+                "es": "La base de datos ya no puede aceptar consultas directas"
+              },
+              {
+                "en": "Writes already acknowledged to clients can be lost if the cache node dies before flushing them to the database",
+                "es": "Escrituras ya confirmadas a los clientes pueden perderse si el nodo de caché muere antes de volcarlas a la base de datos"
+              },
+              {
+                "en": "Reads will now always miss the cache",
+                "es": "Las lecturas ahora siempre fallarán en el caché"
+              }
+            ],
+            "explanation": {
+              "en": "Write-behind acknowledges as soon as the cache is updated and flushes to the database asynchronously. Anything sitting in that unflushed buffer disappears if the cache node crashes — which is why write-behind is reserved for data you can afford to lose or reconstruct.",
+              "es": "Write-behind confirma en cuanto el caché se actualiza y vuelca a la base de datos de forma asíncrona. Todo lo que esté en ese buffer sin volcar desaparece si el nodo de caché se cae — por eso write-behind se reserva para datos que puedes permitirte perder o reconstruir."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cache-invalidation",
+      "question": {
+        "en": "What cache invalidation strategies exist, and how do you deal with stale data?",
+        "es": "¿Qué estrategias de invalidación de caché existen y cómo lidias con datos obsoletos (stale)?"
+      },
+      "definition": {
+        "en": "A cached copy goes **stale** the moment the underlying data changes. The main strategies are: **TTL expiry** (accept bounded staleness — the entry lives at most N seconds), **explicit invalidation** (DELETE the key when you write to the database), and **write-time update** (overwrite the cache entry with the new value when writing).\n\nPrefer **delete over update** on writes: deleting is idempotent and avoids race conditions where two concurrent writers leave the cache with the older value. The next reader repopulates via cache-aside. Even with explicit invalidation, always keep a TTL as a safety net for missed invalidations (crashed process, lost event).\n\nThe honest interview point: invalidation is famously hard because writes and cache operations are not atomic across two systems. You choose a strategy per data type based on how much staleness the business tolerates.",
+        "es": "Una copia cacheada se vuelve **stale** en el momento en que el dato subyacente cambia. Las estrategias principales son: **expiración por TTL** (aceptar obsolescencia acotada — la entrada vive como máximo N segundos), **invalidación explícita** (DELETE de la clave al escribir en la base de datos) y **actualización al escribir** (sobrescribir la entrada del caché con el nuevo valor al escribir).\n\nPrefiere **borrar en lugar de actualizar** al escribir: borrar es idempotente y evita condiciones de carrera donde dos escritores concurrentes dejan el caché con el valor viejo. El siguiente lector lo repuebla vía cache-aside. Incluso con invalidación explícita, mantén siempre un TTL como red de seguridad ante invalidaciones perdidas (proceso caído, evento perdido).\n\nEl punto honesto de entrevista: la invalidación es famosamente difícil porque las escrituras y las operaciones de caché no son atómicas entre dos sistemas. Eliges una estrategia por tipo de dato según cuánta obsolescencia tolere el negocio."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce site caches product prices with a 60s TTL: a price update may be stale for up to a minute, which the business accepts. Inventory count, however, is invalidated explicitly on every purchase.",
+          "es": "Un e-commerce cachea precios de productos con TTL de 60s: una actualización de precio puede quedar obsoleta hasta un minuto, lo cual el negocio acepta. El inventario, en cambio, se invalida explícitamente en cada compra."
+        },
+        {
+          "en": "Facebook's TAO paper describes deleting (not updating) cache entries after database writes precisely to avoid concurrent-writer races that pin stale values in cache.",
+          "es": "El paper de TAO de Facebook describe borrar (no actualizar) las entradas del caché tras las escrituras en la base de datos, precisamente para evitar carreras entre escritores concurrentes que fijan valores viejos en el caché."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "On a database write, why is it generally safer to DELETE the cache key than to SET it with the new value?",
+              "es": "Al escribir en la base de datos, ¿por qué generalmente es más seguro hacer DELETE de la clave del caché que hacer SET con el nuevo valor?"
+            },
+            "options": [
+              {
+                "en": "DELETE is a faster Redis command than SET",
+                "es": "DELETE es un comando de Redis más rápido que SET"
+              },
+              {
+                "en": "Delete is idempotent and avoids races where a slower concurrent writer overwrites the cache with older data",
+                "es": "Borrar es idempotente y evita carreras donde un escritor concurrente más lento sobrescribe el caché con datos más viejos"
+              },
+              {
+                "en": "Deleting frees memory, which is always the priority",
+                "es": "Borrar libera memoria, que siempre es la prioridad"
+              },
+              {
+                "en": "SET does not support TTLs",
+                "es": "SET no soporta TTLs"
+              }
+            ],
+            "explanation": {
+              "en": "If two writers race, the one that finishes last may SET an older value into the cache, pinning stale data until the TTL. A delete leaves the cache empty and the next read repopulates it fresh.",
+              "es": "Si dos escritores compiten, el que termina último puede hacer SET de un valor más viejo en el caché, fijando datos obsoletos hasta el TTL. Un delete deja el caché vacío y la siguiente lectura lo repuebla con datos frescos."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your product API caches user profiles in Redis. Profiles can be edited by the user. Describe the invalidation strategy you would use and why, including what you would do to protect against a missed invalidation.",
+              "es": "Tu API cachea perfiles de usuario en Redis. Los perfiles pueden ser editados por el usuario. Describe la estrategia de invalidación que usarías y por qué, incluyendo qué harías para protegerte de una invalidación perdida."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose invalidating (preferably deleting) the cache key when the profile is updated in the database, and must mention keeping a TTL on cached entries as a safety net so stale data self-heals if the explicit invalidation is missed. Bonus: mentioning delete-over-update to avoid concurrent-writer races, or ordering (write DB first, then invalidate).",
+              "es": "Debe proponer invalidar (preferiblemente borrar) la clave del caché cuando el perfil se actualiza en la base de datos, y debe mencionar mantener un TTL en las entradas cacheadas como red de seguridad para que los datos obsoletos se autocorrijan si la invalidación explícita falla. Bonus: mencionar borrar en lugar de actualizar para evitar carreras entre escritores, o el orden (escribir primero en la BD, luego invalidar)."
+            },
+            "reference": "Use cache-aside with explicit invalidation: on profile update, write to the database first, then DELETE the cache key (delete rather than set, to avoid races where a concurrent slower writer pins an older value). The next read repopulates the cache. Additionally, set a moderate TTL (e.g. 5-15 minutes) on every cached profile so that if an invalidation is ever missed — a crashed process, a lost message — the stale entry expires on its own instead of living forever."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "With cache-aside plus explicit invalidation, why is the recommended order 'write the database first, THEN delete the cache key' rather than deleting the cache first?",
+              "es": "Con cache-aside e invalidación explícita, ¿por qué el orden recomendado es 'escribir primero en la base de datos y LUEGO borrar la clave del caché' en lugar de borrar el caché primero?"
+            },
+            "options": [
+              {
+                "en": "The database write is always faster than the cache delete",
+                "es": "La escritura en la base de datos siempre es más rápida que el borrado en el caché"
+              },
+              {
+                "en": "Redis refuses to delete keys while the database has an open transaction",
+                "es": "Redis se niega a borrar claves mientras la base de datos tiene una transacción abierta"
+              },
+              {
+                "en": "Deleting the cache first would make the deletion non-idempotent",
+                "es": "Borrar el caché primero haría que el borrado no fuera idempotente"
+              },
+              {
+                "en": "If you delete first, a concurrent reader can miss, read the old value from the database and repopulate the cache with stale data before your write commits",
+                "es": "Si borras primero, un lector concurrente puede tener un miss, leer el valor viejo de la base de datos y repoblar el caché con datos obsoletos antes de que tu escritura se confirme"
+              }
+            ],
+            "explanation": {
+              "en": "Between the cache delete and the database commit there is a window where a reader repopulates the cache with the pre-write value; that stale entry then looks perfectly fresh until its TTL. Writing the database first shrinks that inconsistency window — though the TTL safety net is still needed.",
+              "es": "Entre el borrado del caché y el commit en la base de datos hay una ventana en la que un lector repuebla el caché con el valor previo a la escritura; esa entrada obsoleta luce perfectamente fresca hasta su TTL. Escribir primero en la base de datos reduce esa ventana de inconsistencia — aunque la red de seguridad del TTL sigue siendo necesaria."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "ttl-and-expiration",
+      "question": {
+        "en": "How do TTLs work in Redis, and what happens when a cached entry expires?",
+        "es": "¿Cómo funcionan los TTLs en Redis y qué pasa cuando una entrada cacheada expira?"
+      },
+      "definition": {
+        "en": "A **TTL** (time to live) marks a key for automatic deletion: `SET key value EX 300` or `EXPIRE key 300`. Redis removes expired keys two ways: **lazily** (the key is checked and deleted when someone accesses it) and **actively** (a background job samples random keys with TTLs and evicts the expired ones). This means an expired key may still occupy memory briefly, but it will never be returned to a client.\n\nFrom the application's point of view, an expired key is simply a **cache miss**: the next read finds nothing, goes to the database, and repopulates the cache with a fresh TTL. That's the self-healing loop of cache-aside.\n\nChoosing the TTL is a trade-off: long TTLs give high hit rates but more staleness; short TTLs give fresher data but more database load. Note that `SET key value` *without* EX on an existing key clears its TTL — a classic production bug.",
+        "es": "Un **TTL** (tiempo de vida) marca una clave para borrado automático: `SET clave valor EX 300` o `EXPIRE clave 300`. Redis elimina claves expiradas de dos formas: **perezosamente** (la clave se verifica y borra cuando alguien la accede) y **activamente** (un job de fondo muestrea claves con TTL al azar y desaloja las expiradas). Esto significa que una clave expirada puede ocupar memoria brevemente, pero nunca se devolverá a un cliente.\n\nDesde el punto de vista de la aplicación, una clave expirada es simplemente un **cache miss**: la siguiente lectura no encuentra nada, va a la base de datos y repuebla el caché con un TTL fresco. Ese es el ciclo de autocuración de cache-aside.\n\nElegir el TTL es un trade-off: TTLs largos dan mayor tasa de hits pero más obsolescencia; TTLs cortos dan datos más frescos pero más carga en la base de datos. Ojo: `SET clave valor` *sin* EX sobre una clave existente borra su TTL — un bug clásico de producción."
+      },
+      "examples": [
+        {
+          "en": "OAuth access tokens cached with `EX 3600` mirror the token's real 1-hour validity: when the key expires, the app is forced to refresh the token — the TTL encodes business logic.",
+          "es": "Tokens de acceso OAuth cacheados con `EX 3600` reflejan la validez real de 1 hora del token: cuando la clave expira, la app se ve forzada a refrescar el token — el TTL codifica lógica de negocio."
+        },
+        {
+          "en": "A weather API caches responses per city with a 10-minute TTL: weather barely changes in 10 minutes, and the hit rate stays above 99% while third-party API costs drop drastically.",
+          "es": "Una API de clima cachea respuestas por ciudad con TTL de 10 minutos: el clima apenas cambia en 10 minutos, la tasa de hits se mantiene sobre 99% y los costos de la API de terceros caen drásticamente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A key cached with a 60s TTL expires. Order what happens from expiry to the cache being warm again.",
+              "es": "Una clave cacheada con TTL de 60s expira. Ordena lo que ocurre desde la expiración hasta que el caché vuelve a estar caliente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "expire",
+                "label": {
+                  "en": "TTL reaches zero; Redis marks the key expired",
+                  "es": "El TTL llega a cero; Redis marca la clave como expirada"
+                }
+              },
+              {
+                "id": "read",
+                "label": {
+                  "en": "A client requests the data; app does GET on the key",
+                  "es": "Un cliente pide los datos; la app hace GET de la clave"
+                }
+              },
+              {
+                "id": "miss",
+                "label": {
+                  "en": "Redis deletes the expired key and returns nil (miss)",
+                  "es": "Redis borra la clave expirada y devuelve nil (miss)"
+                }
+              },
+              {
+                "id": "query",
+                "label": {
+                  "en": "App fetches fresh data from the database",
+                  "es": "La app obtiene datos frescos de la base de datos"
+                }
+              },
+              {
+                "id": "reset",
+                "label": {
+                  "en": "App SETs the key again with a new TTL",
+                  "es": "La app hace SET de la clave de nuevo con un TTL nuevo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "expire",
+              "read",
+              "miss",
+              "query",
+              "reset"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A key was stored with `SET session:42 data EX 1800`. Later, code runs `SET session:42 newdata` (no EX). What is the state of the key?",
+              "es": "Una clave se guardó con `SET session:42 data EX 1800`. Luego, el código ejecuta `SET session:42 newdata` (sin EX). ¿Cuál es el estado de la clave?"
+            },
+            "options": [
+              {
+                "en": "It holds newdata and has NO TTL — the plain SET cleared the expiry",
+                "es": "Contiene newdata y NO tiene TTL — el SET simple eliminó la expiración"
+              },
+              {
+                "en": "The SET fails because the key already has a TTL",
+                "es": "El SET falla porque la clave ya tiene un TTL"
+              },
+              {
+                "en": "It holds newdata and keeps the remaining TTL",
+                "es": "Contiene newdata y conserva el TTL restante"
+              },
+              {
+                "en": "It holds newdata and the TTL resets to 1800 seconds",
+                "es": "Contiene newdata y el TTL se reinicia a 1800 segundos"
+              }
+            ],
+            "explanation": {
+              "en": "SET without an expiry option removes any existing TTL (use `KEEPTTL` to preserve it). This silently turns expiring keys into immortal ones — a classic memory-leak bug.",
+              "es": "SET sin opción de expiración elimina cualquier TTL existente (usa `KEEPTTL` para conservarlo). Esto convierte silenciosamente claves con expiración en claves inmortales — un bug clásico de fuga de memoria."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each TTL-related command or result with its effect.",
+              "es": "Conecta cada comando o resultado relacionado con TTL con su efecto."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "EXPIRE key 300",
+                  "es": "EXPIRE clave 300"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "PERSIST key",
+                  "es": "PERSIST clave"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "TTL key returns -2",
+                  "es": "TTL clave devuelve -2"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "SET key value KEEPTTL",
+                  "es": "SET clave valor KEEPTTL"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Sets or replaces the key's time to live",
+                  "es": "Configura o reemplaza el tiempo de vida de la clave"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Removes the expiry so the key never expires",
+                  "es": "Elimina la expiración para que la clave nunca expire"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "The key does not exist (never created, or already expired)",
+                  "es": "La clave no existe (nunca se creó o ya expiró)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Overwrites the value while preserving the remaining TTL",
+                  "es": "Sobrescribe el valor conservando el TTL restante"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cache-stampede",
+      "question": {
+        "en": "What is a cache stampede (thundering herd), and how do you prevent it?",
+        "es": "¿Qué es una estampida de caché (thundering herd) y cómo la previenes?"
+      },
+      "definition": {
+        "en": "A **cache stampede** happens when a popular key expires and *many* concurrent requests all miss at once — every one of them hits the database with the same expensive query at the same moment. The database, sized for a 99% hit rate, suddenly receives the full load and can collapse; a variant is mass expiry, where thousands of keys cached at the same time (same TTL) all expire together.\n\nThree standard defenses: **jittered TTLs** (add a random offset, e.g. `300 + rand(0,60)` seconds, so keys don't expire in sync), **request coalescing / locking** (only the first miss acquires a short lock — e.g. `SET lock:key token NX PX 5000` — and recomputes; the rest wait briefly or serve the stale value), and **early refresh** (a background job or probabilistic early expiration recomputes hot keys *before* they expire, so users never see a miss).\n\nIn interviews, mention that these compose: jitter for the mass-expiry case, a lock for single hot keys, and background refresh for the few keys you know are critical.",
+        "es": "Una **estampida de caché** ocurre cuando una clave popular expira y *muchas* peticiones concurrentes fallan a la vez — cada una golpea la base de datos con la misma consulta costosa en el mismo instante. La base, dimensionada para 99% de hits, recibe de golpe toda la carga y puede colapsar; una variante es la expiración masiva, donde miles de claves cacheadas al mismo tiempo (mismo TTL) expiran juntas.\n\nTres defensas estándar: **TTLs con jitter** (agrega un offset aleatorio, p. ej. `300 + rand(0,60)` segundos, para que las claves no expiren sincronizadas), **coalescencia de peticiones / locking** (solo el primer miss adquiere un lock corto — p. ej. `SET lock:clave token NX PX 5000` — y recalcula; el resto espera brevemente o sirve el valor viejo), y **refresco anticipado** (un job de fondo o expiración anticipada probabilística recalcula las claves calientes *antes* de que expiren, así los usuarios nunca ven un miss).\n\nEn entrevistas, menciona que se combinan: jitter para la expiración masiva, lock para claves calientes individuales y refresco de fondo para las pocas claves que sabes que son críticas."
+      },
+      "examples": [
+        {
+          "en": "A news site's homepage cache (1 key, 5s recompute cost, 10k req/s) expires: 50,000 identical queries land on the database in the 5 seconds it takes to rebuild — unless a lock lets one request rebuild while others serve stale.",
+          "es": "El caché de la portada de un sitio de noticias (1 clave, 5s de costo de recálculo, 10k req/s) expira: 50,000 consultas idénticas caen sobre la base de datos en los 5 segundos que toma reconstruir — a menos que un lock deje que una sola petición reconstruya mientras las demás sirven el valor viejo."
+        },
+        {
+          "en": "After a deploy, a service warmed 100k cache entries at the same instant with TTL 3600. Exactly one hour later they all expired together and the database fell over — fixed by adding ±10% random jitter to every TTL.",
+          "es": "Tras un deploy, un servicio calentó 100k entradas de caché en el mismo instante con TTL 3600. Exactamente una hora después todas expiraron juntas y la base de datos se cayó — se arregló agregando un jitter aleatorio de ±10% a cada TTL."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each stampede defense with what it protects against.",
+              "es": "Conecta cada defensa contra estampidas con aquello de lo que protege."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Jittered TTLs",
+                  "es": "TTLs con jitter"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Mutex lock on miss (SET NX)",
+                  "es": "Lock mutex ante un miss (SET NX)"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Early / background refresh",
+                  "es": "Refresco anticipado / en segundo plano"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Serving stale while revalidating",
+                  "es": "Servir datos viejos mientras se revalida"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Thousands of keys expiring at the same instant",
+                  "es": "Miles de claves expirando en el mismo instante"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Many concurrent requests recomputing the same hot key",
+                  "es": "Muchas peticiones concurrentes recalculando la misma clave caliente"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Users ever seeing a miss on known-critical keys",
+                  "es": "Que los usuarios lleguen a ver un miss en claves críticas conocidas"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Latency spikes for waiters while one request rebuilds",
+                  "es": "Picos de latencia para los que esperan mientras una petición reconstruye"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You cache 50,000 entries during a nightly warm-up job, all with TTL 86400. What is the biggest risk?",
+              "es": "Cacheas 50,000 entradas durante un job nocturno de calentamiento, todas con TTL 86400. ¿Cuál es el mayor riesgo?"
+            },
+            "options": [
+              {
+                "en": "All 50,000 keys expire simultaneously tomorrow night, stampeding the database",
+                "es": "Las 50,000 claves expiran simultáneamente mañana en la noche, provocando una estampida sobre la base de datos"
+              },
+              {
+                "en": "TTLs longer than one hour are not allowed",
+                "es": "No se permiten TTLs mayores a una hora"
+              },
+              {
+                "en": "Redis cannot store 50,000 keys",
+                "es": "Redis no puede almacenar 50,000 claves"
+              },
+              {
+                "en": "The warm-up job will corrupt existing keys",
+                "es": "El job de calentamiento corromperá las claves existentes"
+              }
+            ],
+            "explanation": {
+              "en": "Identical TTLs set at the same moment expire at the same moment: a synchronized mass miss. Add random jitter (e.g. 86400 ± a few thousand seconds) so expirations spread out.",
+              "es": "TTLs idénticos configurados en el mismo momento expiran en el mismo momento: un miss masivo sincronizado. Agrega jitter aleatorio (p. ej. 86400 ± unos miles de segundos) para que las expiraciones se distribuyan."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In the lock-based (request coalescing) defense, the first request that misses acquires `SET stampede:lock <token> NX PX 3000` and recomputes the value. What should the OTHER concurrent requests that also missed do?",
+              "es": "En la defensa basada en lock (coalescencia de peticiones), la primera petición que falla adquiere `SET stampede:lock <token> NX PX 3000` y recalcula el valor. ¿Qué deberían hacer las DEMÁS peticiones concurrentes que también fallaron?"
+            },
+            "options": [
+              {
+                "en": "Delete the lock so all requests can recompute in parallel",
+                "es": "Borrar el lock para que todas las peticiones puedan recalcular en paralelo"
+              },
+              {
+                "en": "Wait briefly and retry the cache, or serve the previous stale value — anything except running the expensive query themselves",
+                "es": "Esperar brevemente y reintentar el caché, o servir el valor viejo anterior — cualquier cosa excepto ejecutar ellas mismas la consulta costosa"
+              },
+              {
+                "en": "Run the database query anyway, since the lock only protects Redis memory",
+                "es": "Ejecutar la consulta a la base de datos de todos modos, ya que el lock solo protege la memoria de Redis"
+              },
+              {
+                "en": "Return HTTP 500 to their clients until the cache is warm again",
+                "es": "Devolver HTTP 500 a sus clientes hasta que el caché vuelva a estar caliente"
+              }
+            ],
+            "explanation": {
+              "en": "The whole point of coalescing is that exactly one request pays the recomputation cost. The rest either poll the cache for a few milliseconds or serve the last known (stale) value, keeping database load at one query instead of thousands.",
+              "es": "Todo el punto de la coalescencia es que exactamente una petición pague el costo del recálculo. Las demás sondean el caché durante unos milisegundos o sirven el último valor conocido (obsoleto), manteniendo la carga de la base de datos en una consulta en lugar de miles."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "rate-limiting-with-redis",
+      "question": {
+        "en": "How would you build a distributed rate limiter with Redis?",
+        "es": "¿Cómo construirías un rate limiter distribuido con Redis?"
+      },
+      "definition": {
+        "en": "Rate limiting must be **centralized** when you have many API servers — an in-process counter can't see requests handled by other instances. Redis is the natural home: it's shared, fast, and its counters are atomic.\n\nThe simplest algorithm is a **fixed window**: key per user per window, e.g. `rate:{user}:{minute}`. Each request runs `INCR` (atomic, returns the new count); if the result is 1, set the window `EXPIRE`; if the count exceeds the limit, reject with 429. Its weakness: bursts at window boundaries (up to 2x the limit across two adjacent windows).\n\nA **token bucket** (or sliding window) is smoother: the bucket refills at a constant rate and each request consumes a token. Because refill-then-consume involves several reads and writes, you implement it as a **Lua script** with `EVAL` — Redis executes the whole script atomically, so no other client can interleave between the read and the write.",
+        "es": "El rate limiting debe ser **centralizado** cuando tienes muchos servidores de API — un contador en memoria del proceso no ve las peticiones atendidas por otras instancias. Redis es el lugar natural: es compartido, rápido y sus contadores son atómicos.\n\nEl algoritmo más simple es la **ventana fija**: una clave por usuario por ventana, p. ej. `rate:{user}:{minuto}`. Cada petición ejecuta `INCR` (atómico, devuelve el nuevo conteo); si el resultado es 1, configura el `EXPIRE` de la ventana; si el conteo supera el límite, rechaza con 429. Su debilidad: ráfagas en los bordes de la ventana (hasta 2x el límite entre dos ventanas adyacentes).\n\nUn **token bucket** (o ventana deslizante) es más suave: el bucket se rellena a tasa constante y cada petición consume un token. Como rellenar-y-consumir implica varias lecturas y escrituras, se implementa como un **script Lua** con `EVAL` — Redis ejecuta todo el script atómicamente, así ningún otro cliente puede intercalarse entre la lectura y la escritura."
+      },
+      "examples": [
+        {
+          "en": "GitHub's API returns `X-RateLimit-Remaining` headers backed by centralized counters: any of their edge servers can serve your request, yet the count is consistent because it lives in a shared store.",
+          "es": "La API de GitHub devuelve headers `X-RateLimit-Remaining` respaldados por contadores centralizados: cualquiera de sus servidores edge puede atender tu petición y aun así el conteo es consistente porque vive en un almacén compartido."
+        },
+        {
+          "en": "Stripe describes using Redis token buckets via Lua scripts to rate-limit API traffic, precisely because EVAL makes the check-refill-consume sequence atomic under heavy concurrency.",
+          "es": "Stripe describe usar token buckets en Redis vía scripts Lua para limitar el tráfico de su API, precisamente porque EVAL hace atómica la secuencia verificar-rellenar-consumir bajo alta concurrencia."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Implement `isAllowed(userId)` in JavaScript pseudo-code for a fixed-window rate limiter: max 100 requests per user per 60-second window, using a Redis client with `incr(key)` and `expire(key, seconds)`. Return `true` if the request is allowed, `false` if rate-limited.",
+              "es": "Implementa `isAllowed(userId)` en pseudocódigo JavaScript para un rate limiter de ventana fija: máximo 100 peticiones por usuario por ventana de 60 segundos, usando un cliente Redis con `incr(key)` y `expire(key, seconds)`. Devuelve `true` si la petición se permite, `false` si se limita."
+            },
+            "language": "javascript",
+            "starter_code": "async function isAllowed(userId) {\n  // max 100 requests per 60s window\n  // use redis.incr(key) and redis.expire(key, seconds)\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must build a per-user key (ideally including the current window, e.g. floor(now/60)), call INCR to atomically increment, set EXPIRE when the counter is new (result of INCR is 1) or rely on a windowed key name plus expire, and return false when the count exceeds 100, true otherwise. Bonus: noting that INCR is atomic so concurrent requests are counted correctly, or mentioning the boundary-burst weakness of fixed windows.",
+              "es": "Debe construir una clave por usuario (idealmente incluyendo la ventana actual, p. ej. floor(now/60)), llamar INCR para incrementar atómicamente, configurar EXPIRE cuando el contador es nuevo (el resultado de INCR es 1) o apoyarse en una clave con ventana más expire, y devolver false cuando el conteo supera 100, true en caso contrario. Bonus: notar que INCR es atómico y por eso las peticiones concurrentes se cuentan bien, o mencionar la debilidad de ráfagas en los bordes de la ventana fija."
+            },
+            "reference": "async function isAllowed(userId) {\n  const window = Math.floor(Date.now() / 60000);\n  const key = `rate:${userId}:${window}`;\n  const count = await redis.incr(key);\n  if (count === 1) {\n    await redis.expire(key, 60); // first hit in this window: set the TTL\n  }\n  return count <= 100;\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is a token bucket rate limiter usually implemented as a Lua script (EVAL) in Redis?",
+              "es": "¿Por qué un rate limiter de token bucket usualmente se implementa como un script Lua (EVAL) en Redis?"
+            },
+            "options": [
+              {
+                "en": "Lua is the only language Redis clients support",
+                "es": "Lua es el único lenguaje que soportan los clientes de Redis"
+              },
+              {
+                "en": "Lua scripts persist to disk automatically",
+                "es": "Los scripts Lua se persisten a disco automáticamente"
+              },
+              {
+                "en": "EVAL is faster than INCR for single commands",
+                "es": "EVAL es más rápido que INCR para comandos individuales"
+              },
+              {
+                "en": "The refill-check-consume sequence spans several commands, and Lua makes them execute atomically with no interleaving",
+                "es": "La secuencia rellenar-verificar-consumir abarca varios comandos, y Lua hace que se ejecuten atómicamente sin intercalado"
+              }
+            ],
+            "explanation": {
+              "en": "Token bucket needs read-modify-write across multiple values (tokens, last refill time). Without atomicity, two concurrent requests could both read the same token count and both pass. EVAL runs the whole script as one atomic unit.",
+              "es": "El token bucket necesita leer-modificar-escribir sobre varios valores (tokens, último momento de recarga). Sin atomicidad, dos peticiones concurrentes podrían leer el mismo conteo de tokens y ambas pasar. EVAL ejecuta todo el script como una unidad atómica."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A fixed-window limiter allows 100 requests per user per minute, with windows aligned to clock minutes. What is the worst-case burst a determined client can push through?",
+              "es": "Un limitador de ventana fija permite 100 peticiones por usuario por minuto, con ventanas alineadas a los minutos del reloj. ¿Cuál es la peor ráfaga que un cliente decidido puede lograr?"
+            },
+            "options": [
+              {
+                "en": "About 200 requests within a few seconds, by sending 100 at the very end of one window and 100 at the start of the next",
+                "es": "Unas 200 peticiones en pocos segundos, enviando 100 justo al final de una ventana y 100 al inicio de la siguiente"
+              },
+              {
+                "en": "Exactly 100 requests per minute — the algorithm is airtight",
+                "es": "Exactamente 100 peticiones por minuto — el algoritmo es hermético"
+              },
+              {
+                "en": "50 requests, because INCR counts each request twice",
+                "es": "50 peticiones, porque INCR cuenta cada petición dos veces"
+              },
+              {
+                "en": "120 requests, due to network retries inflating the counter",
+                "es": "120 peticiones, por reintentos de red que inflan el contador"
+              }
+            ],
+            "explanation": {
+              "en": "Fixed windows reset the counter at the boundary, so back-to-back bursts straddling the boundary reach roughly 2x the limit. Sliding-window or token-bucket algorithms smooth this out, which is why they are preferred when the limit must hold strictly.",
+              "es": "Las ventanas fijas reinician el contador en el borde, así que ráfagas consecutivas a ambos lados del borde alcanzan aproximadamente 2x el límite. Los algoritmos de ventana deslizante o token bucket suavizan esto, y por eso se prefieren cuando el límite debe cumplirse estrictamente."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "distributed-locks",
+      "question": {
+        "en": "How do you implement a distributed lock with Redis, and what are the caveats?",
+        "es": "¿Cómo implementas un lock distribuido con Redis y cuáles son sus advertencias?"
+      },
+      "definition": {
+        "en": "A distributed lock ensures only one process across a fleet performs an action (a cron job, a payment, rebuilding a cache key). The Redis primitive is `SET lock:resource <random-token> NX PX 30000`: **NX** means \"only if the key doesn't exist\" (mutual exclusion), **PX** sets an expiry so a crashed holder can't lock forever, and the **random token** identifies the owner.\n\nReleasing must be **check-then-delete atomically**: a Lua script that deletes the key *only if* its value equals your token. A plain DEL is a bug — if your lock already expired and another process acquired it, you'd delete *their* lock.\n\nCaveats interviewers expect: the expiry creates a hazard — if your work takes longer than the TTL, the lock silently expires and two holders run at once (mitigate with fencing tokens or watchdog renewal). **Redlock** extends this to multiple independent Redis nodes to survive node failure, but it's debated (Kleppmann's critique): with clock jumps or GC pauses it can still violate mutual exclusion, so don't use Redis locks alone for correctness-critical invariants — enforce those in the database.",
+        "es": "Un lock distribuido asegura que solo un proceso de toda la flota realice una acción (un cron job, un pago, reconstruir una clave de caché). La primitiva de Redis es `SET lock:recurso <token-aleatorio> NX PX 30000`: **NX** significa \"solo si la clave no existe\" (exclusión mutua), **PX** configura una expiración para que un poseedor caído no bloquee para siempre, y el **token aleatorio** identifica al dueño.\n\nLa liberación debe ser **verificar-y-borrar atómicamente**: un script Lua que borra la clave *solo si* su valor es igual a tu token. Un DEL simple es un bug — si tu lock ya expiró y otro proceso lo adquirió, borrarías *su* lock.\n\nAdvertencias que los entrevistadores esperan: la expiración crea un peligro — si tu trabajo tarda más que el TTL, el lock expira silenciosamente y dos poseedores corren a la vez (se mitiga con fencing tokens o renovación con watchdog). **Redlock** extiende esto a varios nodos Redis independientes para sobrevivir fallas de nodo, pero es debatido (la crítica de Kleppmann): con saltos de reloj o pausas de GC aún puede violar la exclusión mutua, así que no uses locks de Redis solos para invariantes críticos de correctitud — refuérzalos en la base de datos."
+      },
+      "examples": [
+        {
+          "en": "Ten instances of a billing service run the same hourly cron. Each tries `SET lock:billing-cron <uuid> NX PX 600000`; only the instance that succeeds runs the job, the rest skip this hour.",
+          "es": "Diez instancias de un servicio de facturación corren el mismo cron cada hora. Cada una intenta `SET lock:billing-cron <uuid> NX PX 600000`; solo la instancia que lo logra ejecuta el job, las demás se saltan esa hora."
+        },
+        {
+          "en": "A worker held a lock with a 30s TTL but a stop-the-world GC pause froze it for 40s: the lock expired, another worker acquired it, and both wrote the same file. Fencing tokens (a monotonically increasing number checked by the storage layer) prevent the stale holder's write.",
+          "es": "Un worker tenía un lock con TTL de 30s pero una pausa de GC stop-the-world lo congeló 40s: el lock expiró, otro worker lo adquirió y ambos escribieron el mismo archivo. Los fencing tokens (un número monotónicamente creciente verificado por la capa de almacenamiento) impiden la escritura del poseedor obsoleto."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why must the lock value be a random token, checked before deletion, instead of releasing with a plain DEL?",
+              "es": "¿Por qué el valor del lock debe ser un token aleatorio, verificado antes de borrar, en lugar de liberar con un DEL simple?"
+            },
+            "options": [
+              {
+                "en": "Random values compress better in Redis memory",
+                "es": "Los valores aleatorios se comprimen mejor en la memoria de Redis"
+              },
+              {
+                "en": "Random tokens make the key harder to guess by attackers",
+                "es": "Los tokens aleatorios hacen la clave más difícil de adivinar para atacantes"
+              },
+              {
+                "en": "DEL is not allowed on keys created with NX",
+                "es": "DEL no está permitido en claves creadas con NX"
+              },
+              {
+                "en": "If your lock expired and another process acquired it, a plain DEL would release the other process's lock",
+                "es": "Si tu lock expiró y otro proceso lo adquirió, un DEL simple liberaría el lock del otro proceso"
+              }
+            ],
+            "explanation": {
+              "en": "The token proves ownership. Check-and-delete must be atomic (a Lua script), because between GET and DEL the lock could expire and change hands.",
+              "es": "El token demuestra la propiedad. Verificar-y-borrar debe ser atómico (un script Lua), porque entre el GET y el DEL el lock podría expirar y cambiar de dueño."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A teammate proposes acquiring a distributed lock with `SET lock:job worker1 NX` (no expiry) so the lock can never be lost mid-work. Explain what is wrong with this and what you would use instead, including the remaining risk even after your fix.",
+              "es": "Un compañero propone adquirir un lock distribuido con `SET lock:job worker1 NX` (sin expiración) para que el lock nunca se pierda a mitad del trabajo. Explica qué está mal con esto y qué usarías en su lugar, incluyendo el riesgo que persiste incluso después de tu corrección."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must identify that without an expiry, a crashed holder leaves the lock held forever (deadlock requiring manual intervention), and propose SET with NX plus an expiry (PX/EX) and a unique random token, released via an atomic check-and-delete. Must also mention the remaining risk: if the work outlives the TTL, the lock expires and two processes can hold it simultaneously (mitigations: fencing tokens, watchdog renewal, or enforcing the invariant in the database).",
+              "es": "Debe identificar que sin expiración, un poseedor que se cae deja el lock tomado para siempre (deadlock que requiere intervención manual), y proponer SET con NX más una expiración (PX/EX) y un token aleatorio único, liberado con verificar-y-borrar atómico. También debe mencionar el riesgo restante: si el trabajo dura más que el TTL, el lock expira y dos procesos pueden tenerlo simultáneamente (mitigaciones: fencing tokens, renovación con watchdog, o reforzar el invariante en la base de datos)."
+            },
+            "reference": "Without a TTL, if worker1 crashes after acquiring the lock, the key stays forever and no other worker can ever run the job — a permanent deadlock. The correct form is SET lock:job <random-token> NX PX 30000: NX gives mutual exclusion, PX guarantees liveness after a crash, and the random token lets release be safe via a Lua script that deletes only if the value matches. The remaining risk is that the work may take longer than the TTL: the lock silently expires, a second worker acquires it, and mutual exclusion is violated. Mitigate with a watchdog that renews the TTL while working, fencing tokens verified by the downstream system, or by making the protected operation idempotent / enforced by a database constraint."
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of correctly acquiring and safely releasing a Redis distributed lock.",
+              "es": "Ordena los pasos para adquirir correctamente y liberar de forma segura un lock distribuido en Redis."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "token",
+                "label": {
+                  "en": "Generate a unique random token for this attempt",
+                  "es": "Genera un token aleatorio único para este intento"
+                }
+              },
+              {
+                "id": "acquire",
+                "label": {
+                  "en": "Run SET lock:resource <token> NX PX 30000",
+                  "es": "Ejecuta SET lock:recurso <token> NX PX 30000"
+                }
+              },
+              {
+                "id": "confirm",
+                "label": {
+                  "en": "Check that the SET replied OK — the lock is yours",
+                  "es": "Verifica que el SET respondió OK — el lock es tuyo"
+                }
+              },
+              {
+                "id": "work",
+                "label": {
+                  "en": "Run the critical section, keeping it shorter than the TTL",
+                  "es": "Ejecuta la sección crítica, manteniéndola más corta que el TTL"
+                }
+              },
+              {
+                "id": "release",
+                "label": {
+                  "en": "Release with a Lua script that deletes the key only if its value equals your token",
+                  "es": "Libera con un script Lua que borra la clave solo si su valor es igual a tu token"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "token",
+              "acquire",
+              "confirm",
+              "work",
+              "release"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "redis-as-source-of-truth",
+      "question": {
+        "en": "What are the risks of using Redis as your source of truth?",
+        "es": "¿Cuáles son los riesgos de usar Redis como fuente de verdad?"
+      },
+      "definition": {
+        "en": "Redis *can* persist data, but its defaults and design assume the data is reconstructible. **Persistence** is best-effort: RDB snapshots lose everything since the last snapshot on a crash, and AOF with the default `everysec` fsync can still lose up to a second of acknowledged writes. Compare that with Postgres, which fsyncs the WAL before acknowledging a commit.\n\n**Eviction** is the sneakier risk: when Redis hits `maxmemory` with an eviction policy like `allkeys-lru`, it silently deletes keys to make room — fine for a cache, catastrophic for canonical data. **Replication is asynchronous**: a replica acknowledges nothing, so a failover can promote a replica that lags behind the dead primary, losing the most recent writes (and Redis Cluster does not give linearizable guarantees).\n\nRule of thumb for interviews: keep the source of truth in a database with real durability, and treat everything in Redis as *losable*. If you do store canonical data in Redis (e.g. ephemeral sessions), do it consciously: AOF with `always` fsync, `noeviction` policy, and accept the availability trade-offs.",
+        "es": "Redis *puede* persistir datos, pero sus defaults y su diseño asumen que los datos son reconstruibles. La **persistencia** es best-effort: los snapshots RDB pierden todo lo posterior al último snapshot ante un crash, y AOF con el fsync default `everysec` aún puede perder hasta un segundo de escrituras confirmadas. Compara con Postgres, que hace fsync del WAL antes de confirmar un commit.\n\nLa **evicción** es el riesgo más traicionero: cuando Redis llega a `maxmemory` con una política como `allkeys-lru`, borra claves silenciosamente para hacer espacio — perfecto para un caché, catastrófico para datos canónicos. La **replicación es asíncrona**: la réplica no confirma nada, así que un failover puede promover una réplica que va detrás del primario muerto, perdiendo las escrituras más recientes (y Redis Cluster no da garantías linealizables).\n\nRegla práctica para entrevistas: mantén la fuente de verdad en una base con durabilidad real, y trata todo lo que está en Redis como *perdible*. Si guardas datos canónicos en Redis (p. ej. sesiones efímeras), hazlo conscientemente: AOF con fsync `always`, política `noeviction`, y acepta los trade-offs de disponibilidad."
+      },
+      "examples": [
+        {
+          "en": "A startup stored shopping carts only in Redis with `allkeys-lru`. During a traffic spike memory filled up and Redis evicted active carts — users watched their items vanish. Carts moved to Postgres; Redis kept only a cache of them.",
+          "es": "Una startup guardaba los carritos de compra solo en Redis con `allkeys-lru`. Durante un pico de tráfico la memoria se llenó y Redis desalojó carritos activos — los usuarios vieron desaparecer sus artículos. Los carritos se movieron a Postgres; Redis quedó solo como caché de ellos."
+        },
+        {
+          "en": "A primary crashed right after acknowledging writes; the asynchronous replica was ~200ms behind. Failover promoted the replica and those acknowledged writes were gone forever — acceptable for a cache, not for orders or balances.",
+          "es": "Un primario se cayó justo después de confirmar escrituras; la réplica asíncrona iba ~200ms atrás. El failover promovió la réplica y esas escrituras confirmadas se perdieron para siempre — aceptable para un caché, no para órdenes o saldos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each Redis risk with its consequence for canonical data.",
+              "es": "Conecta cada riesgo de Redis con su consecuencia para datos canónicos."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "RDB snapshot persistence",
+                  "es": "Persistencia por snapshots RDB"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "AOF with everysec fsync",
+                  "es": "AOF con fsync everysec"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "maxmemory + allkeys-lru eviction",
+                  "es": "maxmemory + evicción allkeys-lru"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Asynchronous replication + failover",
+                  "es": "Replicación asíncrona + failover"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "A crash loses every write since the last snapshot",
+                  "es": "Un crash pierde todas las escrituras desde el último snapshot"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Up to one second of acknowledged writes can vanish",
+                  "es": "Hasta un segundo de escrituras confirmadas puede desaparecer"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Keys are silently deleted under memory pressure",
+                  "es": "Las claves se borran silenciosamente bajo presión de memoria"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "A lagging replica gets promoted and recent writes are lost",
+                  "es": "Una réplica rezagada es promovida y se pierden las escrituras recientes"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your team wants to store order records ONLY in Redis 'because it's fast'. What is the strongest argument against it?",
+              "es": "Tu equipo quiere guardar los registros de órdenes SOLO en Redis 'porque es rápido'. ¿Cuál es el argumento más fuerte en contra?"
+            },
+            "options": [
+              {
+                "en": "Redis reads are too slow for order lookups",
+                "es": "Las lecturas de Redis son demasiado lentas para consultar órdenes"
+              },
+              {
+                "en": "Acknowledged orders can be lost to eviction, crash-window data loss, or a failover to a lagging replica",
+                "es": "Órdenes confirmadas pueden perderse por evicción, por la ventana de pérdida ante un crash, o por un failover a una réplica rezagada"
+              },
+              {
+                "en": "Redis cannot store JSON-shaped data",
+                "es": "Redis no puede almacenar datos con forma de JSON"
+              },
+              {
+                "en": "Redis licenses forbid storing business data",
+                "es": "Las licencias de Redis prohíben almacenar datos de negocio"
+              }
+            ],
+            "explanation": {
+              "en": "Orders are canonical, must-not-lose data. Redis's persistence windows, eviction under memory pressure, and async replication all create realistic loss scenarios that a WAL-based database avoids.",
+              "es": "Las órdenes son datos canónicos que no se pueden perder. Las ventanas de persistencia de Redis, la evicción bajo presión de memoria y la replicación asíncrona crean escenarios realistas de pérdida que una base de datos basada en WAL evita."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You are forced to keep ephemeral session data ONLY in Redis, with no other store. Which configuration takes the durability and eviction risks most seriously?",
+              "es": "Estás obligado a guardar datos de sesión efímeros SOLO en Redis, sin otro almacén. ¿Qué configuración toma más en serio los riesgos de durabilidad y evicción?"
+            },
+            "options": [
+              {
+                "en": "allkeys-lru eviction with an RDB snapshot every 15 minutes",
+                "es": "Evicción allkeys-lru con un snapshot RDB cada 15 minutos"
+              },
+              {
+                "en": "volatile-ttl eviction with persistence disabled for maximum speed",
+                "es": "Evicción volatile-ttl con la persistencia desactivada para máxima velocidad"
+              },
+              {
+                "en": "noeviction policy plus AOF with fsync always, accepting lower write throughput",
+                "es": "Política noeviction más AOF con fsync always, aceptando menor throughput de escritura"
+              },
+              {
+                "en": "Simply doubling maxmemory so eviction never has a reason to trigger",
+                "es": "Simplemente duplicar maxmemory para que la evicción nunca tenga motivo de activarse"
+              }
+            ],
+            "explanation": {
+              "en": "noeviction makes Redis return errors instead of silently deleting data under memory pressure, and AOF with fsync always persists each write before acknowledging it. LRU eviction or sparse snapshots can silently lose sessions, and extra RAM only postpones the moment memory fills up.",
+              "es": "noeviction hace que Redis devuelva errores en lugar de borrar datos silenciosamente bajo presión de memoria, y AOF con fsync always persiste cada escritura antes de confirmarla. La evicción LRU o los snapshots espaciados pueden perder sesiones silenciosamente, y más RAM solo pospone el momento en que la memoria se llena."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is Redis typically much faster than PostgreSQL for key lookups?",
+          "es": "¿Por qué Redis suele ser mucho más rápido que PostgreSQL para búsquedas por clave?"
+        },
+        "options": [
+          {
+            "en": "Redis uses a faster network protocol than TCP",
+            "es": "Redis usa un protocolo de red más rápido que TCP"
+          },
+          {
+            "en": "Redis compresses all values automatically",
+            "es": "Redis comprime todos los valores automáticamente"
+          },
+          {
+            "en": "Data lives in RAM and operations are simple commands on keys, with no SQL parsing or disk pages",
+            "es": "Los datos viven en RAM y las operaciones son comandos simples sobre claves, sin parseo de SQL ni páginas de disco"
+          },
+          {
+            "en": "PostgreSQL cannot index by primary key",
+            "es": "PostgreSQL no puede indexar por clave primaria"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In cache-aside, what does the application do after a cache miss?",
+          "es": "En cache-aside, ¿qué hace la aplicación después de un cache miss?"
+        },
+        "options": [
+          {
+            "en": "Waits until another process fills the cache",
+            "es": "Espera a que otro proceso llene el caché"
+          },
+          {
+            "en": "Queries the database, writes the result into the cache with a TTL, and returns it",
+            "es": "Consulta la base de datos, escribe el resultado en el caché con un TTL y lo devuelve"
+          },
+          {
+            "en": "Deletes the key and retries the cache",
+            "es": "Borra la clave y reintenta el caché"
+          },
+          {
+            "en": "Returns an error to the client",
+            "es": "Devuelve un error al cliente"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a write-through cache, what happens on a write?",
+          "es": "En un caché write-through, ¿qué ocurre en una escritura?"
+        },
+        "options": [
+          {
+            "en": "Only the database is written; the cache is never touched",
+            "es": "Solo se escribe la base de datos; el caché nunca se toca"
+          },
+          {
+            "en": "The write is rejected if the key is already cached",
+            "es": "La escritura se rechaza si la clave ya está cacheada"
+          },
+          {
+            "en": "The cache is written and it synchronously writes to the database, keeping both consistent",
+            "es": "Se escribe el caché y este escribe sincrónicamente en la base de datos, manteniendo ambos consistentes"
+          },
+          {
+            "en": "Only the cache is written; the database is updated hours later by a batch job",
+            "es": "Solo se escribe el caché; la base de datos se actualiza horas después con un job por lotes"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why should you keep a TTL on cache entries even when you invalidate explicitly on every write?",
+          "es": "¿Por qué deberías mantener un TTL en las entradas del caché aunque invalides explícitamente en cada escritura?"
+        },
+        "options": [
+          {
+            "en": "Because Redis requires every key to have a TTL",
+            "es": "Porque Redis exige que toda clave tenga un TTL"
+          },
+          {
+            "en": "Explicit invalidation only works on keys with TTLs",
+            "es": "La invalidación explícita solo funciona en claves con TTL"
+          },
+          {
+            "en": "TTLs make reads faster",
+            "es": "Los TTLs hacen las lecturas más rápidas"
+          },
+          {
+            "en": "As a safety net: if an invalidation is ever missed, the stale entry expires on its own",
+            "es": "Como red de seguridad: si alguna invalidación se pierde, la entrada obsoleta expira por sí sola"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "From the application's perspective, what is an expired Redis key equivalent to?",
+          "es": "Desde la perspectiva de la aplicación, ¿a qué equivale una clave de Redis expirada?"
+        },
+        "options": [
+          {
+            "en": "An error that must be caught and retried",
+            "es": "Un error que debe capturarse y reintentarse"
+          },
+          {
+            "en": "A corrupted key that blocks further writes",
+            "es": "Una clave corrupta que bloquea futuras escrituras"
+          },
+          {
+            "en": "A stale value that Redis still returns with a warning flag",
+            "es": "Un valor obsoleto que Redis igual devuelve con una bandera de advertencia"
+          },
+          {
+            "en": "A cache miss: the next read goes to the database and repopulates the cache",
+            "es": "Un cache miss: la siguiente lectura va a la base de datos y repuebla el caché"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is a cache stampede?",
+          "es": "¿Qué es una estampida de caché?"
+        },
+        "options": [
+          {
+            "en": "Redis running out of memory and crashing",
+            "es": "Redis quedándose sin memoria y crasheando"
+          },
+          {
+            "en": "Two caches replicating to each other in a loop",
+            "es": "Dos cachés replicándose mutuamente en un bucle"
+          },
+          {
+            "en": "A client writing keys faster than Redis can store them",
+            "es": "Un cliente escribiendo claves más rápido de lo que Redis puede almacenarlas"
+          },
+          {
+            "en": "A hot key expires and many concurrent requests all hit the database with the same expensive query at once",
+            "es": "Una clave caliente expira y muchas peticiones concurrentes golpean la base de datos con la misma consulta costosa a la vez"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How does TTL jitter prevent mass-expiry stampedes?",
+          "es": "¿Cómo previene el jitter de TTL las estampidas por expiración masiva?"
+        },
+        "options": [
+          {
+            "en": "It makes keys never expire",
+            "es": "Hace que las claves nunca expiren"
+          },
+          {
+            "en": "It doubles every TTL, halving database load",
+            "es": "Duplica cada TTL, reduciendo la carga de la base a la mitad"
+          },
+          {
+            "en": "It moves expired keys to a backup Redis instance",
+            "es": "Mueve las claves expiradas a una instancia Redis de respaldo"
+          },
+          {
+            "en": "A random offset per key spreads expirations over time instead of letting them expire in sync",
+            "es": "Un offset aleatorio por clave distribuye las expiraciones en el tiempo en lugar de dejar que expiren sincronizadas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a fixed-window rate limiter using INCR, why must EXPIRE be set when the counter is created?",
+          "es": "En un rate limiter de ventana fija con INCR, ¿por qué debe configurarse EXPIRE cuando se crea el contador?"
+        },
+        "options": [
+          {
+            "en": "Otherwise the counter key lives forever and users stay rate-limited (or keys leak) after the window should have ended",
+            "es": "De lo contrario la clave del contador vive para siempre y los usuarios quedan limitados (o las claves se fugan) después de que la ventana debió terminar"
+          },
+          {
+            "en": "Redis rejects counters above 100 without an expiry",
+            "es": "Redis rechaza contadores mayores a 100 sin expiración"
+          },
+          {
+            "en": "EXPIRE makes INCR atomic",
+            "es": "EXPIRE hace que INCR sea atómico"
+          },
+          {
+            "en": "INCR fails on keys without a TTL",
+            "es": "INCR falla en claves sin TTL"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which command correctly acquires a distributed lock in Redis?",
+          "es": "¿Qué comando adquiere correctamente un lock distribuido en Redis?"
+        },
+        "options": [
+          {
+            "en": "DEL lock:resource then SET lock:resource 1",
+            "es": "DEL lock:recurso y luego SET lock:recurso 1"
+          },
+          {
+            "en": "SET lock:resource <random-token> NX PX 30000",
+            "es": "SET lock:recurso <token-aleatorio> NX PX 30000"
+          },
+          {
+            "en": "GET lock:resource followed by SET lock:resource 1",
+            "es": "GET lock:recurso seguido de SET lock:recurso 1"
+          },
+          {
+            "en": "INCR lock:resource",
+            "es": "INCR lock:recurso"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is `allkeys-lru` eviction dangerous if Redis holds your only copy of the data?",
+          "es": "¿Por qué la evicción `allkeys-lru` es peligrosa si Redis tiene tu única copia de los datos?"
+        },
+        "options": [
+          {
+            "en": "It only evicts keys with TTLs",
+            "es": "Solo desaloja claves con TTL"
+          },
+          {
+            "en": "It disables persistence entirely",
+            "es": "Desactiva la persistencia por completo"
+          },
+          {
+            "en": "LRU eviction corrupts the values it keeps",
+            "es": "La evicción LRU corrompe los valores que conserva"
+          },
+          {
+            "en": "Under memory pressure Redis silently deletes keys — including canonical data — to make room",
+            "es": "Bajo presión de memoria Redis borra claves silenciosamente — incluyendo datos canónicos — para hacer espacio"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your homepage is served from a single cached key that takes 4 seconds to recompute and receives thousands of requests per second. Explain what happens when that key expires and describe at least two techniques to prevent the problem.",
+          "es": "Tu página de inicio se sirve desde una sola clave cacheada que tarda 4 segundos en recalcularse y recibe miles de peticiones por segundo. Explica qué pasa cuando esa clave expira y describe al menos dos técnicas para prevenir el problema."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe the cache stampede: on expiry, all concurrent requests miss at once and flood the database with the same expensive recomputation, risking overload. Must give at least two valid preventions among: a mutex/lock so only one request recomputes (SET NX with short TTL) while others wait or serve stale, early/background refresh before expiry, probabilistic early expiration, or serving stale while revalidating. Jittered TTLs alone is a weaker answer here (single key) but acceptable as a secondary mention.",
+          "es": "Debe describir la estampida de caché: al expirar, todas las peticiones concurrentes fallan a la vez e inundan la base de datos con el mismo recálculo costoso, arriesgando una sobrecarga. Debe dar al menos dos prevenciones válidas entre: un mutex/lock para que solo una petición recalcule (SET NX con TTL corto) mientras las demás esperan o sirven el valor viejo, refresco anticipado/en segundo plano antes de expirar, expiración anticipada probabilística, o servir datos viejos mientras se revalida. El jitter de TTL por sí solo es una respuesta más débil aquí (una sola clave) pero aceptable como mención secundaria."
+        },
+        "reference": "When the key expires, every in-flight request misses simultaneously and each one triggers the 4-second recomputation against the database — thousands of identical expensive queries in a few seconds: a cache stampede that can take the database down. Preventions: (1) request coalescing with a lock — the first miss does SET stampede-lock NX PX 5000 and recomputes while the others either wait briefly or keep serving the previous (stale) value; (2) background/early refresh — a job recomputes and re-SETs the key before its TTL runs out, so users never observe a miss; (3) probabilistic early expiration, where requests occasionally refresh the value before real expiry."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A colleague suggests dropping PostgreSQL and keeping all user accounts and orders directly in Redis for speed. Give at least three concrete risks of making Redis the source of truth for this data.",
+          "es": "Un colega sugiere eliminar PostgreSQL y guardar todas las cuentas de usuario y órdenes directamente en Redis por velocidad. Da al menos tres riesgos concretos de hacer a Redis la fuente de verdad para estos datos."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must give at least three of: persistence gaps (RDB loses everything since the last snapshot; AOF everysec can lose up to ~1s of acknowledged writes), eviction silently deleting keys under memory pressure with policies like allkeys-lru, asynchronous replication meaning a failover can promote a lagging replica and lose acknowledged writes, lack of rich querying/constraints/transactions for relational data like accounts and orders, or the entire dataset needing to fit in RAM (cost/scalability).",
+          "es": "Debe dar al menos tres de: brechas de persistencia (RDB pierde todo desde el último snapshot; AOF everysec puede perder hasta ~1s de escrituras confirmadas), evicción borrando claves silenciosamente bajo presión de memoria con políticas como allkeys-lru, replicación asíncrona que implica que un failover puede promover una réplica rezagada y perder escrituras confirmadas, falta de consultas ricas/constraints/transacciones para datos relacionales como cuentas y órdenes, o que todo el dataset debe caber en RAM (costo/escalabilidad)."
+        },
+        "reference": "1) Durability: Redis persistence is best-effort — RDB snapshots lose all writes since the last snapshot on a crash, and AOF with the default everysec fsync can lose up to a second of acknowledged writes; Postgres fsyncs its WAL before acknowledging. 2) Eviction: if maxmemory is reached with an eviction policy like allkeys-lru, Redis silently deletes keys — orders and accounts could vanish under load. 3) Replication lag: replication is asynchronous, so a failover can promote a replica that is behind the dead primary, permanently losing acknowledged writes. 4) Additionally, accounts and orders are relational: you lose constraints, joins, multi-row ACID transactions and ad-hoc querying, and the whole dataset must fit in RAM, which is expensive."
+      }
+    }
+  ]
+}

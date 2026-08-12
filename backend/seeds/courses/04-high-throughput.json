@@ -1,0 +1,1949 @@
+{
+  "slug": "high-throughput",
+  "order": 4,
+  "icon": "zap",
+  "title": {
+    "en": "High-Throughput & Low-Latency Systems",
+    "es": "Sistemas de Alto Rendimiento y Baja Latencia"
+  },
+  "description": {
+    "en": "How to design APIs that survive 100k requests per second: load balancing, caching, queues, backpressure, rate limiting, sharding and graceful degradation.",
+    "es": "Cómo diseñar APIs que sobreviven 100k peticiones por segundo: balanceo de carga, caché, colas, backpressure, rate limiting, sharding y degradación elegante."
+  },
+  "lessons": [
+    {
+      "slug": "design-100k-rps-api",
+      "question": {
+        "en": "Design an API that receives 100,000 requests per second — where do you start and what do you measure?",
+        "es": "Diseña una API que recibe 100,000 peticiones por segundo — ¿por dónde empiezas y qué mides?"
+      },
+      "definition": {
+        "en": "Start by **clarifying the workload**, not by drawing boxes: read/write ratio, payload size, latency budget (p50/p99), consistency needs, and traffic shape (steady vs spiky). 100k RPS of cacheable reads is a very different problem from 100k RPS of writes.\n\nThen design in layers so most requests **never reach the database**: CDN/edge for static and cacheable responses, a load balancer spreading traffic across stateless API replicas, an application cache (e.g. Redis) in front of the database, and queues to defer non-critical work.\n\nMeasure **latency percentiles (p50, p95, p99)** rather than averages, plus throughput, error rate and saturation of each layer (CPU, connections, queue depth). The p99 tells you what your slowest real users experience — averages hide it.",
+        "es": "Empieza **aclarando la carga de trabajo**, no dibujando cajas: proporción lectura/escritura, tamaño de payload, presupuesto de latencia (p50/p99), necesidades de consistencia y forma del tráfico (estable vs con picos). 100k RPS de lecturas cacheables es un problema muy distinto a 100k RPS de escrituras.\n\nLuego diseña en capas para que la mayoría de peticiones **nunca lleguen a la base de datos**: CDN/edge para respuestas estáticas y cacheables, un balanceador de carga repartiendo tráfico entre réplicas API sin estado, una caché de aplicación (p. ej. Redis) delante de la base de datos, y colas para diferir trabajo no crítico.\n\nMide **percentiles de latencia (p50, p95, p99)** en lugar de promedios, además de throughput, tasa de errores y saturación de cada capa (CPU, conexiones, profundidad de colas). El p99 te dice qué experimentan tus usuarios reales más lentos — los promedios lo ocultan."
+      },
+      "examples": [
+        {
+          "en": "A news site during breaking news serves 95%+ of traffic from the CDN: millions of readers hit cached pages and only a tiny fraction of requests reach the origin servers.",
+          "es": "Un sitio de noticias durante una noticia de última hora sirve 95%+ del tráfico desde el CDN: millones de lectores reciben páginas cacheadas y solo una fracción mínima de peticiones llega a los servidores de origen."
+        },
+        {
+          "en": "Amazon famously found that every 100ms of extra latency cost ~1% in sales — which is why latency budgets are defined per layer (e.g. 5ms cache, 20ms DB, 50ms total p99).",
+          "es": "Amazon descubrió que cada 100ms de latencia extra costaba ~1% en ventas — por eso los presupuestos de latencia se definen por capa (p. ej. 5ms caché, 20ms BD, 50ms p99 total)."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the path of a typical read request through a high-throughput architecture, from the user to the source of truth.",
+              "es": "Ordena el camino de una petición de lectura típica a través de una arquitectura de alto rendimiento, desde el usuario hasta la fuente de verdad."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "client",
+                "label": {
+                  "en": "Client",
+                  "es": "Cliente"
+                }
+              },
+              {
+                "id": "cdn",
+                "label": {
+                  "en": "CDN / edge cache",
+                  "es": "CDN / caché de borde"
+                }
+              },
+              {
+                "id": "lb",
+                "label": {
+                  "en": "Load balancer",
+                  "es": "Balanceador de carga"
+                }
+              },
+              {
+                "id": "api",
+                "label": {
+                  "en": "API service (stateless)",
+                  "es": "Servicio API (sin estado)"
+                }
+              },
+              {
+                "id": "cache",
+                "label": {
+                  "en": "Application cache (Redis)",
+                  "es": "Caché de aplicación (Redis)"
+                }
+              },
+              {
+                "id": "db",
+                "label": {
+                  "en": "Database",
+                  "es": "Base de datos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "client",
+              "cdn",
+              "lb",
+              "api",
+              "cache",
+              "db"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "An interviewer asks you to design an API for 100k RPS. What are the first 3 questions you ask before proposing an architecture, and why does each one matter?",
+              "es": "Un entrevistador te pide diseñar una API para 100k RPS. ¿Cuáles son las primeras 3 preguntas que haces antes de proponer una arquitectura, y por qué importa cada una?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must ask about at least three of: read/write ratio (determines whether caching/replicas help), latency requirements or percentiles (defines the budget), consistency requirements (eventual vs strong), traffic shape (spiky vs steady, affects autoscaling/queues), payload size or data volume. Each question must include a short justification of how it changes the design.",
+              "es": "Debe preguntar al menos tres de: proporción lectura/escritura (determina si caché/réplicas ayudan), requisitos de latencia o percentiles (define el presupuesto), requisitos de consistencia (eventual vs fuerte), forma del tráfico (picos vs estable, afecta autoescalado/colas), tamaño de payload o volumen de datos. Cada pregunta debe incluir una breve justificación de cómo cambia el diseño."
+            },
+            "reference": "1) What is the read/write ratio? If it's read-heavy, aggressive caching and read replicas absorb most traffic; if write-heavy, I need partitioning and queues. 2) What is the latency budget (p99)? A 50ms p99 rules out synchronous cross-region calls and forces caching close to users. 3) How consistent must reads be? If eventual consistency is acceptable, I can serve from caches and replicas; if strong, more traffic must hit the primary and the design gets harder."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "After clarifying the workload, you learn your 100k RPS is 99% cacheable reads of public content with a 100ms p99 budget. Which layer should be designed to absorb the vast majority of that traffic?",
+              "es": "Tras aclarar la carga de trabajo, descubres que tus 100k RPS son 99% lecturas cacheables de contenido público con un presupuesto p99 de 100ms. ¿Qué capa debería diseñarse para absorber la gran mayoría de ese tráfico?"
+            },
+            "options": [
+              {
+                "en": "The CDN/edge cache, so most requests are answered before they ever reach your infrastructure",
+                "es": "El CDN/caché de borde, para que la mayoría de peticiones se respondan antes de siquiera llegar a tu infraestructura"
+              },
+              {
+                "en": "The database, by adding read replicas until they can serve all 100k RPS directly",
+                "es": "La base de datos, agregando réplicas de lectura hasta que puedan servir los 100k RPS directamente"
+              },
+              {
+                "en": "A message queue, by converting the reads into asynchronous jobs",
+                "es": "Una cola de mensajes, convirtiendo las lecturas en jobs asíncronos"
+              },
+              {
+                "en": "The API tier, by autoscaling enough stateless replicas to process every single request",
+                "es": "La capa de API, autoescalando suficientes réplicas sin estado para procesar cada petición"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Public, cacheable content should be pushed to the edge: the CDN answers most requests without a round trip to your servers, and every inner layer only sees misses. Scaling the database or API tier to full volume is far more expensive and slower, and queues defer work — they don't serve synchronous reads.",
+              "es": "El contenido público y cacheable debe empujarse al borde: el CDN responde la mayoría de peticiones sin un viaje a tus servidores, y cada capa interna solo ve los fallos. Escalar la base de datos o la capa de API al volumen completo es mucho más caro y lento, y las colas difieren trabajo — no sirven lecturas síncronas."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "load-balancing-strategies",
+      "question": {
+        "en": "What load balancing strategies exist and when do you use each one?",
+        "es": "¿Qué estrategias de balanceo de carga existen y cuándo usas cada una?"
+      },
+      "definition": {
+        "en": "**Round robin** hands each new request to the next server in the list. It's simple and works well when all servers are identical and requests are cheap and uniform. **Weighted round robin** adjusts for servers of different sizes.\n\n**Least connections** sends the request to the server with the fewest active connections — better when request durations vary a lot (some take 5ms, some 5s), because it avoids piling long requests on one node.\n\n**Consistent hashing** maps each key (user ID, session, cache key) to a position on a ring, so the same key always lands on the same server, and adding/removing a server only remaps ~1/N of the keys. It's the standard choice for cache clusters and sticky routing, where scattering keys across nodes would destroy hit rates.",
+        "es": "**Round robin** entrega cada nueva petición al siguiente servidor de la lista. Es simple y funciona bien cuando todos los servidores son idénticos y las peticiones son baratas y uniformes. **Round robin con pesos** ajusta para servidores de distintos tamaños.\n\n**Least connections** envía la petición al servidor con menos conexiones activas — mejor cuando la duración de las peticiones varía mucho (algunas tardan 5ms, otras 5s), porque evita acumular peticiones largas en un solo nodo.\n\nEl **hashing consistente** mapea cada clave (ID de usuario, sesión, clave de caché) a una posición en un anillo, de modo que la misma clave siempre cae en el mismo servidor, y agregar/quitar un servidor solo reubica ~1/N de las claves. Es la opción estándar para clústeres de caché y enrutamiento sticky, donde dispersar las claves entre nodos destruiría la tasa de aciertos."
+      },
+      "examples": [
+        {
+          "en": "NGINX defaults to round robin for upstreams, but `least_conn` is recommended when proxying APIs with mixed fast and slow endpoints.",
+          "es": "NGINX usa round robin por defecto para upstreams, pero se recomienda `least_conn` al hacer proxy de APIs con endpoints rápidos y lentos mezclados."
+        },
+        {
+          "en": "Memcached and Redis Cluster clients use consistent hashing: when one of 10 cache nodes dies, only ~10% of keys miss instead of the entire cache being reshuffled.",
+          "es": "Los clientes de Memcached y Redis Cluster usan hashing consistente: cuando muere 1 de 10 nodos de caché, solo ~10% de las claves fallan en lugar de rebarajarse toda la caché."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each load balancing strategy with the scenario where it shines.",
+              "es": "Conecta cada estrategia de balanceo con el escenario donde brilla."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Round robin",
+                  "es": "Round robin"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Weighted round robin",
+                  "es": "Round robin con pesos"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Least connections",
+                  "es": "Least connections"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Consistent hashing",
+                  "es": "Hashing consistente"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Identical servers, uniform cheap requests",
+                  "es": "Servidores idénticos, peticiones uniformes y baratas"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "A mixed fleet where some machines are twice as big",
+                  "es": "Una flota mixta donde algunas máquinas son el doble de grandes"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Request durations vary wildly (5ms to 5s)",
+                  "es": "La duración de las peticiones varía muchísimo (5ms a 5s)"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Cache cluster where each key must stick to one node",
+                  "es": "Clúster de caché donde cada clave debe quedarse en un nodo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You run a 10-node cache cluster with simple modulo hashing (`hash % 10`). One node dies. What happens, and what would consistent hashing change?",
+              "es": "Tienes un clúster de caché de 10 nodos con hashing por módulo simple (`hash % 10`). Un nodo muere. ¿Qué pasa, y qué cambiaría el hashing consistente?"
+            },
+            "options": [
+              {
+                "en": "Almost every key maps to a different node, mass cache misses; consistent hashing would remap only ~1/10 of keys",
+                "es": "Casi todas las claves se mapean a otro nodo, fallos masivos de caché; el hashing consistente reubicaría solo ~1/10 de las claves"
+              },
+              {
+                "en": "Consistent hashing loses all keys because the ring must be rebuilt",
+                "es": "El hashing consistente pierde todas las claves porque hay que reconstruir el anillo"
+              },
+              {
+                "en": "Only the dead node's keys are lost either way; both strategies behave identically",
+                "es": "Solo se pierden las claves del nodo muerto en ambos casos; las dos estrategias se comportan igual"
+              },
+              {
+                "en": "Modulo hashing automatically rebalances with zero misses",
+                "es": "El hashing por módulo rebalancea automáticamente sin fallos"
+              }
+            ],
+            "explanation": {
+              "en": "With `hash % 10` becoming `hash % 9`, nearly every key changes its target node, so the whole cache effectively empties. Consistent hashing only reassigns the dead node's ring segment, ~1/N of keys.",
+              "es": "Al pasar de `hash % 10` a `hash % 9`, casi todas las claves cambian de nodo destino, así que la caché entera se vacía en la práctica. El hashing consistente solo reasigna el segmento del anillo del nodo muerto, ~1/N de las claves."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API servers keep user sessions in local memory. What constraint does this impose on the load balancer, and what is the standard way to remove it?",
+              "es": "Tus servidores de API guardan las sesiones de usuario en memoria local. ¿Qué restricción le impone esto al balanceador de carga, y cuál es la forma estándar de eliminarla?"
+            },
+            "options": [
+              {
+                "en": "It requires consistent hashing on the URL path; the fix is hashing on the user agent instead",
+                "es": "Requiere hashing consistente sobre la ruta de la URL; el arreglo es hashear sobre el user agent"
+              },
+              {
+                "en": "It has no effect on load balancing; only DNS resolution is affected",
+                "es": "No afecta al balanceo de carga; solo afecta la resolución DNS"
+              },
+              {
+                "en": "It requires least connections; the fix is making all requests take the same time",
+                "es": "Requiere least connections; el arreglo es hacer que todas las peticiones tarden lo mismo"
+              },
+              {
+                "en": "It forces sticky sessions (same user → same server); the fix is externalizing session state to a shared store like Redis so servers become stateless",
+                "es": "Fuerza sesiones sticky (mismo usuario → mismo servidor); el arreglo es externalizar el estado de sesión a un almacén compartido como Redis para que los servidores queden sin estado"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Local session state couples each user to one specific server, so the balancer must pin (sticky sessions) — which skews load and loses sessions when a node dies. Moving sessions to Redis makes every server able to handle any request, so the balancer can distribute freely and nodes can be added or removed safely.",
+              "es": "El estado de sesión local ata a cada usuario a un servidor específico, así que el balanceador debe fijarlo (sesiones sticky) — lo cual desbalancea la carga y pierde sesiones cuando un nodo muere. Mover las sesiones a Redis hace que cualquier servidor pueda atender cualquier petición, de modo que el balanceador distribuye libremente y los nodos pueden agregarse o quitarse con seguridad."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "caching-layers",
+      "question": {
+        "en": "Where do you cache and what do you cache at each layer (CDN, app cache, DB cache)?",
+        "es": "¿Dónde cacheas y qué cacheas en cada capa (CDN, caché de aplicación, caché de BD)?"
+      },
+      "definition": {
+        "en": "Cache as **close to the user as possible**, and let each layer absorb what the next one shouldn't see. A **CDN/edge cache** stores static assets and public, cacheable API responses (product pages, images) — it eliminates entire round trips to your infrastructure.\n\nAn **application cache** (Redis/Memcached) sits between your API and the database: it stores hot objects, computed results and session data keyed by ID. It's where you cache *per-user* or *frequently recomputed* data that the CDN can't share across users.\n\nThe **database's own caches** (buffer pool, query cache, materialized views) speed up repeated reads of hot pages. The hard part everywhere is **invalidation**: choose TTLs based on how stale data can be, and prefer cache-aside (read-through on miss, explicit invalidation on write) as the default pattern.",
+        "es": "Cachea **lo más cerca posible del usuario**, y deja que cada capa absorba lo que la siguiente no debería ver. Un **CDN/caché de borde** guarda recursos estáticos y respuestas de API públicas y cacheables (páginas de producto, imágenes) — elimina viajes completos a tu infraestructura.\n\nUna **caché de aplicación** (Redis/Memcached) se sitúa entre tu API y la base de datos: guarda objetos calientes, resultados computados y datos de sesión indexados por ID. Es donde cacheas datos *por usuario* o *recomputados con frecuencia* que el CDN no puede compartir entre usuarios.\n\nLas **cachés propias de la base de datos** (buffer pool, caché de consultas, vistas materializadas) aceleran lecturas repetidas de páginas calientes. Lo difícil en todas partes es la **invalidación**: elige TTLs según cuán obsoletos pueden ser los datos, y prefiere cache-aside (leer en el fallo, invalidar explícitamente al escribir) como patrón por defecto."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce product page: images and the page shell come from the CDN, price and stock from Redis with a 30s TTL, and only checkout reads hit PostgreSQL directly.",
+          "es": "Una página de producto de e-commerce: las imágenes y el esqueleto de la página vienen del CDN, precio y stock de Redis con TTL de 30s, y solo las lecturas del checkout golpean PostgreSQL directamente."
+        },
+        {
+          "en": "Twitter caches rendered timelines in Memcached/Redis: assembling a timeline from the DB on every read would melt the database, so reads are served from precomputed cached lists.",
+          "es": "Twitter cachea timelines renderizados en Memcached/Redis: armar un timeline desde la BD en cada lectura fundiría la base de datos, así que las lecturas se sirven desde listas precomputadas en caché."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each piece of data with the layer where it should primarily be cached.",
+              "es": "Conecta cada dato con la capa donde debería cachearse principalmente."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Product images and JS bundles",
+                  "es": "Imágenes de producto y bundles de JS"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "A user's session and profile object",
+                  "es": "La sesión y el objeto de perfil de un usuario"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Hot table pages read on every query",
+                  "es": "Páginas calientes de tablas leídas en cada consulta"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "A public API response identical for all users",
+                  "es": "Una respuesta de API pública idéntica para todos los usuarios"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "CDN / edge",
+                  "es": "CDN / borde"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Application cache (Redis)",
+                  "es": "Caché de aplicación (Redis)"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Database buffer pool",
+                  "es": "Buffer pool de la base de datos"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "CDN with Cache-Control headers",
+                  "es": "CDN con cabeceras Cache-Control"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "In the cache-aside pattern, what does the application do on a cache miss?",
+              "es": "En el patrón cache-aside, ¿qué hace la aplicación cuando hay un fallo de caché?"
+            },
+            "options": [
+              {
+                "en": "Writes the value to the database and the cache simultaneously",
+                "es": "Escribe el valor en la base de datos y la caché simultáneamente"
+              },
+              {
+                "en": "Waits for the cache to fetch the value from the database by itself",
+                "es": "Espera a que la caché busque el valor de la base de datos por sí sola"
+              },
+              {
+                "en": "Reads from the database, writes the result into the cache, then returns it",
+                "es": "Lee de la base de datos, escribe el resultado en la caché y luego lo devuelve"
+              },
+              {
+                "en": "Returns an error so the client retries later",
+                "es": "Devuelve un error para que el cliente reintente después"
+              }
+            ],
+            "explanation": {
+              "en": "In cache-aside, the application owns the logic: on miss it reads the DB, populates the cache (with a TTL), and returns the value. The cache never talks to the database itself — that would be read-through.",
+              "es": "En cache-aside, la aplicación es dueña de la lógica: en un fallo lee la BD, llena la caché (con TTL) y devuelve el valor. La caché nunca habla con la base de datos por sí misma — eso sería read-through."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A very hot cache key expires and thousands of concurrent requests miss at the same instant, all hammering the database with the same query. What is this problem called, and what is a standard mitigation?",
+              "es": "Una clave de caché muy caliente expira y miles de peticiones concurrentes fallan en el mismo instante, todas martillando la base de datos con la misma consulta. ¿Cómo se llama este problema, y cuál es una mitigación estándar?"
+            },
+            "options": [
+              {
+                "en": "False sharing; mitigate by splitting the value into smaller keys",
+                "es": "False sharing; se mitiga dividiendo el valor en claves más pequeñas"
+              },
+              {
+                "en": "Replication lag; mitigate by pinning all reads to the primary database",
+                "es": "Lag de replicación; se mitiga fijando todas las lecturas a la base de datos primaria"
+              },
+              {
+                "en": "Cache stampede (thundering herd); mitigate by letting a single request recompute (lock/coalescing) while others wait or serve stale, plus TTLs with jitter",
+                "es": "Estampida de caché (thundering herd); se mitiga dejando que una sola petición recompute (lock/coalescing) mientras las demás esperan o sirven el valor obsoleto, más TTLs con jitter"
+              },
+              {
+                "en": "Cache poisoning; mitigate by cryptographically signing every cached entry",
+                "es": "Envenenamiento de caché; se mitiga firmando criptográficamente cada entrada cacheada"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "When a popular key expires, every concurrent miss triggers the same expensive database query — a cache stampede. Request coalescing (only one request recomputes, the rest wait or get the stale value) and staggering expirations with random jitter prevent the synchronized thundering herd.",
+              "es": "Cuando una clave popular expira, cada fallo concurrente dispara la misma consulta cara a la base de datos — una estampida de caché. El coalescing de peticiones (solo una recomputa, el resto espera o recibe el valor obsoleto) y escalonar las expiraciones con jitter aleatorio evitan la estampida sincronizada."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "connection-pooling",
+      "question": {
+        "en": "Why do we use connection pooling and how does it fail?",
+        "es": "¿Por qué usamos connection pooling y cómo falla?"
+      },
+      "definition": {
+        "en": "Opening a database connection is expensive: TCP handshake, TLS, authentication, and server-side memory (PostgreSQL forks a process per connection). A **connection pool** keeps a fixed set of warm connections that requests borrow and return, turning a ~50ms setup into a ~0.1ms checkout.\n\nPools fail in two classic ways. **Pool exhaustion**: if queries are slow or a connection leaks (borrowed but never returned), all connections end up busy and new requests block or time out waiting — the app looks 'down' even though the DB is fine. **Overwhelming the database**: 200 API replicas × 20 connections each = 4,000 connections, far beyond what PostgreSQL handles well; this is why proxies like PgBouncer multiplex many client connections onto few server connections.\n\nSize the pool deliberately (often small: CPU cores × a small factor), always set a checkout timeout, and monitor wait time on the pool — it's one of the first saturation signals under load.",
+        "es": "Abrir una conexión a la base de datos es caro: handshake TCP, TLS, autenticación y memoria en el servidor (PostgreSQL crea un proceso por conexión). Un **pool de conexiones** mantiene un conjunto fijo de conexiones calientes que las peticiones toman prestadas y devuelven, convirtiendo un setup de ~50ms en un checkout de ~0.1ms.\n\nLos pools fallan de dos formas clásicas. **Agotamiento del pool**: si las consultas son lentas o una conexión se fuga (prestada pero nunca devuelta), todas las conexiones quedan ocupadas y las peticiones nuevas se bloquean o expiran esperando — la app parece 'caída' aunque la BD esté bien. **Saturar la base de datos**: 200 réplicas API × 20 conexiones cada una = 4,000 conexiones, mucho más de lo que PostgreSQL maneja bien; por eso proxies como PgBouncer multiplexan muchas conexiones cliente sobre pocas conexiones al servidor.\n\nDimensiona el pool deliberadamente (a menudo pequeño: núcleos de CPU × un factor pequeño), siempre configura un timeout de checkout, y monitorea el tiempo de espera del pool — es una de las primeras señales de saturación bajo carga."
+      },
+      "examples": [
+        {
+          "en": "A team forgot to release connections in an error path; under a traffic spike the pool of 20 drained in seconds and every request started timing out — the fix was a `finally` block returning the connection.",
+          "es": "Un equipo olvidó liberar conexiones en una ruta de error; con un pico de tráfico el pool de 20 se vació en segundos y todas las peticiones empezaron a expirar — el arreglo fue un bloque `finally` devolviendo la conexión."
+        },
+        {
+          "en": "Serverless functions each opening their own DB connection famously melt PostgreSQL during bursts; AWS RDS Proxy and PgBouncer exist precisely to pool connections outside the ephemeral functions.",
+          "es": "Las funciones serverless abriendo cada una su propia conexión a la BD funden PostgreSQL durante ráfagas; AWS RDS Proxy y PgBouncer existen precisamente para agrupar conexiones fuera de las funciones efímeras."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your API suddenly returns timeouts, but the database CPU is at 10% and queries run fast when executed manually. Pool metrics show 100% of connections busy and rising checkout wait times. What's the most likely cause?",
+              "es": "Tu API de repente devuelve timeouts, pero la CPU de la base de datos está al 10% y las consultas corren rápido ejecutadas manualmente. Las métricas del pool muestran 100% de conexiones ocupadas y tiempos de espera de checkout crecientes. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "The load balancer is misrouting traffic",
+                "es": "El balanceador de carga está enrutando mal el tráfico"
+              },
+              {
+                "en": "A connection leak or slow code path is holding connections, exhausting the pool",
+                "es": "Una fuga de conexiones o una ruta de código lenta retiene conexiones, agotando el pool"
+              },
+              {
+                "en": "The database is overloaded and needs more CPU",
+                "es": "La base de datos está sobrecargada y necesita más CPU"
+              },
+              {
+                "en": "The pool is too large and must be reduced",
+                "es": "El pool es demasiado grande y hay que reducirlo"
+              }
+            ],
+            "explanation": {
+              "en": "A healthy DB plus a fully-busy pool points at connections being held too long on the app side — a leak (never returned) or a slow path (e.g. an external call made while holding the connection).",
+              "es": "Una BD sana más un pool totalmente ocupado apunta a conexiones retenidas demasiado tiempo del lado de la app — una fuga (nunca devueltas) o una ruta lenta (p. ej. una llamada externa hecha mientras se retiene la conexión)."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You scale your API from 10 to 200 replicas, each with a pool of 20 connections. Explain what problem this creates for PostgreSQL and two ways to fix it.",
+              "es": "Escalas tu API de 10 a 200 réplicas, cada una con un pool de 20 conexiones. Explica qué problema le crea esto a PostgreSQL y dos formas de arreglarlo."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must identify that total connections explode (200 × 20 = 4,000) and that PostgreSQL handles many connections poorly (per-connection process/memory overhead, context switching). Fixes must include at least two of: an external pooler/proxy (PgBouncer, RDS Proxy) multiplexing connections, reducing per-replica pool size, or read replicas/sharding to spread connections.",
+              "es": "Debe identificar que el total de conexiones explota (200 × 20 = 4,000) y que PostgreSQL maneja mal muchas conexiones (proceso/memoria por conexión, cambios de contexto). Los arreglos deben incluir al menos dos de: un pooler/proxy externo (PgBouncer, RDS Proxy) multiplexando conexiones, reducir el tamaño del pool por réplica, o réplicas de lectura/sharding para repartir conexiones."
+            },
+            "reference": "200 replicas × 20 connections = 4,000 connections. PostgreSQL allocates a backend process and memory per connection, so thousands of mostly-idle connections waste RAM and degrade performance via context switching. Fixes: 1) put PgBouncer or RDS Proxy between the apps and the DB to multiplex thousands of client connections onto a few dozen server connections (transaction pooling); 2) shrink each replica's pool (most replicas don't need 20 concurrent queries); 3) offload reads to replicas so each database sees fewer connections."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is the recommended database pool size usually small (roughly CPU cores × a small factor) rather than hundreds of connections?",
+              "es": "¿Por qué el tamaño recomendado de un pool de base de datos suele ser pequeño (aproximadamente núcleos de CPU × un factor pequeño) en lugar de cientos de conexiones?"
+            },
+            "options": [
+              {
+                "en": "Because small pools make checkout timeouts unnecessary",
+                "es": "Porque los pools pequeños hacen innecesarios los timeouts de checkout"
+              },
+              {
+                "en": "Because connections beyond 100 automatically disable TLS encryption",
+                "es": "Porque las conexiones más allá de 100 desactivan automáticamente el cifrado TLS"
+              },
+              {
+                "en": "Because the database can only truly execute about as many queries in parallel as it has cores — extra connections just add context switching and memory overhead without more throughput",
+                "es": "Porque la base de datos solo puede ejecutar en paralelo aproximadamente tantas consultas como núcleos tiene — las conexiones extra solo agregan cambios de contexto y consumo de memoria sin más throughput"
+              },
+              {
+                "en": "Because most database drivers cannot open more than 32 connections",
+                "es": "Porque la mayoría de drivers de base de datos no pueden abrir más de 32 conexiones"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Real parallelism is bounded by the database's cores (and disk I/O): beyond that, more concurrent queries just queue inside the DB while paying per-connection memory and context-switch costs. A small pool with a queue in front usually yields both higher throughput and lower latency than a huge pool.",
+              "es": "El paralelismo real está limitado por los núcleos de la base de datos (y el I/O de disco): más allá de eso, las consultas concurrentes adicionales solo hacen fila dentro de la BD mientras pagan memoria por conexión y costos de cambio de contexto. Un pool pequeño con una fila delante suele dar más throughput y menos latencia que un pool enorme."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "sync-vs-async-processing",
+      "question": {
+        "en": "Synchronous vs asynchronous processing — when do you defer work to a queue?",
+        "es": "Procesamiento síncrono vs asíncrono — ¿cuándo difieres trabajo a una cola?"
+      },
+      "definition": {
+        "en": "**Synchronous** processing does all the work inside the request: the client waits for everything to finish. **Asynchronous** processing does only the essential part inline, enqueues the rest as a job, and responds immediately (often `202 Accepted`); workers consume the queue at their own pace.\n\nDefer work when the client doesn't need its result to continue: sending emails, generating thumbnails, updating analytics, syncing to third parties. The request only needs to durably record *intent* (write the order, enqueue the job) — everything else can happen later.\n\nQueues also act as **shock absorbers**: a spike of 50k requests becomes a backlog processed at the workers' sustainable rate, instead of an outage. The trade-offs: eventual consistency (the work isn't done when the response returns), and you now need retries, idempotent handlers, and dead-letter queues for poison messages.",
+        "es": "El procesamiento **síncrono** hace todo el trabajo dentro de la petición: el cliente espera a que todo termine. El procesamiento **asíncrono** hace solo la parte esencial en línea, encola el resto como un job y responde de inmediato (a menudo `202 Accepted`); los workers consumen la cola a su propio ritmo.\n\nDifiere trabajo cuando el cliente no necesita su resultado para continuar: enviar emails, generar miniaturas, actualizar analítica, sincronizar con terceros. La petición solo necesita registrar la *intención* de forma durable (escribir el pedido, encolar el job) — todo lo demás puede pasar después.\n\nLas colas también actúan como **amortiguadores**: un pico de 50k peticiones se convierte en un backlog procesado al ritmo sostenible de los workers, en lugar de una caída. Los trade-offs: consistencia eventual (el trabajo no está hecho cuando vuelve la respuesta), y ahora necesitas reintentos, handlers idempotentes y colas de mensajes muertos (dead-letter) para mensajes venenosos."
+      },
+      "examples": [
+        {
+          "en": "When you place an Amazon order, the confirmation returns instantly; payment capture, warehouse allocation, and the confirmation email all happen asynchronously through queues.",
+          "es": "Cuando haces un pedido en Amazon, la confirmación vuelve al instante; el cobro, la asignación de almacén y el email de confirmación ocurren asíncronamente a través de colas."
+        },
+        {
+          "en": "A video upload API stores the raw file and enqueues a transcoding job: the user sees 'processing' while workers transcode in the background, instead of holding an HTTP request open for minutes.",
+          "es": "Una API de subida de video guarda el archivo crudo y encola un job de transcodificación: el usuario ve 'procesando' mientras los workers transcodifican en segundo plano, en lugar de mantener una petición HTTP abierta durante minutos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the flow of an asynchronous order-placement request, from arrival to the deferred work completing.",
+              "es": "Ordena el flujo de una petición asíncrona de creación de pedido, desde que llega hasta que se completa el trabajo diferido."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "receive",
+                "label": {
+                  "en": "API receives and validates the request",
+                  "es": "La API recibe y valida la petición"
+                }
+              },
+              {
+                "id": "persist",
+                "label": {
+                  "en": "Persist the order (source of truth)",
+                  "es": "Persistir el pedido (fuente de verdad)"
+                }
+              },
+              {
+                "id": "enqueue",
+                "label": {
+                  "en": "Enqueue follow-up jobs (email, billing)",
+                  "es": "Encolar jobs de seguimiento (email, cobro)"
+                }
+              },
+              {
+                "id": "respond",
+                "label": {
+                  "en": "Respond 202 Accepted to the client",
+                  "es": "Responder 202 Accepted al cliente"
+                }
+              },
+              {
+                "id": "consume",
+                "label": {
+                  "en": "Worker consumes the job from the queue",
+                  "es": "El worker consume el job de la cola"
+                }
+              },
+              {
+                "id": "complete",
+                "label": {
+                  "en": "Worker completes the work and acks the message",
+                  "es": "El worker completa el trabajo y confirma (ack) el mensaje"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "receive",
+              "persist",
+              "enqueue",
+              "respond",
+              "consume",
+              "complete"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which task should stay synchronous inside the request, rather than being deferred to a queue?",
+              "es": "¿Qué tarea debería mantenerse síncrona dentro de la petición, en lugar de diferirse a una cola?"
+            },
+            "options": [
+              {
+                "en": "Validating input and writing the order to the database",
+                "es": "Validar la entrada y escribir el pedido en la base de datos"
+              },
+              {
+                "en": "Sending the order-confirmation email",
+                "es": "Enviar el email de confirmación del pedido"
+              },
+              {
+                "en": "Updating the analytics dashboard",
+                "es": "Actualizar el dashboard de analítica"
+              },
+              {
+                "en": "Syncing the order to a third-party CRM",
+                "es": "Sincronizar el pedido con un CRM de terceros"
+              }
+            ],
+            "explanation": {
+              "en": "The client needs to know its order was accepted and durably recorded — that's the essential intent and must happen inline. Emails, analytics and CRM syncs don't block the user and are classic queue candidates.",
+              "es": "El cliente necesita saber que su pedido fue aceptado y registrado de forma durable — esa es la intención esencial y debe pasar en línea. Emails, analítica y sincronizaciones a CRM no bloquean al usuario y son candidatos clásicos para colas."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your queue delivers messages at-least-once. A worker charges a customer's card and then crashes before acknowledging the message, so it gets redelivered to another worker. What actually prevents a double charge?",
+              "es": "Tu cola entrega mensajes al-menos-una-vez. Un worker cobra la tarjeta de un cliente y luego muere antes de confirmar (ack) el mensaje, así que se vuelve a entregar a otro worker. ¿Qué evita realmente un cobro doble?"
+            },
+            "options": [
+              {
+                "en": "Making the handler idempotent — e.g. recording an idempotency key per payment and skipping messages whose key was already processed",
+                "es": "Hacer el handler idempotente — p. ej. registrar una clave de idempotencia por pago y saltar los mensajes cuya clave ya fue procesada"
+              },
+              {
+                "en": "Enabling the broker's exactly-once flag, which removes duplicates in every scenario",
+                "es": "Activar el flag de exactamente-una-vez del broker, que elimina duplicados en todos los escenarios"
+              },
+              {
+                "en": "The dead-letter queue, which automatically captures the duplicate message",
+                "es": "La cola de mensajes muertos (dead-letter), que captura automáticamente el mensaje duplicado"
+              },
+              {
+                "en": "Processing messages in smaller batches so workers crash less often",
+                "es": "Procesar los mensajes en lotes más pequeños para que los workers mueran con menos frecuencia"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "With at-least-once delivery, redelivery after a crash is by design — the consumer must tolerate duplicates. An idempotency key (checked and recorded atomically with the side effect) makes reprocessing harmless. Broker-level 'exactly-once' doesn't cover external side effects like a card charge, and DLQs handle poison messages, not duplicates.",
+              "es": "Con entrega al-menos-una-vez, la reentrega tras un crash es parte del diseño — el consumidor debe tolerar duplicados. Una clave de idempotencia (verificada y registrada atómicamente junto con el efecto secundario) hace que reprocesar sea inofensivo. El 'exactamente-una-vez' del broker no cubre efectos externos como un cobro de tarjeta, y las DLQ manejan mensajes venenosos, no duplicados."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "batching-and-backpressure",
+      "question": {
+        "en": "What are batching and backpressure, and why do high-throughput systems need both?",
+        "es": "¿Qué son el batching y el backpressure, y por qué los sistemas de alto rendimiento necesitan ambos?"
+      },
+      "definition": {
+        "en": "**Batching** amortizes fixed costs by grouping many small operations into one: one INSERT of 500 rows instead of 500 INSERTs, one Kafka produce call with 1,000 messages, one network round trip instead of hundreds. Throughput rises dramatically at the cost of a little latency (you wait a few ms to fill the batch — hence tuning knobs like 'max batch size OR max wait time').\n\n**Backpressure** is the mechanism by which an overloaded consumer slows down its producers instead of silently drowning. Bounded queues, blocking writes, HTTP 429 responses, and TCP flow control are all backpressure: they push the pressure upstream to whoever can actually decide what to drop or delay.\n\nWithout backpressure, unbounded buffers grow until memory dies — the system fails late, catastrophically, and far from the root cause. With it, the system degrades early and predictably: producers slow down, shed load, or fail fast while the consumer stays alive.",
+        "es": "El **batching** amortiza costos fijos agrupando muchas operaciones pequeñas en una: un INSERT de 500 filas en vez de 500 INSERTs, una llamada de producción a Kafka con 1,000 mensajes, un viaje de red en vez de cientos. El throughput sube dramáticamente a costa de un poco de latencia (esperas unos ms para llenar el lote — de ahí parámetros como 'tamaño máximo de lote O tiempo máximo de espera').\n\nEl **backpressure** es el mecanismo por el cual un consumidor sobrecargado frena a sus productores en lugar de ahogarse en silencio. Colas acotadas, escrituras bloqueantes, respuestas HTTP 429 y el control de flujo de TCP son backpressure: empujan la presión río arriba hacia quien realmente puede decidir qué descartar o retrasar.\n\nSin backpressure, los buffers sin límite crecen hasta agotar la memoria — el sistema falla tarde, catastróficamente y lejos de la causa raíz. Con él, el sistema se degrada temprano y de forma predecible: los productores se frenan, descartan carga o fallan rápido mientras el consumidor sigue vivo."
+      },
+      "examples": [
+        {
+          "en": "Kafka producers batch messages per partition (`linger.ms` waits a few ms to fill batches), multiplying throughput by an order of magnitude versus sending one message per request.",
+          "es": "Los productores de Kafka agrupan mensajes por partición (`linger.ms` espera unos ms para llenar lotes), multiplicando el throughput por un orden de magnitud frente a enviar un mensaje por petición."
+        },
+        {
+          "en": "A logging pipeline with an unbounded in-memory buffer kept 'working' during a downstream outage until every app server ran out of memory at once — a bounded buffer that drops debug logs first would have degraded gracefully.",
+          "es": "Un pipeline de logs con un buffer en memoria sin límite siguió 'funcionando' durante una caída del destino hasta que todos los servidores se quedaron sin memoria a la vez — un buffer acotado que descartara primero los logs de debug se habría degradado con elegancia."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A worker consumes from an in-memory unbounded queue fed by a fast producer. The worker slows down. What happens without backpressure?",
+              "es": "Un worker consume de una cola en memoria sin límite alimentada por un productor rápido. El worker se vuelve lento. ¿Qué pasa sin backpressure?"
+            },
+            "options": [
+              {
+                "en": "The queue silently drops the oldest messages, which is always safe",
+                "es": "La cola descarta en silencio los mensajes más viejos, lo cual siempre es seguro"
+              },
+              {
+                "en": "Nothing — queues exist precisely so speed differences never matter",
+                "es": "Nada — las colas existen precisamente para que las diferencias de velocidad nunca importen"
+              },
+              {
+                "en": "The queue grows without bound until the process runs out of memory and crashes",
+                "es": "La cola crece sin límite hasta que el proceso se queda sin memoria y muere"
+              },
+              {
+                "en": "The producer automatically slows down to match the worker",
+                "es": "El productor se frena automáticamente para igualar al worker"
+              }
+            ],
+            "explanation": {
+              "en": "An unbounded buffer hides the imbalance until memory runs out — the failure appears late and far from the cause. Bounding the queue forces a decision (block, drop, or reject) while the system is still healthy.",
+              "es": "Un buffer sin límite oculta el desbalance hasta que se acaba la memoria — la falla aparece tarde y lejos de la causa. Acotar la cola fuerza una decisión (bloquear, descartar o rechazar) mientras el sistema aún está sano."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your service writes events one-by-one to the database and can't keep up. Explain how batching would help, and what new trade-off it introduces (mention the two knobs a batching config usually exposes).",
+              "es": "Tu servicio escribe eventos uno por uno a la base de datos y no da abasto. Explica cómo ayudaría el batching, y qué nuevo trade-off introduce (menciona los dos parámetros que una configuración de batching suele exponer)."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that batching amortizes per-operation fixed costs (network round trips, transaction/commit overhead, syscalls) so N events cost roughly one operation, greatly increasing throughput. Must state the trade-off: added latency while the batch fills, plus larger blast radius if a batch fails. Must mention the two standard knobs: max batch size and max wait/linger time (flush on whichever comes first).",
+              "es": "Debe explicar que el batching amortiza los costos fijos por operación (viajes de red, overhead de transacción/commit, syscalls) de modo que N eventos cuestan aproximadamente una operación, aumentando mucho el throughput. Debe indicar el trade-off: latencia añadida mientras el lote se llena, y mayor radio de impacto si un lote falla. Debe mencionar los dos parámetros estándar: tamaño máximo de lote y tiempo máximo de espera (se descarga con lo que ocurra primero)."
+            },
+            "reference": "Each single-row INSERT pays a network round trip and commit overhead; batching 500 events into one multi-row INSERT pays those costs once, so throughput can improve 10-100x. The trade-off is latency: events wait in the buffer until the batch flushes, and a failed batch affects many events at once. Configs expose two knobs — max batch size (flush when full) and max linger/wait time (flush after N ms even if not full) — so you bound both throughput cost and added latency."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of the following is a genuine example of backpressure, as opposed to merely hiding overload?",
+              "es": "¿Cuál de las siguientes es un ejemplo genuino de backpressure, en lugar de simplemente ocultar la sobrecarga?"
+            },
+            "options": [
+              {
+                "en": "Compressing messages so more of them fit in the same buffer",
+                "es": "Comprimir los mensajes para que quepan más en el mismo buffer"
+              },
+              {
+                "en": "Retrying failed requests immediately and indefinitely until they succeed",
+                "es": "Reintentar las peticiones fallidas de inmediato e indefinidamente hasta que tengan éxito"
+              },
+              {
+                "en": "Adding more RAM so the in-memory buffer can keep growing during overload",
+                "es": "Agregar más RAM para que el buffer en memoria pueda seguir creciendo durante la sobrecarga"
+              },
+              {
+                "en": "A bounded queue whose producer blocks or receives 429 when the consumer falls behind, pushing the pressure upstream",
+                "es": "Una cola acotada cuyo productor se bloquea o recibe 429 cuando el consumidor se atrasa, empujando la presión río arriba"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Backpressure means the overloaded consumer makes its producers feel the slowdown — a bounded queue that blocks or rejects does exactly that. More RAM or compression just enlarges the buffer and delays the failure, and immediate blind retries add load, which is the opposite of backpressure.",
+              "es": "Backpressure significa que el consumidor sobrecargado hace que sus productores sientan la lentitud — una cola acotada que bloquea o rechaza hace exactamente eso. Más RAM o compresión solo agrandan el buffer y retrasan la falla, y los reintentos ciegos inmediatos agregan carga, que es lo opuesto al backpressure."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "rate-limiting-strategies",
+      "question": {
+        "en": "How do rate limiting algorithms work (token bucket, sliding window)?",
+        "es": "¿Cómo funcionan los algoritmos de rate limiting (token bucket, ventana deslizante)?"
+      },
+      "definition": {
+        "en": "Rate limiting protects your service and enforces fairness by bounding how many requests a client may make. The **token bucket** is the most common algorithm: a bucket holds up to `capacity` tokens and refills at `rate` tokens per second. Each request consumes one token; if the bucket is empty, the request is rejected (HTTP 429) or delayed. Its key virtue: it allows short **bursts** up to the bucket capacity while enforcing the average rate.\n\n**Fixed window** counts requests per interval (e.g. 100/minute) — simple, but allows up to 2× the limit at window boundaries (100 at 0:59 + 100 at 1:01). The **sliding window** fixes this by weighting the previous window's count or tracking individual timestamps, smoothing enforcement over a rolling interval.\n\nIn distributed systems the counters live in a shared store (usually Redis with atomic operations), and good limiters return `429 Too Many Requests` with a `Retry-After` header so well-behaved clients back off instead of hammering.",
+        "es": "El rate limiting protege tu servicio e impone equidad limitando cuántas peticiones puede hacer un cliente. El **token bucket** es el algoritmo más común: un balde contiene hasta `capacidad` tokens y se rellena a `tasa` tokens por segundo. Cada petición consume un token; si el balde está vacío, la petición se rechaza (HTTP 429) o se retrasa. Su virtud clave: permite **ráfagas** cortas hasta la capacidad del balde mientras impone la tasa promedio.\n\nLa **ventana fija** cuenta peticiones por intervalo (p. ej. 100/minuto) — simple, pero permite hasta 2× el límite en los bordes de la ventana (100 a las 0:59 + 100 a la 1:01). La **ventana deslizante** lo corrige ponderando el conteo de la ventana anterior o registrando timestamps individuales, suavizando la aplicación sobre un intervalo móvil.\n\nEn sistemas distribuidos los contadores viven en un almacén compartido (normalmente Redis con operaciones atómicas), y los buenos limitadores devuelven `429 Too Many Requests` con cabecera `Retry-After` para que los clientes educados se frenen en lugar de martillar."
+      },
+      "examples": [
+        {
+          "en": "The GitHub API gives authenticated users 5,000 requests per hour and returns `X-RateLimit-Remaining` headers, letting clients pace themselves before hitting 429s.",
+          "es": "La API de GitHub da a usuarios autenticados 5,000 peticiones por hora y devuelve cabeceras `X-RateLimit-Remaining`, permitiendo a los clientes dosificarse antes de recibir 429s."
+        },
+        {
+          "en": "Stripe rate-limits per API key using token buckets in Redis: a merchant's batch job can burst briefly, but sustained abuse gets 429s while other merchants remain unaffected.",
+          "es": "Stripe limita por clave de API usando token buckets en Redis: el job por lotes de un comercio puede hacer una ráfaga breve, pero el abuso sostenido recibe 429s mientras los demás comercios no se ven afectados."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps a token bucket rate limiter performs when a request arrives.",
+              "es": "Ordena los pasos que realiza un rate limiter de token bucket cuando llega una petición."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "arrive",
+                "label": {
+                  "en": "Request arrives for a client key",
+                  "es": "Llega una petición para la clave de un cliente"
+                }
+              },
+              {
+                "id": "refill",
+                "label": {
+                  "en": "Refill tokens based on time elapsed × rate (up to capacity)",
+                  "es": "Rellenar tokens según tiempo transcurrido × tasa (hasta la capacidad)"
+                }
+              },
+              {
+                "id": "check",
+                "label": {
+                  "en": "Check if at least 1 token is available",
+                  "es": "Verificar si hay al menos 1 token disponible"
+                }
+              },
+              {
+                "id": "consume",
+                "label": {
+                  "en": "If yes: consume a token and allow the request",
+                  "es": "Si sí: consumir un token y permitir la petición"
+                }
+              },
+              {
+                "id": "reject",
+                "label": {
+                  "en": "If no: reject with 429 and Retry-After",
+                  "es": "Si no: rechazar con 429 y Retry-After"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "arrive",
+              "refill",
+              "check",
+              "consume",
+              "reject"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A fixed-window limiter allows 100 requests/minute. Why can a client get ~200 requests through in a few seconds, and which algorithm fixes it?",
+              "es": "Un limitador de ventana fija permite 100 peticiones/minuto. ¿Por qué un cliente puede colar ~200 peticiones en unos segundos, y qué algoritmo lo corrige?"
+            },
+            "options": [
+              {
+                "en": "By sending 100 at the end of one window and 100 at the start of the next; a sliding window smooths counting across the boundary",
+                "es": "Enviando 100 al final de una ventana y 100 al inicio de la siguiente; una ventana deslizante suaviza el conteo a través del borde"
+              },
+              {
+                "en": "Because counters in Redis are eventually consistent; strong consistency fixes it",
+                "es": "Porque los contadores en Redis son eventualmente consistentes; la consistencia fuerte lo corrige"
+              },
+              {
+                "en": "It can't — fixed windows strictly enforce the limit at all times",
+                "es": "No puede — las ventanas fijas imponen el límite estrictamente en todo momento"
+              },
+              {
+                "en": "By using multiple API keys; only IP-based limits fix it",
+                "es": "Usando múltiples claves de API; solo los límites por IP lo corrigen"
+              }
+            ],
+            "explanation": {
+              "en": "Fixed windows reset the counter at the boundary, so bursts on both sides of the reset can double the effective rate. Sliding windows weight or track requests over a rolling interval, eliminating the boundary loophole.",
+              "es": "Las ventanas fijas reinician el contador en el borde, así que ráfagas a ambos lados del reinicio pueden duplicar la tasa efectiva. Las ventanas deslizantes ponderan o registran peticiones sobre un intervalo móvil, eliminando el truco del borde."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each rate-limiting building block with the role it plays.",
+              "es": "Conecta cada pieza del rate limiting con el papel que juega."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Token bucket",
+                  "es": "Token bucket"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Sliding window",
+                  "es": "Ventana deslizante"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Retry-After header",
+                  "es": "Cabecera Retry-After"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Atomic counters in Redis",
+                  "es": "Contadores atómicos en Redis"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Allows short bursts up to a capacity while enforcing the average rate",
+                  "es": "Permite ráfagas cortas hasta una capacidad mientras impone la tasa promedio"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Smooths enforcement over a rolling interval instead of resetting at boundaries",
+                  "es": "Suaviza la aplicación sobre un intervalo móvil en lugar de reiniciar en los bordes"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Tells a rejected client how long to back off before retrying",
+                  "es": "Le dice a un cliente rechazado cuánto esperar antes de reintentar"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Shared state so every API replica enforces the same limit per client",
+                  "es": "Estado compartido para que cada réplica de la API imponga el mismo límite por cliente"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "partitioning-and-sharding",
+      "question": {
+        "en": "How do you partition and shard data when one database is no longer enough?",
+        "es": "¿Cómo particionas y fragmentas (shard) los datos cuando una base de datos ya no alcanza?"
+      },
+      "definition": {
+        "en": "**Sharding** splits data horizontally across independent databases: each shard holds a subset of rows, chosen by a **shard key**. The two main schemes are **hash-based** (hash the key → shard; distributes uniformly but range queries scatter across all shards) and **range-based** (key ranges → shards; range scans are efficient but hot ranges create hotspots).\n\nChoosing the shard key is the critical decision: it should match your dominant access pattern so most queries hit **one** shard (e.g. `user_id` for a user-centric app keeps each user's data together). A bad key means cross-shard queries, scatter-gather fan-out, and no more cheap JOINs or transactions across shards.\n\nSharding is a last resort after caching, read replicas and vertical scaling — because resharding live data, handling hotspots (one celebrity user overloading a shard), and losing cross-shard transactions are permanent operational costs.",
+        "es": "El **sharding** divide los datos horizontalmente entre bases de datos independientes: cada shard contiene un subconjunto de filas, elegido por una **clave de sharding**. Los dos esquemas principales son **por hash** (hash de la clave → shard; distribuye uniformemente pero las consultas por rango se dispersan por todos los shards) y **por rango** (rangos de claves → shards; los escaneos por rango son eficientes pero los rangos calientes crean hotspots).\n\nElegir la clave de sharding es la decisión crítica: debe coincidir con tu patrón de acceso dominante para que la mayoría de consultas golpeen **un** shard (p. ej. `user_id` en una app centrada en usuarios mantiene juntos los datos de cada usuario). Una mala clave significa consultas cross-shard, fan-out de dispersión-recolección, y adiós a JOINs y transacciones baratas entre shards.\n\nEl sharding es el último recurso después de caché, réplicas de lectura y escalado vertical — porque re-shardear datos en vivo, manejar hotspots (un usuario celebridad sobrecargando un shard) y perder transacciones cross-shard son costos operativos permanentes."
+      },
+      "examples": [
+        {
+          "en": "Discord shards messages by channel ID: all messages of a channel live on the same shard, so loading a channel's history is a single-shard query even at billions of messages.",
+          "es": "Discord fragmenta los mensajes por ID de canal: todos los mensajes de un canal viven en el mismo shard, así que cargar el historial de un canal es una consulta a un solo shard incluso con miles de millones de mensajes."
+        },
+        {
+          "en": "Instagram sharded PostgreSQL by user ID with the shard encoded inside the generated ID itself, so any service can route a query directly to the right shard without a lookup table.",
+          "es": "Instagram fragmentó PostgreSQL por ID de usuario con el shard codificado dentro del propio ID generado, de modo que cualquier servicio puede enrutar una consulta directamente al shard correcto sin tabla de búsqueda."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each sharding concept with its consequence.",
+              "es": "Conecta cada concepto de sharding con su consecuencia."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Hash-based sharding",
+                  "es": "Sharding por hash"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Range-based sharding",
+                  "es": "Sharding por rango"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Bad shard key",
+                  "es": "Mala clave de sharding"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Hotspot (celebrity problem)",
+                  "es": "Hotspot (problema de la celebridad)"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Uniform distribution, but range queries hit every shard",
+                  "es": "Distribución uniforme, pero las consultas por rango golpean todos los shards"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Efficient range scans, but sequential keys overload one shard",
+                  "es": "Escaneos por rango eficientes, pero las claves secuenciales sobrecargan un shard"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Most queries become scatter-gather across shards",
+                  "es": "La mayoría de consultas se vuelven dispersión-recolección entre shards"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "One extremely hot key overloads its shard while others idle",
+                  "es": "Una clave extremadamente caliente sobrecarga su shard mientras otros están ociosos"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A messaging app's queries are almost always 'load all messages of conversation X'. What is the best shard key?",
+              "es": "Las consultas de una app de mensajería son casi siempre 'cargar todos los mensajes de la conversación X'. ¿Cuál es la mejor clave de sharding?"
+            },
+            "options": [
+              {
+                "en": "conversation_id — every query resolves within a single shard",
+                "es": "conversation_id — cada consulta se resuelve dentro de un solo shard"
+              },
+              {
+                "en": "message_id — it's the primary key, so it's the natural choice",
+                "es": "message_id — es la clave primaria, así que es la opción natural"
+              },
+              {
+                "en": "created_at — recent messages are the most queried",
+                "es": "created_at — los mensajes recientes son los más consultados"
+              },
+              {
+                "en": "sender_id — it evenly distributes users",
+                "es": "sender_id — distribuye a los usuarios uniformemente"
+              }
+            ],
+            "explanation": {
+              "en": "The shard key must match the dominant access pattern. Sharding by conversation_id keeps each conversation's messages together; message_id or sender_id would scatter one conversation across shards, and created_at creates a hotspot on the newest shard.",
+              "es": "La clave de sharding debe coincidir con el patrón de acceso dominante. Fragmentar por conversation_id mantiene juntos los mensajes de cada conversación; message_id o sender_id dispersarían una conversación entre shards, y created_at crea un hotspot en el shard más nuevo."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your app shards by user_id and works well — until one celebrity account starts generating 100× the traffic of an entire normal shard. What is a standard way to handle this hotspot?",
+              "es": "Tu app fragmenta por user_id y funciona bien — hasta que una cuenta de celebridad empieza a generar 100× el tráfico de un shard normal completo. ¿Cuál es una forma estándar de manejar este hotspot?"
+            },
+            "options": [
+              {
+                "en": "Treat the hot key specially: cache its reads aggressively and, if needed, give it a dedicated shard or sub-partition its data",
+                "es": "Tratar la clave caliente de forma especial: cachear sus lecturas agresivamente y, si hace falta, darle un shard dedicado o sub-particionar sus datos"
+              },
+              {
+                "en": "Apply stricter rate limits to the celebrity until their shard recovers",
+                "es": "Aplicar límites de tasa más estrictos a la celebridad hasta que su shard se recupere"
+              },
+              {
+                "en": "Move all the data back to a single vertically-scaled database",
+                "es": "Mover todos los datos de vuelta a una sola base de datos escalada verticalmente"
+              },
+              {
+                "en": "Re-shard the whole cluster by created_at so the traffic spreads over time",
+                "es": "Re-shardear todo el clúster por created_at para que el tráfico se reparta en el tiempo"
+              }
+            ],
+            "multiple": false,
+            "explanation": {
+              "en": "Hotspots are a per-key problem, so the fix is per-key: absorb the celebrity's read traffic with caching, and isolate or further split that key (dedicated shard, sub-partitioning by user_id + bucket). Resharding by created_at creates a different hotspot on the newest shard, un-sharding gives up scalability, and rate limiting your most popular user punishes exactly the traffic you want.",
+              "es": "Los hotspots son un problema por clave, así que el arreglo es por clave: absorber el tráfico de lectura de la celebridad con caché, y aislar o dividir aún más esa clave (shard dedicado, sub-particionar por user_id + bucket). Re-shardear por created_at crea otro hotspot en el shard más nuevo, des-shardear renuncia a la escalabilidad, y limitar a tu usuario más popular castiga exactamente el tráfico que quieres tener."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "read-replicas-splitting",
+      "question": {
+        "en": "How do read replicas and read/write splitting work, and what can go wrong?",
+        "es": "¿Cómo funcionan las réplicas de lectura y la separación lectura/escritura, y qué puede salir mal?"
+      },
+      "definition": {
+        "en": "A **read replica** continuously copies the primary database's changes (usually by streaming its write-ahead log). **Read/write splitting** routes all writes to the primary and distributes reads across replicas — a natural fit because most applications read 10-100× more than they write, and you can add replicas to scale reads almost linearly.\n\nThe catch is **replication lag**: replicas apply changes milliseconds to seconds after the primary. A user who updates their profile and immediately reloads the page may read a stale replica and see their old data — the classic *read-your-own-writes* problem.\n\nMitigations: route a user's reads to the primary for a short window after they write (or use session 'pinning'), track the replication position the client must see before a replica may serve it, or accept staleness for content where it's harmless (feeds, counters). Also monitor lag — under heavy write load, replicas can fall far behind precisely when traffic peaks.",
+        "es": "Una **réplica de lectura** copia continuamente los cambios de la base de datos primaria (normalmente transmitiendo su write-ahead log). La **separación lectura/escritura** enruta todas las escrituras a la primaria y distribuye las lecturas entre réplicas — encaja naturalmente porque la mayoría de aplicaciones leen 10-100× más de lo que escriben, y puedes agregar réplicas para escalar lecturas casi linealmente.\n\nEl problema es el **lag de replicación**: las réplicas aplican los cambios milisegundos a segundos después que la primaria. Un usuario que actualiza su perfil y recarga la página inmediatamente puede leer de una réplica desactualizada y ver sus datos viejos — el clásico problema de *leer-tus-propias-escrituras*.\n\nMitigaciones: enrutar las lecturas de un usuario a la primaria durante una ventana corta después de escribir (o 'fijar' la sesión), rastrear la posición de replicación que el cliente debe ver antes de que una réplica pueda atenderlo, o aceptar la obsolescencia donde es inofensiva (feeds, contadores). Además monitorea el lag — bajo carga alta de escritura, las réplicas pueden atrasarse mucho justo cuando el tráfico llega a su pico."
+      },
+      "examples": [
+        {
+          "en": "A typical SaaS runs one PostgreSQL primary plus 2-5 replicas behind a router (or app-level logic): dashboards, search and reports read from replicas, while checkout and account changes hit the primary.",
+          "es": "Un SaaS típico corre una primaria de PostgreSQL más 2-5 réplicas detrás de un router (o lógica en la app): dashboards, búsqueda y reportes leen de réplicas, mientras el checkout y los cambios de cuenta van a la primaria."
+        },
+        {
+          "en": "A user reports 'I changed my avatar but it didn't save' — it did save; their next read hit a replica lagging 3 seconds behind. The fix was pinning reads to the primary for 5 seconds after any write by that user.",
+          "es": "Un usuario reporta 'cambié mi avatar pero no se guardó' — sí se guardó; su siguiente lectura golpeó una réplica atrasada 3 segundos. El arreglo fue fijar las lecturas a la primaria durante 5 segundos después de cualquier escritura de ese usuario."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A user saves a change and the very next page load shows the old value. The write succeeded. What is the most likely cause?",
+              "es": "Un usuario guarda un cambio y la siguiente carga de página muestra el valor viejo. La escritura tuvo éxito. ¿Cuál es la causa más probable?"
+            },
+            "options": [
+              {
+                "en": "The write was silently rolled back by the primary",
+                "es": "La primaria revirtió la escritura silenciosamente"
+              },
+              {
+                "en": "The load balancer dropped the write request",
+                "es": "El balanceador de carga descartó la petición de escritura"
+              },
+              {
+                "en": "The follow-up read was served by a replica that hadn't applied the write yet (replication lag)",
+                "es": "La lectura posterior la atendió una réplica que aún no había aplicado la escritura (lag de replicación)"
+              },
+              {
+                "en": "The database index was corrupted",
+                "es": "El índice de la base de datos estaba corrupto"
+              }
+            ],
+            "explanation": {
+              "en": "This is the textbook read-your-own-writes anomaly: the write landed on the primary, but the read was routed to a lagging replica. Fix by pinning post-write reads to the primary or waiting for the replica to catch up to the write's position.",
+              "es": "Es la anomalía de libro de leer-tus-propias-escrituras: la escritura llegó a la primaria, pero la lectura fue enrutada a una réplica atrasada. Se arregla fijando las lecturas post-escritura a la primaria o esperando a que la réplica alcance la posición de esa escritura."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which workload benefits the most from adding read replicas?",
+              "es": "¿Qué carga de trabajo se beneficia más de agregar réplicas de lectura?"
+            },
+            "options": [
+              {
+                "en": "A write-heavy ingestion pipeline (95% writes)",
+                "es": "Un pipeline de ingesta dominado por escrituras (95% escrituras)"
+              },
+              {
+                "en": "A read-heavy app (95% reads) that tolerates slightly stale data",
+                "es": "Una app dominada por lecturas (95% lecturas) que tolera datos ligeramente obsoletos"
+              },
+              {
+                "en": "A workload requiring strongly consistent reads of every write",
+                "es": "Una carga que requiere lecturas fuertemente consistentes de cada escritura"
+              },
+              {
+                "en": "A tiny database that fits entirely in memory with low traffic",
+                "es": "Una base de datos diminuta que cabe entera en memoria con poco tráfico"
+              }
+            ],
+            "explanation": {
+              "en": "Replicas only multiply read capacity — every replica still applies all writes. Write-heavy loads need partitioning/queues instead, and strongly consistent reads must go to the primary anyway.",
+              "es": "Las réplicas solo multiplican la capacidad de lectura — cada réplica igual aplica todas las escrituras. Las cargas de escritura intensa necesitan particionado/colas, y las lecturas fuertemente consistentes deben ir a la primaria de todos modos."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order how a write propagates from the application until a read replica can serve it — the window during which stale reads are possible.",
+              "es": "Ordena cómo se propaga una escritura desde la aplicación hasta que una réplica de lectura puede servirla — la ventana durante la cual son posibles las lecturas obsoletas."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "write",
+                "label": {
+                  "en": "Application sends the write to the primary",
+                  "es": "La aplicación envía la escritura a la primaria"
+                }
+              },
+              {
+                "id": "commit",
+                "label": {
+                  "en": "Primary commits and appends the change to its WAL",
+                  "es": "La primaria hace commit y agrega el cambio a su WAL"
+                }
+              },
+              {
+                "id": "stream",
+                "label": {
+                  "en": "WAL entries are streamed to the replica",
+                  "es": "Las entradas del WAL se transmiten a la réplica"
+                }
+              },
+              {
+                "id": "apply",
+                "label": {
+                  "en": "Replica applies the change to its own copy",
+                  "es": "La réplica aplica el cambio a su propia copia"
+                }
+              },
+              {
+                "id": "serve",
+                "label": {
+                  "en": "Replica can now serve reads that include the write",
+                  "es": "La réplica ya puede servir lecturas que incluyen la escritura"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "write",
+              "commit",
+              "stream",
+              "apply",
+              "serve"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "slow-dependency-resilience",
+      "question": {
+        "en": "What happens when one dependency becomes slow, and how do timeouts, hedging and load shedding help?",
+        "es": "¿Qué pasa cuando una dependencia se vuelve lenta, y cómo ayudan los timeouts, el hedging y el load shedding?"
+      },
+      "definition": {
+        "en": "A slow dependency is more dangerous than a dead one. Dead dependencies fail fast; slow ones make your threads, connections and memory pile up waiting, until *your* service exhausts its resources and the slowness **cascades** upstream through the whole call chain.\n\nDefenses, in order: **timeouts** on every remote call (aggressive, based on the dependency's p99 — no timeout means waiting forever); **circuit breakers** that stop calling a failing dependency and fail fast, giving it room to recover; **hedged requests** for latency-critical reads — if the first attempt hasn't answered by the p95 latency, send a second to another replica and take whichever answers first (tames tail latency, costs some extra load, requires idempotent operations).\n\n**Load shedding** is the last line: when saturated, deliberately reject some requests (429/503, prioritizing critical traffic) so the rest complete within their budget. Serving 80% of users well beats serving 100% of users a timeout. Combined with **graceful degradation** — returning cached or partial data when a non-critical dependency is down — the system bends instead of breaking.",
+        "es": "Una dependencia lenta es más peligrosa que una muerta. Las dependencias muertas fallan rápido; las lentas hacen que tus threads, conexiones y memoria se acumulen esperando, hasta que *tu* servicio agota sus recursos y la lentitud se propaga en **cascada** río arriba por toda la cadena de llamadas.\n\nLas defensas, en orden: **timeouts** en cada llamada remota (agresivos, basados en el p99 de la dependencia — sin timeout significa esperar para siempre); **circuit breakers** que dejan de llamar a una dependencia que falla y fallan rápido, dándole espacio para recuperarse; **peticiones hedged** para lecturas críticas en latencia — si el primer intento no respondió al llegar al p95 de latencia, envía un segundo a otra réplica y toma el que responda primero (doma la latencia de cola, cuesta algo de carga extra, requiere operaciones idempotentes).\n\nEl **load shedding** es la última línea: al saturarse, rechaza deliberadamente algunas peticiones (429/503, priorizando el tráfico crítico) para que el resto complete dentro de su presupuesto. Atender bien al 80% de los usuarios es mejor que darle timeout al 100%. Combinado con la **degradación elegante** — devolver datos cacheados o parciales cuando una dependencia no crítica está caída — el sistema se dobla en vez de romperse."
+      },
+      "examples": [
+        {
+          "en": "Netflix's Hystrix popularized circuit breakers: when the recommendations service degrades, the home page falls back to generic popular titles instead of timing out — most users never notice.",
+          "es": "Hystrix de Netflix popularizó los circuit breakers: cuando el servicio de recomendaciones se degrada, la página principal recurre a títulos populares genéricos en lugar de expirar — la mayoría de usuarios ni lo nota."
+        },
+        {
+          "en": "Google's 'The Tail at Scale' paper describes hedged requests: sending a backup request after the p95 delay cut tail latency dramatically with only ~5% extra load on their storage systems.",
+          "es": "El paper 'The Tail at Scale' de Google describe las peticiones hedged: enviar una petición de respaldo tras el retraso p95 recortó drásticamente la latencia de cola con solo ~5% de carga extra en sus sistemas de almacenamiento."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Service A calls B with no timeout. B starts taking 30s per call instead of 50ms. What happens to A?",
+              "es": "El servicio A llama a B sin timeout. B empieza a tardar 30s por llamada en vez de 50ms. ¿Qué le pasa a A?"
+            },
+            "options": [
+              {
+                "en": "A automatically retries with a different dependency",
+                "es": "A reintenta automáticamente con otra dependencia"
+              },
+              {
+                "en": "A's load balancer detects the slowness and removes B",
+                "es": "El balanceador de A detecta la lentitud y quita a B"
+              },
+              {
+                "en": "A's threads and connections pile up waiting on B until A itself exhausts resources and fails — a cascading failure",
+                "es": "Los threads y conexiones de A se acumulan esperando a B hasta que A misma agota recursos y falla — una falla en cascada"
+              },
+              {
+                "en": "Nothing — A only fails if B returns errors, not if B is slow",
+                "es": "Nada — A solo falla si B devuelve errores, no si B es lenta"
+              }
+            ],
+            "explanation": {
+              "en": "Without a timeout, every in-flight call to B holds a thread/connection for 30s. Under steady traffic those resources saturate within seconds, and A becomes as unavailable as B — slowness propagates upstream unless something fails fast.",
+              "es": "Sin timeout, cada llamada en curso a B retiene un thread/conexión por 30s. Con tráfico constante esos recursos se saturan en segundos, y A queda tan indisponible como B — la lentitud se propaga río arriba a menos que algo falle rápido."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your API is saturated: p99 latency exploded and requests are queueing. Explain what load shedding is, why rejecting requests can be the right call, and one way to decide which requests to reject first.",
+              "es": "Tu API está saturada: el p99 explotó y las peticiones se están encolando. Explica qué es el load shedding, por qué rechazar peticiones puede ser lo correcto, y una forma de decidir qué peticiones rechazar primero."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define load shedding as deliberately rejecting a portion of requests (e.g. 429/503) when the system is beyond capacity. Must justify it: serving fewer requests within their latency budget beats letting all requests queue and time out (queueing makes everyone fail). Must give a prioritization strategy, e.g. shed by request priority/criticality (drop analytics before checkout), by client tier, drop retries first, or reject requests already older than their deadline.",
+              "es": "Debe definir el load shedding como rechazar deliberadamente una porción de las peticiones (p. ej. 429/503) cuando el sistema supera su capacidad. Debe justificarlo: atender menos peticiones dentro de su presupuesto de latencia es mejor que dejar que todas se encolen y expiren (el encolamiento hace fallar a todos). Debe dar una estrategia de priorización, p. ej. descartar por prioridad/criticidad (analítica antes que checkout), por nivel de cliente, descartar reintentos primero, o rechazar peticiones que ya superaron su deadline."
+            },
+            "reference": "Load shedding means the service intentionally rejects excess requests (fast 429/503 responses) once it detects saturation (queue depth, latency, CPU). It's right because beyond capacity, queueing only adds latency until every request times out — rejecting 20% quickly lets the remaining 80% succeed within budget. Prioritize by criticality: shed low-value traffic first (analytics, prefetching, background syncs) and protect revenue-critical paths (checkout, login); also drop requests whose client deadline has already passed since answering them helps no one."
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each resilience mechanism with what it does when a dependency misbehaves.",
+              "es": "Conecta cada mecanismo de resiliencia con lo que hace cuando una dependencia se comporta mal."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Timeout",
+                  "es": "Timeout"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Circuit breaker",
+                  "es": "Circuit breaker"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Hedged request",
+                  "es": "Petición hedged"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Graceful degradation",
+                  "es": "Degradación elegante"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Bounds how long any single remote call may wait before failing fast",
+                  "es": "Acota cuánto puede esperar cualquier llamada remota individual antes de fallar rápido"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Stops calling a repeatedly-failing dependency so it gets room to recover",
+                  "es": "Deja de llamar a una dependencia que falla repetidamente para darle espacio a recuperarse"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Sends a backup copy of a slow read to another replica and keeps the first response",
+                  "es": "Envía una copia de respaldo de una lectura lenta a otra réplica y se queda con la primera respuesta"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Serves cached or partial data when a non-critical dependency is down",
+                  "es": "Sirve datos cacheados o parciales cuando una dependencia no crítica está caída"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "When designing for 100k RPS, why do you measure p99 latency instead of the average?",
+          "es": "Al diseñar para 100k RPS, ¿por qué mides la latencia p99 en lugar del promedio?"
+        },
+        "options": [
+          {
+            "en": "p99 is easier and cheaper to compute than an average",
+            "es": "El p99 es más fácil y barato de calcular que un promedio"
+          },
+          {
+            "en": "The average hides the slow tail; p99 reflects what the slowest real users actually experience",
+            "es": "El promedio oculta la cola lenta; el p99 refleja lo que realmente experimentan los usuarios reales más lentos"
+          },
+          {
+            "en": "Averages only work for systems below 1k RPS",
+            "es": "Los promedios solo funcionan en sistemas por debajo de 1k RPS"
+          },
+          {
+            "en": "p99 and average are always nearly identical, so it doesn't matter",
+            "es": "El p99 y el promedio son casi idénticos siempre, así que da igual"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Your API has endpoints that take 5ms and others that take 5 seconds. Which load balancing strategy avoids piling long requests onto one server?",
+          "es": "Tu API tiene endpoints que tardan 5ms y otros que tardan 5 segundos. ¿Qué estrategia de balanceo evita acumular peticiones largas en un solo servidor?"
+        },
+        "options": [
+          {
+            "en": "Round robin",
+            "es": "Round robin"
+          },
+          {
+            "en": "Least connections",
+            "es": "Least connections"
+          },
+          {
+            "en": "Sticky sessions by client IP",
+            "es": "Sesiones sticky por IP del cliente"
+          },
+          {
+            "en": "Random selection",
+            "es": "Selección aleatoria"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the main advantage of consistent hashing over modulo hashing for a cache cluster?",
+          "es": "¿Cuál es la ventaja principal del hashing consistente sobre el hashing por módulo para un clúster de caché?"
+        },
+        "options": [
+          {
+            "en": "Adding or removing a node only remaps ~1/N of the keys instead of nearly all of them",
+            "es": "Agregar o quitar un nodo solo reubica ~1/N de las claves en lugar de casi todas"
+          },
+          {
+            "en": "It compresses the keys so the cache stores more data",
+            "es": "Comprime las claves para que la caché guarde más datos"
+          },
+          {
+            "en": "It removes the need for cache invalidation",
+            "es": "Elimina la necesidad de invalidar la caché"
+          },
+          {
+            "en": "It guarantees perfectly equal load on every node at all times",
+            "es": "Garantiza carga perfectamente igual en cada nodo en todo momento"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which content belongs in the CDN rather than the application cache?",
+          "es": "¿Qué contenido pertenece al CDN y no a la caché de aplicación?"
+        },
+        "options": [
+          {
+            "en": "Database connection credentials",
+            "es": "Las credenciales de conexión a la base de datos"
+          },
+          {
+            "en": "Static assets and public responses identical for all users",
+            "es": "Recursos estáticos y respuestas públicas idénticas para todos los usuarios"
+          },
+          {
+            "en": "Per-user personalized recommendation lists",
+            "es": "Listas de recomendaciones personalizadas por usuario"
+          },
+          {
+            "en": "A user's shopping cart contents",
+            "es": "El contenido del carrito de compras de un usuario"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why does a connection pool exist in the first place?",
+          "es": "¿Por qué existe un pool de conexiones en primer lugar?"
+        },
+        "options": [
+          {
+            "en": "Pools encrypt queries automatically",
+            "es": "Los pools cifran las consultas automáticamente"
+          },
+          {
+            "en": "Pools make transactions unnecessary",
+            "es": "Los pools hacen innecesarias las transacciones"
+          },
+          {
+            "en": "Opening a DB connection is expensive (TCP, TLS, auth, server memory), so reusing warm connections is far cheaper",
+            "es": "Abrir una conexión a la BD es caro (TCP, TLS, auth, memoria del servidor), así que reutilizar conexiones calientes es mucho más barato"
+          },
+          {
+            "en": "Databases refuse to accept more than one connection per client",
+            "es": "Las bases de datos se niegan a aceptar más de una conexión por cliente"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What role does a message queue play during a sudden traffic spike?",
+          "es": "¿Qué papel juega una cola de mensajes durante un pico repentino de tráfico?"
+        },
+        "options": [
+          {
+            "en": "It speeds up each individual job so the spike ends sooner",
+            "es": "Acelera cada job individual para que el pico termine antes"
+          },
+          {
+            "en": "It absorbs the burst as a backlog that workers process at a sustainable rate",
+            "es": "Absorbe la ráfaga como un backlog que los workers procesan a un ritmo sostenible"
+          },
+          {
+            "en": "It duplicates traffic to a standby datacenter",
+            "es": "Duplica el tráfico a un datacenter de respaldo"
+          },
+          {
+            "en": "It guarantees every job is processed exactly once with zero configuration",
+            "es": "Garantiza que cada job se procese exactamente una vez sin configuración"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What distinguishes a token bucket rate limiter from a fixed window counter?",
+          "es": "¿Qué distingue a un rate limiter de token bucket de un contador de ventana fija?"
+        },
+        "options": [
+          {
+            "en": "Fixed windows can't be implemented in Redis",
+            "es": "Las ventanas fijas no se pueden implementar en Redis"
+          },
+          {
+            "en": "The token bucket blocks all bursts completely",
+            "es": "El token bucket bloquea todas las ráfagas por completo"
+          },
+          {
+            "en": "The token bucket allows controlled bursts up to its capacity while still enforcing the average rate",
+            "es": "El token bucket permite ráfagas controladas hasta su capacidad mientras impone la tasa promedio"
+          },
+          {
+            "en": "The token bucket requires no state at all",
+            "es": "El token bucket no requiere ningún estado"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the most important factor when choosing a shard key?",
+          "es": "¿Cuál es el factor más importante al elegir una clave de sharding?"
+        },
+        "options": [
+          {
+            "en": "That the key is as short as possible to save storage",
+            "es": "Que la clave sea lo más corta posible para ahorrar almacenamiento"
+          },
+          {
+            "en": "That the dominant query pattern resolves within a single shard",
+            "es": "Que el patrón de consulta dominante se resuelva dentro de un solo shard"
+          },
+          {
+            "en": "That the key is human-readable for debugging",
+            "es": "Que la clave sea legible por humanos para depurar"
+          },
+          {
+            "en": "That the key is a UUID, always",
+            "es": "Que la clave sea un UUID, siempre"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A user updates their profile and instantly sees old data on the next page load. Which mechanism prevents this while keeping read replicas?",
+          "es": "Un usuario actualiza su perfil y ve datos viejos al instante en la siguiente carga. ¿Qué mecanismo lo evita manteniendo las réplicas de lectura?"
+        },
+        "options": [
+          {
+            "en": "Cache the stale value so at least it's consistent",
+            "es": "Cachear el valor obsoleto para que al menos sea consistente"
+          },
+          {
+            "en": "Delete all replicas and read only from the primary forever",
+            "es": "Eliminar todas las réplicas y leer solo de la primaria para siempre"
+          },
+          {
+            "en": "Increase the replica count so lag disappears",
+            "es": "Aumentar el número de réplicas para que el lag desaparezca"
+          },
+          {
+            "en": "Pin that user's reads to the primary for a short window after their write",
+            "es": "Fijar las lecturas de ese usuario a la primaria durante una ventana corta después de su escritura"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is a hedged request?",
+          "es": "¿Qué es una petición hedged?"
+        },
+        "options": [
+          {
+            "en": "Splitting a request into smaller chunks processed in parallel",
+            "es": "Dividir una petición en fragmentos más pequeños procesados en paralelo"
+          },
+          {
+            "en": "Retrying a failed request with exponential backoff",
+            "es": "Reintentar una petición fallida con backoff exponencial"
+          },
+          {
+            "en": "Encrypting a request twice for critical operations",
+            "es": "Cifrar una petición dos veces para operaciones críticas"
+          },
+          {
+            "en": "Sending a backup copy of a slow request to another replica and using whichever response arrives first",
+            "es": "Enviar una copia de respaldo de una petición lenta a otra réplica y usar la respuesta que llegue primero"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Walk through the layers a read request crosses in a high-throughput architecture (from client to database) and explain what each layer absorbs so the database sees only a fraction of the traffic.",
+          "es": "Recorre las capas que cruza una petición de lectura en una arquitectura de alto rendimiento (del cliente a la base de datos) y explica qué absorbe cada capa para que la base de datos vea solo una fracción del tráfico."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe the layered path in order — CDN/edge, load balancer, stateless API service, application cache (Redis/Memcached), then database — and explain each layer's role: CDN serves static/public cacheable content, the load balancer spreads traffic across replicas, the app cache answers hot reads so only cache misses reach the DB. Bonus: mentioning read replicas, TTLs/invalidation, or percentages of traffic absorbed per layer.",
+          "es": "Debe describir el camino por capas en orden — CDN/borde, balanceador de carga, servicio API sin estado, caché de aplicación (Redis/Memcached), y luego base de datos — y explicar el papel de cada capa: el CDN sirve contenido estático/público cacheable, el balanceador reparte el tráfico entre réplicas, la caché de aplicación responde lecturas calientes de modo que solo los fallos de caché llegan a la BD. Bonus: mencionar réplicas de lectura, TTLs/invalidación, o porcentajes de tráfico absorbidos por capa."
+        },
+        "reference": "Client → CDN: static assets and public cacheable responses are served at the edge, often eliminating most requests. CDN misses → load balancer, which spreads requests across many stateless API replicas so no single node saturates. The API checks the application cache (Redis) for hot objects; hits return in ~1ms without touching the database. Only cache misses reach the database, which may itself split reads across replicas. Each layer filters traffic so the DB — the hardest layer to scale — handles perhaps 1-5% of original request volume."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A downstream service your API depends on suddenly becomes 100× slower. Describe the cascading failure that follows if you did nothing, and name three defenses with a one-line explanation of how each helps.",
+          "es": "Un servicio del que depende tu API de repente se vuelve 100× más lento. Describe la falla en cascada que sigue si no hicieras nada, y nombra tres defensas con una línea explicando cómo ayuda cada una."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must describe the cascade: in-flight calls hold threads/connections/memory while waiting, the caller's resources (thread pool, connection pool) saturate, the caller becomes slow/unavailable itself, and the failure propagates upstream. Must name at least three defenses among: timeouts (bound the wait, fail fast), circuit breakers (stop calling a failing dependency so it can recover), load shedding (reject excess requests to protect the rest), hedged requests (duplicate slow reads to another replica), graceful degradation/fallbacks (serve cached or partial data), bulkheads (isolate resources per dependency).",
+          "es": "Debe describir la cascada: las llamadas en curso retienen threads/conexiones/memoria mientras esperan, los recursos del llamador (pool de threads, pool de conexiones) se saturan, el llamador se vuelve lento/indisponible también, y la falla se propaga río arriba. Debe nombrar al menos tres defensas entre: timeouts (acotan la espera, fallan rápido), circuit breakers (dejan de llamar a la dependencia fallida para que se recupere), load shedding (rechazar el exceso de peticiones para proteger el resto), peticiones hedged (duplicar lecturas lentas a otra réplica), degradación elegante/fallbacks (servir datos cacheados o parciales), bulkheads (aislar recursos por dependencia)."
+        },
+        "reference": "Without defenses: each call to the slow service holds a thread and connection for seconds instead of milliseconds; the caller's pools saturate within seconds under steady traffic; new requests queue and time out; the caller is now as unavailable as the dependency, and ITS callers begin to saturate too — the slowness cascades up the entire chain. Defenses: 1) Timeouts — bound every remote call near the dependency's normal p99 so resources are released quickly. 2) Circuit breaker — after repeated failures, fail fast without calling the dependency, giving it room to recover. 3) Load shedding — reject excess requests (429/503) so surviving capacity serves critical traffic within budget. 4) Graceful degradation — serve cached/partial responses for non-critical data instead of failing the whole request."
+      }
+    }
+  ]
+}

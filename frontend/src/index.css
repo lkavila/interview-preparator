@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme tokens: light (default) and dark. Components never hardcode colors —
+   they use Tailwind utilities backed by these variables. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #eef0f3;
+  --border: #dfe2e8;
+  --text: #1c1f26;
+  --text-muted: #667085;
+  --accent: #4c6faf;
+  --accent-soft: rgba(76, 111, 175, 0.1);
+  --success: #35845e;
+  --success-soft: rgba(53, 132, 94, 0.12);
+  --error: #b35454;
+  --error-soft: rgba(179, 84, 84, 0.12);
+  --warning: #a8842c;
+}
+
+.dark {
+  --bg: #0e1014;
+  --surface: #15181e;
+  --surface-2: #1c2028;
+  --border: #262b35;
+  --text: #dfe3ea;
+  --text-muted: #8b93a1;
+  --accent: #7f9fd4;
+  --accent-soft: rgba(127, 159, 212, 0.12);
+  --success: #5aa984;
+  --success-soft: rgba(90, 169, 132, 0.14);
+  --error: #c47878;
+  --error-soft: rgba(196, 120, 120, 0.14);
+  --warning: #c2a45c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-warning: var(--warning);
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Minimal scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Reusable primitives */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+.btn:hover {
+  background: var(--surface-2);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.dark .btn-primary {
+  color: #0e1014;
+}
+.btn-primary:hover {
+  background: var(--accent);
+  opacity: 0.9;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.input:focus {
+  border-color: var(--accent);
+}
+
+.prose-content h1,
+.prose-content h2,
+.prose-content h3 {
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+}
+.prose-content p {
+  margin: 0.5em 0;
+}
+.prose-content ul,
+.prose-content ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+}
+.prose-content ul {
+  list-style: disc;
+}
+.prose-content ol {
+  list-style: decimal;
+}
+.prose-content code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.prose-content pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.prose-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+.prose-content strong {
+  font-weight: 600;
+}

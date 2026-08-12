@@ -1,0 +1,2120 @@
+{
+  "slug": "react",
+  "order": 13,
+  "icon": "atom",
+  "title": {
+    "en": "React",
+    "es": "React"
+  },
+  "description": {
+    "en": "Senior-level React interview prep: hooks, reconciliation, performance, concurrent features, testing, SSR and the trade-offs behind them.",
+    "es": "Preparación senior para entrevistas de React: hooks, reconciliación, rendimiento, características concurrentes, testing, SSR y los trade-offs detrás de cada tema."
+  },
+  "lessons": [
+    {
+      "slug": "hooks-and-rules-of-hooks",
+      "question": {
+        "en": "What are the Rules of Hooks, and why does React enforce them?",
+        "es": "¿Cuáles son las Reglas de los Hooks y por qué React las exige?"
+      },
+      "definition": {
+        "en": "React stores hook state in a **linked list attached to each component's fiber**, indexed purely by **call order**: the first `useState` call gets slot 0, the second gets slot 1, and so on. That is why the two rules exist: **only call hooks at the top level** (never inside conditions, loops or early returns) and **only call them from React functions** (components or custom hooks). If a hook call disappears between renders, every subsequent hook reads the wrong slot and state gets silently corrupted.\n\nA second senior-level theme is the **closure model**: every render captures its own props and state. An effect that reads `count` sees the value from the render that created it — the classic *stale closure*. The dependency array is not an optimization hint; it is the contract that tells React when the closure must be recreated. Omitting a dependency means intentionally running with stale values.\n\nIn interviews, connect the rules to the mechanism: they aren't style conventions, they are what makes a positional state store safe. The `eslint-plugin-react-hooks` rules (`rules-of-hooks`, `exhaustive-deps`) mechanically enforce both.",
+        "es": "React guarda el estado de los hooks en una **lista enlazada asociada al fiber de cada componente**, indexada puramente por **orden de llamada**: el primer `useState` obtiene el slot 0, el segundo el slot 1, y así sucesivamente. Por eso existen las dos reglas: **llama a los hooks solo en el nivel superior** (nunca dentro de condicionales, bucles o returns tempranos) y **llámalos solo desde funciones de React** (componentes o custom hooks). Si una llamada a un hook desaparece entre renders, todos los hooks siguientes leen el slot equivocado y el estado se corrompe silenciosamente.\n\nUn segundo tema de nivel senior es el **modelo de closures**: cada render captura sus propias props y estado. Un efecto que lee `count` ve el valor del render que lo creó — el clásico *stale closure*. El array de dependencias no es una pista de optimización; es el contrato que le dice a React cuándo debe recrearse el closure. Omitir una dependencia significa ejecutar deliberadamente con valores obsoletos.\n\nEn entrevistas, conecta las reglas con el mecanismo: no son convenciones de estilo, son lo que hace seguro un almacén de estado posicional. Las reglas de `eslint-plugin-react-hooks` (`rules-of-hooks`, `exhaustive-deps`) verifican ambas de forma mecánica."
+      },
+      "examples": [
+        {
+          "en": "A dashboard put `useState` behind `if (user.isAdmin)`. When an admin's session downgraded mid-use, the hook count changed between renders and React threw 'Rendered fewer hooks than expected', crashing the page for real users.",
+          "es": "Un dashboard puso un `useState` detrás de `if (user.isAdmin)`. Cuando la sesión de un admin bajó de nivel en pleno uso, la cantidad de hooks cambió entre renders y React lanzó 'Rendered fewer hooks than expected', tirando la página para usuarios reales."
+        },
+        {
+          "en": "A polling widget used `setInterval` inside `useEffect` with `[]` deps and read `filters` from the closure — it kept sending the initial filters forever. The fix was adding `filters` to the deps (recreating the interval) or moving the read into a ref.",
+          "es": "Un widget de polling usaba `setInterval` dentro de `useEffect` con deps `[]` y leía `filters` desde el closure — enviaba los filtros iniciales para siempre. La solución fue agregar `filters` a las deps (recreando el intervalo) o mover la lectura a un ref."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why exactly does calling a hook inside an `if` break a component?",
+              "es": "¿Por qué exactamente llamar un hook dentro de un `if` rompe un componente?"
+            },
+            "options": [
+              {
+                "en": "Hook state is matched by call position; if the order changes between renders, later hooks read the wrong state slot",
+                "es": "El estado de los hooks se asocia por posición de llamada; si el orden cambia entre renders, los hooks siguientes leen el slot de estado equivocado"
+              },
+              {
+                "en": "React batches conditional hooks into a single update, losing intermediate values",
+                "es": "React agrupa los hooks condicionales en una sola actualización, perdiendo valores intermedios"
+              },
+              {
+                "en": "Conditional hooks create a memory leak in the fiber tree",
+                "es": "Los hooks condicionales crean una fuga de memoria en el árbol de fibers"
+              },
+              {
+                "en": "Hooks inside conditionals are stripped by the compiler",
+                "es": "Los hooks dentro de condicionales son eliminados por el compilador"
+              }
+            ],
+            "explanation": {
+              "en": "There is no name for each hook — only its position in the call sequence. A skipped call shifts every hook after it into the wrong slot.",
+              "es": "No hay un nombre para cada hook — solo su posición en la secuencia de llamadas. Una llamada omitida desplaza todos los hooks posteriores al slot equivocado."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "This effect logs `0` forever:\n\n```javascript\nconst [count, setCount] = useState(0);\nuseEffect(() => {\n  const id = setInterval(() => console.log(count), 1000);\n  return () => clearInterval(id);\n}, []);\n```\n\nWhat is happening?",
+              "es": "Este efecto imprime `0` para siempre:\n\n```javascript\nconst [count, setCount] = useState(0);\nuseEffect(() => {\n  const id = setInterval(() => console.log(count), 1000);\n  return () => clearInterval(id);\n}, []);\n```\n\n¿Qué está pasando?"
+            },
+            "options": [
+              {
+                "en": "The cleanup function resets `count` to its initial value each second",
+                "es": "La función de limpieza reinicia `count` a su valor inicial cada segundo"
+              },
+              {
+                "en": "State updates don't propagate into effects unless you use `useLayoutEffect`",
+                "es": "Las actualizaciones de estado no llegan a los efectos a menos que uses `useLayoutEffect`"
+              },
+              {
+                "en": "`setInterval` copies primitive values, so `count` is frozen at 0",
+                "es": "`setInterval` copia los valores primitivos, así que `count` queda congelado en 0"
+              },
+              {
+                "en": "The interval callback closed over `count` from the first render, and the empty deps array means the closure is never recreated",
+                "es": "El callback del intervalo capturó el `count` del primer render, y el array de deps vacío hace que el closure nunca se recree"
+              }
+            ],
+            "explanation": {
+              "en": "Each render creates new closures. With `[]`, React keeps the closure from render #1, whose `count` is 0. Add `count` to the deps or read via a functional update/ref.",
+              "es": "Cada render crea closures nuevos. Con `[]`, React conserva el closure del render 1, cuyo `count` es 0. Agrega `count` a las deps o lee mediante una actualización funcional/ref."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "This timer has two bugs: the displayed count freezes because of a stale closure, and the interval is never cleaned up (it leaks on unmount and duplicates under Strict Mode). Fix both without adding `seconds` to the dependency array.",
+              "es": "Este temporizador tiene dos bugs: el conteo mostrado se congela por un stale closure, y el intervalo nunca se limpia (se fuga al desmontar y se duplica bajo Strict Mode). Corrige ambos sin agregar `seconds` al array de dependencias."
+            },
+            "language": "javascript",
+            "starter_code": "import { useEffect, useState } from \"react\";\n\nfunction Timer() {\n  const [seconds, setSeconds] = useState(0);\n\n  useEffect(() => {\n    setInterval(() => {\n      setSeconds(seconds + 1); // freezes at 1\n    }, 1000);\n  }, []);\n\n  return <p>Elapsed: {seconds}s</p>;\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must use the functional updater form setSeconds(s => s + 1) so the closure never reads a stale `seconds`, must store the interval id and return a cleanup function calling clearInterval(id) from the effect, and must keep the dependency array empty (or equivalent). Bonus: mentions why Strict Mode double-invokes effects in development.",
+              "es": "Debe usar la forma funcional setSeconds(s => s + 1) para que el closure nunca lea un `seconds` obsoleto, debe guardar el id del intervalo y devolver una función de limpieza que llame clearInterval(id) desde el efecto, y debe mantener el array de dependencias vacío (o equivalente). Bonus: menciona por qué Strict Mode invoca los efectos dos veces en desarrollo."
+            },
+            "reference": "import { useEffect, useState } from \"react\";\n\nfunction Timer() {\n  const [seconds, setSeconds] = useState(0);\n\n  useEffect(() => {\n    const id = setInterval(() => {\n      setSeconds((s) => s + 1);\n    }, 1000);\n    return () => clearInterval(id);\n  }, []);\n\n  return <p>Elapsed: {seconds}s</p>;\n}"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "reconciliation-and-virtual-dom",
+      "question": {
+        "en": "How does React's reconciliation algorithm decide what to update in the DOM?",
+        "es": "¿Cómo decide el algoritmo de reconciliación de React qué actualizar en el DOM?"
+      },
+      "definition": {
+        "en": "On every render React builds a new tree of **elements** (plain descriptions, the 'virtual DOM') and **diffs it against the previous tree**. A general tree diff is O(n³), so React applies two heuristics to get O(n): 1) if two elements have **different types** (`div` vs `span`, `UserCard` vs `AdminCard`), React **tears down the whole subtree** and rebuilds it — state inside is destroyed; 2) among siblings, elements are matched by **key** (or by index when no key is given).\n\nSince Fiber, this work is split into two phases. The **render phase** (building fibers, diffing, computing the effect list) is interruptible and can be paused, resumed or thrown away. The **commit phase** (applying DOM mutations, running layout effects) is synchronous and never interrupted, so users never see a half-applied UI.\n\nThe senior takeaway: the virtual DOM is not 'fast' by itself — it is a **batching and diffing strategy** that lets React apply the minimal set of real DOM mutations, and its correctness depends on you keeping element types stable and keys meaningful.",
+        "es": "En cada render React construye un nuevo árbol de **elementos** (descripciones planas, el 'virtual DOM') y lo **compara con el árbol anterior**. Un diff general de árboles es O(n³), así que React aplica dos heurísticas para lograr O(n): 1) si dos elementos tienen **tipos distintos** (`div` vs `span`, `UserCard` vs `AdminCard`), React **destruye el subárbol completo** y lo reconstruye — el estado interno se pierde; 2) entre hermanos, los elementos se emparejan por **key** (o por índice cuando no hay key).\n\nDesde Fiber, este trabajo se divide en dos fases. La **fase de render** (construir fibers, hacer el diff, calcular la lista de efectos) es interrumpible y puede pausarse, reanudarse o descartarse. La **fase de commit** (aplicar mutaciones al DOM, ejecutar layout effects) es síncrona y nunca se interrumpe, así que el usuario nunca ve una UI aplicada a medias.\n\nLa conclusión senior: el virtual DOM no es 'rápido' por sí mismo — es una **estrategia de batching y diffing** que permite a React aplicar el conjunto mínimo de mutaciones reales al DOM, y su corrección depende de que mantengas estables los tipos de elementos y las keys con significado."
+      },
+      "examples": [
+        {
+          "en": "A team defined a component inside its parent's render (`const Row = () => ...` inside `Table`). Every parent render created a new function identity, so React saw a 'different type', unmounted every row and remounted it — inputs lost focus and animations restarted on each keystroke.",
+          "es": "Un equipo definió un componente dentro del render de su padre (`const Row = () => ...` dentro de `Table`). Cada render del padre creaba una nueva identidad de función, así que React veía un 'tipo distinto', desmontaba cada fila y la volvía a montar — los inputs perdían el foco y las animaciones se reiniciaban con cada tecla."
+        },
+        {
+          "en": "React DevTools' Profiler flame graph shows exactly which subtrees re-rendered and why; production teams use it to confirm that a memoization fix actually pruned the reconciliation work instead of guessing.",
+          "es": "El flame graph del Profiler de React DevTools muestra exactamente qué subárboles se re-renderizaron y por qué; los equipos en producción lo usan para confirmar que un fix de memoización realmente podó el trabajo de reconciliación en vez de adivinar."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order what happens from a state update to pixels on screen.",
+              "es": "Ordena lo que ocurre desde una actualización de estado hasta los píxeles en pantalla."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "commit",
+                "label": {
+                  "en": "Commit phase: apply DOM mutations synchronously",
+                  "es": "Fase de commit: aplicar mutaciones al DOM de forma síncrona"
+                }
+              },
+              {
+                "id": "schedule",
+                "label": {
+                  "en": "setState schedules an update with a priority",
+                  "es": "setState agenda una actualización con una prioridad"
+                }
+              },
+              {
+                "id": "effects",
+                "label": {
+                  "en": "Run passive effects (useEffect) after paint",
+                  "es": "Ejecutar los efectos pasivos (useEffect) después del paint"
+                }
+              },
+              {
+                "id": "render",
+                "label": {
+                  "en": "Render phase: call components, build the new element tree",
+                  "es": "Fase de render: llamar componentes y construir el nuevo árbol de elementos"
+                }
+              },
+              {
+                "id": "diff",
+                "label": {
+                  "en": "Diff new tree vs current fibers, collect needed mutations",
+                  "es": "Comparar el árbol nuevo contra los fibers actuales y recolectar mutaciones necesarias"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "schedule",
+              "render",
+              "diff",
+              "commit",
+              "effects"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "During reconciliation React finds `<article>` where the previous tree had `<section>` (children are identical). What does it do?",
+              "es": "Durante la reconciliación React encuentra `<article>` donde el árbol anterior tenía `<section>` (los hijos son idénticos). ¿Qué hace?"
+            },
+            "options": [
+              {
+                "en": "Destroys the entire subtree (losing its state) and mounts a fresh one, because different types are never diffed further",
+                "es": "Destruye el subárbol completo (perdiendo su estado) y monta uno nuevo, porque tipos distintos nunca se comparan más a fondo"
+              },
+              {
+                "en": "Renames the DOM node in place and keeps all children mounted",
+                "es": "Renombra el nodo del DOM en el lugar y mantiene todos los hijos montados"
+              },
+              {
+                "en": "Diffs the children anyway and only replaces the outer element",
+                "es": "Compara los hijos de todas formas y solo reemplaza el elemento exterior"
+              },
+              {
+                "en": "Throws a hydration warning and re-renders twice",
+                "es": "Lanza una advertencia de hidratación y re-renderiza dos veces"
+              }
+            ],
+            "explanation": {
+              "en": "Different element types short-circuit the diff: the whole subtree is unmounted (state destroyed, cleanup run) and rebuilt from scratch. This is a core O(n) heuristic.",
+              "es": "Tipos de elemento distintos cortocircuitan el diff: el subárbol completo se desmonta (estado destruido, cleanups ejecutados) y se reconstruye desde cero. Es una heurística central del O(n)."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is React's commit phase synchronous and uninterruptible, while the render phase is interruptible?",
+              "es": "¿Por qué la fase de commit de React es síncrona e ininterrumpible, mientras que la fase de render es interrumpible?"
+            },
+            "options": [
+              {
+                "en": "Browsers only allow synchronous DOM mutation inside requestAnimationFrame",
+                "es": "Los navegadores solo permiten mutación síncrona del DOM dentro de requestAnimationFrame"
+              },
+              {
+                "en": "Renders are cached, so interrupting them is free; commits are not cached",
+                "es": "Los renders se cachean, así que interrumpirlos es gratis; los commits no se cachean"
+              },
+              {
+                "en": "Rendering is pure computation that can be redone safely, but a half-applied set of DOM mutations would show users an inconsistent UI",
+                "es": "El render es cómputo puro que puede rehacerse sin riesgo, pero un conjunto de mutaciones del DOM aplicado a medias mostraría al usuario una UI inconsistente"
+              },
+              {
+                "en": "The commit phase runs on a worker thread, which cannot yield",
+                "es": "La fase de commit corre en un worker thread, que no puede ceder el control"
+              }
+            ],
+            "explanation": {
+              "en": "Render work produces descriptions and can be discarded or repeated. DOM mutations are observable side effects, so React applies them all at once, atomically.",
+              "es": "El trabajo de render produce descripciones y puede descartarse o repetirse. Las mutaciones del DOM son efectos observables, así que React las aplica todas de una vez, atómicamente."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "keys-in-lists",
+      "question": {
+        "en": "Why does React need keys in lists, and when is using the array index harmful?",
+        "es": "¿Por qué React necesita keys en las listas y cuándo es dañino usar el índice del array?"
+      },
+      "definition": {
+        "en": "Keys give React a **stable identity** for each sibling so the reconciler can tell *moved* apart from *changed*. Without keys (or with index keys), React matches old and new children **by position**: if you prepend an item, React thinks every existing item changed its content and rewrites all of them, instead of inserting one node.\n\nThe real damage appears with **stateful children**. State, refs, uncontrolled input values and animation progress are attached to the key, not to your data. With `key={index}`, deleting row 2 makes row 3 inherit row 2's state — users see text typed into one row appear in another. This is a classic production bug and a favorite interview probe.\n\nIndex keys are acceptable only when the list is **static**: never reordered, never filtered, items never inserted/removed in the middle, and rows hold no state. Otherwise use a stable id from your data. Also remember keys only need to be unique **among siblings**, and changing a key is a legitimate technique to deliberately reset a component's state.",
+        "es": "Las keys le dan a React una **identidad estable** para cada hermano, de modo que el reconciliador pueda distinguir *movido* de *cambiado*. Sin keys (o con keys de índice), React empareja los hijos viejos y nuevos **por posición**: si insertas un elemento al principio, React cree que todos los elementos existentes cambiaron su contenido y los reescribe todos, en lugar de insertar un solo nodo.\n\nEl daño real aparece con **hijos con estado**. El estado, los refs, los valores de inputs no controlados y el progreso de animaciones se asocian a la key, no a tus datos. Con `key={index}`, borrar la fila 2 hace que la fila 3 herede el estado de la fila 2 — el usuario ve texto escrito en una fila aparecer en otra. Es un bug clásico de producción y una pregunta favorita en entrevistas.\n\nLas keys de índice son aceptables solo cuando la lista es **estática**: nunca se reordena, nunca se filtra, no se insertan/eliminan elementos en el medio y las filas no guardan estado. En cualquier otro caso usa un id estable de tus datos. Recuerda además que las keys solo deben ser únicas **entre hermanos**, y que cambiar una key es una técnica legítima para reiniciar deliberadamente el estado de un componente."
+      },
+      "examples": [
+        {
+          "en": "A support inbox rendered conversations with `key={index}` and sorted by 'most recent'. When a new message re-sorted the list, half-written reply drafts jumped to the wrong conversation — the textarea state stayed at its position while the data moved.",
+          "es": "Una bandeja de soporte renderizaba conversaciones con `key={index}` y ordenaba por 'más reciente'. Cuando un mensaje nuevo reordenaba la lista, los borradores de respuesta a medio escribir saltaban a la conversación equivocada — el estado del textarea se quedaba en su posición mientras los datos se movían."
+        },
+        {
+          "en": "Remounting-by-key is used on purpose: `<UserProfile key={userId} />` guarantees all internal state (tabs, drafts, fetch caches in state) resets when navigating between users, instead of leaking from one profile to the next.",
+          "es": "El remontaje por key se usa a propósito: `<UserProfile key={userId} />` garantiza que todo el estado interno (tabs, borradores, caches de fetch en estado) se reinicie al navegar entre usuarios, en lugar de filtrarse de un perfil al siguiente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A sortable list of rows with checkboxes uses `key={index}`. The user checks row 1, then sorts the list. What happens?",
+              "es": "Una lista ordenable de filas con checkboxes usa `key={index}`. El usuario marca la fila 1 y luego ordena la lista. ¿Qué pasa?"
+            },
+            "options": [
+              {
+                "en": "Nothing — keys only affect performance, never behavior",
+                "es": "Nada — las keys solo afectan el rendimiento, nunca el comportamiento"
+              },
+              {
+                "en": "The checkbox follows its row because React tracks DOM nodes by content",
+                "es": "El checkbox sigue a su fila porque React rastrea los nodos del DOM por contenido"
+              },
+              {
+                "en": "React throws a duplicate-key warning",
+                "es": "React lanza una advertencia de key duplicada"
+              },
+              {
+                "en": "The checked state stays at position 1 while the data moves, so a different row now appears checked",
+                "es": "El estado marcado se queda en la posición 1 mientras los datos se mueven, así que otra fila aparece ahora marcada"
+              }
+            ],
+            "explanation": {
+              "en": "Component state binds to the key. Index keys pin state to positions, so reordering the data detaches state from the row it belonged to.",
+              "es": "El estado del componente se asocia a la key. Las keys de índice fijan el estado a posiciones, así que reordenar los datos separa el estado de la fila a la que pertenecía."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "This todo list uses the array index as key and also generates a random key as a 'fix' someone attempted for the notes list. Both are wrong: index keys corrupt input state when items are removed, and random keys remount every row on every render. Fix both lists to use a proper stable key.",
+              "es": "Esta lista de tareas usa el índice del array como key y además genera una key aleatoria como 'arreglo' que alguien intentó para la lista de notas. Ambas están mal: las keys de índice corrompen el estado de los inputs al eliminar elementos, y las keys aleatorias remontan cada fila en cada render. Corrige ambas listas para usar una key estable adecuada."
+            },
+            "language": "javascript",
+            "starter_code": "function TodoList({ todos, notes, onRemove }) {\n  // todos: [{ id: \"t1\", text: \"...\" }, ...]\n  // notes: [{ uuid: \"n1\", body: \"...\" }, ...]\n  return (\n    <>\n      <ul>\n        {todos.map((todo, i) => (\n          <li key={i}>\n            <input defaultValue={todo.text} />\n            <button onClick={() => onRemove(todo.id)}>x</button>\n          </li>\n        ))}\n      </ul>\n      <ul>\n        {notes.map((note) => (\n          <li key={Math.random()}>{note.body}</li>\n        ))}\n      </ul>\n    </>\n  );\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must replace key={i} with key={todo.id} and key={Math.random()} with key={note.uuid} (a stable identifier from the data). Should briefly justify: index keys misattach state (the uncontrolled input's value) when items are removed/reordered, and random keys force a full unmount/remount of every list item on each render.",
+              "es": "Debe reemplazar key={i} por key={todo.id} y key={Math.random()} por key={note.uuid} (un identificador estable de los datos). Debería justificar brevemente: las keys de índice asocian mal el estado (el valor del input no controlado) al eliminar/reordenar elementos, y las keys aleatorias fuerzan un desmontaje/remontaje completo de cada elemento en cada render."
+            },
+            "reference": "function TodoList({ todos, notes, onRemove }) {\n  return (\n    <>\n      <ul>\n        {todos.map((todo) => (\n          <li key={todo.id}>\n            <input defaultValue={todo.text} />\n            <button onClick={() => onRemove(todo.id)}>x</button>\n          </li>\n        ))}\n      </ul>\n      <ul>\n        {notes.map((note) => (\n          <li key={note.uuid}>{note.body}</li>\n        ))}\n      </ul>\n    </>\n  );\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "When is `key={index}` actually acceptable?",
+              "es": "¿Cuándo es realmente aceptable usar `key={index}`?"
+            },
+            "options": [
+              {
+                "en": "When the list is static — never reordered, filtered or spliced — and rows hold no state",
+                "es": "Cuando la lista es estática — nunca se reordena, filtra ni se insertan/borran elementos — y las filas no guardan estado"
+              },
+              {
+                "en": "Whenever the items have no natural id, regardless of behavior",
+                "es": "Siempre que los elementos no tengan un id natural, sin importar el comportamiento"
+              },
+              {
+                "en": "Only in development builds, where React ignores keys",
+                "es": "Solo en builds de desarrollo, donde React ignora las keys"
+              },
+              {
+                "en": "Never — React forbids index keys since version 18",
+                "es": "Nunca — React prohíbe keys de índice desde la versión 18"
+              }
+            ],
+            "explanation": {
+              "en": "Index keys are fine when position IS the identity: a fixed list that never changes shape and whose rows are stateless. Everywhere else, use stable ids.",
+              "es": "Las keys de índice están bien cuando la posición ES la identidad: una lista fija que nunca cambia de forma y cuyas filas no tienen estado. En cualquier otro caso, usa ids estables."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "controlled-vs-uncontrolled",
+      "question": {
+        "en": "What is the difference between controlled and uncontrolled components, and how do you choose?",
+        "es": "¿Cuál es la diferencia entre componentes controlados y no controlados, y cómo eliges?"
+      },
+      "definition": {
+        "en": "A **controlled** input gets its value from React state (`value={x}` + `onChange`): React state is the single source of truth, every keystroke flows through a render, and you can validate, transform or reject input synchronously. An **uncontrolled** input keeps its value in the **DOM**: you seed it with `defaultValue` and read it on demand through a **ref** — React does not re-render per keystroke.\n\nThe trade-off is control vs cost. Controlled inputs enable instant validation, formatting (masks), disabling submit, and derived UI, but re-render on every keystroke — noticeable in huge forms or low-end devices. Uncontrolled inputs are cheap and closer to platform behavior, which is why **React Hook Form** builds on refs and only re-renders on validation events.\n\nTwo interview traps: mixing modes (passing `value` without `onChange` makes a read-only input; switching between `undefined` and a string triggers the 'changing an uncontrolled input to controlled' warning), and forgetting that the same duality applies to any component you design — accept both a `value` (controlled) and a `defaultValue` (uncontrolled) prop when building reusable inputs.",
+        "es": "Un input **controlado** recibe su valor del estado de React (`value={x}` + `onChange`): el estado de React es la única fuente de verdad, cada tecla pasa por un render, y puedes validar, transformar o rechazar la entrada de forma síncrona. Un input **no controlado** guarda su valor en el **DOM**: lo inicializas con `defaultValue` y lo lees bajo demanda mediante un **ref** — React no re-renderiza por cada tecla.\n\nEl trade-off es control vs costo. Los inputs controlados permiten validación instantánea, formateo (máscaras), deshabilitar el submit y UI derivada, pero re-renderizan con cada tecla — perceptible en formularios enormes o dispositivos modestos. Los no controlados son baratos y más cercanos al comportamiento de la plataforma; por eso **React Hook Form** se apoya en refs y solo re-renderiza en eventos de validación.\n\nDos trampas de entrevista: mezclar modos (pasar `value` sin `onChange` crea un input de solo lectura; alternar entre `undefined` y un string dispara la advertencia 'changing an uncontrolled input to controlled'), y olvidar que la misma dualidad aplica a cualquier componente que diseñes — acepta tanto una prop `value` (controlado) como `defaultValue` (no controlado) al construir inputs reutilizables."
+      },
+      "examples": [
+        {
+          "en": "A payment form controls the card-number field to insert spaces every 4 digits and block non-numeric characters as the user types — impossible to do reliably with an uncontrolled input.",
+          "es": "Un formulario de pago controla el campo de número de tarjeta para insertar espacios cada 4 dígitos y bloquear caracteres no numéricos mientras el usuario escribe — imposible de hacer de forma confiable con un input no controlado."
+        },
+        {
+          "en": "An internal admin tool with a 60-field form dropped keystroke latency dramatically by migrating from all-controlled state to React Hook Form's uncontrolled ref-based registration, re-rendering only the fields with errors.",
+          "es": "Una herramienta interna de administración con un formulario de 60 campos redujo drásticamente la latencia por tecla al migrar de estado totalmente controlado a el registro no controlado basado en refs de React Hook Form, re-renderizando solo los campos con errores."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each API or behavior with the component mode it belongs to.",
+              "es": "Conecta cada API o comportamiento con el modo de componente al que pertenece."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "value + onChange on every keystroke",
+                  "es": "value + onChange en cada tecla"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "defaultValue read later via a ref",
+                  "es": "defaultValue leído después mediante un ref"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Synchronous input masking/formatting",
+                  "es": "Enmascarado/formateo síncrono de la entrada"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "No re-render per keystroke; DOM owns the value",
+                  "es": "Sin re-render por tecla; el DOM es dueño del valor"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Controlled — React state is the source of truth",
+                  "es": "Controlado — el estado de React es la fuente de verdad"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Uncontrolled — the DOM is the source of truth",
+                  "es": "No controlado — el DOM es la fuente de verdad"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Controlled — requires intercepting each change",
+                  "es": "Controlado — requiere interceptar cada cambio"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Uncontrolled — cheap, platform-native behavior",
+                  "es": "No controlado — barato, comportamiento nativo de la plataforma"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "React warns: \"A component is changing an uncontrolled input to be controlled.\" What is the most common cause?",
+              "es": "React advierte: \"A component is changing an uncontrolled input to be controlled.\" ¿Cuál es la causa más común?"
+            },
+            "options": [
+              {
+                "en": "The onChange handler was declared inside the component body",
+                "es": "El handler onChange fue declarado dentro del cuerpo del componente"
+              },
+              {
+                "en": "The input is inside a form without an onSubmit handler",
+                "es": "El input está dentro de un form sin handler onSubmit"
+              },
+              {
+                "en": "Two inputs share the same `name` attribute",
+                "es": "Dos inputs comparten el mismo atributo `name`"
+              },
+              {
+                "en": "The value prop started as `undefined` (e.g., data not loaded yet) and later became a string, switching the input's mode mid-life",
+                "es": "La prop value empezó como `undefined` (p. ej., datos aún no cargados) y luego pasó a ser un string, cambiando el modo del input a mitad de vida"
+              }
+            ],
+            "explanation": {
+              "en": "`value={undefined}` means uncontrolled. Initialize state to `''` (or gate rendering until data arrives) so the input stays controlled for its whole life.",
+              "es": "`value={undefined}` significa no controlado. Inicializa el estado en `''` (o no renderices hasta que lleguen los datos) para que el input sea controlado durante toda su vida."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Convert this uncontrolled username field into a controlled one that: lowercases input as the user types, strips spaces, and disables the submit button while the value is shorter than 3 characters.",
+              "es": "Convierte este campo de nombre de usuario no controlado en uno controlado que: pase la entrada a minúsculas mientras el usuario escribe, elimine espacios y deshabilite el botón de envío mientras el valor tenga menos de 3 caracteres."
+            },
+            "language": "javascript",
+            "starter_code": "import { useRef } from \"react\";\n\nfunction UsernameForm({ onSubmit }) {\n  const inputRef = useRef(null);\n\n  function handleSubmit(e) {\n    e.preventDefault();\n    onSubmit(inputRef.current.value);\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <input ref={inputRef} defaultValue=\"\" />\n      <button type=\"submit\">Create account</button>\n    </form>\n  );\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must replace the ref with useState initialized to '', render the input with value={username} and an onChange that applies .toLowerCase() and removes spaces (e.g. .replace(/\\s+/g, '')) before setState, submit the state value instead of reading the DOM, and set disabled={username.length < 3} on the button. The input must never receive undefined as value.",
+              "es": "Debe reemplazar el ref por useState inicializado en '', renderizar el input con value={username} y un onChange que aplique .toLowerCase() y elimine espacios (p. ej. .replace(/\\s+/g, '')) antes de setState, enviar el valor del estado en lugar de leer el DOM, y poner disabled={username.length < 3} en el botón. El input nunca debe recibir undefined como value."
+            },
+            "reference": "import { useState } from \"react\";\n\nfunction UsernameForm({ onSubmit }) {\n  const [username, setUsername] = useState(\"\");\n\n  function handleChange(e) {\n    setUsername(e.target.value.toLowerCase().replace(/\\s+/g, \"\"));\n  }\n\n  function handleSubmit(e) {\n    e.preventDefault();\n    onSubmit(username);\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <input value={username} onChange={handleChange} />\n      <button type=\"submit\" disabled={username.length < 3}>\n        Create account\n      </button>\n    </form>\n  );\n}"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "memoization-and-performance",
+      "question": {
+        "en": "How do useMemo, useCallback and React.memo work together, and when do they backfire?",
+        "es": "¿Cómo trabajan juntos useMemo, useCallback y React.memo, y cuándo salen contraproducentes?"
+      },
+      "definition": {
+        "en": "By default, when a component re-renders, **all of its children re-render too** — props equality is not even checked. `React.memo(Component)` opts a component into a **shallow props comparison**: if every prop is `Object.is`-equal to last time, React skips re-rendering it. This only works if the props you pass are **referentially stable**, which is where the hooks come in: `useCallback(fn, deps)` keeps the same function identity across renders, and `useMemo(factory, deps)` does the same for computed values and objects.\n\nThe classic failure: wrapping a child in `React.memo` but passing `onClick={() => ...}` or `style={{...}}` inline. Each render creates a fresh reference, the shallow comparison fails, and you pay for the memo check **plus** the render. Memoization is a chain — one unstable prop breaks it.\n\nSenior guidance: **measure first** with the React DevTools Profiler; memoize expensive subtrees, list rows, and dependencies of effects — not everything. Every memo adds comparison cost and memory. Also know the alternatives interviewers love: **lifting content into `children`** (a parent re-rendering doesn't recreate element props it received), pushing state down, and the React Compiler, which automates this memoization.",
+        "es": "Por defecto, cuando un componente se re-renderiza, **todos sus hijos se re-renderizan también** — ni siquiera se comparan las props. `React.memo(Component)` activa una **comparación superficial de props**: si cada prop es igual (según `Object.is`) a la del render anterior, React omite re-renderizarlo. Esto solo funciona si las props que pasas son **referencialmente estables**, y ahí entran los hooks: `useCallback(fn, deps)` mantiene la misma identidad de función entre renders, y `useMemo(factory, deps)` hace lo mismo con valores calculados y objetos.\n\nEl fallo clásico: envolver un hijo en `React.memo` pero pasarle `onClick={() => ...}` o `style={{...}}` inline. Cada render crea una referencia nueva, la comparación superficial falla, y pagas el costo del chequeo del memo **más** el render. La memoización es una cadena — una sola prop inestable la rompe.\n\nGuía senior: **mide primero** con el Profiler de React DevTools; memoiza subárboles costosos, filas de listas y dependencias de efectos — no todo. Cada memo agrega costo de comparación y memoria. Conoce también las alternativas que encantan a los entrevistadores: **subir contenido como `children`** (un padre que se re-renderiza no recrea las props de elementos que recibió), bajar el estado, y el React Compiler, que automatiza esta memoización."
+      },
+      "examples": [
+        {
+          "en": "A trading dashboard re-rendered 500 price rows on every tick because the row's `onSelect` was an inline arrow. Wrapping rows in `React.memo` and the handler in `useCallback` cut render time per tick from ~80ms to ~4ms.",
+          "es": "Un dashboard de trading re-renderizaba 500 filas de precios en cada tick porque el `onSelect` de la fila era una arrow function inline. Envolver las filas en `React.memo` y el handler en `useCallback` redujo el tiempo de render por tick de ~80ms a ~4ms."
+        },
+        {
+          "en": "A theme provider passed `value={{ theme, toggle }}` inline, so every provider render re-rendered every consumer in the app. Memoizing the context value with `useMemo` limited re-renders to actual theme changes.",
+          "es": "Un provider de tema pasaba `value={{ theme, toggle }}` inline, así que cada render del provider re-renderizaba todos los consumidores de la app. Memoizar el valor del contexto con `useMemo` limitó los re-renders a cambios reales de tema."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each tool with what it actually memoizes.",
+              "es": "Conecta cada herramienta con lo que realmente memoiza."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "React.memo",
+                  "es": "React.memo"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "useMemo",
+                  "es": "useMemo"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "useCallback",
+                  "es": "useCallback"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "children composition (lifting content up)",
+                  "es": "composición con children (subir el contenido)"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Skips re-rendering a component when shallow props comparison passes",
+                  "es": "Omite re-renderizar un componente cuando la comparación superficial de props pasa"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Caches a computed value/object between renders while deps are unchanged",
+                  "es": "Cachea un valor/objeto calculado entre renders mientras las deps no cambien"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Keeps a stable function identity between renders while deps are unchanged",
+                  "es": "Mantiene una identidad de función estable entre renders mientras las deps no cambien"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Avoids re-rendering subtrees without any memo API, by receiving them as already-created elements",
+                  "es": "Evita re-renderizar subárboles sin ninguna API de memo, al recibirlos como elementos ya creados"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`<ExpensiveChart data={data} options={{ smooth: true }} />` — the child is wrapped in `React.memo` but re-renders every time its parent does. Why?",
+              "es": "`<ExpensiveChart data={data} options={{ smooth: true }} />` — el hijo está envuelto en `React.memo` pero se re-renderiza cada vez que su padre lo hace. ¿Por qué?"
+            },
+            "options": [
+              {
+                "en": "The `data` prop is an array, and arrays always fail shallow comparison",
+                "es": "La prop `data` es un array, y los arrays siempre fallan la comparación superficial"
+              },
+              {
+                "en": "The inline `options` object is a new reference on every render, so the shallow comparison always fails",
+                "es": "El objeto `options` inline es una referencia nueva en cada render, así que la comparación superficial siempre falla"
+              },
+              {
+                "en": "React.memo is disabled in development mode",
+                "es": "React.memo está deshabilitado en modo desarrollo"
+              },
+              {
+                "en": "React.memo only works on class components",
+                "es": "React.memo solo funciona con componentes de clase"
+              }
+            ],
+            "explanation": {
+              "en": "Shallow comparison uses reference equality per prop. An object literal in JSX is recreated each render. Hoist it or wrap it in useMemo.",
+              "es": "La comparación superficial usa igualdad por referencia en cada prop. Un objeto literal en JSX se recrea en cada render. Sácalo fuera o envuélvelo en useMemo."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Every keystroke in the search box re-renders all 1000 `ProductRow`s. Optimize so rows only re-render when their own product changes: memoize the row component, stabilize the `onAddToCart` handler, and memoize the filtered list computation.",
+              "es": "Cada tecla en el buscador re-renderiza las 1000 `ProductRow`. Optimiza para que las filas solo se re-rendericen cuando cambie su propio producto: memoiza el componente de fila, estabiliza el handler `onAddToCart` y memoiza el cálculo de la lista filtrada."
+            },
+            "language": "javascript",
+            "starter_code": "import { useState } from \"react\";\n\nfunction ProductRow({ product, onAddToCart }) {\n  return (\n    <li>\n      {product.name} — ${product.price}\n      <button onClick={() => onAddToCart(product.id)}>Add</button>\n    </li>\n  );\n}\n\nfunction ProductList({ products, addToCart }) {\n  const [query, setQuery] = useState(\"\");\n  const visible = products.filter((p) =>\n    p.name.toLowerCase().includes(query.toLowerCase())\n  );\n\n  return (\n    <>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n      <ul>\n        {visible.map((p) => (\n          <ProductRow\n            key={p.id}\n            product={p}\n            onAddToCart={(id) => addToCart(id)}\n          />\n        ))}\n      </ul>\n    </>\n  );\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must wrap ProductRow in React.memo, replace the inline onAddToCart arrow with a useCallback-stabilized handler (deps [addToCart]) passed by reference, and wrap the filter in useMemo with deps [products, query]. Note: rows still re-render when the query changes the visible list — that's expected; the win is that typing doesn't re-render rows whose product reference is unchanged.",
+              "es": "Debe envolver ProductRow en React.memo, reemplazar la arrow inline de onAddToCart por un handler estabilizado con useCallback (deps [addToCart]) pasado por referencia, y envolver el filter en useMemo con deps [products, query]. Nota: las filas igual se re-renderizan cuando la query cambia la lista visible — eso es esperado; la ganancia es que escribir no re-renderiza filas cuya referencia de producto no cambió."
+            },
+            "reference": "import { memo, useCallback, useMemo, useState } from \"react\";\n\nconst ProductRow = memo(function ProductRow({ product, onAddToCart }) {\n  return (\n    <li>\n      {product.name} — ${product.price}\n      <button onClick={() => onAddToCart(product.id)}>Add</button>\n    </li>\n  );\n});\n\nfunction ProductList({ products, addToCart }) {\n  const [query, setQuery] = useState(\"\");\n\n  const visible = useMemo(\n    () =>\n      products.filter((p) =>\n        p.name.toLowerCase().includes(query.toLowerCase())\n      ),\n    [products, query]\n  );\n\n  const handleAddToCart = useCallback(\n    (id) => {\n      addToCart(id);\n    },\n    [addToCart]\n  );\n\n  return (\n    <>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n      <ul>\n        {visible.map((p) => (\n          <ProductRow key={p.id} product={p} onAddToCart={handleAddToCart} />\n        ))}\n      </ul>\n    </>\n  );\n}"
+          }
+        }
+      ]
+    },
+    {
+      "slug": "context-vs-redux",
+      "question": {
+        "en": "When would you choose React Context over Redux (or another external store), and what are the trade-offs?",
+        "es": "¿Cuándo elegirías React Context en lugar de Redux (u otro store externo), y cuáles son los trade-offs?"
+      },
+      "definition": {
+        "en": "**Context is a dependency-injection mechanism, not a state manager.** When a provider's `value` changes, **every consumer re-renders** — there is no built-in way to subscribe to a slice. That makes Context ideal for **low-frequency, app-wide values**: theme, locale, current user, feature flags. For **high-frequency or large state** (normalized entities, forms, real-time data), naive Context becomes a re-render bomb.\n\nExternal stores like **Redux (Toolkit)** or **Zustand** solve this with **selector-based subscriptions**: components subscribe to a computed slice and only re-render when that slice's result changes. Redux adds an opinionated architecture — pure reducers, serializable actions, time-travel DevTools, middleware for side effects — which pays off in large teams that need traceability, and it integrates with React via `useSyncExternalStore` to stay concurrent-safe.\n\nThe senior answer is a decision framework, not a winner: start with local state, lift it, use Context for stable global values (splitting contexts and memoizing `value` to limit re-renders), and reach for a store when you need selective subscriptions, devtools/audit trails, middleware, or state shared outside the React tree. Mention that server state (fetched data) is usually better served by React Query/SWR than either.",
+        "es": "**Context es un mecanismo de inyección de dependencias, no un gestor de estado.** Cuando el `value` de un provider cambia, **todos los consumidores se re-renderizan** — no hay forma nativa de suscribirse a una porción. Eso hace a Context ideal para **valores globales de baja frecuencia**: tema, idioma, usuario actual, feature flags. Para **estado grande o de alta frecuencia** (entidades normalizadas, formularios, datos en tiempo real), un Context ingenuo se convierte en una bomba de re-renders.\n\nLos stores externos como **Redux (Toolkit)** o **Zustand** lo resuelven con **suscripciones por selector**: los componentes se suscriben a una porción calculada y solo se re-renderizan cuando el resultado de esa porción cambia. Redux agrega una arquitectura con opiniones — reducers puros, acciones serializables, DevTools con time-travel, middleware para efectos — que rinde en equipos grandes que necesitan trazabilidad, y se integra con React vía `useSyncExternalStore` para ser seguro en modo concurrente.\n\nLa respuesta senior es un marco de decisión, no un ganador: empieza con estado local, súbelo, usa Context para valores globales estables (dividiendo contextos y memoizando el `value` para limitar re-renders), y recurre a un store cuando necesites suscripciones selectivas, devtools/auditoría, middleware o estado compartido fuera del árbol de React. Menciona que el estado de servidor (datos fetched) suele estar mejor servido por React Query/SWR que por cualquiera de los dos."
+      },
+      "examples": [
+        {
+          "en": "A SaaS app keeps `ThemeContext` and `AuthContext` as plain contexts (they change a few times per session) but moved its live collaboration cursors to Zustand — 30 cursor updates per second through Context froze the whole page.",
+          "es": "Una app SaaS mantiene `ThemeContext` y `AuthContext` como contextos simples (cambian pocas veces por sesión) pero movió los cursores de colaboración en vivo a Zustand — 30 actualizaciones de cursor por segundo a través de Context congelaban toda la página."
+        },
+        {
+          "en": "A fintech team kept Redux Toolkit for its audit requirements: every state change is a serializable action they can replay in DevTools to reproduce a customer's bug report step by step.",
+          "es": "Un equipo fintech mantuvo Redux Toolkit por sus requisitos de auditoría: cada cambio de estado es una acción serializable que pueden reproducir en DevTools para replicar paso a paso el reporte de bug de un cliente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What happens to consumers when a Context provider's `value` changes?",
+              "es": "¿Qué les pasa a los consumidores cuando cambia el `value` de un provider de Context?"
+            },
+            "options": [
+              {
+                "en": "Consumers re-render only if they are direct children of the provider",
+                "es": "Los consumidores se re-renderizan solo si son hijos directos del provider"
+              },
+              {
+                "en": "Nothing until each consumer's parent also re-renders",
+                "es": "Nada, hasta que el padre de cada consumidor también se re-renderice"
+              },
+              {
+                "en": "React batches them into a single consumer re-render",
+                "es": "React los agrupa en un solo re-render de consumidor"
+              },
+              {
+                "en": "All consumers of that context re-render, regardless of which part of the value they use",
+                "es": "Todos los consumidores de ese contexto se re-renderizan, sin importar qué parte del valor usan"
+              },
+              {
+                "en": "Only consumers that read the changed property re-render",
+                "es": "Solo se re-renderizan los consumidores que leen la propiedad que cambió"
+              }
+            ],
+            "explanation": {
+              "en": "Context has no selectors: any value change (by Object.is) notifies every consumer. That's why you split contexts and memoize values — or use a store with selector subscriptions.",
+              "es": "Context no tiene selectores: cualquier cambio del valor (según Object.is) notifica a todos los consumidores. Por eso se dividen contextos y se memoizan los valores — o se usa un store con suscripciones por selector."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each state need with the most appropriate tool.",
+              "es": "Conecta cada necesidad de estado con la herramienta más apropiada."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Theme and locale, changed a few times per session",
+                  "es": "Tema e idioma, cambian pocas veces por sesión"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Normalized entities with audit trail and time-travel debugging",
+                  "es": "Entidades normalizadas con auditoría y time-travel debugging"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Server data with caching, retries and background refetch",
+                  "es": "Datos de servidor con caché, reintentos y refetch en segundo plano"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "A wizard's step state used only by its own screens",
+                  "es": "El estado del paso de un wizard usado solo por sus propias pantallas"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "React Context with a memoized value",
+                  "es": "React Context con un value memoizado"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Redux Toolkit",
+                  "es": "Redux Toolkit"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "React Query / SWR",
+                  "es": "React Query / SWR"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Local state lifted to the wizard component",
+                  "es": "Estado local subido al componente del wizard"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "How do Redux and Zustand avoid the 'every consumer re-renders' problem that Context has?",
+              "es": "¿Cómo evitan Redux y Zustand el problema de 'todos los consumidores se re-renderizan' que tiene Context?"
+            },
+            "options": [
+              {
+                "en": "Components subscribe with selectors and re-render only when their selected slice's result changes",
+                "es": "Los componentes se suscriben con selectores y solo se re-renderizan cuando cambia el resultado de su porción seleccionada"
+              },
+              {
+                "en": "They render outside of React's tree using portals",
+                "es": "Renderizan fuera del árbol de React usando portales"
+              },
+              {
+                "en": "They clone the state so consumers read frozen snapshots",
+                "es": "Clonan el estado para que los consumidores lean snapshots congelados"
+              },
+              {
+                "en": "They debounce all state updates by default",
+                "es": "Aplican debounce a todas las actualizaciones de estado por defecto"
+              }
+            ],
+            "explanation": {
+              "en": "Selector subscriptions (via useSyncExternalStore under the hood) compare the selected result between updates and skip re-rendering when it is unchanged.",
+              "es": "Las suscripciones por selector (vía useSyncExternalStore por debajo) comparan el resultado seleccionado entre actualizaciones y omiten el re-render cuando no cambió."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "custom-hooks-design",
+      "question": {
+        "en": "How do you design a good custom hook, and what makes one production-quality?",
+        "es": "¿Cómo diseñas un buen custom hook y qué lo hace de calidad de producción?"
+      },
+      "definition": {
+        "en": "A custom hook is just a function whose name starts with `use` and that calls other hooks — but **what it shares is logic, not state**: every component calling `useCart()` gets its **own independent state**. Custom hooks are React's primary unit of reuse, replacing the old HOC/render-props patterns with something composable and testable.\n\nDesign rules that separate senior code from junior code: give it a **focused contract** (one responsibility, clear inputs → outputs); **clean up everything** you subscribe to (timers, listeners, aborted fetches) in the effect's cleanup; handle the **race conditions** your consumers will hit (an `ignore` flag or `AbortController` so a slow stale response can't overwrite a newer one); and keep the API **referentially stable** (memoize returned functions/objects) so consumers can safely put them in dependency arrays.\n\nAlso know when **not** to write one: if there's no hook call inside, it's just a function — keep it as one. And in interviews, mention testing: custom hooks are tested with `renderHook` from React Testing Library, or indirectly through the components that use them.",
+        "es": "Un custom hook es solo una función cuyo nombre empieza con `use` y que llama a otros hooks — pero **lo que comparte es lógica, no estado**: cada componente que llama `useCart()` obtiene su **propio estado independiente**. Los custom hooks son la unidad principal de reutilización en React, reemplazando los viejos patrones de HOC/render-props por algo componible y testeable.\n\nReglas de diseño que separan el código senior del junior: dale un **contrato enfocado** (una responsabilidad, entradas → salidas claras); **limpia todo** aquello a lo que te suscribas (timers, listeners, fetches abortados) en el cleanup del efecto; maneja las **condiciones de carrera** que sufrirán tus consumidores (una bandera `ignore` o un `AbortController` para que una respuesta lenta y obsoleta no pise una más nueva); y mantén la API **referencialmente estable** (memoiza funciones/objetos devueltos) para que los consumidores puedan ponerlos en arrays de dependencias sin miedo.\n\nTambién debes saber cuándo **no** escribir uno: si no hay ninguna llamada a hooks adentro, es solo una función — déjala como tal. Y en entrevistas, menciona el testing: los custom hooks se prueban con `renderHook` de React Testing Library, o indirectamente a través de los componentes que los usan."
+      },
+      "examples": [
+        {
+          "en": "A design system ships `useMediaQuery(query)` used by dozens of teams: it subscribes to `matchMedia`, removes the listener on cleanup, and supports SSR by returning a server-safe default before hydration.",
+          "es": "Un design system publica `useMediaQuery(query)` usado por decenas de equipos: se suscribe a `matchMedia`, quita el listener en el cleanup y soporta SSR devolviendo un valor por defecto seguro en el servidor antes de la hidratación."
+        },
+        {
+          "en": "A search page's `useDebouncedValue(query, 300)` prevents an API call per keystroke; the cleanup canceling the previous timer is exactly the same mechanism that prevents stale results from racing ahead of fresh ones.",
+          "es": "El `useDebouncedValue(query, 300)` de una página de búsqueda evita una llamada a la API por cada tecla; el cleanup que cancela el timer anterior es exactamente el mismo mecanismo que evita que resultados obsoletos le ganen a los nuevos."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Implement `useDebouncedValue(value, delayMs)`: it returns the latest `value`, but only after it has stopped changing for `delayMs` milliseconds. It must cancel the pending timer when `value` changes again or the component unmounts.",
+              "es": "Implementa `useDebouncedValue(value, delayMs)`: devuelve el último `value`, pero solo después de que haya dejado de cambiar durante `delayMs` milisegundos. Debe cancelar el timer pendiente cuando `value` vuelva a cambiar o el componente se desmonte."
+            },
+            "language": "javascript",
+            "starter_code": "import { useEffect, useState } from \"react\";\n\nexport function useDebouncedValue(value, delayMs) {\n  // your code\n}\n\n// Usage:\n// const debouncedQuery = useDebouncedValue(query, 300);\n// useEffect(() => { search(debouncedQuery); }, [debouncedQuery]);"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must keep the debounced value in useState (initialized with value), run an effect with deps [value, delayMs] that schedules setTimeout(() => setDebounced(value), delayMs), and return a cleanup that clears the timeout — which handles both rapid changes and unmount. Must return the debounced state.",
+              "es": "Debe guardar el valor con debounce en useState (inicializado con value), ejecutar un efecto con deps [value, delayMs] que agende setTimeout(() => setDebounced(value), delayMs), y devolver un cleanup que limpie el timeout — lo cual cubre tanto los cambios rápidos como el desmontaje. Debe devolver el estado con debounce."
+            },
+            "reference": "import { useEffect, useState } from \"react\";\n\nexport function useDebouncedValue(value, delayMs) {\n  const [debounced, setDebounced] = useState(value);\n\n  useEffect(() => {\n    const id = setTimeout(() => setDebounced(value), delayMs);\n    return () => clearTimeout(id);\n  }, [value, delayMs]);\n\n  return debounced;\n}"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Two components both call `useCounter()`, a custom hook with internal `useState`. One increments its counter. What does the other see?",
+              "es": "Dos componentes llaman a `useCounter()`, un custom hook con `useState` interno. Uno incrementa su contador. ¿Qué ve el otro?"
+            },
+            "options": [
+              {
+                "en": "Nothing changes for it — each call to a custom hook creates fully independent state",
+                "es": "Nada cambia para él — cada llamada a un custom hook crea estado totalmente independiente"
+              },
+              {
+                "en": "React throws, because two components cannot use the same hook",
+                "es": "React lanza un error, porque dos componentes no pueden usar el mismo hook"
+              },
+              {
+                "en": "It sees the new value — custom hooks share state across callers",
+                "es": "Ve el nuevo valor — los custom hooks comparten estado entre llamadores"
+              },
+              {
+                "en": "It sees the new value only if both are under the same parent",
+                "es": "Ve el nuevo valor solo si ambos están bajo el mismo padre"
+              }
+            ],
+            "explanation": {
+              "en": "Custom hooks share logic, not state. To actually share state you need Context, a store, or lifting state up.",
+              "es": "Los custom hooks comparten lógica, no estado. Para compartir estado de verdad necesitas Context, un store o subir el estado."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Design `useFetch(url)` for production use. Describe its return API, and explain how you would handle the race condition where the user changes `url` while a previous request is still in flight.",
+              "es": "Diseña `useFetch(url)` para uso en producción. Describe la API que devuelve y explica cómo manejarías la condición de carrera en la que el usuario cambia `url` mientras una petición anterior sigue en vuelo."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose a return shape with data, error and a loading/status flag; and must solve the race by canceling or ignoring stale responses — either an AbortController aborted in the effect cleanup, or an ignore/cancelled flag set in cleanup so the old promise's resolution doesn't call setState. Bonus: resetting state on url change, avoiding setState after unmount, mentioning React Query as the production alternative.",
+              "es": "Debe proponer una forma de retorno con data, error y una bandera de loading/status; y debe resolver la carrera cancelando o ignorando respuestas obsoletas — ya sea un AbortController abortado en el cleanup del efecto, o una bandera ignore/cancelled marcada en el cleanup para que la resolución de la promesa vieja no llame a setState. Bonus: reiniciar el estado al cambiar url, evitar setState tras el desmontaje, mencionar React Query como alternativa de producción."
+            },
+            "reference": "Return { data, error, isLoading } (or a status union: 'idle' | 'loading' | 'success' | 'error'). Inside: useEffect keyed on [url]; create an AbortController, pass controller.signal to fetch, and abort it in the cleanup. When url changes, the cleanup aborts the in-flight request, so its promise rejects with AbortError (swallowed) and can never overwrite the newer request's state. Equivalent alternative: let ignore = false in the effect, set ignore = true in cleanup, and guard every setState with if (!ignore). Reset to loading state at the start of each effect run. In production, prefer React Query/SWR, which add caching, dedup and retries on top of this same pattern."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "concurrent-features",
+      "question": {
+        "en": "What problems do React 18's concurrent features (transitions, Suspense) solve?",
+        "es": "¿Qué problemas resuelven las características concurrentes de React 18 (transitions, Suspense)?"
+      },
+      "definition": {
+        "en": "React 18's core shift is **interruptible rendering with priorities**. `startTransition` (and the `useTransition` hook) lets you mark a state update as **non-urgent**: urgent updates (typing, clicking) render first, and React can **pause or abandon** an in-progress transition render if a more urgent update arrives. `isPending` gives you a flag to show subtle feedback while the transition renders in the background. `useDeferredValue` is the sibling API: it lets a derived, expensive part of the UI lag behind an urgent value.\n\n**Suspense** decouples 'this subtree is waiting for something async' from *how* you wait: a component (or `React.lazy` chunk, or a Suspense-enabled data source) suspends, and the **nearest `<Suspense>` boundary** renders its fallback. Combined with transitions, an already-visible screen can keep showing the old content while the next screen's data loads, instead of flashing spinners.\n\nAutomatic **batching** also became universal in 18 (multiple `setState` calls in promises/timeouts flush as one render). Interview framing: concurrency is about **scheduling**, not parallel threads — React time-slices render work on the main thread so a heavy render can't block a keystroke.",
+        "es": "El cambio central de React 18 es el **render interrumpible con prioridades**. `startTransition` (y el hook `useTransition`) te deja marcar una actualización de estado como **no urgente**: las actualizaciones urgentes (escribir, hacer clic) se renderizan primero, y React puede **pausar o abandonar** un render de transición en progreso si llega una actualización más urgente. `isPending` te da una bandera para mostrar feedback sutil mientras la transición se renderiza en segundo plano. `useDeferredValue` es la API hermana: permite que una parte derivada y costosa de la UI vaya rezagada respecto a un valor urgente.\n\n**Suspense** desacopla 'este subárbol está esperando algo asíncrono' de *cómo* esperas: un componente (o un chunk de `React.lazy`, o una fuente de datos compatible con Suspense) se suspende, y la **frontera `<Suspense>` más cercana** renderiza su fallback. Combinado con transitions, una pantalla ya visible puede seguir mostrando el contenido viejo mientras cargan los datos de la siguiente, en vez de parpadear spinners.\n\nEl **batching** automático también se volvió universal en 18 (múltiples `setState` en promesas/timeouts se aplican en un solo render). Encuadre para la entrevista: la concurrencia trata de **scheduling**, no de threads paralelos — React divide el trabajo de render en rebanadas de tiempo en el main thread para que un render pesado no bloquee una tecla."
+      },
+      "examples": [
+        {
+          "en": "A product catalog types into a filter box: the input update is urgent, while re-filtering 10,000 items is wrapped in `startTransition`. Typing stays at 60fps even while the heavy list render is repeatedly thrown away and restarted.",
+          "es": "En un catálogo de productos se escribe en un cuadro de filtro: la actualización del input es urgente, mientras que re-filtrar 10,000 ítems va envuelto en `startTransition`. La escritura se mantiene a 60fps incluso mientras el render pesado de la lista se descarta y reinicia repetidamente."
+        },
+        {
+          "en": "Next.js App Router streams pages with nested `<Suspense>` boundaries: the shell and header arrive instantly while slower panels (recommendations, analytics) stream in and replace their fallbacks as their data resolves.",
+          "es": "El App Router de Next.js hace streaming de páginas con fronteras `<Suspense>` anidadas: el shell y el header llegan al instante mientras los paneles más lentos (recomendaciones, analítica) llegan por streaming y reemplazan sus fallbacks cuando sus datos se resuelven."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What exactly does wrapping a state update in `startTransition` change?",
+              "es": "¿Qué cambia exactamente envolver una actualización de estado en `startTransition`?"
+            },
+            "options": [
+              {
+                "en": "It debounces the update by ~300ms before applying it",
+                "es": "Aplica un debounce de ~300ms a la actualización antes de aplicarla"
+              },
+              {
+                "en": "It skips reconciliation and mutates the DOM directly",
+                "es": "Omite la reconciliación y muta el DOM directamente"
+              },
+              {
+                "en": "It marks the update as non-urgent, so React renders it in an interruptible way and lets urgent updates (like typing) jump ahead",
+                "es": "Marca la actualización como no urgente, así React la renderiza de forma interrumpible y deja que las urgentes (como escribir) pasen adelante"
+              },
+              {
+                "en": "It moves the render to a Web Worker thread",
+                "es": "Mueve el render a un thread de Web Worker"
+              }
+            ],
+            "explanation": {
+              "en": "Transitions are a priority label. The work still happens on the main thread, but it is time-sliced and can be interrupted or discarded if newer urgent input arrives.",
+              "es": "Las transitions son una etiqueta de prioridad. El trabajo sigue ocurriendo en el main thread, pero se divide en rebanadas de tiempo y puede interrumpirse o descartarse si llega input urgente más nuevo."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the lifecycle of a component suspending inside a `<Suspense>` boundary.",
+              "es": "Ordena el ciclo de vida de un componente que se suspende dentro de una frontera `<Suspense>`."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "retry",
+                "label": {
+                  "en": "React re-renders the suspended subtree",
+                  "es": "React vuelve a renderizar el subárbol suspendido"
+                }
+              },
+              {
+                "id": "suspend",
+                "label": {
+                  "en": "A component suspends because its data/code isn't ready",
+                  "es": "Un componente se suspende porque sus datos/código no están listos"
+                }
+              },
+              {
+                "id": "commit",
+                "label": {
+                  "en": "The real content replaces the fallback",
+                  "es": "El contenido real reemplaza al fallback"
+                }
+              },
+              {
+                "id": "fallback",
+                "label": {
+                  "en": "The nearest Suspense boundary renders its fallback",
+                  "es": "La frontera Suspense más cercana renderiza su fallback"
+                }
+              },
+              {
+                "id": "resolve",
+                "label": {
+                  "en": "The awaited promise resolves",
+                  "es": "La promesa esperada se resuelve"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "suspend",
+              "fallback",
+              "resolve",
+              "retry",
+              "commit"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A search page filters a huge list as the user types, and typing feels janky. Which combination best applies React 18 features?",
+              "es": "Una página de búsqueda filtra una lista enorme mientras el usuario escribe, y escribir se siente entrecortado. ¿Qué combinación aplica mejor las características de React 18?"
+            },
+            "options": [
+              {
+                "en": "Replace useState with useRef for the input so it never renders",
+                "es": "Reemplaza useState por useRef para el input, así nunca renderiza"
+              },
+              {
+                "en": "Keep the input state urgent; wrap the list-filtering state update in startTransition and show a subtle pending indicator with isPending",
+                "es": "Mantén urgente el estado del input; envuelve la actualización que filtra la lista en startTransition y muestra un indicador sutil con isPending"
+              },
+              {
+                "en": "Wrap the input's setState in startTransition so keystrokes render last",
+                "es": "Envuelve el setState del input en startTransition para que las teclas se rendericen al final"
+              },
+              {
+                "en": "Move the filter into useLayoutEffect so it runs before paint",
+                "es": "Mueve el filtro a useLayoutEffect para que corra antes del paint"
+              }
+            ],
+            "explanation": {
+              "en": "The controlled input must stay urgent (users need to see what they type). The expensive derived render is the transition. useDeferredValue on the query is an equivalent alternative.",
+              "es": "El input controlado debe seguir siendo urgente (el usuario necesita ver lo que escribe). El render derivado costoso es la transición. useDeferredValue sobre la query es una alternativa equivalente."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "error-boundaries",
+      "question": {
+        "en": "How do error boundaries work, and what errors do they NOT catch?",
+        "es": "¿Cómo funcionan los error boundaries y qué errores NO capturan?"
+      },
+      "definition": {
+        "en": "An **error boundary** is a class component implementing `static getDerivedStateFromError` (render a fallback) and/or `componentDidCatch` (log to your error service). When a descendant **throws during rendering, in a lifecycle method, or in a constructor**, the nearest boundary above it swaps its subtree for a fallback UI instead of letting React unmount the entire application — which is what happens in production if an error reaches the root.\n\nThe interview-critical part is what they **don't** catch: errors in **event handlers** (use try/catch — by the time the handler runs, rendering is done), **asynchronous code** (`setTimeout`, promise rejections), **SSR errors**, and errors thrown **in the boundary itself**. There is still no hook equivalent; teams either keep one small class or use `react-error-boundary`, which adds `onReset`, reset keys and a render-prop fallback.\n\nStrategy matters more than mechanics: place **granular boundaries around independent regions** (each widget, route, or panel) so one crashing widget degrades gracefully, plus a top-level boundary as a last resort that reports to Sentry/Datadog. A senior answer also mentions pairing fallbacks with a 'retry' action that resets the boundary's state.",
+        "es": "Un **error boundary** es un componente de clase que implementa `static getDerivedStateFromError` (renderizar un fallback) y/o `componentDidCatch` (loguear a tu servicio de errores). Cuando un descendiente **lanza durante el render, en un método de ciclo de vida o en un constructor**, la frontera más cercana por encima reemplaza su subárbol por una UI de respaldo en lugar de dejar que React desmonte la aplicación completa — que es lo que ocurre en producción si un error llega a la raíz.\n\nLa parte crítica para la entrevista es lo que **no** capturan: errores en **event handlers** (usa try/catch — cuando el handler corre, el render ya terminó), **código asíncrono** (`setTimeout`, promesas rechazadas), **errores de SSR** y errores lanzados **en la propia frontera**. Todavía no existe un equivalente con hooks; los equipos mantienen una clase pequeña o usan `react-error-boundary`, que agrega `onReset`, reset keys y un fallback como render-prop.\n\nLa estrategia importa más que la mecánica: coloca **fronteras granulares alrededor de regiones independientes** (cada widget, ruta o panel) para que un widget que falla se degrade con gracia, más una frontera de nivel superior como último recurso que reporte a Sentry/Datadog. Una respuesta senior también menciona acompañar los fallbacks con una acción de 'reintentar' que reinicie el estado de la frontera."
+      },
+      "examples": [
+        {
+          "en": "A news homepage wraps each third-party widget (weather, stocks, ads) in its own boundary: when the stocks API returns malformed data and the widget throws, readers see a 'Markets unavailable' card while the rest of the page works.",
+          "es": "La portada de un sitio de noticias envuelve cada widget de terceros (clima, bolsa, anuncios) en su propia frontera: cuando la API de bolsa devuelve datos malformados y el widget lanza, los lectores ven una tarjeta de 'Mercados no disponibles' mientras el resto de la página funciona."
+        },
+        {
+          "en": "Sentry's React SDK ships `Sentry.ErrorBoundary`, which captures the component stack from componentDidCatch and attaches it to the error report — teams see exactly which subtree crashed and with which props pattern.",
+          "es": "El SDK de React de Sentry incluye `Sentry.ErrorBoundary`, que captura el component stack desde componentDidCatch y lo adjunta al reporte de error — los equipos ven exactamente qué subárbol falló y con qué patrón de props."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these errors will an error boundary catch?",
+              "es": "¿Cuál de estos errores capturará un error boundary?"
+            },
+            "options": [
+              {
+                "en": "A TypeError thrown while a child component renders (e.g., reading a property of undefined in JSX)",
+                "es": "Un TypeError lanzado mientras un componente hijo renderiza (p. ej., leer una propiedad de undefined en JSX)"
+              },
+              {
+                "en": "A network error logged by fetch in an event handler",
+                "es": "Un error de red logueado por fetch en un event handler"
+              },
+              {
+                "en": "A rejected promise inside an onClick handler's async function",
+                "es": "Una promesa rechazada dentro de la función async de un handler onClick"
+              },
+              {
+                "en": "An exception inside setTimeout scheduled by a child",
+                "es": "Una excepción dentro de un setTimeout agendado por un hijo"
+              }
+            ],
+            "explanation": {
+              "en": "Boundaries catch render-phase, lifecycle and constructor errors from descendants. Event handlers and async callbacks run outside rendering — handle those with try/catch or state.",
+              "es": "Las fronteras capturan errores de la fase de render, ciclos de vida y constructores de los descendientes. Los event handlers y callbacks asíncronos corren fuera del render — manéjalos con try/catch o estado."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why do error boundaries still require a class component?",
+              "es": "¿Por qué los error boundaries todavía requieren un componente de clase?"
+            },
+            "options": [
+              {
+                "en": "It's a deliberate security restriction added in React 18",
+                "es": "Es una restricción de seguridad deliberada agregada en React 18"
+              },
+              {
+                "en": "Classes render faster when errors occur",
+                "es": "Las clases renderizan más rápido cuando ocurren errores"
+              },
+              {
+                "en": "React has no hook equivalents of getDerivedStateFromError/componentDidCatch yet, so libraries like react-error-boundary wrap a class internally",
+                "es": "React aún no tiene equivalentes en hooks de getDerivedStateFromError/componentDidCatch, así que librerías como react-error-boundary envuelven una clase internamente"
+              },
+              {
+                "en": "Function components cannot render fallback UIs",
+                "es": "Los componentes de función no pueden renderizar UIs de respaldo"
+              }
+            ],
+            "explanation": {
+              "en": "The catching lifecycles have no hook counterparts. In practice you write one small class (or use react-error-boundary) and reuse it everywhere.",
+              "es": "Los ciclos de vida que capturan errores no tienen contraparte en hooks. En la práctica escribes una clase pequeña (o usas react-error-boundary) y la reutilizas en todas partes."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You own a dashboard with 12 independent data widgets. Describe your error-boundary strategy: where you place boundaries, what the fallbacks do, how errors get reported, and how a user recovers without reloading the page.",
+              "es": "Eres responsable de un dashboard con 12 widgets de datos independientes. Describe tu estrategia de error boundaries: dónde colocas las fronteras, qué hacen los fallbacks, cómo se reportan los errores y cómo se recupera un usuario sin recargar la página."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must propose granular boundaries (one per widget) so a single crash degrades only that widget, plus a top-level/root boundary as a last resort; fallbacks show a contextual message with a retry action; errors are reported via componentDidCatch (or an onError callback) to a service like Sentry with the component stack; recovery resets the boundary state (retry button, resetKeys/remount via key change). Bonus: mentioning that event-handler/async errors need separate handling.",
+              "es": "Debe proponer fronteras granulares (una por widget) para que un solo fallo degrade solo ese widget, más una frontera raíz como último recurso; fallbacks que muestren un mensaje contextual con acción de reintento; reporte de errores vía componentDidCatch (o un callback onError) a un servicio como Sentry con el component stack; recuperación reiniciando el estado de la frontera (botón de retry, resetKeys/remontaje cambiando la key). Bonus: mencionar que los errores de event handlers/async necesitan manejo aparte."
+            },
+            "reference": "Wrap each of the 12 widgets in its own boundary so a crash in one renders a small 'This widget failed — Retry' card while the other 11 keep working; keep a root boundary for anything that escapes. Fallbacks are compact, name the widget, and offer a Retry button that resets the boundary's error state (e.g., react-error-boundary's onReset/resetKeys, or remounting via a changed key). componentDidCatch/onError sends the error plus component stack to Sentry with widget id and user context. Event-handler and async errors aren't caught by boundaries, so widget code catches those itself and can rethrow into render (or set error state) when they should trigger the same fallback."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "forms-and-validation",
+      "question": {
+        "en": "How do you architect forms and validation in a large React application?",
+        "es": "¿Cómo diseñas la arquitectura de formularios y validación en una aplicación React grande?"
+      },
+      "definition": {
+        "en": "Form architecture is a set of deliberate choices: **where field state lives** (controlled React state vs uncontrolled DOM refs), **when validation runs** (on change, on blur, on submit — usually a blend: validate a field on blur, re-validate eagerly once it has an error, and validate everything on submit), and **where rules are defined**. Modern teams define rules once in a **schema** (Zod, Yup) and derive client validation, TypeScript types, and often server validation from the same source, so the rules can't drift apart.\n\n**React Hook Form** dominates large apps because it registers inputs as **uncontrolled with refs**, subscribing to changes without re-rendering the whole form on every keystroke; a 60-field form re-renders only the field being edited and anything subscribed to it. Formik's fully-controlled model is simpler to reason about but re-renders far more. Either way, keep **server errors** in the same error map as client errors so the UI treats 'email already taken' like any other field error.\n\nSenior signals: never trust client validation (the server must re-validate); design **accessible errors** (`aria-invalid`, `aria-describedby`, focus the first invalid field on submit); and handle the submission lifecycle — disable the button while pending, map field-level server errors back onto fields.",
+        "es": "La arquitectura de formularios es un conjunto de decisiones deliberadas: **dónde vive el estado de los campos** (estado controlado de React vs refs no controlados del DOM), **cuándo corre la validación** (on change, on blur, on submit — normalmente una mezcla: validar un campo al blur, re-validar de forma inmediata una vez que tiene error, y validar todo al submit), y **dónde se definen las reglas**. Los equipos modernos definen las reglas una vez en un **schema** (Zod, Yup) y derivan de la misma fuente la validación del cliente, los tipos de TypeScript y a menudo la validación del servidor, para que las reglas no diverjan.\n\n**React Hook Form** domina en apps grandes porque registra los inputs como **no controlados con refs**, suscribiéndose a los cambios sin re-renderizar todo el formulario en cada tecla; un formulario de 60 campos re-renderiza solo el campo editado y lo que esté suscrito a él. El modelo totalmente controlado de Formik es más fácil de razonar pero re-renderiza mucho más. En cualquier caso, mantén los **errores del servidor** en el mismo mapa de errores que los del cliente, para que la UI trate 'email ya registrado' como cualquier otro error de campo.\n\nSeñales senior: nunca confíes en la validación del cliente (el servidor debe re-validar); diseña **errores accesibles** (`aria-invalid`, `aria-describedby`, enfocar el primer campo inválido al enviar); y maneja el ciclo del envío — deshabilitar el botón mientras está pendiente, mapear errores de campo del servidor de vuelta a los campos."
+      },
+      "examples": [
+        {
+          "en": "A checkout defines its schema once in Zod: the client gets instant per-field messages via @hookform/resolvers, the API validates the same schema in its handler, and the TypeScript type of the form values is inferred with z.infer — one source of truth for three layers.",
+          "es": "Un checkout define su schema una vez en Zod: el cliente recibe mensajes instantáneos por campo vía @hookform/resolvers, la API valida el mismo schema en su handler, y el tipo de TypeScript de los valores del formulario se infiere con z.infer — una sola fuente de verdad para tres capas."
+        },
+        {
+          "en": "An insurance company's 80-field quote form was rewritten from all-controlled state to React Hook Form; per-keystroke render counts dropped from ~80 components to 1, fixing typing lag on mid-range phones.",
+          "es": "El formulario de cotización de 80 campos de una aseguradora se reescribió de estado totalmente controlado a React Hook Form; los renders por tecla bajaron de ~80 componentes a 1, arreglando el lag de escritura en teléfonos de gama media."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does React Hook Form typically outperform a fully-controlled (e.g., classic Formik) form as field count grows?",
+              "es": "¿Por qué React Hook Form suele rendir mejor que un formulario totalmente controlado (p. ej., Formik clásico) a medida que crece el número de campos?"
+            },
+            "options": [
+              {
+                "en": "It batches keystrokes and applies them once per second",
+                "es": "Agrupa las teclas y las aplica una vez por segundo"
+              },
+              {
+                "en": "It validates in a Web Worker off the main thread",
+                "es": "Valida en un Web Worker fuera del main thread"
+              },
+              {
+                "en": "It registers inputs as uncontrolled via refs, so typing in one field doesn't re-render the whole form tree",
+                "es": "Registra los inputs como no controlados vía refs, así que escribir en un campo no re-renderiza todo el árbol del formulario"
+              },
+              {
+                "en": "It compiles the form to vanilla JS at build time",
+                "es": "Compila el formulario a JS puro en tiempo de build"
+              }
+            ],
+            "explanation": {
+              "en": "RHF keeps values in the DOM and subscribes selectively; a controlled form lifts every keystroke into shared state, re-rendering everything that reads it.",
+              "es": "RHF mantiene los valores en el DOM y se suscribe selectivamente; un formulario controlado sube cada tecla a estado compartido, re-renderizando todo lo que lo lee."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each validation timing strategy with its main effect on UX.",
+              "es": "Conecta cada estrategia de momento de validación con su efecto principal en la UX."
+            },
+            "left": [
+              {
+                "id": "a",
+                "label": {
+                  "en": "Validate on every change from the first keystroke",
+                  "es": "Validar en cada cambio desde la primera tecla"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Validate on blur, then eagerly re-validate fields that have errors",
+                  "es": "Validar al blur, y luego re-validar de inmediato los campos con error"
+                }
+              },
+              {
+                "id": "c",
+                "label": {
+                  "en": "Validate only on submit",
+                  "es": "Validar solo al enviar"
+                }
+              },
+              {
+                "id": "d",
+                "label": {
+                  "en": "Schema-based validation (Zod/Yup) shared with the server",
+                  "es": "Validación basada en schema (Zod/Yup) compartida con el servidor"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Yells at users about fields they haven't finished typing",
+                  "es": "Regaña al usuario por campos que aún no terminó de escribir"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "The balanced default: quiet until a field is touched, instant feedback once it's wrong",
+                  "es": "El equilibrio por defecto: silencioso hasta tocar el campo, feedback instantáneo una vez que está mal"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Cheapest, but users discover all errors at once at the end",
+                  "es": "El más barato, pero el usuario descubre todos los errores de golpe al final"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "One source of truth for rules, types and server checks",
+                  "es": "Una sola fuente de verdad para reglas, tipos y chequeos del servidor"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2",
+              "c": "3",
+              "d": "4"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The server rejects a signup with 'email already registered'. What is the best way to surface this?",
+              "es": "El servidor rechaza un registro con 'email ya registrado'. ¿Cuál es la mejor forma de mostrarlo?"
+            },
+            "options": [
+              {
+                "en": "Log it to the console and keep the button disabled",
+                "es": "Loguearlo en consola y dejar el botón deshabilitado"
+              },
+              {
+                "en": "Retry the request automatically until it succeeds",
+                "es": "Reintentar la petición automáticamente hasta que tenga éxito"
+              },
+              {
+                "en": "Map it into the same per-field error state used by client validation, so it renders under the email field like any other error",
+                "es": "Mapearlo al mismo estado de errores por campo que usa la validación del cliente, para que se muestre bajo el campo de email como cualquier otro error"
+              },
+              {
+                "en": "Show a generic alert() dialog with the raw server message",
+                "es": "Mostrar un alert() genérico con el mensaje crudo del servidor"
+              }
+            ],
+            "explanation": {
+              "en": "Users fix field errors at the field. RHF's setError (or an errors map) lets server-side field errors flow through exactly the same UI path as client errors.",
+              "es": "El usuario corrige errores de campo en el campo. El setError de RHF (o un mapa de errores) permite que los errores de campo del servidor fluyan por el mismo camino de UI que los del cliente."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "testing-react-components",
+      "question": {
+        "en": "How do you test React components effectively, and what makes a test suite trustworthy?",
+        "es": "¿Cómo pruebas componentes de React de forma efectiva y qué hace confiable a una suite de tests?"
+      },
+      "definition": {
+        "en": "The guiding principle (from React Testing Library) is: **test what the user experiences, not how the component is implemented**. Render the component, find things the way a user would — `getByRole('button', { name: /save/i })`, labels, visible text — interact with `userEvent` (which simulates full event sequences: pointer, focus, keyboard), and assert on visible outcomes. Tests coupled to state variable names or DOM structure break on every refactor without catching real bugs; tests written against roles and text survive refactors and also enforce **accessibility**.\n\nAsync behavior is where suites get flaky. Use `findBy*` queries or `waitFor` to await UI appearing, and `queryBy*` to assert absence. Never assert immediately after an action that triggers async work. Network calls should be intercepted at the boundary with **MSW (Mock Service Worker)** rather than mocking `fetch` or your API module — the component exercises its real data path against controlled responses.\n\nStructure the pyramid pragmatically: many component/integration tests with RTL + Jest/Vitest, `renderHook` for reusable hooks, and a thin layer of end-to-end tests (Cypress/Playwright) for critical flows like checkout and login. Coverage of user-visible behavior beats line coverage.",
+        "es": "El principio rector (de React Testing Library) es: **prueba lo que el usuario experimenta, no cómo está implementado el componente**. Renderiza el componente, encuentra las cosas como lo haría un usuario — `getByRole('button', { name: /save/i })`, labels, texto visible — interactúa con `userEvent` (que simula secuencias completas de eventos: puntero, foco, teclado), y haz aserciones sobre resultados visibles. Los tests acoplados a nombres de variables de estado o a la estructura del DOM se rompen con cada refactor sin atrapar bugs reales; los tests escritos contra roles y texto sobreviven refactors y además obligan a la **accesibilidad**.\n\nEl comportamiento asíncrono es donde las suites se vuelven inestables. Usa queries `findBy*` o `waitFor` para esperar UI que aparece, y `queryBy*` para asertar ausencia. Nunca hagas aserciones inmediatamente después de una acción que dispara trabajo asíncrono. Las llamadas de red se interceptan en el borde con **MSW (Mock Service Worker)** en lugar de mockear `fetch` o tu módulo de API — el componente ejercita su camino de datos real contra respuestas controladas.\n\nEstructura la pirámide con pragmatismo: muchos tests de componente/integración con RTL + Jest/Vitest, `renderHook` para hooks reutilizables, y una capa delgada de tests end-to-end (Cypress/Playwright) para flujos críticos como checkout y login. La cobertura de comportamiento visible al usuario vale más que la cobertura de líneas."
+      },
+      "examples": [
+        {
+          "en": "A team's login test renders the form, types with userEvent, and asserts the welcome message — with MSW returning a canned 200. When they later swapped axios for fetch and moved state into a reducer, the test kept passing because it never referenced implementation details.",
+          "es": "El test de login de un equipo renderiza el formulario, escribe con userEvent y aserta el mensaje de bienvenida — con MSW devolviendo un 200 predefinido. Cuando después cambiaron axios por fetch y movieron el estado a un reducer, el test siguió pasando porque nunca referenció detalles de implementación."
+        },
+        {
+          "en": "A flaky suite asserted `getByText('Loaded')` right after clicking refresh; it passed locally and failed in CI. Switching to `await findByText('Loaded')` (which retries until timeout) eliminated an entire class of intermittent failures.",
+          "es": "Una suite inestable asertaba `getByText('Loaded')` justo después de hacer clic en refresh; pasaba en local y fallaba en CI. Cambiar a `await findByText('Loaded')` (que reintenta hasta el timeout) eliminó una clase entera de fallos intermitentes."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the steps of a well-structured React Testing Library test for a form that submits data to an API.",
+              "es": "Ordena los pasos de un test bien estructurado con React Testing Library para un formulario que envía datos a una API."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "assert",
+                "label": {
+                  "en": "Await the success message with findByText / waitFor",
+                  "es": "Esperar el mensaje de éxito con findByText / waitFor"
+                }
+              },
+              {
+                "id": "mock",
+                "label": {
+                  "en": "Set up the mocked API response (MSW handler)",
+                  "es": "Configurar la respuesta simulada de la API (handler de MSW)"
+                }
+              },
+              {
+                "id": "interact",
+                "label": {
+                  "en": "Type into fields and click submit with userEvent",
+                  "es": "Escribir en los campos y hacer clic en enviar con userEvent"
+                }
+              },
+              {
+                "id": "render",
+                "label": {
+                  "en": "Render the component under test",
+                  "es": "Renderizar el componente bajo prueba"
+                }
+              },
+              {
+                "id": "query",
+                "label": {
+                  "en": "Locate fields and the button by role/label",
+                  "es": "Localizar los campos y el botón por rol/label"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "mock",
+              "render",
+              "query",
+              "interact",
+              "assert"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "After clicking 'Load data', the list appears asynchronously. Which assertion is correct?",
+              "es": "Después de hacer clic en 'Load data', la lista aparece de forma asíncrona. ¿Qué aserción es correcta?"
+            },
+            "options": [
+              {
+                "en": "expect(await screen.findByText('Item 1')).toBeInTheDocument() — findBy retries until the element appears or times out",
+                "es": "expect(await screen.findByText('Item 1')).toBeInTheDocument() — findBy reintenta hasta que el elemento aparece o se agota el tiempo"
+              },
+              {
+                "en": "expect(screen.queryByText('Item 1')).toBeNull() to confirm the data loaded",
+                "es": "expect(screen.queryByText('Item 1')).toBeNull() para confirmar que los datos cargaron"
+              },
+              {
+                "en": "expect(screen.getByText('Item 1')).toBeInTheDocument() immediately after the click",
+                "es": "expect(screen.getByText('Item 1')).toBeInTheDocument() inmediatamente después del clic"
+              },
+              {
+                "en": "setTimeout(() => expect(screen.getByText('Item 1')).toBeInTheDocument(), 2000)",
+                "es": "setTimeout(() => expect(screen.getByText('Item 1')).toBeInTheDocument(), 2000)"
+              }
+            ],
+            "explanation": {
+              "en": "findBy* returns a promise that retries the query. getBy throws immediately; raw setTimeout assertions escape the test runner; queryBy...toBeNull asserts absence, not presence.",
+              "es": "findBy* devuelve una promesa que reintenta la query. getBy lanza de inmediato; las aserciones en setTimeout escapan del runner; queryBy...toBeNull aserta ausencia, no presencia."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A teammate's tests assert on component state (`wrapper.state('items')`) and mock your internal `useItems` hook. Explain why this style is fragile, and describe how you would restructure one of these tests the RTL way.",
+              "es": "Los tests de un compañero hacen aserciones sobre el estado del componente (`wrapper.state('items')`) y mockean tu hook interno `useItems`. Explica por qué este estilo es frágil y describe cómo reestructurarías uno de esos tests al estilo RTL."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must explain that testing implementation details (state shape, internal hooks) breaks on refactors that don't change behavior and can pass while the real UI is broken. Restructure: render the component, mock at the network boundary (MSW) instead of the hook, interact via userEvent and accessible queries (getByRole/findByText), and assert visible output. Bonus: mentions that internal hooks get covered through the component, or renderHook for truly reusable hooks.",
+              "es": "Debe explicar que probar detalles de implementación (forma del estado, hooks internos) se rompe con refactors que no cambian el comportamiento y puede pasar aunque la UI real esté rota. Reestructura: renderizar el componente, mockear en el borde de red (MSW) en vez del hook, interactuar con userEvent y queries accesibles (getByRole/findByText), y asertar la salida visible. Bonus: menciona que los hooks internos se cubren a través del componente, o renderHook para hooks realmente reutilizables."
+            },
+            "reference": "Asserting wrapper.state('items') couples the test to a private variable: renaming it, moving it into a reducer, or adopting React Query breaks the test with zero behavior change — and the test can stay green while the render output is broken, since it never looks at the DOM. Mocking useItems is worse: the test now exercises a fake. RTL version: register an MSW handler returning fixture items, render(<ItemList />), await screen.findByRole('list'), assert the item names are visible, and for interactions use userEvent.click on the accessible button. The hook's logic is covered through the component; only extract renderHook tests if the hook is shared across features."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "ssr-and-hydration",
+      "question": {
+        "en": "How do SSR and hydration work in React, and what causes hydration mismatches?",
+        "es": "¿Cómo funcionan el SSR y la hidratación en React, y qué causa los errores de hydration mismatch?"
+      },
+      "definition": {
+        "en": "With **server-side rendering**, the server runs your components and sends real HTML, so users (and crawlers) see content on first byte instead of a blank div. But that HTML is inert. **Hydration** (`hydrateRoot`) is the client step where React renders the same tree in memory, **adopts the existing DOM nodes instead of recreating them**, and attaches event listeners. Between HTML arrival and hydration completion lies the 'uncanny valley': content is visible but not yet interactive.\n\nHydration assumes the client's first render output **matches the server's HTML exactly**. Anything non-deterministic breaks it: `Date.now()`/`Math.random()`, locale/timezone-dependent formatting, or branching on `window`/user agent during the initial render. React logs mismatch errors and may discard the server HTML and re-render on the client — losing the SSR performance benefit. The fixes are to make the first client render match (render a placeholder, then update inside `useEffect`, which only runs on the client) or `suppressHydrationWarning` for genuinely unavoidable text like timestamps.\n\nReact 18 modernized the pipeline: **streaming SSR** (`renderToPipeableStream`) sends HTML in chunks with `<Suspense>` boundaries, and **selective hydration** hydrates boundaries independently — prioritizing the one the user is interacting with. Server Components go further: they run only on the server and ship **no JS bundle at all** for those components.",
+        "es": "Con el **server-side rendering**, el servidor ejecuta tus componentes y envía HTML real, así que los usuarios (y los crawlers) ven contenido desde el primer byte en lugar de un div vacío. Pero ese HTML es inerte. La **hidratación** (`hydrateRoot`) es el paso en el cliente donde React renderiza el mismo árbol en memoria, **adopta los nodos del DOM existentes en lugar de recrearlos**, y conecta los event listeners. Entre la llegada del HTML y el fin de la hidratación está el 'valle inquietante': el contenido se ve pero aún no es interactivo.\n\nLa hidratación asume que el primer render del cliente **coincide exactamente con el HTML del servidor**. Cualquier cosa no determinista lo rompe: `Date.now()`/`Math.random()`, formateo dependiente de locale/zona horaria, o ramificar según `window`/user agent durante el render inicial. React registra errores de mismatch y puede descartar el HTML del servidor y re-renderizar en el cliente — perdiendo el beneficio de rendimiento del SSR. Las soluciones son hacer que el primer render del cliente coincida (renderizar un placeholder y actualizar dentro de `useEffect`, que solo corre en el cliente) o `suppressHydrationWarning` para texto genuinamente inevitable como timestamps.\n\nReact 18 modernizó el pipeline: el **streaming SSR** (`renderToPipeableStream`) envía HTML en trozos con fronteras `<Suspense>`, y la **hidratación selectiva** hidrata las fronteras de forma independiente — priorizando aquella con la que el usuario está interactuando. Los Server Components van más allá: corren solo en el servidor y **no envían bundle de JS** para esos componentes."
+      },
+      "examples": [
+        {
+          "en": "An e-commerce product page renders 'Add to cart' via SSR for instant LCP; with React 18's selective hydration, if the user taps the button before the page finishes hydrating, React prioritizes hydrating that boundary first so the tap isn't lost.",
+          "es": "La página de producto de un e-commerce renderiza 'Add to cart' vía SSR para un LCP instantáneo; con la hidratación selectiva de React 18, si el usuario toca el botón antes de que la página termine de hidratarse, React prioriza hidratar esa frontera primero para no perder el toque."
+        },
+        {
+          "en": "A news site showed 'hace 3 minutos' computed with `new Date()` during render: the server rendered one value, the client another seconds later — hydration mismatch on every page. The fix: render the server timestamp and switch to relative time inside useEffect.",
+          "es": "Un sitio de noticias mostraba 'hace 3 minutos' calculado con `new Date()` durante el render: el servidor renderizaba un valor y el cliente otro segundos después — hydration mismatch en cada página. La solución: renderizar el timestamp del servidor y cambiar a tiempo relativo dentro de useEffect."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the SSR + hydration lifecycle from request to interactive page.",
+              "es": "Ordena el ciclo de SSR + hidratación desde la petición hasta la página interactiva."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "hydrate",
+                "label": {
+                  "en": "hydrateRoot renders in memory, adopts existing DOM and attaches event listeners",
+                  "es": "hydrateRoot renderiza en memoria, adopta el DOM existente y conecta los event listeners"
+                }
+              },
+              {
+                "id": "server",
+                "label": {
+                  "en": "Server runs components and streams HTML",
+                  "es": "El servidor ejecuta los componentes y envía el HTML por streaming"
+                }
+              },
+              {
+                "id": "interactive",
+                "label": {
+                  "en": "The page responds to clicks and input",
+                  "es": "La página responde a clics e input"
+                }
+              },
+              {
+                "id": "paint",
+                "label": {
+                  "en": "Browser parses and paints the (inert) HTML",
+                  "es": "El navegador parsea y pinta el HTML (inerte)"
+                }
+              },
+              {
+                "id": "bundle",
+                "label": {
+                  "en": "The JS bundle downloads and executes",
+                  "es": "El bundle de JS se descarga y ejecuta"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "server",
+              "paint",
+              "bundle",
+              "hydrate",
+              "interactive"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these is a classic cause of a hydration mismatch?",
+              "es": "¿Cuál de estas es una causa clásica de hydration mismatch?"
+            },
+            "options": [
+              {
+                "en": "Fetching data inside useEffect",
+                "es": "Hacer fetch de datos dentro de useEffect"
+              },
+              {
+                "en": "Using CSS modules instead of styled-components",
+                "es": "Usar CSS modules en lugar de styled-components"
+              },
+              {
+                "en": "Rendering `Math.random()` or the current time during the initial render, producing different output on server and client",
+                "es": "Renderizar `Math.random()` o la hora actual durante el render inicial, produciendo salidas distintas en servidor y cliente"
+              },
+              {
+                "en": "Rendering a list with stable ids as keys",
+                "es": "Renderizar una lista con ids estables como keys"
+              }
+            ],
+            "explanation": {
+              "en": "Hydration compares the client's first render against server HTML. Non-deterministic render output (random values, clocks, window checks) guarantees a mismatch. useEffect runs after hydration, so it's safe.",
+              "es": "La hidratación compara el primer render del cliente contra el HTML del servidor. Salida no determinista (valores aleatorios, relojes, chequeos de window) garantiza un mismatch. useEffect corre después de la hidratación, así que es seguro."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What do React 18's streaming SSR and selective hydration improve over classic renderToString?",
+              "es": "¿Qué mejoran el streaming SSR y la hidratación selectiva de React 18 respecto al clásico renderToString?"
+            },
+            "options": [
+              {
+                "en": "HTML streams progressively per Suspense boundary instead of waiting for the whole page, and boundaries hydrate independently — prioritizing where the user interacts",
+                "es": "El HTML llega progresivamente por frontera de Suspense en vez de esperar la página completa, y las fronteras se hidratan de forma independiente — priorizando donde el usuario interactúa"
+              },
+              {
+                "en": "They make hydration mismatches impossible",
+                "es": "Hacen imposibles los hydration mismatches"
+              },
+              {
+                "en": "They remove the need for a JS bundle entirely",
+                "es": "Eliminan por completo la necesidad de un bundle de JS"
+              },
+              {
+                "en": "They render on the GPU instead of the CPU",
+                "es": "Renderizan en la GPU en lugar de la CPU"
+              }
+            ],
+            "explanation": {
+              "en": "renderToString was all-or-nothing: full HTML, full bundle, full hydration. React 18 breaks all three into Suspense-bounded chunks that flow and hydrate independently.",
+              "es": "renderToString era todo o nada: HTML completo, bundle completo, hidratación completa. React 18 divide los tres en trozos delimitados por Suspense que fluyen y se hidratan de forma independiente."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why must hooks be called unconditionally at the top level of a component?",
+          "es": "¿Por qué los hooks deben llamarse incondicionalmente en el nivel superior de un componente?"
+        },
+        "options": [
+          {
+            "en": "Hooks inside conditions run twice in Strict Mode",
+            "es": "Los hooks dentro de condiciones corren dos veces en Strict Mode"
+          },
+          {
+            "en": "Conditional hooks cannot be minified",
+            "es": "Los hooks condicionales no pueden minificarse"
+          },
+          {
+            "en": "Hook state is stored positionally per fiber; a changing call order makes hooks read the wrong state slots",
+            "es": "El estado de los hooks se guarda posicionalmente por fiber; un orden de llamadas cambiante hace que los hooks lean los slots de estado equivocados"
+          },
+          {
+            "en": "Because the compiler inlines hooks in order",
+            "es": "Porque el compilador hace inline de los hooks en orden"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "During reconciliation, when does React unmount an entire subtree and rebuild it from scratch?",
+          "es": "Durante la reconciliación, ¿cuándo desmonta React un subárbol completo y lo reconstruye desde cero?"
+        },
+        "options": [
+          {
+            "en": "Only when you call forceUpdate",
+            "es": "Solo cuando llamas forceUpdate"
+          },
+          {
+            "en": "When the element's type differs from the previous render (e.g., a different component or tag)",
+            "es": "Cuando el tipo del elemento difiere del render anterior (p. ej., un componente o tag distinto)"
+          },
+          {
+            "en": "Whenever any prop changes",
+            "es": "Cada vez que cambia cualquier prop"
+          },
+          {
+            "en": "After every commit, as part of cleanup",
+            "es": "Después de cada commit, como parte de la limpieza"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the main behavioral risk of `key={index}` in a list that can be reordered or filtered?",
+          "es": "¿Cuál es el principal riesgo de comportamiento de `key={index}` en una lista que puede reordenarse o filtrarse?"
+        },
+        "options": [
+          {
+            "en": "Keys leak into the DOM as attributes",
+            "es": "Las keys se filtran al DOM como atributos"
+          },
+          {
+            "en": "React refuses to render and throws",
+            "es": "React se niega a renderizar y lanza un error"
+          },
+          {
+            "en": "The list renders in reverse order",
+            "es": "La lista se renderiza en orden inverso"
+          },
+          {
+            "en": "Component state (inputs, checkboxes) stays glued to positions instead of following the data items",
+            "es": "El estado de los componentes (inputs, checkboxes) queda pegado a las posiciones en lugar de seguir a los elementos de datos"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which statement about controlled inputs is true?",
+          "es": "¿Qué afirmación sobre los inputs controlados es verdadera?"
+        },
+        "options": [
+          {
+            "en": "They cannot be validated until submit",
+            "es": "No pueden validarse hasta el submit"
+          },
+          {
+            "en": "They keep their value in the DOM and read it via refs",
+            "es": "Guardan su valor en el DOM y lo leen mediante refs"
+          },
+          {
+            "en": "They avoid re-renders on each keystroke",
+            "es": "Evitan re-renders en cada tecla"
+          },
+          {
+            "en": "React state is the source of truth, enabling synchronous validation and formatting at the cost of a render per keystroke",
+            "es": "El estado de React es la fuente de verdad, permitiendo validación y formateo síncronos al costo de un render por tecla"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A `React.memo` child still re-renders with its parent. Which prop pattern is the most likely culprit?",
+          "es": "Un hijo con `React.memo` sigue re-renderizándose con su padre. ¿Qué patrón de props es el culpable más probable?"
+        },
+        "options": [
+          {
+            "en": "A number prop passed from a constant",
+            "es": "Una prop numérica pasada desde una constante"
+          },
+          {
+            "en": "A memoized callback from useCallback",
+            "es": "Un callback memoizado con useCallback"
+          },
+          {
+            "en": "An inline object/array/function literal recreated on every parent render",
+            "es": "Un objeto/array/función inline recreado en cada render del padre"
+          },
+          {
+            "en": "A string prop that never changes",
+            "es": "Una prop string que nunca cambia"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which requirement most strongly justifies Redux (or another selector-based store) over plain Context?",
+          "es": "¿Qué requisito justifica con más fuerza usar Redux (u otro store basado en selectores) en lugar de Context puro?"
+        },
+        "options": [
+          {
+            "en": "Avoiding prop drilling for a static config object",
+            "es": "Evitar prop drilling para un objeto de configuración estático"
+          },
+          {
+            "en": "Passing the current theme to deeply nested components",
+            "es": "Pasar el tema actual a componentes profundamente anidados"
+          },
+          {
+            "en": "High-frequency updates where components must subscribe to slices to avoid mass re-renders, plus devtools/audit needs",
+            "es": "Actualizaciones de alta frecuencia donde los componentes deben suscribirse a porciones para evitar re-renders masivos, más necesidades de devtools/auditoría"
+          },
+          {
+            "en": "Storing the current locale string",
+            "es": "Guardar el string del idioma actual"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does a custom hook share between the components that call it?",
+          "es": "¿Qué comparte un custom hook entre los componentes que lo llaman?"
+        },
+        "options": [
+          {
+            "en": "Its internal state, like a singleton",
+            "es": "Su estado interno, como un singleton"
+          },
+          {
+            "en": "Only the logic — each caller gets fully independent state and effects",
+            "es": "Solo la lógica — cada llamador obtiene estado y efectos totalmente independientes"
+          },
+          {
+            "en": "Its refs, but not its state",
+            "es": "Sus refs, pero no su estado"
+          },
+          {
+            "en": "Nothing; custom hooks cannot hold state",
+            "es": "Nada; los custom hooks no pueden tener estado"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In React 18, what does `useTransition`'s `isPending` flag represent?",
+          "es": "En React 18, ¿qué representa la bandera `isPending` de `useTransition`?"
+        },
+        "options": [
+          {
+            "en": "The network request triggered by the transition is still in flight",
+            "es": "La petición de red disparada por la transición sigue en vuelo"
+          },
+          {
+            "en": "The component has pending unsaved form data",
+            "es": "El componente tiene datos de formulario sin guardar"
+          },
+          {
+            "en": "React is waiting for the browser to be idle",
+            "es": "React está esperando a que el navegador esté ocioso"
+          },
+          {
+            "en": "A non-urgent update is still rendering in the background, so you can show subtle feedback meanwhile",
+            "es": "Una actualización no urgente todavía se está renderizando en segundo plano, así que puedes mostrar feedback sutil mientras tanto"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which error will NOT be caught by an error boundary?",
+          "es": "¿Qué error NO será capturado por un error boundary?"
+        },
+        "options": [
+          {
+            "en": "A throw inside a descendant's constructor",
+            "es": "Un throw dentro del constructor de un descendiente"
+          },
+          {
+            "en": "A throw inside componentDidUpdate of a child",
+            "es": "Un throw dentro de componentDidUpdate de un hijo"
+          },
+          {
+            "en": "A throw inside a child's render",
+            "es": "Un throw dentro del render de un hijo"
+          },
+          {
+            "en": "A promise rejection inside an async onClick handler",
+            "es": "Un rechazo de promesa dentro de un handler onClick async"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In React Testing Library, which query should you use to assert that an element appears after an async operation?",
+          "es": "En React Testing Library, ¿qué query deberías usar para asertar que un elemento aparece después de una operación asíncrona?"
+        },
+        "options": [
+          {
+            "en": "queryByText — it is the async variant",
+            "es": "queryByText — es la variante asíncrona"
+          },
+          {
+            "en": "getByText — it waits automatically",
+            "es": "getByText — espera automáticamente"
+          },
+          {
+            "en": "getAllByText with a try/catch",
+            "es": "getAllByText con un try/catch"
+          },
+          {
+            "en": "await findByText — it retries until the element appears or the timeout expires",
+            "es": "await findByText — reintenta hasta que el elemento aparece o expira el timeout"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What does hydration (`hydrateRoot`) actually do?",
+          "es": "¿Qué hace realmente la hidratación (`hydrateRoot`)?"
+        },
+        "options": [
+          {
+            "en": "It preloads data for useEffect calls",
+            "es": "Precarga datos para las llamadas a useEffect"
+          },
+          {
+            "en": "It deletes the server HTML and re-renders from a blank root",
+            "es": "Borra el HTML del servidor y re-renderiza desde una raíz vacía"
+          },
+          {
+            "en": "It renders the tree in memory, adopts the existing server-rendered DOM nodes, and attaches event listeners",
+            "es": "Renderiza el árbol en memoria, adopta los nodos del DOM ya renderizados por el servidor y conecta los event listeners"
+          },
+          {
+            "en": "It requests fresh HTML from the server and swaps it in",
+            "es": "Pide HTML fresco al servidor y lo intercambia"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "A page with a search input over a large table feels sluggish while typing. Walk through your diagnosis and fix plan using React's performance tools and APIs.",
+          "es": "Una página con un buscador sobre una tabla grande se siente lenta al escribir. Describe tu diagnóstico y plan de solución usando las herramientas y APIs de rendimiento de React."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must start by measuring (React DevTools Profiler) to find what re-renders and why, then apply targeted fixes: memoize the filtered computation with useMemo, memoize rows with React.memo and stabilize handlers with useCallback, and keep typing responsive by deprioritizing the heavy list update with useTransition or useDeferredValue (optionally debouncing). Bonus: virtualization (react-window) for very large tables, and confirming the win by re-profiling.",
+          "es": "Debe empezar midiendo (Profiler de React DevTools) para encontrar qué se re-renderiza y por qué, y luego aplicar arreglos dirigidos: memoizar el cálculo del filtrado con useMemo, memoizar las filas con React.memo y estabilizar handlers con useCallback, y mantener la escritura fluida despriorizando la actualización pesada de la lista con useTransition o useDeferredValue (opcionalmente debounce). Bonus: virtualización (react-window) para tablas muy grandes, y confirmar la mejora re-perfilando."
+        },
+        "reference": "First profile with React DevTools to see which components render per keystroke and why (it's usually the entire table re-rendering because the query lives high in the tree). Then: keep the input state urgent but wrap the table-filtering update in startTransition (or derive it from useDeferredValue of the query) so typing stays responsive; compute the filtered rows in useMemo keyed on [rows, deferredQuery]; wrap the row component in React.memo and pass useCallback-stabilized handlers so unchanged rows skip re-rendering. If the table renders thousands of DOM rows, add virtualization with react-window so only visible rows mount. Re-profile to confirm the render count and commit durations actually dropped."
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "Your marketing site moved from client-side rendering to SSR and now logs hydration mismatch warnings on the homepage. Explain what a hydration mismatch is, two realistic causes, and how you would fix each.",
+          "es": "Tu sitio de marketing pasó de renderizado del lado del cliente a SSR y ahora registra advertencias de hydration mismatch en la portada. Explica qué es un hydration mismatch, dos causas realistas y cómo arreglarías cada una."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must define the mismatch: the client's first render produced different output than the server's HTML, so React warns and may discard server HTML and re-render on the client. Must give two realistic causes — e.g., time/random values rendered during render (Date.now, Math.random), locale/timezone-dependent formatting, or branching on window/localStorage during initial render — and fix each: move client-only logic into useEffect (render a server-safe placeholder first), keep the first client render deterministic and identical to the server, or use suppressHydrationWarning for unavoidable text like timestamps.",
+          "es": "Debe definir el mismatch: el primer render del cliente produjo una salida distinta al HTML del servidor, así que React advierte y puede descartar el HTML del servidor y re-renderizar en el cliente. Debe dar dos causas realistas — p. ej., valores de tiempo/aleatorios renderizados durante el render (Date.now, Math.random), formateo dependiente de locale/zona horaria, o ramificar según window/localStorage en el render inicial — y arreglar cada una: mover la lógica solo-cliente a useEffect (renderizando primero un placeholder seguro para el servidor), mantener el primer render del cliente determinista e idéntico al del servidor, o usar suppressHydrationWarning para texto inevitable como timestamps."
+        },
+        "reference": "A hydration mismatch means React's first client render didn't produce the same output as the server HTML it is adopting; React warns, and can throw away the server markup and re-render client-side, losing SSR's benefit. Cause 1: rendering non-deterministic values during render — e.g., a 'time ago' label from new Date() or an A/B variant from Math.random(). Fix: render a deterministic value (the server timestamp) and switch to the dynamic value inside useEffect, which runs only after hydration; for pure text like clocks, suppressHydrationWarning is acceptable. Cause 2: branching on client-only APIs during initial render — e.g., reading window.innerWidth or localStorage to pick a layout/theme. Fix: default to a server-safe branch on the first render and update state in useEffect once mounted (the standard useIsClient/mounted-flag pattern), accepting one post-hydration re-render."
+      }
+    }
+  ]
+}
