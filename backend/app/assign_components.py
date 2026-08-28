@@ -100,6 +100,7 @@ COURSE_TOPIC: dict[str, str] = {
     "node": "nodejs",
     "typescript": "typescript",
     "database-selection": "b-tree",
+    "golang": "concurrency",
     # behavioral-interview has no meaningful image topic — left out on purpose.
 }
 
@@ -108,6 +109,104 @@ COURSE_TOPIC: dict[str, str] = {
 # generic needle swallows a specific lesson (e.g. "explain-analyze" would also match
 # "reading-explain-analyze-step-by-step").
 DIAGRAMS: list[tuple[str, dict]] = [
+    (
+        "goroutines-and-the-scheduler",
+        {
+            "kind": "mermaid",
+            "code": (
+                "flowchart TD\n"
+                '  subgraph P1["P (processor) - one per GOMAXPROCS"]\n'
+                '    Q1["local run queue: G G G"]\n'
+                "  end\n"
+                '  subgraph P2["P (processor)"]\n'
+                '    Q2["local run queue: G"]\n'
+                "  end\n"
+                '  GQ["global run queue"]\n'
+                '  M1["M - OS thread"] --> P1\n'
+                '  M2["M - OS thread"] --> P2\n'
+                "  GQ --> P1\n"
+                "  GQ --> P2\n"
+                '  P2 -.->|"work stealing when its queue is empty"| P1\n'
+                '  P1 --> RUN["G running on M1"]\n'
+                '  RUN -->|"blocks on channel or network read"| PARK["parked; M1 picks up the next G"]\n'
+                '  PARK -.->|"ready again"| Q1'
+            ),
+            "caption": {
+                "en": "The M:N scheduler: many goroutines multiplexed onto few OS threads. A blocked goroutine is parked so its thread runs another — which is why Go needs no async/await.",
+                "es": "El scheduler M:N: muchas goroutines multiplexadas sobre pocos hilos del SO. Una goroutine bloqueada se estaciona para que su hilo corra otra — por eso Go no necesita async/await.",
+            },
+        },
+    ),
+    (
+        "channels-and-select",
+        {
+            "kind": "mermaid",
+            "code": (
+                "flowchart LR\n"
+                '  S["Sender goroutine"] -->|"ch <- v"| C{"Channel"}\n'
+                '  C -->|"unbuffered: blocks until a receiver is ready"| R["Receiver goroutine"]\n'
+                '  C -->|"buffered: blocks only when full"| R\n'
+                '  R --> SEL{"select"}\n'
+                '  SEL -->|"case v := <-work"| W["process the value"]\n'
+                '  SEL -->|"case <-ctx.Done()"| X["return ctx.Err()"]\n'
+                '  SEL -->|"case <-time.After(1s)"| T["timeout"]\n'
+                '  SEL -->|"default"| N["non-blocking: run immediately"]\n'
+                '  SEL -.->|"several ready: one is chosen at random"| SEL'
+            ),
+            "caption": {
+                "en": "An unbuffered channel is a rendezvous, not a queue. select waits on several operations at once, and picks randomly among ready cases so none can starve.",
+                "es": "Un canal sin buffer es una cita, no una cola. select espera varias operaciones a la vez, y elige al azar entre los casos listos para que ninguno quede hambriento.",
+            },
+        },
+    ),
+    (
+        "context-and-where-async-await",
+        {
+            "kind": "mermaid",
+            "code": (
+                "flowchart TD\n"
+                '  subgraph JS["JavaScript / Python"]\n'
+                '    A1["async function"] --> A2["await io()"]\n'
+                '    A2 --> A3["every caller must also be async"]\n'
+                '    A3 --> A4["function colouring spreads through the call graph"]\n'
+                "  end\n"
+                '  subgraph GO["Go"]\n'
+                '    B1["plain function"] --> B2["resp, err := http.Get(url)"]\n'
+                '    B2 --> B3["goroutine parks; the OS thread runs another"]\n'
+                '    B3 --> B4["no async keyword, so no colouring"]\n'
+                "  end\n"
+                '  B4 --> C1["but a goroutine cannot be killed from outside"]\n'
+                '  C1 --> C2["ctx, cancel := context.WithTimeout(...)"]\n'
+                '  C2 --> C3["select on ctx.Done() to return early"]\n'
+                '  C3 --> C4["cancelling a parent cancels every derived context"]'
+            ),
+            "caption": {
+                "en": "Go replaces async/await with cheap blocking, and replaces the promise's cancellation story with context.Context — needed because a goroutine must return on its own.",
+                "es": "Go reemplaza async/await con bloqueo barato, y reemplaza la cancelación de las promesas con context.Context — necesario porque una goroutine debe retornar por su cuenta.",
+            },
+        },
+    ),
+    (
+        "is-go-object-oriented",
+        {
+            "kind": "mermaid",
+            "code": (
+                "flowchart TD\n"
+                '  OOP["Classical OOP"] --> I1["Encapsulation"]\n'
+                '  OOP --> I2["Polymorphism"]\n'
+                '  OOP --> I3["Inheritance"]\n'
+                '  I1 --> G1["Go: yes, but per package - Name is exported, name is not"]\n'
+                '  I2 --> G2["Go: yes, via interfaces satisfied implicitly and structurally"]\n'
+                '  I3 --> G3["Go: no. Embedding delegates but gives no virtual dispatch"]\n'
+                '  G2 --> C1["The consumer declares the interface, so tiny interfaces like io.Reader compose"]\n'
+                '  G3 --> C2["Pass behaviour in as a field or small interface instead of overriding"]'
+            ),
+            "caption": {
+                "en": "Go keeps encapsulation and polymorphism and deliberately drops inheritance. Embedding looks like inheritance but is delegation — a method defined on the outer type never overrides one the inner type calls on itself.",
+                "es": "Go conserva la encapsulación y el polimorfismo y descarta la herencia a propósito. El embedding parece herencia pero es delegación — un método definido en el tipo externo nunca sobrescribe a uno que el tipo interno se llama a sí mismo.",
+            },
+        },
+    ),
     (
         "reading-explain-analyze",
         {
