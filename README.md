@@ -4,10 +4,11 @@ A digital course platform to prepare for software engineering interviews. Full-s
 
 ## Features
 
-- 15 seeded courses covering CS fundamentals, distributed systems, PostgreSQL, Redis, message brokers, Kubernetes, AWS, Python/Django, networking, observability, React, Node.js and TypeScript.
+- 19 seeded courses covering CS fundamentals, distributed systems, PostgreSQL, Redis, message brokers, Kubernetes, AWS, Python/Django, networking, observability, React, Node.js, TypeScript, Go, database selection, behavioural interviews and the AWS Solutions Architect Associate (SAA-C03) certification.
 - Each lesson answers a real interview question: short definition, real-world examples and 3 interactive exercises.
 - Exercise types: multiple choice, matching (connect concepts), ordering/flow building, table builder, real SQL (executed in-browser with PGlite), code writing and open answers validated by a local LLM.
 - Final test per course (10-15 questions, mostly multiple choice).
+- Optional practice exams per course: several named, timed mock exams with their own length and pass mark (the AWS SAA-C03 course ships six, from 10 to 50 questions, 165 questions in total), with the explanation of each answer revealed on submit.
 - User accounts (JWT) with progress tracking, per-day study timer and analytics (strengths/weaknesses by topic).
 - Bilingual UI and content (English/Spanish), dark/light theme with CSS variable tokens + Tailwind.
 - AI tutor and answer validation powered by Ollama (`qwen3-vl:8b-instruct` by default).
@@ -45,6 +46,8 @@ copy .env.example .env
 alembic upgrade head
 python -m app.seed        # loads all course content
 uvicorn app.main:app --reload --port 8000
+
+start server: .\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 ```
 
 ### 3. Frontend
@@ -81,7 +84,24 @@ Content is 100% data-driven. To add a course you only add a JSON file — no cod
    - `sql` — real SQL executed in the browser via PGlite; result rows are compared with the expected result. Static validation.
    - `code` — write code in CodeMirror; validated by the local LLM against criteria.
    - `open_text` — free text answer; validated by the local LLM against criteria.
-4. Run the seeder (idempotent — safe to re-run, upserts by slug):
+4. (Optional) Add practice exams. Besides `test`, a course can define an `exams` array; each entry becomes a separate timed exam on the course page:
+
+```json
+"exams": [
+  {
+    "slug": "full-mock-50",
+    "title": { "en": "Full mock exam · 50 questions", "es": "Simulacro completo · 50 preguntas" },
+    "description": { "en": "50 questions in 100 minutes.", "es": "50 preguntas en 100 minutos." },
+    "pass_score": 72,
+    "time_limit_minutes": 100,
+    "questions": [ /* same shape as `test` entries; put `explanation` inside `solution` so it is only revealed after submitting */ ]
+  }
+]
+```
+
+   A course needs either a `test` (10-15 questions) or at least one exam. Exams are served by `GET /api/courses/{slug}/exams`, `GET /api/courses/{slug}/exams/{exam_slug}` and `POST /api/courses/{slug}/exams/{exam_slug}/attempt`, and scores are tracked per exam.
+
+5. Run the seeder (idempotent — safe to re-run, upserts by slug):
 
 ```bash
 cd backend
@@ -90,7 +110,7 @@ python -m app.seed
 
 The new course appears automatically in the dashboard. The seeder validates the JSON with Pydantic and reports clear errors if the schema is wrong.
 
-5. (Optional) Assign the interactive lesson components (quiz, interview questions, fun facts, image galleries, concept diagrams) to the new lessons:
+6. (Optional) Assign the interactive lesson components (quiz, interview questions, fun facts, image galleries, concept diagrams) to the new lessons:
 
 ```bash
 python -m app.assign_components
