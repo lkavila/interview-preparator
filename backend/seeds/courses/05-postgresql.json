@@ -137,6 +137,189 @@
       ]
     },
     {
+      "slug": "index-types-in-postgres",
+      "question": {
+        "en": "Which index types does Postgres have, and when do you use each one?",
+        "es": "¿Qué tipos de índices tiene Postgres y cuándo usas cada uno?"
+      },
+      "definition": {
+        "en": "`CREATE INDEX` defaults to **B-tree**, and for 95% of queries that is the right answer. The other types exist because B-tree only answers questions it can express as a range over a sorted key: `=`, `<`, `>`, `BETWEEN`, `IN`, prefix `LIKE 'abc%'`, and `ORDER BY`.\n\n- **B-tree** — the default. Ordered, supports equality, ranges and sorting, and is the only type that can serve `ORDER BY` without a Sort node.\n- **Hash** — equality only (`=`), no ranges, no ordering. Slightly smaller and faster than B-tree for pure equality on large values; crash-safe and replicated since PG 10. Rarely worth the loss of flexibility.\n- **GIN** — *Generalized Inverted Index*, for columns holding **many values per row**: `jsonb`, arrays, and full-text `tsvector`. It maps each contained value to the rows holding it. Fast reads, slow writes (mitigated by the `fastupdate` pending list).\n- **GiST** — *Generalized Search Tree*, a framework for **overlap and distance**: geometric types, `range` types with `&&`, PostGIS, and nearest-neighbour `ORDER BY point <-> point`.\n- **BRIN** — *Block Range INdex*. Stores only the min/max of each block range, so it is tiny (kilobytes for a table of gigabytes). It only works when the physical row order **correlates** with the column, e.g. an append-only `created_at`. On unordered data it is useless.\n- **SP-GiST** — space-partitioned trees for non-balanced structures (quadtrees, tries). Niche.\n\nTwo modifiers apply on top of any type:\n\n```sql\n-- Partial: index only the rows you actually query.\nCREATE INDEX idx_jobs_pending ON jobs (created_at) WHERE status = 'pending';\n\n-- Expression: index the result of a function, not the column.\nCREATE INDEX idx_users_lower_email ON users (lower(email));\n```\n\nA partial index over a small hot subset can be 100x smaller than the full index and is the single highest-leverage index trick in a queue-shaped table. An expression index is the only way to make `WHERE lower(email) = $1` use an index at all — the plain index on `email` cannot serve it.",
+        "es": "`CREATE INDEX` usa **B-tree** por defecto, y para el 95% de las consultas esa es la respuesta correcta. Los demás tipos existen porque B-tree solo responde preguntas que puede expresar como un rango sobre una clave ordenada: `=`, `<`, `>`, `BETWEEN`, `IN`, `LIKE 'abc%'` con prefijo, y `ORDER BY`.\n\n- **B-tree** — el default. Ordenado, soporta igualdad, rangos y ordenamiento, y es el único tipo que puede servir un `ORDER BY` sin un nodo Sort.\n- **Hash** — solo igualdad (`=`), sin rangos ni orden. Un poco más chico y rápido que B-tree para igualdad pura sobre valores grandes; es crash-safe y se replica desde PG 10. Rara vez compensa perder la flexibilidad.\n- **GIN** — *Generalized Inverted Index*, para columnas con **muchos valores por fila**: `jsonb`, arreglos y búsqueda de texto `tsvector`. Mapea cada valor contenido a las filas que lo tienen. Lecturas rápidas, escrituras lentas (mitigado por la lista pendiente de `fastupdate`).\n- **GiST** — *Generalized Search Tree*, un framework para **solapamiento y distancia**: tipos geométricos, tipos `range` con `&&`, PostGIS, y vecino más cercano con `ORDER BY punto <-> punto`.\n- **BRIN** — *Block Range INdex*. Guarda solo el mínimo y máximo de cada rango de bloques, así que es diminuto (kilobytes para una tabla de gigabytes). Solo funciona cuando el orden físico de las filas **correlaciona** con la columna, por ejemplo un `created_at` que solo crece. Sobre datos desordenados es inútil.\n- **SP-GiST** — árboles particionados en el espacio para estructuras no balanceadas (quadtrees, tries). Nicho.\n\nDos modificadores aplican encima de cualquier tipo:\n\n```sql\n-- Parcial: indexa solo las filas que realmente consultas.\nCREATE INDEX idx_jobs_pending ON jobs (created_at) WHERE status = 'pending';\n\n-- De expresión: indexa el resultado de una función, no la columna.\nCREATE INDEX idx_users_lower_email ON users (lower(email));\n```\n\nUn índice parcial sobre un subconjunto caliente pequeño puede ser 100 veces más chico que el índice completo, y es el truco de índices con más rendimiento en una tabla con forma de cola. Un índice de expresión es la única manera de que `WHERE lower(email) = $1` use un índice: el índice simple sobre `email` no puede servirlo."
+      },
+      "examples": [
+        {
+          "en": "A `jobs` table holds 40 million rows but only ~2 000 are `status = 'pending'` at any moment. The full index on `(status, created_at)` is 1.8 GB; `CREATE INDEX ... (created_at) WHERE status = 'pending'` is 90 KB, fits in cache permanently, and the worker's `SELECT ... WHERE status='pending' ORDER BY created_at LIMIT 10` drops from 40 ms to 0.1 ms.",
+          "es": "Una tabla `jobs` tiene 40 millones de filas pero solo ~2 000 están en `status = 'pending'` en cualquier momento. El índice completo sobre `(status, created_at)` pesa 1.8 GB; `CREATE INDEX ... (created_at) WHERE status = 'pending'` pesa 90 KB, cabe en caché permanentemente, y el `SELECT ... WHERE status='pending' ORDER BY created_at LIMIT 10` del worker baja de 40 ms a 0.1 ms."
+        },
+        {
+          "en": "An events table appended in time order and never updated: a BRIN index on `created_at` costs ~200 KB for 500 GB of data and prunes 99% of block ranges for a one-day query. The equivalent B-tree would be ~15 GB. If the same table were bulk-reloaded in random order, the BRIN index would stop pruning anything and every query would fall back to a full scan.",
+          "es": "Una tabla de eventos que solo se agrega en orden temporal y nunca se actualiza: un índice BRIN sobre `created_at` cuesta ~200 KB para 500 GB de datos y descarta el 99% de los rangos de bloques en una consulta de un día. El B-tree equivalente pesaría ~15 GB. Si esa misma tabla se recargara en orden aleatorio, el BRIN dejaría de descartar nada y toda consulta caería a un scan completo."
+        },
+        {
+          "en": "Searching a `jsonb` column with `WHERE payload @> '{\"plan\":\"pro\"}'` cannot use a B-tree at all — the containment operator is not a range. A GIN index on `payload` makes it an index scan; without it, every such query is a full sequential scan plus a per-row JSON parse.",
+          "es": "Buscar en una columna `jsonb` con `WHERE payload @> '{\"plan\":\"pro\"}'` no puede usar un B-tree en absoluto — el operador de contención no es un rango. Un índice GIN sobre `payload` lo convierte en un index scan; sin él, cada consulta así es un scan secuencial completo más un parseo de JSON por fila."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each index type with the query it is built for.",
+              "es": "Conecta cada tipo de índice con la consulta para la que está hecho."
+            },
+            "left": [
+              {
+                "id": "btree",
+                "label": {
+                  "en": "B-tree",
+                  "es": "B-tree"
+                }
+              },
+              {
+                "id": "gin",
+                "label": {
+                  "en": "GIN",
+                  "es": "GIN"
+                }
+              },
+              {
+                "id": "gist",
+                "label": {
+                  "en": "GiST",
+                  "es": "GiST"
+                }
+              },
+              {
+                "id": "brin",
+                "label": {
+                  "en": "BRIN",
+                  "es": "BRIN"
+                }
+              },
+              {
+                "id": "hash",
+                "label": {
+                  "en": "Hash",
+                  "es": "Hash"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "range",
+                "label": {
+                  "en": "WHERE created_at BETWEEN $1 AND $2 ORDER BY created_at",
+                  "es": "WHERE created_at BETWEEN $1 AND $2 ORDER BY created_at"
+                }
+              },
+              {
+                "id": "contains",
+                "label": {
+                  "en": "WHERE tags @> ARRAY['urgent'] — many values inside one row",
+                  "es": "WHERE tags @> ARRAY['urgent'] — muchos valores dentro de una fila"
+                }
+              },
+              {
+                "id": "overlap",
+                "label": {
+                  "en": "WHERE booking_period && tstzrange($1, $2) — overlap and distance",
+                  "es": "WHERE booking_period && tstzrange($1, $2) — solapamiento y distancia"
+                }
+              },
+              {
+                "id": "correlated",
+                "label": {
+                  "en": "A 500 GB append-only log where physical order tracks the timestamp",
+                  "es": "Un log de 500 GB que solo crece y cuyo orden físico sigue al timestamp"
+                }
+              },
+              {
+                "id": "eq",
+                "label": {
+                  "en": "WHERE token = $1 and nothing else — never a range, never sorted",
+                  "es": "WHERE token = $1 y nada más — nunca un rango, nunca ordenado"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "btree": "range",
+              "gin": "contains",
+              "gist": "overlap",
+              "brin": "correlated",
+              "hash": "eq"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Your `users` table has `CREATE INDEX idx_users_email ON users (email)`. Login runs `SELECT * FROM users WHERE lower(email) = $1`, and it is doing a sequential scan. What is the fix?",
+              "es": "Tu tabla `users` tiene `CREATE INDEX idx_users_email ON users (email)`. El login ejecuta `SELECT * FROM users WHERE lower(email) = $1` y está haciendo un scan secuencial. ¿Cuál es el arreglo?"
+            },
+            "options": [
+              {
+                "en": "Run `ANALYZE users` — the planner just has stale statistics",
+                "es": "Ejecutar `ANALYZE users` — el planner solo tiene estadísticas desactualizadas"
+              },
+              {
+                "en": "Rebuild the index as a Hash index, since this is an equality comparison",
+                "es": "Reconstruir el índice como Hash, ya que es una comparación de igualdad"
+              },
+              {
+                "en": "Create an expression index: `CREATE INDEX ON users (lower(email))`, because the existing index stores the raw values and Postgres cannot invert `lower()`",
+                "es": "Crear un índice de expresión: `CREATE INDEX ON users (lower(email))`, porque el índice existente guarda los valores crudos y Postgres no puede invertir `lower()`"
+              },
+              {
+                "en": "Add `SET enable_seqscan = off` to the session so the planner is forced to use the index",
+                "es": "Agregar `SET enable_seqscan = off` a la sesión para forzar al planner a usar el índice"
+              }
+            ],
+            "explanation": {
+              "en": "An index stores the indexed expression, and here that expression is `email`, not `lower(email)`. The planner has no way to work backwards from a lowercased input to the stored values, so the index is unusable. Indexing `lower(email)` stores exactly what the predicate asks for. `enable_seqscan = off` does not help — with no usable index there is nothing else to choose, and forcing planner switches in production hides the real problem.",
+              "es": "Un índice guarda la expresión indexada, y aquí esa expresión es `email`, no `lower(email)`. El planner no tiene forma de ir hacia atrás desde una entrada en minúsculas hasta los valores guardados, así que el índice es inservible. Indexar `lower(email)` guarda exactamente lo que pide el predicado. `enable_seqscan = off` no ayuda: sin un índice usable no hay otra cosa que elegir, y forzar interruptores del planner en producción esconde el problema real."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "The `jobs` table has 20 000 rows but the worker only ever reads the pending ones, ordered by `created_at`. Create a **partial** index named exactly `idx_jobs_pending`, on `created_at`, restricted to `status = 'pending'`.",
+              "es": "La tabla `jobs` tiene 20 000 filas pero el worker solo lee las pendientes, ordenadas por `created_at`. Crea un índice **parcial** llamado exactamente `idx_jobs_pending`, sobre `created_at`, restringido a `status = 'pending'`."
+            },
+            "setup_sql": "CREATE TABLE jobs (\n  id SERIAL PRIMARY KEY,\n  status TEXT NOT NULL,\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);\nINSERT INTO jobs (status, created_at)\nSELECT CASE WHEN g % 200 = 0 THEN 'pending' ELSE 'done' END,\n       now() - (g || ' seconds')::interval\nFROM generate_series(1, 20000) g;\nANALYZE jobs;",
+            "verification_query": "SELECT indexname,\n       (indexdef ILIKE '%where%')::text AS is_partial,\n       (indexdef ILIKE '%created_at%')::text AS on_created_at\nFROM pg_indexes\nWHERE tablename = 'jobs' AND indexname = 'idx_jobs_pending';",
+            "hint": {
+              "en": "CREATE INDEX <name> ON jobs (<column>) WHERE <condition>;",
+              "es": "CREATE INDEX <nombre> ON jobs (<columna>) WHERE <condición>;"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "idx_jobs_pending",
+                "true",
+                "true"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
       "slug": "when-indexes-slow-you-down",
       "question": {
         "en": "When can an index make queries slower?",
@@ -545,6 +728,326 @@
             "correct": [
               1
             ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "seq-scan-vs-index-scan",
+      "question": {
+        "en": "How does a sequential scan differ from an index scan, and why does Postgres sometimes prefer the sequential scan?",
+        "es": "¿En qué se diferencia un sequential scan de un index scan, y por qué Postgres a veces prefiere el sequential scan?"
+      },
+      "definition": {
+        "en": "The two access paths do genuinely different physical work.\n\n**Sequential scan** reads every 8 KB page of the table from the first to the last, in physical order, and discards the rows that do not match. The reads are sequential, so the OS and the disk prefetch them; Postgres also uses a small ring buffer so a big scan does not evict the whole shared buffer cache. Cost is roughly `seq_page_cost (1.0) x pages + cpu_tuple_cost x rows`.\n\n**Index scan** descends the B-tree from the root to a leaf, walks the leaf entries that match, and for each one does a **random** fetch of the heap page holding the actual row — because the index only stores the key and a row pointer (`ctid`), not the row. Cost is roughly `random_page_cost (4.0) x matching rows`, plus the tree descent. If 30% of the rows match, that is 30% of the table fetched **one random page at a time**, which is far slower than reading the whole thing sequentially.\n\nBetween the two sits the **Bitmap Heap Scan**: Postgres collects all matching `ctid`s from the index into an in-memory bitmap, sorts them by physical page, and then reads the heap in physical order. It is the planner's compromise for a filter that is selective but not *very* selective, and it is why a plan you expected to say `Index Scan` often says `Bitmap Heap Scan` instead.\n\nThe rule of thumb everyone quotes — *an index stops paying off somewhere around 5–10% selectivity* — is not a hardcoded threshold. It falls out of the cost formula: `random_page_cost` is 4x `seq_page_cost` by default, so once the number of random fetches approaches a quarter of the table's pages, the sequential scan wins on arithmetic alone. **A sequential scan on a small or non-selective query is not a bug. It is usually the planner being right.**",
+        "es": "Los dos caminos de acceso hacen trabajo físico genuinamente distinto.\n\n**Sequential scan** lee cada página de 8 KB de la tabla desde la primera hasta la última, en orden físico, y descarta las filas que no coinciden. Las lecturas son secuenciales, así que el sistema operativo y el disco las precargan; Postgres además usa un buffer circular pequeño para que un scan grande no vacíe toda la caché de shared buffers. El costo es aproximadamente `seq_page_cost (1.0) x páginas + cpu_tuple_cost x filas`.\n\n**Index scan** desciende el B-tree desde la raíz hasta una hoja, recorre las entradas de la hoja que coinciden, y por cada una hace una lectura **aleatoria** de la página del heap que contiene la fila real — porque el índice solo guarda la clave y un puntero a la fila (`ctid`), no la fila. El costo es aproximadamente `random_page_cost (4.0) x filas que coinciden`, más el descenso del árbol. Si coincide el 30% de las filas, eso es el 30% de la tabla leído **de a una página aleatoria por vez**, mucho más lento que leerla entera de corrido.\n\nEntre los dos está el **Bitmap Heap Scan**: Postgres junta todos los `ctid` que coinciden en un bitmap en memoria, los ordena por página física, y luego lee el heap en orden físico. Es el punto medio del planner para un filtro selectivo pero no *muy* selectivo, y es la razón por la que un plan que esperabas que dijera `Index Scan` a menudo dice `Bitmap Heap Scan`.\n\nLa regla que todos citan — *un índice deja de convenir alrededor del 5–10% de selectividad* — no es un umbral hardcodeado. Sale de la fórmula de costo: `random_page_cost` es 4 veces `seq_page_cost` por defecto, así que cuando el número de lecturas aleatorias se acerca a un cuarto de las páginas de la tabla, el scan secuencial gana por pura aritmética. **Un sequential scan en una consulta chica o poco selectiva no es un bug. Normalmente es el planner teniendo razón.**"
+      },
+      "examples": [
+        {
+          "en": "`SELECT * FROM events WHERE user_id = 4242` on 30 000 rows with 5 000 distinct users matches ~6 rows: 6 random fetches beats reading 200 pages, so the index wins. `SELECT * FROM events WHERE kind = 'click'` matches a third of the table: 10 000 random fetches lose badly to 200 sequential page reads, so the planner picks the seq scan and is right to.",
+          "es": "`SELECT * FROM events WHERE user_id = 4242` en 30 000 filas con 5 000 usuarios distintos coincide con ~6 filas: 6 lecturas aleatorias le ganan a leer 200 páginas, así que gana el índice. `SELECT * FROM events WHERE kind = 'click'` coincide con un tercio de la tabla: 10 000 lecturas aleatorias pierden feo contra 200 lecturas secuenciales, así que el planner elige el seq scan y hace bien."
+        },
+        {
+          "en": "A classic false alarm: a 500-row lookup table shows `Seq Scan` in every plan and someone opens a ticket. The whole table is two pages; reading both is cheaper than opening an index. Adding the index makes the query measurably slower and adds write overhead to every INSERT.",
+          "es": "Una falsa alarma clásica: una tabla de referencia de 500 filas muestra `Seq Scan` en todos los planes y alguien abre un ticket. La tabla entera son dos páginas; leer ambas es más barato que abrir un índice. Agregar el índice hace la consulta medible­mente más lenta y suma trabajo de escritura a cada INSERT."
+        },
+        {
+          "en": "On SSD-backed instances teams commonly set `random_page_cost = 1.1` (down from 4.0), because random reads on flash cost nearly the same as sequential ones. That one setting shifts the crossover point and flips many borderline plans from Seq Scan to Index Scan without touching a single query.",
+          "es": "En instancias con SSD los equipos suelen poner `random_page_cost = 1.1` (bajándolo de 4.0), porque en flash una lectura aleatoria cuesta casi lo mismo que una secuencial. Ese único parámetro corre el punto de cruce y voltea muchos planes limítrofes de Seq Scan a Index Scan sin tocar una sola consulta."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`events` has 30 000 rows: 5 000 distinct `user_id` values, but only 3 distinct `kind` values. Create an index named exactly `idx_events_user_id` on `user_id`.\n\nThe checker asks the planner what it would do for **two** queries. Getting it right means the `user_id` lookup becomes an index scan **and** the `kind` lookup correctly stays a sequential scan — indexing `kind` too would be wrong.",
+              "es": "`events` tiene 30 000 filas: 5 000 valores distintos de `user_id`, pero solo 3 valores distintos de `kind`. Crea un índice llamado exactamente `idx_events_user_id` sobre `user_id`.\n\nEl verificador le pregunta al planner qué haría con **dos** consultas. Acertar significa que la búsqueda por `user_id` pase a index scan **y** que la búsqueda por `kind` siga siendo un sequential scan — indexar `kind` también sería un error."
+            },
+            "setup_sql": "CREATE TABLE events (\n  id SERIAL PRIMARY KEY,\n  user_id INT NOT NULL,\n  kind TEXT NOT NULL\n);\nINSERT INTO events (user_id, kind)\nSELECT (g % 5000) + 1, (ARRAY['click','view','purchase'])[1 + (g % 3)]\nFROM generate_series(1, 30000) g;\nANALYZE events;\nCREATE OR REPLACE FUNCTION scan_kind(q text) RETURNS text AS $$\nDECLARE p jsonb; s text;\nBEGIN\n  EXECUTE 'EXPLAIN (FORMAT JSON) ' || q INTO p;\n  s := p::text;\n  IF s LIKE '%Index Only Scan%' THEN RETURN 'index-only';\n  ELSIF s LIKE '%Index Scan%' OR s LIKE '%Bitmap%' THEN RETURN 'index';\n  ELSE RETURN 'seq'; END IF;\nEND $$ LANGUAGE plpgsql;",
+            "verification_query": "SELECT 'by_kind' AS q, scan_kind('SELECT * FROM events WHERE kind = ''click''') AS plan\nUNION ALL\nSELECT 'by_user', scan_kind('SELECT * FROM events WHERE user_id = 4242')\nORDER BY q;",
+            "hint": {
+              "en": "One CREATE INDEX statement, on user_id only.",
+              "es": "Una sola sentencia CREATE INDEX, solo sobre user_id."
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "by_kind",
+                "seq"
+              ],
+              [
+                "by_user",
+                "index"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A query filters a 10-million-row table down to about 3 million rows and there is a perfectly good B-tree index on the filtered column. Why does the planner still choose a sequential scan?",
+              "es": "Una consulta filtra una tabla de 10 millones de filas y se queda con unos 3 millones, y hay un índice B-tree perfectamente bueno sobre la columna filtrada. ¿Por qué el planner igual elige un sequential scan?"
+            },
+            "options": [
+              {
+                "en": "Index scans are only considered when the query also has an ORDER BY on the indexed column",
+                "es": "Los index scans solo se consideran cuando la consulta también tiene un ORDER BY sobre la columna indexada"
+              },
+              {
+                "en": "Because 3 million matches means ~3 million random heap fetches at `random_page_cost` 4.0, which costs far more than reading every page once sequentially",
+                "es": "Porque 3 millones de coincidencias significan ~3 millones de lecturas aleatorias del heap a `random_page_cost` 4.0, que cuesta mucho más que leer cada página una vez de forma secuencial"
+              },
+              {
+                "en": "Postgres refuses to use an index when the table exceeds a size threshold",
+                "es": "Postgres se niega a usar un índice cuando la tabla supera cierto umbral de tamaño"
+              },
+              {
+                "en": "The index must be corrupted or bloated; a REINDEX would make the planner use it",
+                "es": "El índice debe estar corrupto o inflado; un REINDEX haría que el planner lo use"
+              }
+            ],
+            "explanation": {
+              "en": "The index gives you the row locations, but you still have to go get the rows, and at 30% selectivity you end up touching most of the table's pages anyway — in random order instead of sequential. The planner is comparing `random_page_cost x 3 000 000` against `seq_page_cost x (pages in the table)` and correctly concluding that reading everything in order is cheaper. There is no size threshold and no ORDER BY requirement.",
+              "es": "El índice te da las ubicaciones de las filas, pero igual tienes que ir a buscarlas, y con 30% de selectividad terminas tocando casi todas las páginas de la tabla de todos modos — en orden aleatorio en vez de secuencial. El planner compara `random_page_cost x 3 000 000` contra `seq_page_cost x (páginas de la tabla)` y concluye correctamente que leer todo en orden es más barato. No hay umbral de tamaño ni requisito de ORDER BY."
+            }
+          },
+          "solution": {
+            "correct": [
+              1
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Put the steps of an index scan in the order Postgres performs them.",
+              "es": "Ordena los pasos de un index scan en el orden en que Postgres los ejecuta."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "root",
+                "label": {
+                  "en": "Read the B-tree root page and pick the child covering the search key",
+                  "es": "Leer la página raíz del B-tree y elegir el hijo que cubre la clave buscada"
+                }
+              },
+              {
+                "id": "descend",
+                "label": {
+                  "en": "Descend through the internal pages to the matching leaf page",
+                  "es": "Descender por las páginas internas hasta la página hoja que coincide"
+                }
+              },
+              {
+                "id": "leaf",
+                "label": {
+                  "en": "Walk the leaf entries in key order, collecting the row pointers (ctid)",
+                  "es": "Recorrer las entradas de la hoja en orden de clave, juntando los punteros a fila (ctid)"
+                }
+              },
+              {
+                "id": "heap",
+                "label": {
+                  "en": "Fetch the heap page each ctid points at — one random read per match",
+                  "es": "Leer la página del heap a la que apunta cada ctid — una lectura aleatoria por coincidencia"
+                }
+              },
+              {
+                "id": "visibility",
+                "label": {
+                  "en": "Check each row's visibility for this transaction and discard dead tuples",
+                  "es": "Verificar la visibilidad de cada fila para esta transacción y descartar las tuplas muertas"
+                }
+              },
+              {
+                "id": "recheck",
+                "label": {
+                  "en": "Apply any remaining filter the index could not evaluate, then return the row",
+                  "es": "Aplicar el filtro restante que el índice no pudo evaluar y devolver la fila"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "root",
+              "descend",
+              "leaf",
+              "heap",
+              "visibility",
+              "recheck"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "how-the-planner-chooses-a-plan",
+      "question": {
+        "en": "How does the Postgres planner actually decide between two plans?",
+        "es": "¿Cómo decide realmente el planner de Postgres entre dos planes?"
+      },
+      "definition": {
+        "en": "The planner never looks at your data at plan time. It **estimates**, and it picks the plan with the lowest estimated total cost. Three inputs feed that estimate.\n\n**1. Statistics** (`pg_stats`, refreshed by `ANALYZE` and autovacuum) — per column, Postgres samples the table and stores:\n- `n_distinct` — how many distinct values (negative means a *ratio* of the row count)\n- `most_common_vals` / `most_common_freqs` — the top values and their frequencies, which is how it knows `status='pending'` is rare and `status='done'` is not\n- a histogram of the remaining values, for range estimates\n- `correlation` — how closely physical row order matches the column's sort order, from -1 to 1. This is what decides whether an index scan's fetches will be near each other or scattered.\n\n**2. Cost constants** (`pg_settings`), in arbitrary units where `seq_page_cost = 1.0`:\n- `random_page_cost = 4.0` — one random page read\n- `cpu_tuple_cost = 0.01`, `cpu_index_tuple_cost = 0.005`, `cpu_operator_cost = 0.0025`\n- `effective_cache_size` — how much RAM the planner *assumes* the OS plus Postgres has for caching. It does not allocate anything; it only makes repeated index access look cheaper.\n- `work_mem` — the memory one sort or hash node may use before spilling to disk.\n\n**3. The shape of the query** — which joins, which filters, which orderings are possible at all.\n\nFrom these it computes, for every candidate plan, `startup_cost..total_cost` and takes the cheapest total (or the cheapest startup, under a `LIMIT`).\n\nThe practical consequence: **a bad plan is almost always a bad estimate, not a bad decision.** The chain is `stale statistics → wrong row estimate → wrong cost → wrong plan`. That is why the first move on a suddenly-slow query is `EXPLAIN ANALYZE` and a look at estimated rows versus actual rows on every node — not rewriting the SQL.\n\n```sql\n-- What the planner believes about a column\nSELECT attname, n_distinct, correlation, most_common_vals\nFROM pg_stats WHERE tablename = 'orders';\n\n-- Give it more resolution on a skewed column (default is 100 buckets)\nALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000;\nANALYZE orders;\n\n-- Teach it that two columns are correlated, not independent\nCREATE STATISTICS orders_city_country (dependencies)\n  ON city, country FROM orders;\n```",
+        "es": "El planner nunca mira tus datos al momento de planificar. **Estima**, y elige el plan con el menor costo total estimado. Tres entradas alimentan esa estimación.\n\n**1. Estadísticas** (`pg_stats`, refrescadas por `ANALYZE` y autovacuum) — por columna, Postgres muestrea la tabla y guarda:\n- `n_distinct` — cuántos valores distintos hay (un valor negativo es una *proporción* del total de filas)\n- `most_common_vals` / `most_common_freqs` — los valores más frecuentes y su frecuencia, que es como sabe que `status='pending'` es raro y `status='done'` no\n- un histograma del resto de los valores, para estimar rangos\n- `correlation` — qué tanto el orden físico de las filas coincide con el orden de la columna, de -1 a 1. Es lo que decide si las lecturas de un index scan van a caer cerca unas de otras o dispersas.\n\n**2. Constantes de costo** (`pg_settings`), en unidades arbitrarias donde `seq_page_cost = 1.0`:\n- `random_page_cost = 4.0` — una lectura de página aleatoria\n- `cpu_tuple_cost = 0.01`, `cpu_index_tuple_cost = 0.005`, `cpu_operator_cost = 0.0025`\n- `effective_cache_size` — cuánta RAM *supone* el planner que tienen el sistema operativo y Postgres para cachear. No reserva nada; solo hace que el acceso repetido por índice parezca más barato.\n- `work_mem` — la memoria que un nodo de sort o hash puede usar antes de volcar a disco.\n\n**3. La forma de la consulta** — qué joins, qué filtros y qué ordenamientos son posibles siquiera.\n\nCon eso calcula, para cada plan candidato, `startup_cost..total_cost` y se queda con el total más barato (o con el startup más barato, si hay `LIMIT`).\n\nLa consecuencia práctica: **un mal plan casi siempre es una mala estimación, no una mala decisión.** La cadena es `estadísticas viejas → estimación de filas equivocada → costo equivocado → plan equivocado`. Por eso el primer movimiento ante una consulta que se volvió lenta es `EXPLAIN ANALYZE` y mirar filas estimadas contra filas reales en cada nodo — no reescribir el SQL.\n\n```sql\n-- Qué cree el planner sobre una columna\nSELECT attname, n_distinct, correlation, most_common_vals\nFROM pg_stats WHERE tablename = 'orders';\n\n-- Darle más resolución en una columna sesgada (por defecto son 100 buckets)\nALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000;\nANALYZE orders;\n\n-- Enseñarle que dos columnas están correlacionadas y no son independientes\nCREATE STATISTICS orders_city_country (dependencies)\n  ON city, country FROM orders;\n```"
+      },
+      "examples": [
+        {
+          "en": "A nightly bulk load inserts 20 million rows. Autovacuum has not run yet, so `pg_stats` still describes yesterday's empty table and every estimate says `rows=1`. The planner picks nested loops everywhere, each executing millions of times, and the report job that took 40 seconds now takes 6 hours. A single `ANALYZE` after the load fixes it — which is why bulk-load pipelines end with an explicit ANALYZE instead of waiting for autovacuum.",
+          "es": "Una carga masiva nocturna inserta 20 millones de filas. Autovacuum todavía no corrió, así que `pg_stats` sigue describiendo la tabla vacía de ayer y toda estimación dice `rows=1`. El planner elige nested loops por todos lados, cada uno ejecutándose millones de veces, y el job de reportes que tardaba 40 segundos ahora tarda 6 horas. Un solo `ANALYZE` después de la carga lo arregla — por eso los pipelines de carga masiva terminan con un ANALYZE explícito en vez de esperar a autovacuum."
+        },
+        {
+          "en": "`WHERE city = 'Lima' AND country = 'PE'` — Postgres assumes columns are independent and multiplies the two selectivities, estimating maybe 12 rows when the real answer is 400 000, because every Lima row is a PE row. `CREATE STATISTICS ... (dependencies) ON city, country` teaches it the functional dependency and the estimate snaps back to reality.",
+          "es": "`WHERE city = 'Lima' AND country = 'PE'` — Postgres supone que las columnas son independientes y multiplica las dos selectividades, estimando quizá 12 filas cuando la respuesta real es 400 000, porque toda fila de Lima es una fila de PE. `CREATE STATISTICS ... (dependencies) ON city, country` le enseña la dependencia funcional y la estimación vuelve a la realidad."
+        },
+        {
+          "en": "A `status` column has 4 values, 99.7% of them `'done'`. With the default 100 statistics buckets Postgres captures all four in `most_common_vals` and estimates `status='pending'` accurately. Widen it to 40 values with a long tail and the rare ones fall out of the MCV list into a flat histogram assumption — raising `SET STATISTICS` to 1000 brings them back and fixes the plan.",
+          "es": "Una columna `status` tiene 4 valores, el 99.7% de ellos `'done'`. Con los 100 buckets de estadísticas por defecto, Postgres captura los cuatro en `most_common_vals` y estima `status='pending'` con precisión. Amplíala a 40 valores con una cola larga y los raros se caen de la lista de MCV hacia una suposición de histograma plano — subir `SET STATISTICS` a 1000 los trae de vuelta y arregla el plan."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`visits` was just bulk-loaded and nobody collected statistics for it, so the planner's row estimate for `city = 'lima'` is wildly wrong (only 1 in 100 rows is `lima`).\n\nFix the estimate with **one statement**. The checker compares the planner's estimated rows against the real ones, and also confirms the column now has statistics.",
+              "es": "`visits` acaba de cargarse en bloque y nadie recolectó estadísticas, así que la estimación de filas del planner para `city = 'lima'` está muy equivocada (solo 1 de cada 100 filas es `lima`).\n\nArregla la estimación con **una sola sentencia**. El verificador compara las filas estimadas por el planner contra las reales, y además confirma que la columna ahora tiene estadísticas."
+            },
+            "setup_sql": "CREATE TABLE visits (id SERIAL PRIMARY KEY, city TEXT NOT NULL);\nINSERT INTO visits (city)\nSELECT CASE WHEN g % 100 = 0 THEN 'lima' ELSE 'bogota' END\nFROM generate_series(1, 20000) g;\nCREATE OR REPLACE FUNCTION est_quality(q text) RETURNS text AS $$\nDECLARE p jsonb; est numeric; act numeric;\nBEGIN\n  EXECUTE 'EXPLAIN (ANALYZE, FORMAT JSON) ' || q INTO p;\n  est := (p->0->'Plan'->>'Plan Rows')::numeric;\n  act := (p->0->'Plan'->>'Actual Rows')::numeric;\n  IF act = 0 THEN RETURN 'empty'; END IF;\n  IF est BETWEEN act * 0.5 AND act * 2 THEN RETURN 'accurate'; ELSE RETURN 'off'; END IF;\nEND $$ LANGUAGE plpgsql;",
+            "verification_query": "SELECT est_quality('SELECT * FROM visits WHERE city = ''lima''') AS estimate,\n       (SELECT count(*)::int FROM pg_stats\n        WHERE tablename = 'visits' AND attname = 'city') AS stats_rows;",
+            "hint": {
+              "en": "One word plus the table name. It is exactly what autovacuum would eventually have done for you.",
+              "es": "Una palabra más el nombre de la tabla. Es exactamente lo que autovacuum habría hecho por ti tarde o temprano."
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "accurate",
+                1
+              ]
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each planner input with what it actually controls.",
+              "es": "Conecta cada entrada del planner con lo que realmente controla."
+            },
+            "left": [
+              {
+                "id": "rpc",
+                "label": {
+                  "en": "random_page_cost",
+                  "es": "random_page_cost"
+                }
+              },
+              {
+                "id": "ecs",
+                "label": {
+                  "en": "effective_cache_size",
+                  "es": "effective_cache_size"
+                }
+              },
+              {
+                "id": "ndistinct",
+                "label": {
+                  "en": "n_distinct",
+                  "es": "n_distinct"
+                }
+              },
+              {
+                "id": "correlation",
+                "label": {
+                  "en": "correlation",
+                  "es": "correlation"
+                }
+              },
+              {
+                "id": "workmem",
+                "label": {
+                  "en": "work_mem",
+                  "es": "work_mem"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "randio",
+                "label": {
+                  "en": "How expensive one random page read is relative to a sequential one — lower it on SSDs",
+                  "es": "Qué tan cara es una lectura de página aleatoria frente a una secuencial — bájalo en SSD"
+                }
+              },
+              {
+                "id": "cachehint",
+                "label": {
+                  "en": "How much RAM the planner assumes is available for caching. Reserves nothing; only makes repeated index access look cheaper",
+                  "es": "Cuánta RAM supone el planner que hay disponible para cachear. No reserva nada; solo abarata el acceso repetido por índice"
+                }
+              },
+              {
+                "id": "selectivity",
+                "label": {
+                  "en": "How many distinct values a column holds, which is how an equality selectivity is estimated",
+                  "es": "Cuántos valores distintos tiene una columna, que es como se estima la selectividad de una igualdad"
+                }
+              },
+              {
+                "id": "physorder",
+                "label": {
+                  "en": "How closely physical row order tracks the column's order, deciding whether index fetches are clustered or scattered",
+                  "es": "Qué tanto el orden físico de las filas sigue al de la columna, decidiendo si las lecturas por índice caen agrupadas o dispersas"
+                }
+              },
+              {
+                "id": "spill",
+                "label": {
+                  "en": "How much memory one sort or hash node may use before it spills to disk",
+                  "es": "Cuánta memoria puede usar un nodo de sort o hash antes de volcar a disco"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "rpc": "randio",
+              "ecs": "cachehint",
+              "ndistinct": "selectivity",
+              "correlation": "physorder",
+              "workmem": "spill"
+            }
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A report query ran in 200 ms for six months. Nothing was deployed, no schema changed, and the query text is identical — but this morning it takes 4 minutes. Explain what most likely happened inside the planner and how you would confirm it in under five minutes.",
+              "es": "Una consulta de reportes corrió en 200 ms durante seis meses. No se desplegó nada, no cambió el esquema, y el texto de la consulta es idéntico — pero esta mañana tarda 4 minutos. Explica qué es lo más probable que haya pasado dentro del planner y cómo lo confirmarías en menos de cinco minutos."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must identify that the data distribution changed while the statistics did not (or a bulk load / large delete left stale stats), so the row estimate is now wrong and the planner flipped to a different plan — typically a nested loop whose outer estimate collapsed to ~1 row. Must name EXPLAIN ANALYZE as the confirmation step and specifically say to compare estimated rows against actual rows per node (or check loops). Bonus: mentions checking pg_stat_user_tables.last_analyze / last_autoanalyze, running ANALYZE as the fix, pg_stat_statements to confirm the regression is this query, extended statistics or SET STATISTICS for a skewed column, and that a plan can also flip because the table crossed a size where the crossover point moved.",
+              "es": "Debe identificar que la distribución de datos cambió mientras las estadísticas no (o que una carga masiva / un borrado grande dejó estadísticas viejas), así que la estimación de filas ahora está mal y el planner se cambió a otro plan — típicamente un nested loop cuya estimación del lado externo colapsó a ~1 fila. Debe nombrar EXPLAIN ANALYZE como el paso de confirmación y decir específicamente que hay que comparar filas estimadas contra filas reales por nodo (o revisar loops). Bonus: menciona revisar pg_stat_user_tables.last_analyze / last_autoanalyze, correr ANALYZE como arreglo, pg_stat_statements para confirmar que la regresión es de esta consulta, estadísticas extendidas o SET STATISTICS para una columna sesgada, y que un plan también puede voltearse porque la tabla cruzó un tamaño donde se movió el punto de cruce."
+            },
+            "reference": "Almost certainly a plan flip caused by stale or insufficient statistics. The query is the same, so what changed is the planner's estimate of how many rows a node returns. A bulk load, a big delete, or simple organic growth changed the real distribution; autovacuum has not re-analyzed, so pg_stats still describes the old data. A row estimate that collapses toward 1 makes a nested loop look nearly free, and the planner picks it — then executes the inner side millions of times.\n\nTo confirm in five minutes: run EXPLAIN (ANALYZE, BUFFERS) on the query and walk it bottom-up comparing `rows=` (estimated) against `actual rows=` on each node, remembering that actual rows is per loop and must be multiplied by `loops=`. A node estimating 1 and actually returning 480 000 is the culprit. Cross-check `SELECT last_analyze, last_autoanalyze, n_live_tup, n_mod_since_analyze FROM pg_stat_user_tables WHERE relname = '<table>'` — a large n_mod_since_analyze with an old last_analyze confirms it. Fix with ANALYZE on that table; if it recurs, raise the column's statistics target or add extended statistics for correlated columns, and check pg_stat_statements to be sure this query is really the regression."
           }
         }
       ]
@@ -1346,6 +1849,328 @@
       ]
     },
     {
+      "slug": "reading-explain-analyze-step-by-step",
+      "question": {
+        "en": "How do you read an EXPLAIN ANALYZE plan node by node?",
+        "es": "¿Cómo se lee un plan de EXPLAIN ANALYZE nodo por nodo?"
+      },
+      "definition": {
+        "en": "`EXPLAIN` shows the plan and its estimates. `EXPLAIN ANALYZE` **actually runs the query** and adds the real numbers next to the estimates. Always add `BUFFERS`.\n\n```\nLimit  (cost=1904.2..1904.5 rows=10 width=64) (actual time=812.4..812.5 rows=10 loops=1)\n  ->  Sort  (cost=1904.2..1924.2 rows=8000 width=64) (actual time=812.4..812.4 rows=10 loops=1)\n        Sort Key: (sum(o.amount)) DESC\n        Sort Method: top-N heapsort  Memory: 27kB\n        ->  HashAggregate  (cost=1650.0..1730.0 rows=8000 width=64) (actual time=780.1..800.2 rows=48000 loops=1)\n              ->  Nested Loop  (cost=0.4..1200.0 rows=20 width=40) (actual time=0.03..612.9 rows=480000 loops=1)\n                    ->  Seq Scan on customers c  (cost=0.0..300.0 rows=20 width=8)\n                          (actual time=0.01..8.2 rows=4800 loops=1)\n                          Filter: (country = 'AD')\n                    ->  Index Scan using idx_orders_customer on orders o\n                          (cost=0.4..44.9 rows=1 width=40)\n                          (actual time=0.01..0.11 rows=100 loops=4800)\n                          Index Cond: (customer_id = c.id)\n                          Buffers: shared hit=19200 read=8400\nPlanning Time: 0.4 ms\nExecution Time: 813.1 ms\n```\n\n**Read it bottom-up and inside-out** — the deepest, most-indented node runs first and feeds its parent.\n\nWhat each number means:\n- `cost=A..B` — estimated *startup*..*total* cost in planner units. **Not milliseconds, not comparable across machines.** Only useful for comparing two plans of the same query.\n- `rows=N` — the **estimated** row count.\n- `actual time=A..B` — real milliseconds to the first row .. to the last row, **per loop**.\n- `actual rows=N ... loops=L` — real rows **per loop**. The true total is `N x L`. This is the single most misread part of a plan.\n- `Buffers: shared hit=X read=Y` — pages served from cache (`hit`) versus pages that had to be fetched (`read`). A large `read` is your real I/O.\n\n**The three things to look for, in order:**\n1. **Estimate vs actual.** Above, `Seq Scan on customers` estimated 20 rows and returned 4 800 — off by 240x. That single bad estimate is why the planner chose a Nested Loop.\n2. **Loops.** The Index Scan looks harmless at `actual time=0.11` — until you notice `loops=4800`, so it really cost ~530 ms and returned 480 000 rows, not 100.\n3. **Where the time actually goes.** A parent's `actual time` includes its children. Subtract to find the node that added the time. Here the Nested Loop ends at 612 ms while its first child ends at 8 ms, so the loop itself is the problem.\n\nOther red flags: `Sort Method: external merge Disk: 84MB` (raise `work_mem`), `Rows Removed by Filter` far larger than the rows kept (missing or wrong index), and `Heap Fetches` on an Index Only Scan (the table needs a VACUUM).",
+        "es": "`EXPLAIN` muestra el plan y sus estimaciones. `EXPLAIN ANALYZE` **realmente ejecuta la consulta** y agrega los números reales junto a las estimaciones. Agrega siempre `BUFFERS`.\n\n```\nLimit  (cost=1904.2..1904.5 rows=10 width=64) (actual time=812.4..812.5 rows=10 loops=1)\n  ->  Sort  (cost=1904.2..1924.2 rows=8000 width=64) (actual time=812.4..812.4 rows=10 loops=1)\n        Sort Key: (sum(o.amount)) DESC\n        Sort Method: top-N heapsort  Memory: 27kB\n        ->  HashAggregate  (cost=1650.0..1730.0 rows=8000 width=64) (actual time=780.1..800.2 rows=48000 loops=1)\n              ->  Nested Loop  (cost=0.4..1200.0 rows=20 width=40) (actual time=0.03..612.9 rows=480000 loops=1)\n                    ->  Seq Scan on customers c  (cost=0.0..300.0 rows=20 width=8)\n                          (actual time=0.01..8.2 rows=4800 loops=1)\n                          Filter: (country = 'AD')\n                    ->  Index Scan using idx_orders_customer on orders o\n                          (cost=0.4..44.9 rows=1 width=40)\n                          (actual time=0.01..0.11 rows=100 loops=4800)\n                          Index Cond: (customer_id = c.id)\n                          Buffers: shared hit=19200 read=8400\nPlanning Time: 0.4 ms\nExecution Time: 813.1 ms\n```\n\n**Léelo de abajo hacia arriba y de adentro hacia afuera** — el nodo más profundo y más indentado corre primero y alimenta a su padre.\n\nQué significa cada número:\n- `cost=A..B` — costo estimado de *arranque*..*total* en unidades del planner. **No son milisegundos ni son comparables entre máquinas.** Solo sirven para comparar dos planes de la misma consulta.\n- `rows=N` — el conteo de filas **estimado**.\n- `actual time=A..B` — milisegundos reales hasta la primera fila .. hasta la última, **por loop**.\n- `actual rows=N ... loops=L` — filas reales **por loop**. El total verdadero es `N x L`. Esta es la parte del plan que más se malinterpreta.\n- `Buffers: shared hit=X read=Y` — páginas servidas desde caché (`hit`) contra páginas que hubo que ir a buscar (`read`). Un `read` grande es tu E/S real.\n\n**Las tres cosas a buscar, en orden:**\n1. **Estimado contra real.** Arriba, `Seq Scan on customers` estimó 20 filas y devolvió 4 800 — errado por 240 veces. Esa sola mala estimación es la razón por la que el planner eligió un Nested Loop.\n2. **Loops.** El Index Scan parece inofensivo con `actual time=0.11` — hasta que ves `loops=4800`, así que en realidad costó ~530 ms y devolvió 480 000 filas, no 100.\n3. **Dónde se va realmente el tiempo.** El `actual time` de un padre incluye a sus hijos. Resta para encontrar el nodo que agregó el tiempo. Aquí el Nested Loop termina en 612 ms mientras su primer hijo termina en 8 ms, así que el loop mismo es el problema.\n\nOtras señales de alarma: `Sort Method: external merge Disk: 84MB` (sube `work_mem`), `Rows Removed by Filter` mucho más grande que las filas conservadas (índice ausente o equivocado), y `Heap Fetches` en un Index Only Scan (la tabla necesita un VACUUM)."
+      },
+      "examples": [
+        {
+          "en": "The plan above says `Execution Time: 813 ms` but the top node's cost is 1904 — people try to convert cost to milliseconds and get nowhere. Costs are unitless and only comparable between candidate plans for the same query on the same machine.",
+          "es": "El plan de arriba dice `Execution Time: 813 ms` pero el costo del nodo superior es 1904 — la gente intenta convertir el costo a milisegundos y no llega a ningún lado. Los costos no tienen unidad y solo son comparables entre planes candidatos de la misma consulta en la misma máquina."
+        },
+        {
+          "en": "`Rows Removed by Filter: 2 480 000` under a Seq Scan that returned 1 200 rows means Postgres read and threw away 2.5 million rows. That is the signature of a missing index on the filtered column — and the fix is not to rewrite the query.",
+          "es": "`Rows Removed by Filter: 2 480 000` bajo un Seq Scan que devolvió 1 200 filas significa que Postgres leyó y tiró 2.5 millones de filas. Esa es la firma de un índice faltante sobre la columna filtrada — y el arreglo no es reescribir la consulta."
+        },
+        {
+          "en": "`Buffers: shared hit=19200 read=8400` on a hot production table means 30% of the pages came from disk. If that node is on the critical path, the same query on a warm cache would be roughly three times faster — worth knowing before you conclude the query itself is slow.",
+          "es": "`Buffers: shared hit=19200 read=8400` en una tabla caliente de producción significa que el 30% de las páginas vino de disco. Si ese nodo está en el camino crítico, la misma consulta con la caché tibia sería unas tres veces más rápida — vale la pena saberlo antes de concluir que la consulta en sí es lenta."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Given the plan in the lesson, order the nodes by the sequence in which Postgres actually executes them.",
+              "es": "Dado el plan de la lección, ordena los nodos según la secuencia en que Postgres realmente los ejecuta."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "seqcust",
+                "label": {
+                  "en": "Seq Scan on customers (Filter: country = 'AD')",
+                  "es": "Seq Scan on customers (Filter: country = 'AD')"
+                }
+              },
+              {
+                "id": "idxorders",
+                "label": {
+                  "en": "Index Scan on orders, once per customer row",
+                  "es": "Index Scan on orders, una vez por cada fila de customers"
+                }
+              },
+              {
+                "id": "nestloop",
+                "label": {
+                  "en": "Nested Loop joining the two",
+                  "es": "Nested Loop uniendo los dos"
+                }
+              },
+              {
+                "id": "hashagg",
+                "label": {
+                  "en": "HashAggregate computing sum(o.amount)",
+                  "es": "HashAggregate calculando sum(o.amount)"
+                }
+              },
+              {
+                "id": "sort",
+                "label": {
+                  "en": "Sort by sum(o.amount) DESC",
+                  "es": "Sort por sum(o.amount) DESC"
+                }
+              },
+              {
+                "id": "limit",
+                "label": {
+                  "en": "Limit returning the first 10 rows",
+                  "es": "Limit devolviendo las primeras 10 filas"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "seqcust",
+              "idxorders",
+              "nestloop",
+              "hashagg",
+              "sort",
+              "limit"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A node reads:\n\n```\nIndex Scan using idx_orders_customer on orders o\n  (cost=0.4..44.9 rows=1 width=40)\n  (actual time=0.01..0.11 rows=100 loops=4800)\n```\n\nHow many rows did this node really produce, and how much time did it really take?",
+              "es": "Un nodo dice:\n\n```\nIndex Scan using idx_orders_customer on orders o\n  (cost=0.4..44.9 rows=1 width=40)\n  (actual time=0.01..0.11 rows=100 loops=4800)\n```\n\n¿Cuántas filas produjo realmente este nodo y cuánto tiempo tardó realmente?"
+            },
+            "options": [
+              {
+                "en": "480 000 rows in about 530 ms — both `actual rows` and `actual time` are per loop and must be multiplied by `loops=4800`",
+                "es": "480 000 filas en unos 530 ms — tanto `actual rows` como `actual time` son por loop y hay que multiplicarlos por `loops=4800`"
+              },
+              {
+                "en": "1 row in 44.9 ms — the planner's `rows=1` and the total cost are the authoritative numbers",
+                "es": "1 fila en 44.9 ms — el `rows=1` del planner y el costo total son los números autoritativos"
+              },
+              {
+                "en": "100 rows in 0.11 ms — the loops count is just how many times the index was opened",
+                "es": "100 filas en 0.11 ms — el conteo de loops es solo cuántas veces se abrió el índice"
+              },
+              {
+                "en": "4 800 rows in 0.11 ms — one row is returned per loop",
+                "es": "4 800 filas en 0.11 ms — se devuelve una fila por loop"
+              }
+            ],
+            "explanation": {
+              "en": "In EXPLAIN ANALYZE, everything after `actual` is reported **per loop**. So this node produced 100 x 4800 = 480 000 rows and consumed roughly 0.11 x 4800 ≈ 530 ms. It also shows exactly why the plan is bad: the planner estimated `rows=1` per loop and got 100, so the nested loop it chose on the strength of that estimate is doing 100x the work it budgeted for.",
+              "es": "En EXPLAIN ANALYZE, todo lo que va después de `actual` se reporta **por loop**. Así que este nodo produjo 100 x 4800 = 480 000 filas y consumió aproximadamente 0.11 x 4800 ≈ 530 ms. Además muestra exactamente por qué el plan es malo: el planner estimó `rows=1` por loop y obtuvo 100, así que el nested loop que eligió confiando en esa estimación está haciendo 100 veces el trabajo que presupuestó."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A plan node shows `Buffers: shared hit=340 read=61200`. What does that tell you?",
+              "es": "Un nodo del plan muestra `Buffers: shared hit=340 read=61200`. ¿Qué te dice eso?"
+            },
+            "options": [
+              {
+                "en": "The query needed 61 200 buffers of work_mem and spilled the rest to disk",
+                "es": "La consulta necesitó 61 200 buffers de work_mem y volcó el resto a disco"
+              },
+              {
+                "en": "61 200 rows were read from disk and 340 from memory",
+                "es": "Se leyeron 61 200 filas desde disco y 340 desde memoria"
+              },
+              {
+                "en": "Almost every 8 KB page this node touched had to be fetched from outside shared buffers — this node is I/O bound, and either the working set does not fit in cache or it is scanning far more data than it should",
+                "es": "Casi cada página de 8 KB que tocó este nodo tuvo que traerse desde fuera de los shared buffers — este nodo está limitado por E/S, y o el working set no cabe en caché o está escaneando mucha más data de la que debería"
+              },
+              {
+                "en": "The node had 61 200 cache hits, which is healthy",
+                "es": "El nodo tuvo 61 200 aciertos de caché, lo cual es saludable"
+              }
+            ],
+            "explanation": {
+              "en": "`hit` and `read` count 8 KB **pages**, not rows: `hit` was already in shared buffers, `read` had to come from the OS cache or the disk. 61 200 reads against 340 hits is a ~0.5% cache hit ratio — this node is doing real I/O for nearly everything it touches. work_mem spilling is reported separately as `Sort Method: external merge` or `Buckets ... Batches > 1`.",
+              "es": "`hit` y `read` cuentan **páginas** de 8 KB, no filas: `hit` ya estaba en shared buffers, `read` tuvo que venir de la caché del sistema operativo o del disco. 61 200 lecturas contra 340 aciertos es una tasa de acierto de ~0.5% — este nodo está haciendo E/S real por casi todo lo que toca. El volcado de work_mem se reporta aparte, como `Sort Method: external merge` o `Buckets ... Batches > 1`."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "join-algorithms-nested-loop-hash-merge",
+      "question": {
+        "en": "Nested Loop, Hash Join or Merge Join — how does each one work, and when does the planner pick it?",
+        "es": "Nested Loop, Hash Join o Merge Join — ¿cómo funciona cada uno y cuándo lo elige el planner?"
+      },
+      "definition": {
+        "en": "Postgres has exactly three ways to join two relations. Knowing which one you got, and why, is most of query tuning.\n\n**Nested Loop.** For every row of the outer relation, probe the inner one. Cost ≈ `outer_rows x cost_of_one_inner_lookup`.\n- Wins when the **outer side is tiny** and the inner side has an index on the join key — then each probe is a cheap index lookup.\n- Startup cost is near zero, so it is also what a `LIMIT 10` usually gets: it can return the first rows without touching everything.\n- **Fails** when the outer estimate is wrong. Estimate 20 outer rows, get 4 800, and you run 4 800 inner lookups instead of 20. This is the single most common cause of a query that went from 200 ms to 6 minutes.\n\n**Hash Join.** Build an in-memory hash table from the smaller relation, then scan the larger one once and probe. Cost ≈ `build_rows + probe_rows`, essentially linear.\n- Wins on **large, unsorted, unindexed** inputs — the bulk analytical default.\n- Equality joins only (`=`). No `<`, no ranges.\n- High startup cost: nothing comes out until the hash table is fully built, so it is a poor fit under `LIMIT`.\n- **Fails** when the build side does not fit in `work_mem`: it spills to disk in multiple batches. Look for `Batches: 8  Memory Usage: 4096kB` in the plan.\n\n**Merge Join.** Sort both inputs on the join key, then walk them in lockstep like a zip merge. Cost ≈ `sort_both + scan_both`.\n- Wins when **both inputs already arrive sorted** — from a B-tree index scan on the join key, or from a sort you were paying for anyway because of `ORDER BY`.\n- The only algorithm that handles non-equality range joins efficiently.\n- **Fails** when it has to sort a large input just for the join, and the sort spills to disk.\n\nThe planner chooses by estimated cost, so **the algorithm is a symptom, not the disease**. A nested loop over millions of rows is not \"the wrong algorithm\" — it is the right algorithm for the row count the planner *believed*. Fix the estimate (ANALYZE, extended statistics, a better index) rather than reaching for `SET enable_nestloop = off`, which is a debugging tool, not a fix.",
+        "es": "Postgres tiene exactamente tres formas de unir dos relaciones. Saber cuál te tocó, y por qué, es la mayor parte del tuning de consultas.\n\n**Nested Loop.** Por cada fila de la relación externa, sondea la interna. Costo ≈ `filas_externas x costo_de_una_búsqueda_interna`.\n- Gana cuando el **lado externo es diminuto** y el interno tiene un índice sobre la clave del join — así cada sondeo es una búsqueda barata por índice.\n- El costo de arranque es casi cero, así que también es lo que suele tocarle a un `LIMIT 10`: puede devolver las primeras filas sin tocar todo.\n- **Falla** cuando la estimación del lado externo está mal. Estima 20 filas externas, obtén 4 800, y corres 4 800 búsquedas internas en vez de 20. Esta es la causa más común de una consulta que pasó de 200 ms a 6 minutos.\n\n**Hash Join.** Construye una tabla hash en memoria con la relación más chica, luego escanea la más grande una vez y sondea. Costo ≈ `filas_construcción + filas_sondeo`, esencialmente lineal.\n- Gana con entradas **grandes, sin ordenar y sin índice** — el default del trabajo analítico masivo.\n- Solo joins de igualdad (`=`). Ni `<` ni rangos.\n- Costo de arranque alto: no sale nada hasta que la tabla hash esté completamente construida, así que encaja mal bajo un `LIMIT`.\n- **Falla** cuando el lado de construcción no cabe en `work_mem`: vuelca a disco en varios lotes. Busca `Batches: 8  Memory Usage: 4096kB` en el plan.\n\n**Merge Join.** Ordena ambas entradas por la clave del join y luego las recorre en paralelo como un cierre relámpago. Costo ≈ `ordenar_ambas + recorrer_ambas`.\n- Gana cuando **ambas entradas ya llegan ordenadas** — desde un index scan B-tree sobre la clave del join, o desde un sort que ibas a pagar igual por un `ORDER BY`.\n- Es el único algoritmo que maneja eficientemente joins por rango, sin igualdad.\n- **Falla** cuando tiene que ordenar una entrada grande solo para el join, y ese sort vuelca a disco.\n\nEl planner elige por costo estimado, así que **el algoritmo es un síntoma, no la enfermedad**. Un nested loop sobre millones de filas no es \"el algoritmo equivocado\" — es el algoritmo correcto para el número de filas que el planner *creía*. Arregla la estimación (ANALYZE, estadísticas extendidas, un mejor índice) en vez de recurrir a `SET enable_nestloop = off`, que es una herramienta de diagnóstico, no un arreglo."
+      },
+      "examples": [
+        {
+          "en": "`SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id WHERE c.email = $1` — the email filter yields exactly one customer, so a Nested Loop with an index lookup on `orders.customer_id` is optimal and finishes in microseconds. Drop the WHERE clause and the same nested loop would run 20 000 times; the planner switches to a Hash Join instead.",
+          "es": "`SELECT * FROM orders o JOIN customers c ON c.id = o.customer_id WHERE c.email = $1` — el filtro por email deja exactamente un cliente, así que un Nested Loop con búsqueda por índice sobre `orders.customer_id` es óptimo y termina en microsegundos. Quita el WHERE y ese mismo nested loop correría 20 000 veces; el planner se cambia a un Hash Join."
+        },
+        {
+          "en": "A nightly ETL joining two 50-million-row tables shows `Hash Join ... Batches: 32`. The hash table needed ~1.2 GB but `work_mem` was 4 MB, so Postgres partitioned it into 32 disk-backed batches. Raising `work_mem` to 256 MB for that one session cut the job from 90 minutes to 11.",
+          "es": "Un ETL nocturno que une dos tablas de 50 millones de filas muestra `Hash Join ... Batches: 32`. La tabla hash necesitaba ~1.2 GB pero `work_mem` era 4 MB, así que Postgres la particionó en 32 lotes respaldados en disco. Subir `work_mem` a 256 MB solo para esa sesión bajó el job de 90 minutos a 11."
+        },
+        {
+          "en": "`SELECT ... FROM a JOIN b ON b.id = a.b_id ORDER BY b.id` with a B-tree index on both sides: the planner picks a Merge Join because both inputs already come out sorted by `id`, and the ORDER BY is then free — no Sort node at all.",
+          "es": "`SELECT ... FROM a JOIN b ON b.id = a.b_id ORDER BY b.id` con un índice B-tree en ambos lados: el planner elige un Merge Join porque ambas entradas ya salen ordenadas por `id`, y entonces el ORDER BY sale gratis — no hay ningún nodo Sort."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Two tables: 20 000 `customers` (only ~20 of them in country `'AD'`) and 60 000 `orders`. Right now **both** joins below use a Hash Join, because `orders.customer_id` has no index.\n\nCreate an index named exactly `idx_orders_customer` on `orders (customer_id)`. The selective join should flip to a **Nested Loop** — 20 outer rows, 20 cheap index probes — while the broad join correctly stays a **Hash Join**.",
+              "es": "Dos tablas: 20 000 `customers` (solo ~20 de ellos en el país `'AD'`) y 60 000 `orders`. Ahora mismo **ambos** joins de abajo usan un Hash Join, porque `orders.customer_id` no tiene índice.\n\nCrea un índice llamado exactamente `idx_orders_customer` sobre `orders (customer_id)`. El join selectivo debería voltearse a un **Nested Loop** — 20 filas externas, 20 sondeos baratos por índice — mientras el join amplio se queda correctamente en **Hash Join**."
+            },
+            "setup_sql": "CREATE TABLE customers (id SERIAL PRIMARY KEY, country TEXT NOT NULL);\nINSERT INTO customers (country)\nSELECT CASE WHEN g % 1000 = 0 THEN 'AD' ELSE 'US' END FROM generate_series(1, 20000) g;\nCREATE TABLE orders (id SERIAL PRIMARY KEY, customer_id INT NOT NULL, amount INT NOT NULL);\nINSERT INTO orders (customer_id, amount)\nSELECT (g % 20000) + 1, (g % 500) FROM generate_series(1, 60000) g;\nANALYZE customers;\nANALYZE orders;\nCREATE OR REPLACE FUNCTION join_kind(q text) RETURNS text AS $$\nDECLARE p jsonb; s text;\nBEGIN\n  EXECUTE 'EXPLAIN (FORMAT JSON) ' || q INTO p;\n  s := p::text;\n  IF s LIKE '%Hash Join%' THEN RETURN 'hash';\n  ELSIF s LIKE '%Merge Join%' THEN RETURN 'merge';\n  ELSIF s LIKE '%Nested Loop%' THEN RETURN 'nested-loop';\n  ELSE RETURN 'other'; END IF;\nEND $$ LANGUAGE plpgsql;",
+            "verification_query": "SELECT 'broad' AS scenario,\n       join_kind('SELECT o.id FROM orders o JOIN customers c ON c.id = o.customer_id') AS algo\nUNION ALL\nSELECT 'selective',\n       join_kind('SELECT o.id FROM orders o JOIN customers c ON c.id = o.customer_id WHERE c.country = ''AD''')\nORDER BY scenario;",
+            "hint": {
+              "en": "One CREATE INDEX on the foreign key column of orders.",
+              "es": "Un solo CREATE INDEX sobre la columna de clave foránea de orders."
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "broad",
+                "hash"
+              ],
+              [
+                "selective",
+                "nested-loop"
+              ]
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each join algorithm with the failure mode that ruins it.",
+              "es": "Conecta cada algoritmo de join con el modo de fallo que lo arruina."
+            },
+            "left": [
+              {
+                "id": "nl",
+                "label": {
+                  "en": "Nested Loop",
+                  "es": "Nested Loop"
+                }
+              },
+              {
+                "id": "hj",
+                "label": {
+                  "en": "Hash Join",
+                  "es": "Hash Join"
+                }
+              },
+              {
+                "id": "mj",
+                "label": {
+                  "en": "Merge Join",
+                  "es": "Merge Join"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "loops",
+                "label": {
+                  "en": "The outer row estimate was far too low, so the inner side is probed millions of times instead of a handful",
+                  "es": "La estimación de filas externas fue mucho más baja de lo real, así que el lado interno se sondea millones de veces en vez de un puñado"
+                }
+              },
+              {
+                "id": "spill",
+                "label": {
+                  "en": "The build side does not fit in work_mem, so it is partitioned into disk-backed batches (`Batches: 32`)",
+                  "es": "El lado de construcción no cabe en work_mem, así que se particiona en lotes respaldados en disco (`Batches: 32`)"
+                }
+              },
+              {
+                "id": "sortcost",
+                "label": {
+                  "en": "Neither input arrives ordered, so it pays for a full sort of both sides purely to enable the join",
+                  "es": "Ninguna entrada llega ordenada, así que paga un sort completo de ambos lados solo para poder hacer el join"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "nl": "loops",
+              "hj": "spill",
+              "mj": "sortcost"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A query regressed overnight. The plan now shows a Nested Loop whose outer node reads `rows=3 ... actual rows=91000 loops=1`. Your teammate proposes adding `SET enable_nestloop = off` to the application's session setup. What is wrong with that?",
+              "es": "Una consulta se degradó de un día para otro. El plan ahora muestra un Nested Loop cuyo nodo externo dice `rows=3 ... actual rows=91000 loops=1`. Tu compañero propone agregar `SET enable_nestloop = off` a la configuración de sesión de la aplicación. ¿Qué tiene de malo eso?"
+            },
+            "options": [
+              {
+                "en": "Nothing — disabling nested loops is the standard production fix for this pattern",
+                "es": "Nada — deshabilitar los nested loops es el arreglo estándar en producción para este patrón"
+              },
+              {
+                "en": "Nested loops cannot be disabled; the setting only affects merge joins",
+                "es": "Los nested loops no se pueden deshabilitar; el parámetro solo afecta a los merge joins"
+              },
+              {
+                "en": "`enable_nestloop = off` is ignored unless you are a superuser",
+                "es": "`enable_nestloop = off` se ignora salvo que seas superusuario"
+              },
+              {
+                "en": "It treats the symptom: the real defect is the 30 000x row underestimate, and suppressing one algorithm globally will make every other query that legitimately needs a nested loop — including primary-key lookups — pick a worse plan",
+                "es": "Trata el síntoma: el defecto real es la subestimación de filas por 30 000 veces, y suprimir un algoritmo globalmente hará que toda otra consulta que legítimamente necesita un nested loop — incluidas las búsquedas por clave primaria — elija un plan peor"
+              }
+            ],
+            "explanation": {
+              "en": "`enable_nestloop = off` does not truly forbid the algorithm — it adds a huge penalty cost — and it applies to every query in the session. The actual defect is visible right in the plan: 3 estimated versus 91 000 actual rows. Investigate why (stale statistics, correlated columns the planner assumes are independent, a filter it cannot estimate) and fix the estimate with ANALYZE, extended statistics, or a rewrite. Planner switches are for narrowing down the cause in a debugging session.",
+              "es": "`enable_nestloop = off` no prohíbe realmente el algoritmo — le agrega un costo de penalización enorme — y aplica a todas las consultas de la sesión. El defecto real se ve directo en el plan: 3 filas estimadas contra 91 000 reales. Investiga por qué (estadísticas viejas, columnas correlacionadas que el planner supone independientes, un filtro que no puede estimar) y arregla la estimación con ANALYZE, estadísticas extendidas o una reescritura. Los interruptores del planner sirven para acotar la causa en una sesión de diagnóstico."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        }
+      ]
+    },
+    {
       "slug": "connection-pooling",
       "question": {
         "en": "What is connection pooling and what happens with too many connections?",
@@ -1808,6 +2633,605 @@
             "correct": [
               0
             ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "window-functions-basics",
+      "question": {
+        "en": "What are window functions, and how do ROW_NUMBER, RANK and DENSE_RANK differ?",
+        "es": "¿Qué son las window functions y en qué se diferencian ROW_NUMBER, RANK y DENSE_RANK?"
+      },
+      "definition": {
+        "en": "A window function computes a value **across a set of rows related to the current row, without collapsing them**. That is the whole difference from `GROUP BY`: an aggregate turns 12 rows into 3, a window function keeps all 12 and adds a column.\n\n```sql\nSELECT region, month, amount,\n       SUM(amount) OVER (PARTITION BY region) AS region_total\nFROM sales;\n-- 12 rows in, 12 rows out, each carrying its region's total\n```\n\nThe `OVER (...)` clause has three parts, all optional:\n- **`PARTITION BY`** — split the rows into independent windows. Like `GROUP BY`, but nothing is collapsed. Omit it and the whole result set is one window.\n- **`ORDER BY`** — order the rows *inside* each window. This is what makes ranking and running totals meaningful. It is unrelated to the query's final `ORDER BY`.\n- **frame clause** (`ROWS`/`RANGE BETWEEN ...`) — which rows inside the window the function actually sees. Covered in the next lesson.\n\n**The three ranking functions differ only in how they handle ties:**\n\n| | 100 | 90 | 90 | 80 |\n|---|---|---|---|---|\n| `ROW_NUMBER()` | 1 | 2 | 3 | 4 |\n| `RANK()` | 1 | 2 | 2 | **4** |\n| `DENSE_RANK()` | 1 | 2 | 2 | **3** |\n\n- **`ROW_NUMBER()`** never ties. Two equal rows get different numbers, and which one gets 2 is arbitrary unless you add a tiebreaker to the ORDER BY. Use it for deduplication and \"top N per group\".\n- **`RANK()`** ties, then **skips**. Two silver medals means no bronze.\n- **`DENSE_RANK()`** ties without skipping. Use it when you want \"the third distinct score\".\n\nOne rule that trips everyone: **window functions run after `WHERE` and `GROUP BY`, so you cannot filter on them in the same `WHERE`.** Wrap the query:\n\n```sql\nSELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC) AS rn\n  FROM sales\n) t WHERE rn = 1;  -- top sale per region\n```\n\nThat subquery-plus-`rn = 1` shape is the canonical \"greatest per group\" answer, and it is asked in interviews constantly.",
+        "es": "Una window function calcula un valor **sobre un conjunto de filas relacionadas con la fila actual, sin colapsarlas**. Esa es toda la diferencia con `GROUP BY`: un agregado convierte 12 filas en 3, una window function conserva las 12 y agrega una columna.\n\n```sql\nSELECT region, month, amount,\n       SUM(amount) OVER (PARTITION BY region) AS region_total\nFROM sales;\n-- entran 12 filas, salen 12 filas, cada una con el total de su región\n```\n\nLa cláusula `OVER (...)` tiene tres partes, todas opcionales:\n- **`PARTITION BY`** — divide las filas en ventanas independientes. Como `GROUP BY`, pero sin colapsar nada. Si lo omites, todo el resultado es una sola ventana.\n- **`ORDER BY`** — ordena las filas *dentro* de cada ventana. Es lo que le da sentido a los rankings y a los totales acumulados. No tiene relación con el `ORDER BY` final de la consulta.\n- **cláusula de frame** (`ROWS`/`RANGE BETWEEN ...`) — qué filas dentro de la ventana ve realmente la función. Se cubre en la lección siguiente.\n\n**Las tres funciones de ranking solo se diferencian en cómo tratan los empates:**\n\n| | 100 | 90 | 90 | 80 |\n|---|---|---|---|---|\n| `ROW_NUMBER()` | 1 | 2 | 3 | 4 |\n| `RANK()` | 1 | 2 | 2 | **4** |\n| `DENSE_RANK()` | 1 | 2 | 2 | **3** |\n\n- **`ROW_NUMBER()`** nunca empata. Dos filas iguales reciben números distintos, y cuál se lleva el 2 es arbitrario salvo que agregues un desempate al ORDER BY. Úsala para deduplicar y para \"top N por grupo\".\n- **`RANK()`** empata y luego **salta**. Dos medallas de plata significa que no hay bronce.\n- **`DENSE_RANK()`** empata sin saltar. Úsala cuando quieras \"el tercer puntaje distinto\".\n\nUna regla con la que todos tropiezan: **las window functions se ejecutan después de `WHERE` y `GROUP BY`, así que no puedes filtrar por ellas en ese mismo `WHERE`.** Envuelve la consulta:\n\n```sql\nSELECT * FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC) AS rn\n  FROM sales\n) t WHERE rn = 1;  -- la venta más alta por región\n```\n\nEsa forma de subconsulta más `rn = 1` es la respuesta canónica al \"máximo por grupo\", y se pregunta constantemente en entrevistas."
+      },
+      "examples": [
+        {
+          "en": "Deduplication: `DELETE FROM t WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at) rn FROM t) s WHERE rn > 1)` keeps the oldest row per email and deletes the rest. Doing this with GROUP BY requires a self-join and is much harder to get right.",
+          "es": "Deduplicación: `DELETE FROM t WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY email ORDER BY created_at) rn FROM t) s WHERE rn > 1)` conserva la fila más vieja por email y borra el resto. Hacer esto con GROUP BY requiere un self-join y es mucho más difícil de acertar."
+        },
+        {
+          "en": "A leaderboard showing 'you are #4' when two players tie for second: with RANK() the next player is #4 (correct for medals), with DENSE_RANK() they are #3 (correct for 'third-best score'). Picking the wrong one is a real bug that ships to users.",
+          "es": "Una tabla de posiciones que muestra 'estás en el #4' cuando dos jugadores empatan en segundo: con RANK() el siguiente jugador es #4 (correcto para medallas), con DENSE_RANK() es #3 (correcto para 'tercer mejor puntaje'). Elegir el equivocado es un bug real que llega a los usuarios."
+        },
+        {
+          "en": "`amount / SUM(amount) OVER (PARTITION BY region)` gives each row's share of its region in a single pass. The GROUP BY equivalent needs a subquery or CTE plus a join back to the detail rows — more code, and usually a second scan of the table.",
+          "es": "`amount / SUM(amount) OVER (PARTITION BY region)` da la participación de cada fila en su región en una sola pasada. El equivalente con GROUP BY necesita una subconsulta o CTE más un join de vuelta a las filas de detalle — más código, y normalmente un segundo scan de la tabla."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Create a view named exactly `top_sale_per_region` with the columns `region` and `amount`, holding **the single highest sale of each region**.\n\nUse `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ... DESC)` inside a subquery and keep the rows where it equals 1.",
+              "es": "Crea una vista llamada exactamente `top_sale_per_region` con las columnas `region` y `amount`, que contenga **la venta más alta de cada región**.\n\nUsa `ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ... DESC)` dentro de una subconsulta y quédate con las filas donde vale 1."
+            },
+            "setup_sql": "CREATE TABLE sales (\n  id SERIAL PRIMARY KEY,\n  region TEXT NOT NULL,\n  month INT NOT NULL,\n  amount NUMERIC(10,2) NOT NULL\n);\nINSERT INTO sales (region, month, amount) VALUES\n  ('north', 1, 100), ('north', 2, 140), ('north', 3, 90),  ('north', 4, 200),\n  ('south', 1, 250), ('south', 2, 180), ('south', 3, 300), ('south', 4, 220),\n  ('east',  1, 120), ('east',  2, 110), ('east',  3, 160), ('east',  4, 140);\nANALYZE sales;",
+            "verification_query": "SELECT region, amount FROM top_sale_per_region ORDER BY region;",
+            "hint": {
+              "en": "CREATE VIEW top_sale_per_region AS SELECT region, amount FROM ( ... ) t WHERE rn = 1;",
+              "es": "CREATE VIEW top_sale_per_region AS SELECT region, amount FROM ( ... ) t WHERE rn = 1;"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "east",
+                160
+              ],
+              [
+                "north",
+                200
+              ],
+              [
+                "south",
+                300
+              ]
+            ]
+          }
+        },
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "`scores` has a tie: two players on 90. Create a view named exactly `ranked_scores` with columns `player`, `rk` and `dr`, where `rk` is `RANK()` and `dr` is `DENSE_RANK()`, both ordered by `score` **descending** over the whole table (no partition).\n\nThis is the exercise that makes the difference between the two concrete.",
+              "es": "`scores` tiene un empate: dos jugadores con 90. Crea una vista llamada exactamente `ranked_scores` con las columnas `player`, `rk` y `dr`, donde `rk` es `RANK()` y `dr` es `DENSE_RANK()`, ambas ordenadas por `score` **descendente** sobre toda la tabla (sin partición).\n\nEste es el ejercicio que hace concreta la diferencia entre las dos."
+            },
+            "setup_sql": "CREATE TABLE scores (player TEXT PRIMARY KEY, score INT NOT NULL);\nINSERT INTO scores (player, score) VALUES\n  ('ana', 100), ('beto', 90), ('caro', 90), ('dan', 80);\nANALYZE scores;",
+            "verification_query": "SELECT player, rk, dr FROM ranked_scores ORDER BY player;",
+            "hint": {
+              "en": "CREATE VIEW ranked_scores AS SELECT player, RANK() OVER (ORDER BY score DESC) AS rk, DENSE_RANK() OVER (ORDER BY score DESC) AS dr FROM scores;",
+              "es": "CREATE VIEW ranked_scores AS SELECT player, RANK() OVER (ORDER BY score DESC) AS rk, DENSE_RANK() OVER (ORDER BY score DESC) AS dr FROM scores;"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "ana",
+                1,
+                1
+              ],
+              [
+                "beto",
+                2,
+                2
+              ],
+              [
+                "caro",
+                2,
+                2
+              ],
+              [
+                "dan",
+                4,
+                3
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does this query fail?\n\n```sql\nSELECT region, amount,\n       ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC) AS rn\nFROM sales\nWHERE rn = 1;\n```",
+              "es": "¿Por qué falla esta consulta?\n\n```sql\nSELECT region, amount,\n       ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC) AS rn\nFROM sales\nWHERE rn = 1;\n```"
+            },
+            "options": [
+              {
+                "en": "Window functions are evaluated after WHERE, so `rn` does not exist yet when the filter runs — wrap it in a subquery or CTE and filter outside",
+                "es": "Las window functions se evalúan después del WHERE, así que `rn` todavía no existe cuando corre el filtro — envuélvela en una subconsulta o CTE y filtra afuera"
+              },
+              {
+                "en": "You cannot alias a window function; remove `AS rn`",
+                "es": "No se puede ponerle alias a una window function; quita el `AS rn`"
+              },
+              {
+                "en": "`ROW_NUMBER()` requires a frame clause when used with PARTITION BY",
+                "es": "`ROW_NUMBER()` requiere una cláusula de frame cuando se usa con PARTITION BY"
+              },
+              {
+                "en": "`sales` needs an index on `(region, amount)` before a window function can be used",
+                "es": "`sales` necesita un índice sobre `(region, amount)` antes de poder usar una window function"
+              }
+            ],
+            "explanation": {
+              "en": "The logical order of evaluation is FROM → WHERE → GROUP BY → HAVING → **window functions** → SELECT → ORDER BY → LIMIT. WHERE runs before the window function is computed, so the alias is not available — and it could not be, since the window's contents depend on which rows survived WHERE. The fix is the subquery form: compute `rn` in an inner query, filter `rn = 1` in the outer one.",
+              "es": "El orden lógico de evaluación es FROM → WHERE → GROUP BY → HAVING → **window functions** → SELECT → ORDER BY → LIMIT. El WHERE corre antes de que se calcule la window function, así que el alias no está disponible — y no podría estarlo, porque el contenido de la ventana depende de qué filas sobrevivieron al WHERE. El arreglo es la forma con subconsulta: calcular `rn` en la consulta interna y filtrar `rn = 1` en la externa."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "window-frames-and-lag-lead",
+      "question": {
+        "en": "How do frame clauses, LAG and LEAD work?",
+        "es": "¿Cómo funcionan las cláusulas de frame, LAG y LEAD?"
+      },
+      "definition": {
+        "en": "The **frame** decides which rows *inside the current partition* the function actually sees. It is the part people skip, and it is where the surprising bugs live.\n\n```sql\nSUM(amount) OVER (\n  PARTITION BY region      -- which rows form the window\n  ORDER BY month           -- their order inside it\n  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  -- the frame\n)\n```\n\n**The default frame is not what most people expect.** With an `ORDER BY` and no explicit frame, Postgres uses `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`. Without an `ORDER BY`, the frame is the entire partition — which is why `SUM(x) OVER (PARTITION BY r)` gives a group total but `SUM(x) OVER (PARTITION BY r ORDER BY m)` gives a running total. Adding an ORDER BY silently changes the meaning.\n\n**`ROWS` vs `RANGE` — the classic trap.**\n- `ROWS` counts **physical rows**: `1 PRECEDING` is literally the previous row.\n- `RANGE` groups by **ORDER BY value**: all rows with the same value are one *peer group*, and `CURRENT ROW` in RANGE mode means \"through the end of my peer group\".\n\nWith an ORDER BY that has duplicates, they give different answers. Ordering by an amount with two rows both at 120, `ROWS ... CURRENT ROW` includes one of them; `RANGE ... CURRENT ROW` includes both. If your ORDER BY key is unique, they are identical — which is why the bug only appears once real data has ties.\n\nCommon frame bounds: `UNBOUNDED PRECEDING`, `n PRECEDING`, `CURRENT ROW`, `n FOLLOWING`, `UNBOUNDED FOLLOWING`.\n\n**Offset functions** look at neighbouring rows directly and ignore the frame:\n- `LAG(col, offset = 1, default = NULL)` — the row `offset` positions **back** in the partition.\n- `LEAD(col, offset = 1, default = NULL)` — `offset` positions **forward**.\n- `FIRST_VALUE` / `LAST_VALUE` / `NTH_VALUE` — do respect the frame, which is why `LAST_VALUE` famously returns the current row unless you write `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.\n\n```sql\n-- Month-over-month change, per region\nSELECT region, month, amount,\n       amount - LAG(amount) OVER (PARTITION BY region ORDER BY month) AS delta\nFROM sales;\n-- delta is NULL for each region's first month: there is no previous row.\n```\n\nThat NULL is correct, not a bug — use `LAG(amount, 1, 0)` if you want zero instead.\n\nFinally: if several functions share a window, name it once with `WINDOW w AS (PARTITION BY region ORDER BY month)` and write `OVER w`. Postgres then computes the partition and sort a single time.",
+        "es": "El **frame** decide qué filas *dentro de la partición actual* ve realmente la función. Es la parte que la gente se salta, y es donde viven los bugs sorprendentes.\n\n```sql\nSUM(amount) OVER (\n  PARTITION BY region      -- qué filas forman la ventana\n  ORDER BY month           -- su orden dentro de ella\n  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW  -- el frame\n)\n```\n\n**El frame por defecto no es el que la mayoría espera.** Con un `ORDER BY` y sin frame explícito, Postgres usa `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`. Sin `ORDER BY`, el frame es toda la partición — por eso `SUM(x) OVER (PARTITION BY r)` da un total del grupo pero `SUM(x) OVER (PARTITION BY r ORDER BY m)` da un total acumulado. Agregar un ORDER BY cambia el significado en silencio.\n\n**`ROWS` vs `RANGE` — la trampa clásica.**\n- `ROWS` cuenta **filas físicas**: `1 PRECEDING` es literalmente la fila anterior.\n- `RANGE` agrupa por **valor del ORDER BY**: todas las filas con el mismo valor forman un *grupo de pares*, y `CURRENT ROW` en modo RANGE significa \"hasta el final de mi grupo de pares\".\n\nCon un ORDER BY que tiene duplicados, dan respuestas distintas. Ordenando por un monto con dos filas en 120, `ROWS ... CURRENT ROW` incluye una de ellas; `RANGE ... CURRENT ROW` incluye las dos. Si tu clave de ORDER BY es única, son idénticas — por eso el bug solo aparece cuando los datos reales tienen empates.\n\nLímites de frame comunes: `UNBOUNDED PRECEDING`, `n PRECEDING`, `CURRENT ROW`, `n FOLLOWING`, `UNBOUNDED FOLLOWING`.\n\n**Las funciones de desplazamiento** miran filas vecinas directamente e ignoran el frame:\n- `LAG(col, offset = 1, default = NULL)` — la fila `offset` posiciones **hacia atrás** en la partición.\n- `LEAD(col, offset = 1, default = NULL)` — `offset` posiciones **hacia adelante**.\n- `FIRST_VALUE` / `LAST_VALUE` / `NTH_VALUE` — sí respetan el frame, y por eso `LAST_VALUE` devuelve célebremente la fila actual salvo que escribas `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.\n\n```sql\n-- Variación mes a mes, por región\nSELECT region, month, amount,\n       amount - LAG(amount) OVER (PARTITION BY region ORDER BY month) AS delta\nFROM sales;\n-- delta es NULL para el primer mes de cada región: no hay fila anterior.\n```\n\nEse NULL es correcto, no un bug — usa `LAG(amount, 1, 0)` si quieres cero en su lugar.\n\nPor último: si varias funciones comparten una ventana, nómbrala una vez con `WINDOW w AS (PARTITION BY region ORDER BY month)` y escribe `OVER w`. Postgres calcula entonces la partición y el orden una sola vez."
+      },
+      "examples": [
+        {
+          "en": "A 7-day moving average: `AVG(value) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)`. Write `RANGE` instead of `ROWS` and any day with two readings silently widens the window, producing a chart that is subtly wrong and impossible to explain.",
+          "es": "Un promedio móvil de 7 días: `AVG(value) OVER (ORDER BY day ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)`. Escribe `RANGE` en lugar de `ROWS` y cualquier día con dos lecturas ensancha la ventana en silencio, produciendo un gráfico sutilmente incorrecto e imposible de explicar."
+        },
+        {
+          "en": "Sessionization: `LAG(event_at) OVER (PARTITION BY user_id ORDER BY event_at)` gives each event the previous one's timestamp, so `event_at - prev > interval '30 minutes'` flags a new session. A running SUM over that flag numbers the sessions. Two window functions replace what would otherwise be application code.",
+          "es": "Sesionización: `LAG(event_at) OVER (PARTITION BY user_id ORDER BY event_at)` le da a cada evento el timestamp del anterior, así que `event_at - prev > interval '30 minutes'` marca una sesión nueva. Un SUM acumulado sobre esa marca numera las sesiones. Dos window functions reemplazan lo que de otro modo sería código de aplicación."
+        },
+        {
+          "en": "`LAST_VALUE(amount) OVER (PARTITION BY region ORDER BY month)` returns the *current* row's amount, not the last one, because the default frame ends at the current row. It is the most reported non-bug in SQL. The fix is an explicit `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`.",
+          "es": "`LAST_VALUE(amount) OVER (PARTITION BY region ORDER BY month)` devuelve el monto de la fila *actual*, no el último, porque el frame por defecto termina en la fila actual. Es el no-bug más reportado de SQL. El arreglo es un `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` explícito."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Create a view named exactly `running_sales` with columns `region`, `month` and `running`, where `running` is the **cumulative sum of `amount` per region, in month order**.\n\nUse an explicit frame: `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.",
+              "es": "Crea una vista llamada exactamente `running_sales` con las columnas `region`, `month` y `running`, donde `running` es la **suma acumulada de `amount` por región, en orden de mes**.\n\nUsa un frame explícito: `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`."
+            },
+            "setup_sql": "CREATE TABLE sales (\n  id SERIAL PRIMARY KEY,\n  region TEXT NOT NULL,\n  month INT NOT NULL,\n  amount NUMERIC(10,2) NOT NULL\n);\nINSERT INTO sales (region, month, amount) VALUES\n  ('north', 1, 100), ('north', 2, 140), ('north', 3, 90),  ('north', 4, 200),\n  ('south', 1, 250), ('south', 2, 180), ('south', 3, 300), ('south', 4, 220);\nANALYZE sales;",
+            "verification_query": "SELECT region, month, running FROM running_sales ORDER BY region, month;",
+            "hint": {
+              "en": "SUM(amount) OVER (PARTITION BY region ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)",
+              "es": "SUM(amount) OVER (PARTITION BY region ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "north",
+                1,
+                100
+              ],
+              [
+                "north",
+                2,
+                240
+              ],
+              [
+                "north",
+                3,
+                330
+              ],
+              [
+                "north",
+                4,
+                530
+              ],
+              [
+                "south",
+                1,
+                250
+              ],
+              [
+                "south",
+                2,
+                430
+              ],
+              [
+                "south",
+                3,
+                730
+              ],
+              [
+                "south",
+                4,
+                950
+              ]
+            ]
+          }
+        },
+        {
+          "type": "sql",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Create a view named exactly `sales_delta` with columns `region`, `month` and `delta`, where `delta` is `amount` minus the **previous month's amount in the same region**.\n\nFor each region's first month there is no previous row — use `LAG(amount, 1, 0)` so `delta` is the amount itself rather than NULL.",
+              "es": "Crea una vista llamada exactamente `sales_delta` con las columnas `region`, `month` y `delta`, donde `delta` es `amount` menos el **monto del mes anterior en la misma región**.\n\nPara el primer mes de cada región no hay fila anterior — usa `LAG(amount, 1, 0)` para que `delta` sea el monto mismo en vez de NULL."
+            },
+            "setup_sql": "CREATE TABLE sales (\n  id SERIAL PRIMARY KEY,\n  region TEXT NOT NULL,\n  month INT NOT NULL,\n  amount NUMERIC(10,2) NOT NULL\n);\nINSERT INTO sales (region, month, amount) VALUES\n  ('north', 1, 100), ('north', 2, 140), ('north', 3, 90),  ('north', 4, 200),\n  ('south', 1, 250), ('south', 2, 180), ('south', 3, 300), ('south', 4, 220);\nANALYZE sales;",
+            "verification_query": "SELECT region, month, delta FROM sales_delta ORDER BY region, month;",
+            "hint": {
+              "en": "amount - LAG(amount, 1, 0) OVER (PARTITION BY region ORDER BY month) AS delta",
+              "es": "amount - LAG(amount, 1, 0) OVER (PARTITION BY region ORDER BY month) AS delta"
+            }
+          },
+          "solution": {
+            "ordered": true,
+            "expected_rows": [
+              [
+                "north",
+                1,
+                100
+              ],
+              [
+                "north",
+                2,
+                40
+              ],
+              [
+                "north",
+                3,
+                -50
+              ],
+              [
+                "north",
+                4,
+                110
+              ],
+              [
+                "south",
+                1,
+                250
+              ],
+              [
+                "south",
+                2,
+                -70
+              ],
+              [
+                "south",
+                3,
+                120
+              ],
+              [
+                "south",
+                4,
+                -80
+              ]
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You are computing a 7-day moving average with `ORDER BY day`, and some days have two readings. What is the difference between `ROWS BETWEEN 6 PRECEDING AND CURRENT ROW` and `RANGE BETWEEN 6 PRECEDING AND CURRENT ROW`?",
+              "es": "Estás calculando un promedio móvil de 7 días con `ORDER BY day`, y algunos días tienen dos lecturas. ¿Cuál es la diferencia entre `ROWS BETWEEN 6 PRECEDING AND CURRENT ROW` y `RANGE BETWEEN 6 PRECEDING AND CURRENT ROW`?"
+            },
+            "options": [
+              {
+                "en": "None — ROWS and RANGE are synonyms, RANGE is just the older spelling",
+                "es": "Ninguna — ROWS y RANGE son sinónimos, RANGE es solo la forma más antigua"
+              },
+              {
+                "en": "RANGE is always faster because it can use an index on the ORDER BY column",
+                "es": "RANGE siempre es más rápido porque puede usar un índice sobre la columna del ORDER BY"
+              },
+              {
+                "en": "ROWS counts 7 physical rows regardless of their day; RANGE works on ORDER BY values, so every row sharing a day is one peer group included or excluded together — with duplicate days the two give different results",
+                "es": "ROWS cuenta 7 filas físicas sin importar su día; RANGE trabaja sobre los valores del ORDER BY, así que todas las filas que comparten un día forman un grupo de pares que entra o sale junto — con días duplicados los dos dan resultados distintos"
+              },
+              {
+                "en": "ROWS only works with SUM and COUNT; RANGE is required for AVG",
+                "es": "ROWS solo funciona con SUM y COUNT; RANGE es obligatorio para AVG"
+              }
+            ],
+            "explanation": {
+              "en": "This is the trap: with a unique ORDER BY key the two are identical, so the bug hides in development and appears in production the first time a day has two readings. For a moving average over days you almost always want ROWS if you mean 'the last 7 records' and RANGE (with an interval bound) if you mean 'the last 7 days of time'. Writing the frame explicitly is what forces you to decide.",
+              "es": "Esta es la trampa: con una clave de ORDER BY única las dos son idénticas, así que el bug se esconde en desarrollo y aparece en producción la primera vez que un día tiene dos lecturas. Para un promedio móvil por días casi siempre quieres ROWS si te refieres a 'los últimos 7 registros' y RANGE (con un límite de intervalo) si te refieres a 'los últimos 7 días de tiempo'. Escribir el frame explícitamente es lo que te obliga a decidir."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the logical evaluation phases of a SELECT. This is what explains why you cannot filter a window function in WHERE.",
+              "es": "Ordena las fases de evaluación lógica de un SELECT. Esto es lo que explica por qué no puedes filtrar una window function en el WHERE."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "from",
+                "label": {
+                  "en": "FROM / JOIN — build the working set",
+                  "es": "FROM / JOIN — armar el conjunto de trabajo"
+                }
+              },
+              {
+                "id": "where",
+                "label": {
+                  "en": "WHERE — filter individual rows",
+                  "es": "WHERE — filtrar filas individuales"
+                }
+              },
+              {
+                "id": "group",
+                "label": {
+                  "en": "GROUP BY + aggregates — collapse groups",
+                  "es": "GROUP BY + agregados — colapsar grupos"
+                }
+              },
+              {
+                "id": "having",
+                "label": {
+                  "en": "HAVING — filter the collapsed groups",
+                  "es": "HAVING — filtrar los grupos colapsados"
+                }
+              },
+              {
+                "id": "window",
+                "label": {
+                  "en": "Window functions — computed over what survived",
+                  "es": "Window functions — se calculan sobre lo que sobrevivió"
+                }
+              },
+              {
+                "id": "select",
+                "label": {
+                  "en": "SELECT — project the output columns and aliases",
+                  "es": "SELECT — proyectar las columnas de salida y los alias"
+                }
+              },
+              {
+                "id": "order",
+                "label": {
+                  "en": "ORDER BY — sort the final result",
+                  "es": "ORDER BY — ordenar el resultado final"
+                }
+              },
+              {
+                "id": "limit",
+                "label": {
+                  "en": "LIMIT / OFFSET — cut the result",
+                  "es": "LIMIT / OFFSET — recortar el resultado"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "from",
+              "where",
+              "group",
+              "having",
+              "window",
+              "select",
+              "order",
+              "limit"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "finding-slow-queries-in-production",
+      "question": {
+        "en": "The app is slow and nobody knows which query. How do you find it in Postgres?",
+        "es": "La aplicación está lenta y nadie sabe qué consulta es. ¿Cómo la encuentras en Postgres?"
+      },
+      "definition": {
+        "en": "\"The app is slow\" is not a query. Postgres has five instruments, and each answers a **different** question. Reaching for the wrong one is why investigations stall.\n\n**`pg_stat_activity` — what is running *right now*.** The first thing to look at during an incident. Every backend, its state, how long its current query has been running, and what it is waiting on.\n\n```sql\nSELECT pid, now() - query_start AS runtime, state, wait_event_type, wait_event,\n       left(query, 80) AS query\nFROM pg_stat_activity\nWHERE state <> 'idle' AND now() - query_start > interval '5 seconds'\nORDER BY runtime DESC;\n```\nAlso the place you find `idle in transaction` sessions — a connection holding a transaction open, blocking VACUUM and holding locks. Kill with `pg_terminate_backend(pid)`.\n\n**`pg_stat_statements` — which query costs the most *in aggregate*.** The extension that matters most. It normalizes queries (literals become `$1`) and accumulates calls, total time, mean time, rows and buffer counts.\n\n```sql\nSELECT calls, round(mean_exec_time::numeric, 2) AS mean_ms,\n       round(total_exec_time::numeric) AS total_ms, left(query, 70)\nFROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;\n```\nOrder by **`total_exec_time`, not `mean_exec_time`**: a 4 ms query called 2 million times an hour hurts far more than a 9-second report run twice a day. That inversion is the single most useful habit here.\n\n**`log_min_duration_statement` — the slow query log.** `SET log_min_duration_statement = '500ms'` logs the full text, with real parameter values, of anything slower. Unlike pg_stat_statements it keeps the actual literals, so you can replay the exact bad case. Set it too low on a busy server and the logging itself becomes the bottleneck.\n\n**`auto_explain` — the plan of the slow execution, captured automatically.** The gap the others leave: you know a query was slow, but by the time you run EXPLAIN by hand the plan may be different. `auto_explain.log_min_duration = '500ms'` with `log_analyze = on` writes the real plan into the log at the moment it was slow. `log_analyze` adds measurable overhead — enable it deliberately, not permanently.\n\n**`pg_stat_user_indexes` / `pg_stat_user_tables` — is the index even being used?**\n```sql\nSELECT relname, indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))\nFROM pg_stat_user_indexes WHERE idx_scan = 0 ORDER BY pg_relation_size(indexrelid) DESC;\n```\n`idx_scan = 0` after weeks of uptime means an index nobody uses that every INSERT still pays for. `pg_stat_user_tables` gives `seq_scan` counts, `n_dead_tup` (bloat) and `last_autoanalyze` — the last one being the first thing to check when a plan suddenly changed.\n\n**The triage order that works:** `pg_stat_activity` to see if something is stuck or blocking right now → `pg_stat_statements` ordered by total time to find the real cost centre → `EXPLAIN (ANALYZE, BUFFERS)` on that one query → check `pg_stat_user_tables` for stale statistics or bloat before concluding anything about the SQL itself.",
+        "es": "\"La app está lenta\" no es una consulta. Postgres tiene cinco instrumentos, y cada uno responde una pregunta **distinta**. Agarrar el equivocado es la razón por la que las investigaciones se estancan.\n\n**`pg_stat_activity` — qué está corriendo *ahora mismo*.** Lo primero que hay que mirar durante un incidente. Cada backend, su estado, cuánto lleva corriendo su consulta actual y en qué está esperando.\n\n```sql\nSELECT pid, now() - query_start AS runtime, state, wait_event_type, wait_event,\n       left(query, 80) AS query\nFROM pg_stat_activity\nWHERE state <> 'idle' AND now() - query_start > interval '5 seconds'\nORDER BY runtime DESC;\n```\nTambién es donde encuentras sesiones `idle in transaction` — una conexión que mantiene una transacción abierta, bloqueando el VACUUM y reteniendo locks. Se matan con `pg_terminate_backend(pid)`.\n\n**`pg_stat_statements` — qué consulta cuesta más *en agregado*.** La extensión que más importa. Normaliza las consultas (los literales pasan a ser `$1`) y acumula llamadas, tiempo total, tiempo medio, filas y conteos de buffers.\n\n```sql\nSELECT calls, round(mean_exec_time::numeric, 2) AS mean_ms,\n       round(total_exec_time::numeric) AS total_ms, left(query, 70)\nFROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;\n```\nOrdena por **`total_exec_time`, no por `mean_exec_time`**: una consulta de 4 ms llamada 2 millones de veces por hora duele mucho más que un reporte de 9 segundos que corre dos veces al día. Esa inversión es el hábito más útil de todo esto.\n\n**`log_min_duration_statement` — el log de consultas lentas.** `SET log_min_duration_statement = '500ms'` registra el texto completo, con los valores reales de los parámetros, de todo lo que tarde más. A diferencia de pg_stat_statements conserva los literales, así que puedes reproducir el caso malo exacto. Ponlo demasiado bajo en un servidor cargado y el propio logging se vuelve el cuello de botella.\n\n**`auto_explain` — el plan de la ejecución lenta, capturado automáticamente.** El hueco que dejan los demás: sabes que una consulta fue lenta, pero para cuando corres EXPLAIN a mano el plan puede ser otro. `auto_explain.log_min_duration = '500ms'` con `log_analyze = on` escribe el plan real en el log en el momento en que fue lento. `log_analyze` agrega sobrecarga medible — actívalo a propósito, no permanentemente.\n\n**`pg_stat_user_indexes` / `pg_stat_user_tables` — ¿el índice se está usando siquiera?**\n```sql\nSELECT relname, indexrelname, idx_scan, pg_size_pretty(pg_relation_size(indexrelid))\nFROM pg_stat_user_indexes WHERE idx_scan = 0 ORDER BY pg_relation_size(indexrelid) DESC;\n```\n`idx_scan = 0` tras semanas de uptime es un índice que nadie usa y que cada INSERT igual paga. `pg_stat_user_tables` da conteos de `seq_scan`, `n_dead_tup` (bloat) y `last_autoanalyze` — este último siendo lo primero que hay que revisar cuando un plan cambió de golpe.\n\n**El orden de triage que funciona:** `pg_stat_activity` para ver si algo está trabado o bloqueando ahora mismo → `pg_stat_statements` ordenado por tiempo total para encontrar el verdadero centro de costo → `EXPLAIN (ANALYZE, BUFFERS)` sobre esa consulta → revisar `pg_stat_user_tables` por estadísticas viejas o bloat antes de concluir nada sobre el SQL en sí."
+      },
+      "examples": [
+        {
+          "en": "A team spent two days optimizing a 9-second report that ran twice daily — 18 seconds of database time. Sorting pg_stat_statements by `total_exec_time` instead showed a 3 ms `SELECT ... WHERE session_token = $1` called 40 000 times a minute, accounting for 61% of all database time. One index on `session_token` cut server CPU in half.",
+          "es": "Un equipo pasó dos días optimizando un reporte de 9 segundos que corría dos veces al día — 18 segundos de tiempo de base de datos. Ordenar pg_stat_statements por `total_exec_time` en su lugar mostró un `SELECT ... WHERE session_token = $1` de 3 ms llamado 40 000 veces por minuto, responsable del 61% de todo el tiempo de base de datos. Un índice sobre `session_token` bajó el CPU del servidor a la mitad."
+        },
+        {
+          "en": "Writes get slower every hour, no query looks unusual. `pg_stat_activity` shows a backend `idle in transaction` for 6 hours — a worker that opened a transaction and crashed without committing. VACUUM could not reclaim anything past its snapshot, so dead tuples piled up on the hot table. `pg_terminate_backend(pid)` plus a statement timeout in the pool prevents the recurrence.",
+          "es": "Las escrituras se ponen más lentas cada hora y ninguna consulta se ve rara. `pg_stat_activity` muestra un backend `idle in transaction` desde hace 6 horas — un worker que abrió una transacción y se cayó sin hacer commit. VACUUM no pudo recuperar nada más allá de su snapshot, así que las tuplas muertas se acumularon en la tabla caliente. `pg_terminate_backend(pid)` más un statement timeout en el pool evita que se repita."
+        },
+        {
+          "en": "A query is fast when you EXPLAIN it by hand but slow in production. auto_explain reveals why: the application uses a prepared statement, and after five executions Postgres switched to a generic plan built without the actual parameter, which happens to be the skewed value. Running EXPLAIN manually always produced the custom plan, hiding the problem completely.",
+          "es": "Una consulta es rápida cuando le haces EXPLAIN a mano pero lenta en producción. auto_explain revela por qué: la aplicación usa un prepared statement, y después de cinco ejecuciones Postgres se cambió a un plan genérico construido sin el parámetro real, que resulta ser el valor sesgado. Correr EXPLAIN a mano siempre producía el plan personalizado, escondiendo el problema por completo."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each Postgres instrument with the question it is the right tool for.",
+              "es": "Conecta cada instrumento de Postgres con la pregunta para la que es la herramienta correcta."
+            },
+            "left": [
+              {
+                "id": "activity",
+                "label": {
+                  "en": "pg_stat_activity",
+                  "es": "pg_stat_activity"
+                }
+              },
+              {
+                "id": "statements",
+                "label": {
+                  "en": "pg_stat_statements",
+                  "es": "pg_stat_statements"
+                }
+              },
+              {
+                "id": "logmin",
+                "label": {
+                  "en": "log_min_duration_statement",
+                  "es": "log_min_duration_statement"
+                }
+              },
+              {
+                "id": "autoexplain",
+                "label": {
+                  "en": "auto_explain",
+                  "es": "auto_explain"
+                }
+              },
+              {
+                "id": "idxstats",
+                "label": {
+                  "en": "pg_stat_user_indexes",
+                  "es": "pg_stat_user_indexes"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "now",
+                "label": {
+                  "en": "What is executing this second, for how long, and what is it waiting on or blocking?",
+                  "es": "¿Qué se está ejecutando en este segundo, hace cuánto, y qué está esperando o bloqueando?"
+                }
+              },
+              {
+                "id": "aggregate",
+                "label": {
+                  "en": "Across all traffic, which normalized query consumes the most total time?",
+                  "es": "Sobre todo el tráfico, ¿qué consulta normalizada consume más tiempo total?"
+                }
+              },
+              {
+                "id": "literals",
+                "label": {
+                  "en": "Give me the full text with the real parameter values of anything slower than 500 ms, so I can replay it",
+                  "es": "Dame el texto completo con los valores reales de los parámetros de todo lo que tarde más de 500 ms, para poder reproducirlo"
+                }
+              },
+              {
+                "id": "planatthetime",
+                "label": {
+                  "en": "Capture the execution plan at the moment it was slow, since running EXPLAIN later may produce a different plan",
+                  "es": "Capturar el plan de ejecución en el momento en que fue lento, ya que correr EXPLAIN después puede producir otro plan"
+                }
+              },
+              {
+                "id": "unused",
+                "label": {
+                  "en": "Which indexes has nobody scanned since the last restart, while every INSERT still pays to maintain them?",
+                  "es": "¿Qué índices nadie escaneó desde el último reinicio, mientras cada INSERT igual paga por mantenerlos?"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "activity": "now",
+              "statements": "aggregate",
+              "logmin": "literals",
+              "autoexplain": "planatthetime",
+              "idxstats": "unused"
+            }
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A page's p99 latency tripled this morning. Order the triage steps so each one narrows the search for the next.",
+              "es": "La latencia p99 de una página se triplicó esta mañana. Ordena los pasos de triage para que cada uno acote la búsqueda del siguiente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "activity",
+                "label": {
+                  "en": "Check pg_stat_activity for long-running, blocked or idle-in-transaction sessions right now",
+                  "es": "Revisar pg_stat_activity por sesiones largas, bloqueadas o idle in transaction ahora mismo"
+                }
+              },
+              {
+                "id": "statements",
+                "label": {
+                  "en": "Sort pg_stat_statements by total_exec_time to identify the real cost centre",
+                  "es": "Ordenar pg_stat_statements por total_exec_time para identificar el verdadero centro de costo"
+                }
+              },
+              {
+                "id": "explain",
+                "label": {
+                  "en": "Run EXPLAIN (ANALYZE, BUFFERS) on that one query and compare estimated versus actual rows",
+                  "es": "Correr EXPLAIN (ANALYZE, BUFFERS) sobre esa consulta y comparar filas estimadas contra reales"
+                }
+              },
+              {
+                "id": "stats",
+                "label": {
+                  "en": "Check pg_stat_user_tables for last_autoanalyze and n_dead_tup on the tables that query touches",
+                  "es": "Revisar pg_stat_user_tables por last_autoanalyze y n_dead_tup en las tablas que toca esa consulta"
+                }
+              },
+              {
+                "id": "fix",
+                "label": {
+                  "en": "Apply the narrowest fix — ANALYZE, an index, or a rewrite — and confirm with pg_stat_statements that total time dropped",
+                  "es": "Aplicar el arreglo más acotado — ANALYZE, un índice o una reescritura — y confirmar con pg_stat_statements que el tiempo total bajó"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "activity",
+              "statements",
+              "explain",
+              "stats",
+              "fix"
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Your team is about to spend a sprint optimizing the slowest query in the system: a 9-second analytics report. Argue for or against, and explain which metric you would use to decide — and why that metric, rather than the obvious one.",
+              "es": "Tu equipo está a punto de dedicar un sprint a optimizar la consulta más lenta del sistema: un reporte analítico de 9 segundos. Argumenta a favor o en contra, y explica qué métrica usarías para decidir — y por qué esa métrica y no la obvia."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must argue that mean or max execution time is the wrong metric on its own and that the decision should be driven by total_exec_time (calls x mean) from pg_stat_statements — total database time consumed, not per-execution duration. Must give the reasoning: a fast query called constantly can dominate total load while a slow query run twice a day cannot. Should mention checking `calls` alongside mean_exec_time. Bonus: distinguishes user-facing latency from background batch work (a 9s report nobody waits on may be fine, whereas 9s on a request path is not), mentions p99 versus mean, notes that optimizing the top total-time query usually frees capacity for everything else, and suggests confirming the improvement by re-reading pg_stat_statements after the change (or pg_stat_statements_reset).",
+              "es": "Debe argumentar que el tiempo medio o máximo de ejecución es la métrica equivocada por sí sola y que la decisión debe guiarse por total_exec_time (llamadas x media) de pg_stat_statements — tiempo total de base de datos consumido, no duración por ejecución. Debe dar el razonamiento: una consulta rápida llamada constantemente puede dominar la carga total mientras que una lenta que corre dos veces al día no. Debería mencionar revisar `calls` junto con mean_exec_time. Bonus: distingue latencia de cara al usuario de trabajo batch en segundo plano (un reporte de 9s que nadie espera puede estar bien, 9s en un camino de request no), menciona p99 contra media, nota que optimizar la consulta con más tiempo total normalmente libera capacidad para todo lo demás, y sugiere confirmar la mejora releyendo pg_stat_statements después del cambio (o pg_stat_statements_reset)."
+            },
+            "reference": "Against, most likely — but the point is that 'slowest' is the wrong criterion. The metric to decide on is `total_exec_time` from pg_stat_statements: calls x mean execution time, i.e. how much total database time that query consumes. A 9-second report run twice a day is 18 seconds of database time per day. A 4 ms query on the session-token lookup called 40 000 times a minute is 160 seconds per minute of database time — nearly four orders of magnitude more, and it is competing with live user requests for the same CPU and buffers.\n\nSo: pull up pg_stat_statements ordered by total_exec_time descending, and look at `calls` next to `mean_exec_time`. If the report is genuinely near the top by total time, optimize it. If it is not, the sprint is better spent on whatever is, and the report can be moved to a replica or a scheduled materialized view instead of being tuned at all.\n\nTwo caveats worth stating. First, latency that a user is waiting on is worth more than the same latency in a background job — if the 9 seconds is a synchronous page load, it may deserve attention on user-experience grounds even at low total cost, and there p99 matters more than the mean. Second, whatever you change, reset or re-read pg_stat_statements afterwards to confirm total time actually dropped rather than moved."
           }
         }
       ]
@@ -2344,6 +3768,72 @@
           "es": "Debe dar una metodología ordenada que cubra la mayoría de: saturación del pool de conexiones (métricas del pool, pg_stat_activity), consultas lentas/calientes (pg_stat_statements, logs), planes e índices (EXPLAIN ANALYZE), locks y transacciones largas (pg_locks, wait events de pg_stat_activity) y recursos del sistema / salud del autovacuum. El orden y las transiciones basadas en evidencia importan más que los nombres exactos de las herramientas."
         },
         "reference": "1) Connection layer: pool wait/saturation metrics and connection counts in pg_stat_activity — queueing for connections raises latency while the DB looks idle. 2) Queries: pg_stat_statements ranked by mean and total time; compare against the baseline to find what changed. 3) Plans: EXPLAIN ANALYZE the top offenders; look for seq scans, estimate mismatches (fix with ANALYZE or an index). 4) Locks: pg_stat_activity wait_event_type = 'Lock', pg_locks, idle-in-transaction sessions blocking others or autovacuum. 5) Resources: CPU, I/O saturation, memory, checkpoint frequency, autovacuum lag and bloat. Confirm each layer with data before moving to the next."
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A query that ran in 200 ms for months suddenly takes 4 minutes. The SQL text, schema and indexes are unchanged. What is the most likely cause?",
+          "es": "Una consulta que corrió en 200 ms durante meses de repente tarda 4 minutos. El texto SQL, el esquema y los índices no cambiaron. ¿Cuál es la causa más probable?"
+        },
+        "options": [
+          {
+            "en": "The index became corrupted and needs a REINDEX",
+            "es": "El índice se corrompió y necesita un REINDEX"
+          },
+          {
+            "en": "Statistics went stale, so a row estimate is now wrong and the planner switched to a different (worse) plan",
+            "es": "Las estadísticas quedaron desactualizadas, así que una estimación de filas ahora está mal y el planner se cambió a otro plan (peor)"
+          },
+          {
+            "en": "Postgres rotates query plans periodically to avoid cache bias",
+            "es": "Postgres rota los planes de consulta periódicamente para evitar sesgo de caché"
+          },
+          {
+            "en": "The connection pool grew, so each query gets less work_mem",
+            "es": "El pool de conexiones creció, así que cada consulta recibe menos work_mem"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which window function assigns 1, 2, 2, 3 to the scores 100, 90, 90, 80?",
+          "es": "¿Qué window function asigna 1, 2, 2, 3 a los puntajes 100, 90, 90, 80?"
+        },
+        "options": [
+          {
+            "en": "ROW_NUMBER()",
+            "es": "ROW_NUMBER()"
+          },
+          {
+            "en": "RANK()",
+            "es": "RANK()"
+          },
+          {
+            "en": "DENSE_RANK()",
+            "es": "DENSE_RANK()"
+          },
+          {
+            "en": "NTILE(4)",
+            "es": "NTILE(4)"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
       }
     }
   ]
