@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { pick } from "../../lib/lang";
+import { useIsWide } from "../../lib/useMediaQuery";
 import type { Bilingual } from "../../lib/types";
 
 interface Item {
@@ -18,9 +19,27 @@ interface Props {
 
 const LINE_COLORS = ["#7f9fd4", "#5aa984", "#c2a45c", "#c47878", "#9d7fd4", "#5aa9a9", "#c78fb0", "#8fa35a"];
 
-/** Connect-the-concepts exercise: click a left item, then a right item to draw a line. */
+/** Colour + letter, shown on both halves of a pair. Redundant encoding, so the
+ * pairing survives colour-blindness and the stacked mobile layout. */
+function PairBadge({ idx }: { idx: number }) {
+  return (
+    <span
+      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-2xs font-semibold text-white"
+      style={{ background: LINE_COLORS[idx % LINE_COLORS.length] }}
+    >
+      {String.fromCharCode(65 + idx)}
+    </span>
+  );
+}
+
+/** Connect-the-concepts exercise: click a left item, then a right item.
+ * On a wide screen the pair is drawn as an SVG line between the two columns.
+ * On a phone the columns stack, where a line would be meaningless — the pairing
+ * is shown instead by a matching colour + letter badge on both halves. That
+ * badge renders at every width, so the colour is never the only cue. */
 export default function Matching({ left, right, pairs, onChange, disabled }: Props) {
   const { t, i18n } = useTranslation();
+  const isWide = useIsWide();
   const [activeLeft, setActiveLeft] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -37,6 +56,10 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
   const recomputeLines = () => {
     const container = containerRef.current;
     if (!container) return;
+    if (!isWide) {
+      setLines([]);
+      return;
+    }
     const cRect = container.getBoundingClientRect();
     const next: typeof lines = [];
     Object.entries(pairs).forEach(([l, r]) => {
@@ -57,7 +80,9 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
     setLines(next);
   };
 
-  useLayoutEffect(recomputeLines, [pairs, i18n.language]);
+  useLayoutEffect(recomputeLines, [pairs, i18n.language, isWide]);
+  // recomputeLines closes over `pairs`, so this deliberately re-subscribes each
+  // render rather than capturing a stale snapshot.
   useEffect(() => {
     window.addEventListener("resize", recomputeLines);
     return () => window.removeEventListener("resize", recomputeLines);
@@ -94,24 +119,31 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
 
   return (
     <div>
-      <p className="mb-2 text-[12.5px] text-muted">{t("matchInstruction")}</p>
+      <p className="mb-2 text-xs text-muted">{t("matchInstruction")}</p>
       <div ref={containerRef} className="relative">
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" style={{ zIndex: 1 }}>
-          {lines.map((l, i) => (
-            <line
-              key={i}
-              x1={l.x1}
-              y1={l.y1}
-              x2={l.x2}
-              y2={l.y2}
-              stroke={l.color}
-              strokeWidth="1.5"
-              opacity="0.75"
-            />
-          ))}
-        </svg>
-        <div className="grid grid-cols-2 gap-x-14 gap-y-2">
+        {isWide && (
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" style={{ zIndex: 1 }}>
+            {lines.map((l, i) => (
+              <line
+                key={i}
+                x1={l.x1}
+                y1={l.y1}
+                x2={l.x2}
+                y2={l.y2}
+                stroke={l.color}
+                strokeWidth="1.5"
+                opacity="0.75"
+              />
+            ))}
+          </svg>
+        )}
+        <div className={`grid gap-y-2 ${isWide ? "grid-cols-2 gap-x-14" : "grid-cols-1 gap-y-3"}`}>
           <div className="space-y-2">
+            {!isWide && (
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted">
+                {t("concepts")}
+              </p>
+            )}
             {left.map((item, idx) => {
               const paired = !!pairs[item.id];
               return (
@@ -121,7 +153,7 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
                   ref={setRef(`L:${item.id}`)}
                   onClick={() => clickLeft(item.id)}
                   disabled={disabled}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-[13.5px] transition-colors ${
+                  className={`flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors sm:min-h-0 sm:py-2 ${
                     activeLeft === item.id
                       ? "border-accent bg-accent-soft"
                       : paired
@@ -130,12 +162,18 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
                   }`}
                   style={paired ? { borderColor: LINE_COLORS[idx % LINE_COLORS.length] } : undefined}
                 >
-                  {pick(item.label, i18n.language)}
+                  <span className="flex-1">{pick(item.label, i18n.language)}</span>
+                  {paired && <PairBadge idx={idx} />}
                 </button>
               );
             })}
           </div>
           <div className="space-y-2">
+            {!isWide && (
+              <p className="text-2xs font-medium uppercase tracking-wider text-muted">
+                {t("matchesColumn")}
+              </p>
+            )}
             {shuffledRight.map((item) => {
               const paired = usedRight.has(item.id);
               const ownerIdx = left.findIndex((l) => pairs[l.id] === item.id);
@@ -146,7 +184,7 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
                   ref={setRef(`R:${item.id}`)}
                   onClick={() => clickRight(item.id)}
                   disabled={disabled}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-[13.5px] transition-colors ${
+                  className={`flex min-h-11 w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors sm:min-h-0 sm:py-2 ${
                     paired ? "bg-surface2" : "border-border bg-surface hover:bg-surface2"
                   }`}
                   style={
@@ -155,7 +193,8 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
                       : undefined
                   }
                 >
-                  {pick(item.label, i18n.language)}
+                  <span className="flex-1">{pick(item.label, i18n.language)}</span>
+                  {paired && ownerIdx >= 0 && <PairBadge idx={ownerIdx} />}
                 </button>
               );
             })}
@@ -163,7 +202,7 @@ export default function Matching({ left, right, pairs, onChange, disabled }: Pro
         </div>
       </div>
       {!disabled && Object.keys(pairs).length > 0 && (
-        <button type="button" className="btn mt-3 !py-1 text-[12px]" onClick={() => onChange({})}>
+        <button type="button" className="btn mt-3 !py-1 text-xs" onClick={() => onChange({})}>
           {t("clear")}
         </button>
       )}

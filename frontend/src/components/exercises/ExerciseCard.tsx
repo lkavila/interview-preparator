@@ -104,23 +104,23 @@ export default function ExerciseCard({ exercise, index, onSolved }: Props) {
     | undefined;
 
   return (
-    <div className="card p-5">
+    <div className="card p-4 sm:p-5">
       <div className="mb-3 flex items-center gap-2">
-        <span className="rounded bg-surface2 px-2 py-0.5 font-mono text-[11px] text-muted">
+        <span className="rounded bg-surface2 px-2 py-0.5 font-mono text-2xs text-muted">
           {t("exercise")} {index + 1}
         </span>
         {exercise.validation_mode === "llm" && (
-          <span className="rounded bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+          <span className="rounded bg-accent-soft px-2 py-0.5 text-2xs font-medium text-accent">
             AI
           </span>
         )}
       </div>
       <div
-        className="prose-content mb-4 text-[14px]"
+        className="prose-content mb-4 text-base"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(pick(exercise.data.prompt, i18n.language)) }}
       />
       {exercise.data.hint && (
-        <details className="mb-3 text-[13px]">
+        <details className="mb-3 text-sm">
           <summary className="cursor-pointer text-muted hover:text-text">{t("hint")}</summary>
           <p className="mt-1 text-muted">{pick(exercise.data.hint, i18n.language)}</p>
         </details>
@@ -224,7 +224,7 @@ export default function ExerciseCard({ exercise, index, onSolved }: Props) {
         )}
         {exercise.validation_mode === "llm" && !solved && (
           <button
-            className="btn text-[13px]"
+            className="btn text-sm"
             onClick={toggleReveal}
             disabled={reveal.isFetching}
             aria-expanded={showReveal}
@@ -238,7 +238,7 @@ export default function ExerciseCard({ exercise, index, onSolved }: Props) {
         )}
         {answered && (
           <span
-            className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               solved ? "bg-success-soft text-success" : "bg-error-soft text-error"
             }`}
           >
@@ -247,13 +247,13 @@ export default function ExerciseCard({ exercise, index, onSolved }: Props) {
         )}
       </div>
 
-      {llmError && <p className="mt-3 text-[13px] text-warning">{t("aiUnavailable")}</p>}
+      {llmError && <p className="mt-3 text-sm text-warning">{t("aiUnavailable")}</p>}
       {showReveal && reveal.isError && (
-        <p className="mt-3 text-[13px] text-warning">{t("aiUnavailable")}</p>
+        <p className="mt-3 text-sm text-warning">{t("aiUnavailable")}</p>
       )}
       {showReveal && reveal.data && (
-        <div className="mt-3 rounded-lg border border-accent/30 bg-accent-soft/40 px-4 py-3 text-[13.5px]">
-          <p className="mb-1 text-[12px] font-medium uppercase tracking-wide text-accent">
+        <div className="mt-3 rounded-lg border border-accent/30 bg-accent-soft/40 px-4 py-3 text-sm">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-accent">
             {t("correctAnswer")}
           </p>
           <div
@@ -263,13 +263,13 @@ export default function ExerciseCard({ exercise, index, onSolved }: Props) {
         </div>
       )}
       {result?.feedback && (
-        <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-[13.5px]">
+        <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-sm">
           {result.feedback}
         </div>
       )}
       {answered && explanation && (
-        <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-[13.5px]">
-          <p className="mb-1 text-[12px] font-medium uppercase tracking-wide text-muted">
+        <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-sm">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">
             {t("explanation")}
           </p>
           <div

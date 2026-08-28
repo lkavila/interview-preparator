@@ -41,10 +41,10 @@ export default function FunFactCarousel({ facts, images = [], source }: FunFactC
   return (
     <section className="card p-5" aria-label={t("funFacts")}>
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-[12px] font-medium uppercase tracking-wider text-muted">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
           💡 {t("funFacts")}
         </h2>
-        <span className="rounded bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+        <span className="rounded bg-accent-soft px-2 py-0.5 text-2xs font-medium text-accent">
           {source === "llm" ? t("aiGenerated") : t("fallbackContent")}
         </span>
       </div>
@@ -61,7 +61,7 @@ export default function FunFactCarousel({ facts, images = [], source }: FunFactC
             >
               {slide.kind === "fact" ? (
                 <div className="flex min-h-28 items-center justify-center rounded-lg border border-border bg-surface2/60 px-6 py-5">
-                  <p className="max-w-lg text-center text-[14.5px] leading-relaxed">{slide.text}</p>
+                  <p className="max-w-lg text-center text-base leading-relaxed">{slide.text}</p>
                 </div>
               ) : (
                 <figure className="flex min-h-28 flex-col items-center rounded-lg border border-border bg-surface2/60 p-4">
@@ -71,7 +71,7 @@ export default function FunFactCarousel({ facts, images = [], source }: FunFactC
                     loading="lazy"
                     className="max-h-56 rounded-md bg-white object-contain p-1"
                   />
-                  <figcaption className="mt-2 text-center text-[11.5px] text-muted">
+                  <figcaption className="mt-2 text-center text-2xs text-muted">
                     {slide.image.title} — {slide.image.license}{" "}
                     {slide.image.source_url && (
                       <a
@@ -93,7 +93,7 @@ export default function FunFactCarousel({ facts, images = [], source }: FunFactC
 
       <div className="mt-3 flex items-center justify-between">
         <button
-          className="btn px-3 py-1 text-[12.5px]"
+          className="btn px-3 py-1 text-xs"
           onClick={() => emblaApi?.scrollPrev()}
           aria-label={t("previous")}
         >
@@ -113,7 +113,7 @@ export default function FunFactCarousel({ facts, images = [], source }: FunFactC
           ))}
         </div>
         <button
-          className="btn px-3 py-1 text-[12.5px]"
+          className="btn px-3 py-1 text-xs"
           onClick={() => emblaApi?.scrollNext()}
           aria-label={t("next")}
         >

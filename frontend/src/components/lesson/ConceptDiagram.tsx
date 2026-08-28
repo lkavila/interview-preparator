@@ -65,7 +65,7 @@ export default function ConceptDiagram({ config }: ConceptDiagramProps) {
 
   return (
     <section className="card p-5" aria-label={t("conceptDiagram")}>
-      <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-muted">
+      <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
         🗺️ {t("conceptDiagram")}
       </h2>
 
@@ -73,7 +73,7 @@ export default function ConceptDiagram({ config }: ConceptDiagramProps) {
         svg ? (
           <div
             ref={containerRef}
-            className="overflow-x-auto [&_svg]:mx-auto [&_svg]:max-w-full"
+            className="scroll-x [&_svg]:mx-auto [&_svg]:max-w-none sm:[&_svg]:max-w-full"
             role="img"
             aria-label={config.caption ? pick(config.caption, i18n.language) : t("conceptDiagram")}
             dangerouslySetInnerHTML={{ __html: svg }}
@@ -120,7 +120,7 @@ export default function ConceptDiagram({ config }: ConceptDiagramProps) {
       ) : null}
 
       {config.caption && (
-        <p className="mt-3 text-center text-[12.5px] text-muted">
+        <p className="mt-3 text-center text-xs text-muted">
           {pick(config.caption, i18n.language)}
         </p>
       )}

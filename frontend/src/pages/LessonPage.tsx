@@ -26,10 +26,10 @@ export default function LessonPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-5">
-        <Link to={`/courses/${lesson.course_slug}`} className="text-[13px] text-muted hover:text-text">
+        <Link to={`/courses/${lesson.course_slug}`} className="text-sm text-muted hover:text-text">
           ← {pick(lesson.course_title, lang)}
         </Link>
-        <p className="mt-3 text-[12px] font-medium uppercase tracking-wider text-accent">
+        <p className="mt-3 text-xs font-medium uppercase tracking-wider text-accent">
           {t("question")}
         </p>
         <h1 className="mt-1 text-xl font-semibold leading-snug">
@@ -37,25 +37,25 @@ export default function LessonPage() {
         </h1>
       </div>
 
-      <section className="card mb-4 p-5">
-        <h2 className="mb-2 text-[12px] font-medium uppercase tracking-wider text-muted">
+      <section className="card mb-4 p-4 sm:p-5">
+        <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">
           {t("definition")}
         </h2>
         <div
-          className="prose-content text-[14.5px]"
+          className="prose-content text-base"
           dangerouslySetInnerHTML={{
             __html: renderMarkdown(pick(lesson.content.definition, lang)),
           }}
         />
       </section>
 
-      <section className="card mb-4 p-5">
-        <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-muted">
+      <section className="card mb-4 p-4 sm:p-5">
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
           {t("examples")}
         </h2>
         <ul className="space-y-3">
           {lesson.content.examples.map((ex, i) => (
-            <li key={i} className="flex gap-3 text-[14px]">
+            <li key={i} className="flex gap-3 text-base">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
               <div
                 className="prose-content"
@@ -70,7 +70,7 @@ export default function LessonPage() {
         <LessonComponents lessonId={lesson.id} components={lesson.components} />
       </div>
 
-      <h2 className="mb-3 mt-6 text-[12px] font-medium uppercase tracking-wider text-muted">
+      <h2 className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-muted">
         {t("exercises")}
       </h2>
       <div className="space-y-4">
@@ -83,22 +83,22 @@ export default function LessonPage() {
         <AiTutor lessonId={lesson.id} />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div>
           {lesson.prev_lesson_id && (
-            <Link to={`/lessons/${lesson.prev_lesson_id}`} className="btn">
+            <Link to={`/lessons/${lesson.prev_lesson_id}`} className="btn w-full sm:w-auto">
               ← {t("prevLesson")}
             </Link>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {lesson.completed ? (
-            <span className="rounded-md bg-success-soft px-3 py-1.5 text-[13px] font-medium text-success">
+            <span className="rounded-md bg-success-soft px-3 py-1.5 text-sm font-medium text-success">
               {t("lessonCompleted")}
             </span>
           ) : (
             <button
-              className="btn btn-primary"
+              className="btn btn-primary w-full sm:w-auto"
               disabled={completing}
               onClick={() =>
                 completeLesson({ lessonId: lesson.id, courseSlug: lesson.course_slug })
@@ -108,7 +108,7 @@ export default function LessonPage() {
             </button>
           )}
           {lesson.next_lesson_id && (
-            <Link to={`/lessons/${lesson.next_lesson_id}`} className="btn">
+            <Link to={`/lessons/${lesson.next_lesson_id}`} className="btn w-full sm:w-auto">
               {t("nextLesson")} →
             </Link>
           )}

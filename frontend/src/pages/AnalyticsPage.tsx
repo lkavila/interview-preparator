@@ -11,10 +11,12 @@ import {
 } from "recharts";
 import ProgressBadgeSystem from "../components/lesson/ProgressBadgeSystem";
 import { formatDuration, pick } from "../lib/lang";
+import { useIsWide } from "../lib/useMediaQuery";
 import { useAnalyticsQuery } from "../store/api";
 
 export default function AnalyticsPage() {
   const { t, i18n } = useTranslation();
+  const isWide = useIsWide();
   const { data, isLoading, isError } = useAnalyticsQuery();
 
   if (isLoading) return <p className="text-muted">...</p>;
@@ -40,15 +42,15 @@ export default function AnalyticsPage() {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="card p-5">
-          <p className="text-[12.5px] text-muted">{t("overallAccuracy")}</p>
+          <p className="text-xs text-muted">{t("overallAccuracy")}</p>
           <p className="mt-1 text-2xl font-semibold">{data.overall_accuracy}%</p>
         </div>
         <div className="card p-5">
-          <p className="text-[12.5px] text-muted">{t("totalAttempts")}</p>
+          <p className="text-xs text-muted">{t("totalAttempts")}</p>
           <p className="mt-1 text-2xl font-semibold">{data.total_attempts}</p>
         </div>
         <div className="card p-5">
-          <p className="text-[12.5px] text-muted">{t("totalStudy")}</p>
+          <p className="text-xs text-muted">{t("totalStudy")}</p>
           <p className="mt-1 text-2xl font-semibold">{formatDuration(data.total_study_seconds)}</p>
         </div>
       </div>
@@ -57,11 +59,11 @@ export default function AnalyticsPage() {
         <ProgressBadgeSystem />
       </div>
 
-      {!hasData && <p className="card p-6 text-center text-[14px] text-muted">{t("noData")}</p>}
+      {!hasData && <p className="card p-6 text-center text-base text-muted">{t("noData")}</p>}
 
       {studyData.length > 0 && (
         <div className="card mb-6 p-5">
-          <h2 className="mb-4 text-[14px] font-semibold">{t("dailyStudy")}</h2>
+          <h2 className="mb-4 text-base font-semibold">{t("dailyStudy")}</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={studyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -85,7 +87,7 @@ export default function AnalyticsPage() {
 
       {courseData.length > 0 && (
         <div className="card mb-6 p-5">
-          <h2 className="mb-4 text-[14px] font-semibold">{t("byCourse")}</h2>
+          <h2 className="mb-4 text-base font-semibold">{t("byCourse")}</h2>
           <ResponsiveContainer width="100%" height={Math.max(200, courseData.length * 42)}>
             <BarChart data={courseData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -93,8 +95,8 @@ export default function AnalyticsPage() {
               <YAxis
                 type="category"
                 dataKey="name"
-                width={190}
-                tick={{ fontSize: 12, fill: "var(--text)" }}
+                width={isWide ? 190 : 96}
+                tick={{ fontSize: isWide ? 12 : 10, fill: "var(--text)" }}
               />
               <Tooltip
                 contentStyle={{
@@ -118,16 +120,16 @@ export default function AnalyticsPage() {
       {(data.weakest_lessons.length > 0 || data.strongest_lessons.length > 0) && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="card p-5">
-            <h2 className="mb-3 text-[14px] font-semibold text-error">{t("weakTopics")}</h2>
+            <h2 className="mb-3 text-base font-semibold text-error">{t("weakTopics")}</h2>
             <ul className="space-y-2">
               {data.weakest_lessons.map((l) => (
                 <li key={l.lesson_id}>
                   <Link
                     to={`/lessons/${l.lesson_id}`}
-                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-[13.5px] hover:bg-surface2"
+                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-surface2"
                   >
                     <span className="line-clamp-1">{pick(l.question, lang)}</span>
-                    <span className="shrink-0 rounded bg-error-soft px-2 py-0.5 text-[12px] font-medium text-error">
+                    <span className="shrink-0 rounded bg-error-soft px-2 py-0.5 text-xs font-medium text-error">
                       {l.accuracy}%
                     </span>
                   </Link>
@@ -136,16 +138,16 @@ export default function AnalyticsPage() {
             </ul>
           </div>
           <div className="card p-5">
-            <h2 className="mb-3 text-[14px] font-semibold text-success">{t("strongTopics")}</h2>
+            <h2 className="mb-3 text-base font-semibold text-success">{t("strongTopics")}</h2>
             <ul className="space-y-2">
               {data.strongest_lessons.map((l) => (
                 <li key={l.lesson_id}>
                   <Link
                     to={`/lessons/${l.lesson_id}`}
-                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-[13.5px] hover:bg-surface2"
+                    className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-surface2"
                   >
                     <span className="line-clamp-1">{pick(l.question, lang)}</span>
-                    <span className="shrink-0 rounded bg-success-soft px-2 py-0.5 text-[12px] font-medium text-success">
+                    <span className="shrink-0 rounded bg-success-soft px-2 py-0.5 text-xs font-medium text-success">
                       {l.accuracy}%
                     </span>
                   </Link>

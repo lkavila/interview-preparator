@@ -31,7 +31,7 @@ export default function AiTutor({ lessonId }: { lessonId?: number }) {
 
   return (
     <div className="card p-5">
-      <h3 className="mb-3 flex items-center gap-2 text-[14px] font-semibold">
+      <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
           <path d="M12 8V4H8" />
           <rect x="4" y="8" width="16" height="12" rx="2" />
@@ -43,7 +43,7 @@ export default function AiTutor({ lessonId }: { lessonId?: number }) {
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`rounded-lg px-3.5 py-2.5 text-[13.5px] ${
+            className={`rounded-lg px-3.5 py-2.5 text-sm ${
               m.role === "user" ? "bg-accent-soft" : "bg-surface2"
             }`}
           >
@@ -57,8 +57,8 @@ export default function AiTutor({ lessonId }: { lessonId?: number }) {
             )}
           </div>
         ))}
-        {isLoading && <p className="text-[13px] text-muted">{t("aiThinking")}</p>}
-        {error && <p className="text-[13px] text-warning">{t("aiUnavailable")}</p>}
+        {isLoading && <p className="text-sm text-muted">{t("aiThinking")}</p>}
+        {error && <p className="text-sm text-warning">{t("aiUnavailable")}</p>}
       </div>
       <div className="mt-3 flex gap-2">
         <input

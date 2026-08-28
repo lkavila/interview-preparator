@@ -26,7 +26,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
 
   return (
     <section className="card p-5" aria-label={t("visualGallery")}>
-      <h2 className="mb-3 text-[12px] font-medium uppercase tracking-wider text-muted">
+      <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">
         🖼️ {t("visualGallery")}
       </h2>
       <div className={`grid gap-3 ${images.length > 1 ? "sm:grid-cols-2" : ""}`}>
@@ -46,7 +46,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
                 className="mx-auto max-h-52 w-full object-contain p-2"
               />
             </motion.button>
-            <figcaption className="mt-1.5 truncate text-[11.5px] text-muted" title={img.title}>
+            <figcaption className="mt-1.5 truncate text-2xs text-muted" title={img.title}>
               {img.title} · {img.license}{" "}
               {img.source_url && (
                 <a
@@ -69,7 +69,7 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-label={open.title}
@@ -79,12 +79,12 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.95 }}
-              className="max-h-full max-w-4xl overflow-auto rounded-xl bg-surface p-4"
+              className="max-h-full max-w-[95vw] overflow-auto rounded-xl bg-surface p-4 sm:max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
               <img src={open.src} alt={open.title} className="mx-auto max-h-[75vh] rounded-md bg-white object-contain p-2" />
               <div className="mt-3 flex items-center justify-between gap-4">
-                <p className="text-[12.5px] text-muted">
+                <p className="text-xs text-muted">
                   {open.title} · {open.license}
                   {open.author && ` · ${open.author}`}
                 </p>

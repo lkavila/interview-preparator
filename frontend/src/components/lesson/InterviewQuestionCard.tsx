@@ -28,10 +28,10 @@ export default function InterviewQuestionCard({ questions, source }: InterviewQu
   return (
     <section className="card p-5" aria-label={t("realInterviewQuestions")}>
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-[12px] font-medium uppercase tracking-wider text-muted">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
           {t("realInterviewQuestions")}
         </h2>
-        <span className="rounded bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+        <span className="rounded bg-accent-soft px-2 py-0.5 text-2xs font-medium text-accent">
           {source === "llm" ? t("aiGenerated") : t("fallbackContent")}
         </span>
       </div>
@@ -40,12 +40,12 @@ export default function InterviewQuestionCard({ questions, source }: InterviewQu
           const expanded = open.has(i);
           return (
             <li key={i} className="rounded-lg border border-border bg-surface2/50 p-4">
-              <p className="text-[14px] font-medium">
+              <p className="text-base font-medium">
                 <span aria-hidden="true" className="mr-1.5">💬</span>
                 {q.question}
               </p>
               <button
-                className="mt-2 text-[13px] font-medium text-accent hover:underline"
+                className="mt-2 text-sm font-medium text-accent hover:underline"
                 onClick={() => toggle(i)}
                 aria-expanded={expanded}
               >
@@ -60,7 +60,7 @@ export default function InterviewQuestionCard({ questions, source }: InterviewQu
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <p className="mt-2 rounded-md border border-border bg-surface px-3 py-2.5 text-[13.5px] leading-relaxed text-muted">
+                    <p className="mt-2 rounded-md border border-border bg-surface px-3 py-2.5 text-sm leading-relaxed text-muted">
                       {q.suggested_answer}
                     </p>
                   </motion.div>

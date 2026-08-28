@@ -36,7 +36,7 @@ export default function TestPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
-        <Link to={`/courses/${slug}`} className="text-[13px] text-muted hover:text-text">
+        <Link to={`/courses/${slug}`} className="text-sm text-muted hover:text-text">
           ← {t("backToCourse")}
         </Link>
         <h1 className="mt-2 text-xl font-semibold">{t("finalTest")}</h1>
@@ -44,7 +44,7 @@ export default function TestPage() {
 
       {result && (
         <div className="card mb-6 p-6 text-center">
-          <p className="text-[13px] uppercase tracking-wider text-muted">{t("testResult")}</p>
+          <p className="text-sm uppercase tracking-wider text-muted">{t("testResult")}</p>
           <p
             className={`mt-2 text-4xl font-bold ${
               result.score >= 70 ? "text-success" : result.score >= 50 ? "text-warning" : "text-error"
@@ -52,7 +52,7 @@ export default function TestPage() {
           >
             {Math.round(result.score)}%
           </p>
-          <p className="mt-1 text-[14px] text-muted">
+          <p className="mt-1 text-base text-muted">
             {t("questionsCorrect", { correct: result.correct, total: result.total })}
           </p>
           <button className="btn mt-4" onClick={reset}>
@@ -69,12 +69,12 @@ export default function TestPage() {
           return (
             <div key={q.id} className="card p-5">
               <div className="mb-3 flex items-center gap-2">
-                <span className="rounded bg-surface2 px-2 py-0.5 font-mono text-[11px] text-muted">
+                <span className="rounded bg-surface2 px-2 py-0.5 font-mono text-2xs text-muted">
                   {qi + 1}/{questions.length}
                 </span>
                 {revealed && (
                   <span
-                    className={`rounded px-2 py-0.5 text-[11px] font-medium ${
+                    className={`rounded px-2 py-0.5 text-2xs font-medium ${
                       qResult.correct ? "bg-success-soft text-success" : "bg-error-soft text-error"
                     }`}
                   >
@@ -83,7 +83,7 @@ export default function TestPage() {
                 )}
               </div>
               <div
-                className="prose-content mb-4 text-[14px]"
+                className="prose-content mb-4 text-base"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(pick(q.data.prompt, lang)) }}
               />
               {q.type === "multiple_choice" ? (
@@ -107,7 +107,7 @@ export default function TestPage() {
                 />
               )}
               {qResult?.feedback && (
-                <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-[13.5px]">
+                <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-sm">
                   {qResult.feedback}
                 </div>
               )}
@@ -117,7 +117,7 @@ export default function TestPage() {
       </div>
 
       {!result && (
-        <div className="sticky bottom-4 mt-6 flex justify-center">
+        <div className="sticky bottom-[calc(var(--bottom-nav-h)+8px)] mt-6 flex justify-center sm:bottom-4">
           <button
             className="btn btn-primary shadow-lg"
             onClick={submit}

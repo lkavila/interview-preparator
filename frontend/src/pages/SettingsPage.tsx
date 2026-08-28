@@ -34,7 +34,7 @@ export default function SettingsPage() {
 
       <div className="card space-y-6 p-6">
         <div>
-          <label className="mb-1 block text-[13px] font-medium text-muted">{t("name")}</label>
+          <label className="mb-1 block text-sm font-medium text-muted">{t("name")}</label>
           <div className="flex gap-2">
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
             <button
@@ -48,7 +48,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <p className="mb-2 text-[13px] font-medium text-muted">{t("language")}</p>
+          <p className="mb-2 text-sm font-medium text-muted">{t("language")}</p>
           <div className="flex gap-2">
             {(["en", "es"] as const).map((lang) => (
               <button
@@ -63,7 +63,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <p className="mb-2 text-[13px] font-medium text-muted">{t("theme")}</p>
+          <p className="mb-2 text-sm font-medium text-muted">{t("theme")}</p>
           <div className="flex gap-2">
             {(["dark", "light"] as const).map((theme) => (
               <button
@@ -77,7 +77,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {saved && <p className="text-[13px] text-success">{t("saved")}</p>}
+        {saved && <p className="text-sm text-success">{t("saved")}</p>}
       </div>
     </div>
   );

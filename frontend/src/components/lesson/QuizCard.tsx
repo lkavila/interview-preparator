@@ -60,14 +60,14 @@ export default function QuizCard({ quiz, source }: QuizCardProps) {
     <section className="card p-5" aria-label={t("quickQuiz")}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-[12px] font-medium uppercase tracking-wider text-muted">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
             {t("quickQuiz")}
           </h2>
-          <span className="rounded bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+          <span className="rounded bg-accent-soft px-2 py-0.5 text-2xs font-medium text-accent">
             {source === "llm" ? t("aiGenerated") : t("fallbackContent")}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[13px]">
+        <div className="flex items-center gap-3 text-sm">
           <span className="text-muted">
             {t("score")}: <strong className="text-text">{score}/{quiz.length}</strong>
           </span>
@@ -96,7 +96,7 @@ export default function QuizCard({ quiz, source }: QuizCardProps) {
           >
             {t("quizDone")}: {score}/{quiz.length}
           </motion.p>
-          <p className="mt-1 text-[13px] text-muted">
+          <p className="mt-1 text-sm text-muted">
             🔥 {t("streak")} máx: {bestStreak}
           </p>
           <button className="btn mt-4" onClick={restart}>
@@ -112,10 +112,10 @@ export default function QuizCard({ quiz, source }: QuizCardProps) {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
           >
-            <p className="mb-1 text-[12px] text-muted">
+            <p className="mb-1 text-xs text-muted">
               {index + 1} / {quiz.length}
             </p>
-            <p className="mb-3 text-[14.5px] font-medium">{item.question}</p>
+            <p className="mb-3 text-base font-medium">{item.question}</p>
             <div role="group" aria-label={item.question} className="space-y-2">
               {item.options.map((opt, i) => {
                 const isCorrect = answered && i === item.correct_index;
@@ -127,7 +127,7 @@ export default function QuizCard({ quiz, source }: QuizCardProps) {
                     onClick={() => choose(i)}
                     disabled={answered}
                     aria-pressed={picked === i}
-                    className={`block w-full rounded-lg border px-4 py-2.5 text-left text-[14px] transition-colors ${
+                    className={`block w-full rounded-lg border px-4 py-2.5 text-left text-base transition-colors ${
                       isCorrect
                         ? "border-success bg-success-soft text-success"
                         : isWrongPick
@@ -147,7 +147,7 @@ export default function QuizCard({ quiz, source }: QuizCardProps) {
                 className="mt-3 flex items-center justify-between"
               >
                 <span
-                  className={`text-[13px] font-medium ${
+                  className={`text-sm font-medium ${
                     picked === item.correct_index ? "text-success" : "text-error"
                   }`}
                   aria-live="polite"

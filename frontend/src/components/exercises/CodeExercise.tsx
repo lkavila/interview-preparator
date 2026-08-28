@@ -21,7 +21,8 @@ export default function CodeExercise({ language, value, onChange, disabled }: Pr
     <div className="overflow-hidden rounded-lg border border-border">
       <CodeMirror
         value={value}
-        height="200px"
+        minHeight="140px"
+        maxHeight="55vh"
         theme={theme === "dark" ? "dark" : "light"}
         extensions={[extension]}
         onChange={onChange}

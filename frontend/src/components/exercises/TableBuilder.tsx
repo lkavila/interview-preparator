@@ -38,14 +38,17 @@ export default function TableBuilder({ columns, onChange, typeOptions, disabled 
 
   return (
     <div className="space-y-2">
-      <div className="overflow-hidden rounded-lg border border-border">
-        <div className="grid grid-cols-[1fr_1fr_36px] gap-0 border-b border-border bg-surface2 px-3 py-1.5 text-[12px] font-medium text-muted">
+      {/* The three columns need a real minimum width to stay usable; below that
+          the row scrolls sideways rather than squeezing the inputs to nothing. */}
+      <div className="scroll-x rounded-lg border border-border">
+        <div className="min-w-[380px]">
+        <div className="grid grid-cols-[1fr_1fr_36px] gap-0 border-b border-border bg-surface2 px-3 py-1.5 text-xs font-medium text-muted">
           <span>{t("columnName")}</span>
           <span>{t("columnType")}</span>
           <span />
         </div>
         {columns.length === 0 && (
-          <p className="px-3 py-3 text-center text-[13px] text-muted">—</p>
+          <p className="px-3 py-3 text-center text-sm text-muted">—</p>
         )}
         {columns.map((col, i) => (
           <div
@@ -53,14 +56,14 @@ export default function TableBuilder({ columns, onChange, typeOptions, disabled 
             className="grid grid-cols-[1fr_1fr_36px] items-center gap-2 border-b border-border px-3 py-1.5 last:border-b-0"
           >
             <input
-              className="input !py-1 font-mono text-[13px]"
+              className="input !py-1 font-mono text-sm"
               value={col.name}
               placeholder="column_name"
               onChange={(e) => update(i, { name: e.target.value })}
               disabled={disabled}
             />
             <select
-              className="input !py-1 font-mono text-[13px]"
+              className="input !py-1 font-mono text-sm"
               value={col.type}
               onChange={(e) => update(i, { type: e.target.value })}
               disabled={disabled}
@@ -86,11 +89,12 @@ export default function TableBuilder({ columns, onChange, typeOptions, disabled 
             </button>
           </div>
         ))}
+        </div>
       </div>
       {!disabled && (
         <button
           type="button"
-          className="btn !py-1 text-[12.5px]"
+          className="btn !py-1 text-xs"
           onClick={() => onChange([...columns, { name: "", type: "" }])}
         >
           + {t("addColumn")}

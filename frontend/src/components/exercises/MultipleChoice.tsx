@@ -32,7 +32,7 @@ export default function MultipleChoice({
 
   return (
     <div className="space-y-2">
-      <p className="text-[12.5px] text-muted">{multiple ? t("selectAll") : t("selectAnswer")}</p>
+      <p className="text-xs text-muted">{multiple ? t("selectAll") : t("selectAnswer")}</p>
       {options.map((opt, i) => {
         const isSelected = selected.includes(i);
         const revealed = correctIndexes != null;
@@ -44,7 +44,7 @@ export default function MultipleChoice({
             type="button"
             onClick={() => toggle(i)}
             disabled={disabled}
-            className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-2.5 text-left text-[14px] transition-colors ${
+            className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-2.5 text-left text-base transition-colors ${
               isCorrect
                 ? "border-success bg-success-soft"
                 : isWrongPick
@@ -55,7 +55,7 @@ export default function MultipleChoice({
             } ${disabled ? "cursor-default" : "cursor-pointer"}`}
           >
             <span
-              className={`mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold ${
+              className={`mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border text-2xs font-semibold ${
                 isSelected ? "border-accent text-accent" : "border-border text-muted"
               }`}
               style={{ width: 18, height: 18 }}

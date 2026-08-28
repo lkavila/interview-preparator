@@ -17,10 +17,10 @@ export default function ProgressBadgeSystem() {
   return (
     <section className="card p-5" aria-label={t("badges")}>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[12px] font-medium uppercase tracking-wider text-muted">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted">
           🏅 {t("badges")}
         </h2>
-        <span className="text-[13px] text-muted">
+        <span className="text-sm text-muted">
           {earnedCount}/{badges.length}
         </span>
       </div>
@@ -43,10 +43,10 @@ export default function ProgressBadgeSystem() {
             <span className={`text-2xl ${badge.earned ? "" : "grayscale"}`} aria-hidden="true">
               {badge.icon}
             </span>
-            <p className="mt-1 text-[12.5px] font-semibold leading-tight">
+            <p className="mt-1 text-xs font-semibold leading-tight">
               {pick(badge.name, i18n.language)}
             </p>
-            <p className="mt-0.5 text-[11px] leading-snug text-muted">
+            <p className="mt-0.5 text-2xs leading-snug text-muted">
               {pick(badge.description, i18n.language)}
             </p>
           </motion.li>

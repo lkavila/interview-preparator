@@ -31,11 +31,11 @@ export default function LoginPage() {
       <div className="card w-full max-w-sm p-8">
         <div className="mb-6 text-center">
           <h1 className="text-lg font-semibold">{t("appName")}</h1>
-          <p className="mt-1 text-[13px] text-muted">{t("tagline")}</p>
+          <p className="mt-1 text-sm text-muted">{t("tagline")}</p>
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-[13px] font-medium text-muted">{t("email")}</label>
+            <label className="mb-1 block text-sm font-medium text-muted">{t("email")}</label>
             <input
               className="input"
               type="email"
@@ -46,7 +46,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-[13px] font-medium text-muted">{t("password")}</label>
+            <label className="mb-1 block text-sm font-medium text-muted">{t("password")}</label>
             <input
               className="input"
               type="password"
@@ -55,12 +55,12 @@ export default function LoginPage() {
               required
             />
           </div>
-          {error && <p className="text-[13px] text-error">{error}</p>}
+          {error && <p className="text-sm text-error">{error}</p>}
           <button className="btn btn-primary w-full justify-center" disabled={isLoading}>
             {t("login")}
           </button>
         </form>
-        <p className="mt-5 text-center text-[13px] text-muted">
+        <p className="mt-5 text-center text-sm text-muted">
           {t("noAccount")}{" "}
           <Link to="/register" className="text-accent hover:underline">
             {t("register")}
@@ -68,14 +68,14 @@ export default function LoginPage() {
         </p>
         <div className="mt-4 flex justify-center gap-2">
           <button
-            className={`text-[12px] ${i18n.language === "en" ? "text-accent" : "text-muted"}`}
+            className={`text-xs ${i18n.language === "en" ? "text-accent" : "text-muted"}`}
             onClick={() => i18n.changeLanguage("en")}
           >
             English
           </button>
           <span className="text-muted">·</span>
           <button
-            className={`text-[12px] ${i18n.language === "es" ? "text-accent" : "text-muted"}`}
+            className={`text-xs ${i18n.language === "es" ? "text-accent" : "text-muted"}`}
             onClick={() => i18n.changeLanguage("es")}
           >
             Español

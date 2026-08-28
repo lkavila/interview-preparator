@@ -44,22 +44,49 @@ export default function Layout({ children }: { children: ReactNode }) {
   };
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `rounded-md px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
+    `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
       isActive ? "bg-accent-soft text-accent" : "text-muted hover:text-text"
     }`;
+
+  // Bottom tab bar (mobile only). Same three destinations as the header nav.
+  const tabClass = ({ isActive }: { isActive: boolean }) =>
+    `flex flex-1 flex-col items-center justify-center gap-0.5 text-2xs font-medium transition-colors ${
+      isActive ? "text-accent" : "text-muted"
+    }`;
+
+  const TABS = [
+    {
+      to: "/",
+      end: true,
+      label: t("courses"),
+      path: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+    },
+    {
+      to: "/analytics",
+      end: false,
+      label: t("analytics"),
+      path: "M3 3v18h18M7 15v3M12 9v9M17 12v6",
+    },
+    {
+      to: "/settings",
+      end: false,
+      label: t("settings"),
+      path: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
+    },
+  ];
 
   return (
     <div className="min-h-full">
       <header className="sticky top-0 z-20 border-b border-border bg-surface/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-2.5">
-          <Link to="/" className="flex items-center gap-2 text-[15px] font-semibold text-text">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 sm:gap-4 sm:py-2.5">
+          <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-text">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-accent">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
             <span className="hidden sm:inline">{t("appName")}</span>
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="hidden items-center gap-1 sm:flex">
             <NavLink to="/" end className={navClass}>
               {t("courses")}
             </NavLink>
@@ -70,7 +97,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               {t("settings")}
             </NavLink>
           </nav>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <StudyTimer />
             <button
               onClick={toggleLanguage}
@@ -107,7 +134,29 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <main className="app-main mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <nav
+        className="bottom-nav fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 backdrop-blur sm:hidden"
+        style={{ height: "calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px))" }}
+      >
+        {TABS.map((tab) => (
+          // NavLink already sets aria-current="page" on the anchor when active.
+          <NavLink key={tab.to} to={tab.to} end={tab.end} className={tabClass}>
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden
+            >
+              <path d={tab.path} />
+            </svg>
+            <span>{tab.label}</span>
+          </NavLink>
+        ))}
+      </nav>
       <BadgeToaster />
     </div>
   );

@@ -19,6 +19,11 @@ const ICONS: Record<string, string> = {
   globe: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z",
   eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+  atom: "M12 12a1 1 0 1 0 0-.01M12 2c3.5 5.5 3.5 14.5 0 20M12 2c-3.5 5.5-3.5 14.5 0 20M2.5 8c5.5-3.5 13.5-3.5 19 0M2.5 16c5.5 3.5 13.5 3.5 19 0",
+  hexagon: "M12 2 3 7v10l9 5 9-5V7l-9-5zM12 8.5 8 11v3l4 2.5 4-2.5v-3l-4-2.5z",
+  braces:
+    "M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1",
+  users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
 };
 
 export default function DashboardPage() {
@@ -32,7 +37,7 @@ export default function DashboardPage() {
         <h1 className="text-xl font-semibold">
           {t("welcomeBack")}, {user?.name}
         </h1>
-        <p className="text-[13.5px] text-muted">{t("keepGoing")}</p>
+        <p className="text-sm text-muted">{t("keepGoing")}</p>
       </div>
 
       {isLoading && <p className="text-muted">...</p>}
@@ -56,15 +61,15 @@ export default function DashboardPage() {
                     <path d={ICONS[course.icon] ?? ICONS.book} />
                   </svg>
                 </span>
-                <h2 className="text-[14.5px] font-semibold leading-tight">
+                <h2 className="text-base font-semibold leading-tight">
                   {pick(course.title, i18n.language)}
                 </h2>
               </div>
-              <p className="mb-4 line-clamp-2 text-[13px] text-muted">
+              <p className="mb-4 line-clamp-2 text-sm text-muted">
                 {pick(course.description, i18n.language)}
               </p>
               <div className="mt-auto">
-                <div className="mb-1.5 flex items-center justify-between text-[12px] text-muted">
+                <div className="mb-1.5 flex items-center justify-between text-xs text-muted">
                   <span>
                     {course.completed_lessons}/{course.lesson_count} {t("lessons")}
                   </span>

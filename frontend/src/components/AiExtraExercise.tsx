@@ -32,7 +32,7 @@ export default function AiExtraExercise({ courseSlug }: { courseSlug: string }) 
   return (
     <div className="card mt-6 p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-[14px] font-semibold">
+        <h2 className="flex items-center gap-2 text-base font-semibold">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
             <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1" />
           </svg>
@@ -42,10 +42,10 @@ export default function AiExtraExercise({ courseSlug }: { courseSlug: string }) 
           {isLoading ? t("generating") : t("generateExercise")}
         </button>
       </div>
-      {error && <p className="mt-3 text-[13px] text-warning">{t("aiUnavailable")}</p>}
+      {error && <p className="mt-3 text-sm text-warning">{t("aiUnavailable")}</p>}
       {exercise && (
         <div className="mt-4">
-          <p className="mb-3 text-[14px]">{pick(exercise.prompt, i18n.language)}</p>
+          <p className="mb-3 text-base">{pick(exercise.prompt, i18n.language)}</p>
           <MultipleChoice
             options={exercise.options}
             selected={selected}
@@ -66,7 +66,7 @@ export default function AiExtraExercise({ courseSlug }: { courseSlug: string }) 
             </button>
             {checked && (
               <span
-                className={`rounded-md px-3 py-1.5 text-[13px] font-medium ${
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                   correct ? "bg-success-soft text-success" : "bg-error-soft text-error"
                 }`}
               >
@@ -75,7 +75,7 @@ export default function AiExtraExercise({ courseSlug }: { courseSlug: string }) 
             )}
           </div>
           {checked && exercise.explanation && (
-            <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-[13.5px]">
+            <div className="mt-3 rounded-lg border border-border bg-surface2 px-4 py-3 text-sm">
               {pick(exercise.explanation, i18n.language)}
             </div>
           )}

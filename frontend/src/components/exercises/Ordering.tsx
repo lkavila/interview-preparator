@@ -1,7 +1,8 @@
 import {
   DndContext,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useSensor,
   useSensors,
@@ -56,18 +57,18 @@ function SortableBox({
         style={{ transform: CSS.Transform.toString(transform), transition }}
         {...attributes}
         {...listeners}
-        className={`flex items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-2.5 text-[13.5px] ${
+        className={`flex items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-3 text-sm sm:py-2.5 ${
           disabled ? "" : "cursor-grab active:cursor-grabbing"
         } ${isDragging ? "z-10 border-accent shadow-lg" : ""}`}
       >
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-surface2 font-mono text-[11px] text-muted">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-surface2 font-mono text-2xs text-muted">
           {index + 1}
         </span>
         <span>{label}</span>
         {!disabled && (
           <svg
-            width="13"
-            height="13"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -95,8 +96,13 @@ function SortableBox({
  * flow (boxes connected by arrows) to build e.g. Client -> Gateway -> Service -> DB. */
 export default function Ordering({ items, order, onChange, disabled, layout }: Props) {
   const { t, i18n } = useTranslation();
+  // MouseSensor + TouchSensor rather than PointerSensor: PointerSensor handles
+  // touch too, so keeping it would double-activate. The touch delay is what
+  // lets a finger scroll the page over the list — a move of more than 6px
+  // within 220ms is a scroll, a press-and-hold is a drag.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -114,7 +120,7 @@ export default function Ordering({ items, order, onChange, disabled, layout }: P
 
   return (
     <div>
-      <p className="mb-2 text-[12.5px] text-muted">{t("orderInstruction")}</p>
+      <p className="mb-2 text-xs text-muted">{t("orderInstruction")}</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className={isFlow ? "flex flex-col" : "flex flex-col gap-2"}>

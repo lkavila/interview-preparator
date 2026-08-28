@@ -30,7 +30,7 @@ export default function BadgeToaster() {
 
   return (
     <div
-      className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2"
+      className="pointer-events-none fixed bottom-[calc(var(--bottom-nav-h)+20px)] right-4 z-50 sm:bottom-5 sm:right-5 flex flex-col gap-2"
       aria-live="polite"
     >
       <AnimatePresence>
@@ -53,10 +53,10 @@ export default function BadgeToaster() {
                 {badge?.icon ?? "🏅"}
               </motion.span>
               <div>
-                <p className="text-[12px] font-medium uppercase tracking-wide text-accent">
+                <p className="text-xs font-medium uppercase tracking-wide text-accent">
                   {t("badgeEarned")}
                 </p>
-                <p className="text-[13.5px] font-semibold">
+                <p className="text-sm font-semibold">
                   {badge ? pick(badge.name, i18n.language) : toast.key}
                 </p>
               </div>

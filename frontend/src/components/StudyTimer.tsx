@@ -81,7 +81,7 @@ export default function StudyTimer() {
 
   return (
     <div
-      className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-[13px] text-muted"
+      className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-muted"
       title={t("studyTime")}
     >
       <span

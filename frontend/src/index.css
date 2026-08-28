@@ -37,6 +37,15 @@
 }
 
 @theme inline {
+  /* Fluid type scale: one set of tokens that shrinks on a phone and settles at
+     the original desktop sizes from ~400px up. Components use text-2xs..text-lg
+     instead of hardcoded pixel values. */
+  --text-2xs: clamp(10.5px, 2.9vw, 11px);
+  --text-xs: clamp(11.5px, 3.2vw, 12.5px);
+  --text-sm: clamp(12.5px, 3.5vw, 13.5px);
+  --text-base: clamp(13.5px, 3.8vw, 14.5px);
+  --text-lg: clamp(15px, 4.2vw, 16px);
+
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface2: var(--surface-2);
@@ -54,6 +63,15 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
+:root {
+  --bottom-nav-h: 56px;
+}
+
+html {
+  /* Stop iOS from inflating text when the device is rotated. */
+  -webkit-text-size-adjust: 100%;
+}
+
 html,
 body,
 #root {
@@ -64,9 +82,10 @@ body {
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: clamp(14px, 3.7vw, 15px);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -89,8 +108,10 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 8px 14px;
+  min-height: 38px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -178,4 +199,59 @@ body {
 }
 .prose-content strong {
   font-weight: 600;
+}
+.prose-content pre {
+  max-width: 100%;
+}
+.prose-content table {
+  display: block;
+  overflow-x: auto;
+}
+
+/* Wide content (tables, query plans, diagrams) scrolls inside its own box
+   instead of widening the page. */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cm-editor {
+  font-size: 13px;
+}
+
+/* Fixed bottom navigation, mobile only. --bottom-nav-h + the iOS home
+   indicator is reserved by .app-main so nothing hides behind it. */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.app-main {
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+@media (max-width: 639.98px) {
+  /* 44px is the minimum comfortable tap target; 16px inputs stop iOS from
+     zooming the viewport on focus. */
+  .btn {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+  .input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  textarea.input {
+    min-height: 96px;
+  }
+  .card {
+    border-radius: 12px;
+  }
+  .cm-editor {
+    font-size: 12.5px;
+  }
+}
+
+@media (min-width: 640px) {
+  .app-main {
+    padding-bottom: 24px;
+  }
 }
