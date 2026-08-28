@@ -4,12 +4,23 @@ correct answer is not biased toward index 0. Remaps solution.correct accordingly
 Skips exercises whose explanation references option positions (e.g. "option A",
 "the first option"), since reordering would break the text.
 
-Run from backend/:  python scripts/shuffle_mcq.py
+Shuffling is deterministic per exercise, so re-running reshuffles rather than
+being idempotent. Pass course-file name fragments to limit it to those files —
+use this when adding a course, so the untouched ones are not churned:
+
+    python scripts/shuffle_mcq.py                       # every course
+    python scripts/shuffle_mcq.py 16-database 17-behav  # only those files
+    python scripts/shuffle_mcq.py 05-post --lesson=window   # only those lessons
+
+--lesson= narrows to lessons whose slug contains the fragment, and skips the
+course test block, so newly added lessons can be shuffled without touching the
+rest of an existing course.
 """
 
 import json
 import random
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -52,11 +63,22 @@ def main() -> None:
     changed_total = 0
     skipped = 0
 
-    for path in sorted(SEEDS_DIR.glob("*.json")):
+    args = sys.argv[1:]
+    lessons_only = [a.split("=", 1)[1] for a in args if a.startswith("--lesson=")]
+    only = [a for a in args if not a.startswith("--")]
+
+    paths = [p for p in sorted(SEEDS_DIR.glob("*.json"))
+             if not only or any(frag in p.name for frag in only)]
+    if only and not paths:
+        raise SystemExit(f"no course files matched {only}")
+
+    for path in paths:
         course = json.loads(path.read_text(encoding="utf-8"))
         changed = 0
 
         for lesson in course.get("lessons", []):
+            if lessons_only and not any(f in lesson["slug"] for f in lessons_only):
+                continue
             for k, ex in enumerate(lesson.get("exercises", [])):
                 if ex.get("type") != "multiple_choice":
                     continue
@@ -69,7 +91,8 @@ def main() -> None:
                 for c in ex["solution"].get("correct", []):
                     after[c] += 1
 
-        for k, q in enumerate(course.get("test", [])):
+        # --lesson= narrows to specific lessons, so leave the test block alone.
+        for k, q in enumerate([] if lessons_only else course.get("test", [])):
             if q.get("type") != "multiple_choice":
                 continue
             for c in q["solution"].get("correct", []):
