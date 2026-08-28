@@ -891,6 +891,655 @@
       ]
     },
     {
+      "slug": "choosing-where-state-lives",
+      "question": {
+        "en": "Where should a piece of state live: local, lifted, context, an external store, the URL, or a server cache?",
+        "es": "¿Dónde debe vivir un pedazo de estado: local, elevado, en context, en un store externo, en la URL o en una caché de servidor?"
+      },
+      "definition": {
+        "en": "Most React architecture arguments are really one unasked question: *what kind of state is this?* There are six homes, and picking the wrong one is what produces prop drilling, stale data and unexplained re-renders.\n\n**1. Server-cache state** — anything whose source of truth is a server: lists, entities, search results. This is **not** client state. It can go stale without you touching it, several components want the same copy, and it needs loading, error, retry and invalidation semantics. Use React Query, RTK Query or SWR. Copying it into `useState` or Redux means writing caching by hand, and getting it wrong.\n\n**2. URL state** — anything that should survive a reload, be shareable by link, or work with the back button: the current tab, filters, pagination, a selected id. Put it in search params or the route. `useSearchParams` in React Router; `useState` here is a bug you find when someone pastes a link.\n\n**3. Refs (`useRef`)** — values the render output does not depend on: timer ids, the previous value of something, a DOM node, a \"has this already fired\" flag. Writing a ref does **not** re-render, which is exactly the point. Putting a timer id in `useState` re-renders on every tick for nothing.\n\n**4. Local state (`useState` / `useReducer`)** — used by one component and its own JSX. An input's draft value, whether a menu is open. **Always start here.** Local is the cheapest to reason about and the easiest to delete.\n\n**5. Lifted state** — the moment a second component needs it, move it to the nearest common parent and pass it down. Two levels of props is not prop drilling; it is just props. Reach for the next tier only when it gets genuinely deep.\n\n**6. Shared global state** — needed by a distant subtree. Split by how often it changes:\n- **Context** for values that change *rarely*: theme, locale, the current user, an auth token. Context has no selector mechanism, so **every consumer re-renders whenever the provider's value changes**, whether or not it uses the part that changed.\n- **An external store with selectors** (Redux, Zustand, Jotai) for values that change *often* and are read by many components. `useSelector` lets each component subscribe to a slice, so an unrelated change does not re-render it.\n\nThe decision ladder, in order: *is it server data? → does it belong in the URL? → does the UI even need to re-render for it? → who reads it: one component, a parent and children, or a distant subtree? → and if distant, does it change rarely or often?*\n\nMost \"we need Redux\" conversations end when you notice that 80% of the state in question was server-cache state, and the rest was a missing `children` prop.",
+        "es": "La mayoría de las discusiones de arquitectura en React son en realidad una pregunta que nadie hizo: *¿qué tipo de estado es este?* Hay seis lugares donde puede vivir, y elegir el equivocado es lo que produce prop drilling, datos viejos y re-renders inexplicables.\n\n**1. Estado de caché de servidor** — todo lo cuya fuente de verdad es un servidor: listas, entidades, resultados de búsqueda. Esto **no** es estado de cliente. Puede quedar viejo sin que lo toques, varios componentes quieren la misma copia, y necesita semántica de carga, error, reintento e invalidación. Usa React Query, RTK Query o SWR. Copiarlo a `useState` o a Redux significa escribir un caché a mano, y hacerlo mal.\n\n**2. Estado en la URL** — todo lo que debe sobrevivir a un reload, poder compartirse por link o funcionar con el botón atrás: la pestaña actual, los filtros, la paginación, un id seleccionado. Ponlo en los search params o en la ruta. `useSearchParams` en React Router; `useState` acá es un bug que descubres cuando alguien pega un link.\n\n**3. Refs (`useRef`)** — valores de los que la salida del render no depende: ids de timers, el valor anterior de algo, un nodo del DOM, una bandera de \"esto ya se disparó\". Escribir un ref **no** re-renderiza, que es precisamente el punto. Poner el id de un timer en `useState` re-renderiza en cada tick para nada.\n\n**4. Estado local (`useState` / `useReducer`)** — usado por un componente y su propio JSX. El borrador de un input, si un menú está abierto. **Empieza siempre acá.** Lo local es lo más barato de razonar y lo más fácil de borrar.\n\n**5. Estado elevado** — en el momento en que un segundo componente lo necesita, muévelo al padre común más cercano y pásalo hacia abajo. Dos niveles de props no es prop drilling; son props y ya. Sube al siguiente escalón solo cuando se vuelva genuinamente profundo.\n\n**6. Estado global compartido** — lo necesita un subárbol lejano. Se divide según con qué frecuencia cambia:\n- **Context** para valores que cambian *poco*: tema, idioma, el usuario actual, un token de auth. Context no tiene mecanismo de selectores, así que **todo consumidor se re-renderiza cada vez que cambia el value del provider**, use o no la parte que cambió.\n- **Un store externo con selectores** (Redux, Zustand, Jotai) para valores que cambian *seguido* y que leen muchos componentes. `useSelector` deja que cada componente se suscriba a una porción, así que un cambio no relacionado no lo re-renderiza.\n\nLa escalera de decisión, en orden: *¿es data del servidor? → ¿va en la URL? → ¿la UI necesita siquiera re-renderizarse por esto? → ¿quién lo lee: un componente, un padre con hijos, o un subárbol lejano? → y si es lejano, ¿cambia poco o mucho?*\n\nLa mayoría de las conversaciones de \"necesitamos Redux\" terminan cuando notas que el 80% del estado en cuestión era estado de caché de servidor, y el resto era una prop `children` que faltaba."
+      },
+      "examples": [
+        {
+          "en": "A dashboard keeps its active filter in `useState`. Support asks users to send the link of what they are seeing, and every link opens the default view. Moving the filter to `useSearchParams` fixes sharing, the back button and reload persistence at once — and deletes the `useEffect` that was syncing it to localStorage.",
+          "es": "Un dashboard guarda su filtro activo en `useState`. Soporte pide a los usuarios que manden el link de lo que están viendo, y todos los links abren la vista por defecto. Mover el filtro a `useSearchParams` arregla de una vez el compartir, el botón atrás y la persistencia al recargar — y borra el `useEffect` que lo estaba sincronizando a localStorage."
+        },
+        {
+          "en": "A team puts `{ user, theme, notifications, cart }` in a single context. Every cart update re-renders the entire app, because context has no selectors and the provider's object is a new reference each time. Splitting into two providers — rarely-changing `user`+`theme`, and a selector store for `cart`+`notifications` — removes the jank without adding a library to the first half.",
+          "es": "Un equipo pone `{ user, theme, notifications, cart }` en un solo context. Cada actualización del carrito re-renderiza toda la app, porque context no tiene selectores y el objeto del provider es una referencia nueva cada vez. Separarlo en dos providers — `user`+`theme` que cambian poco, y un store con selectores para `cart`+`notifications` — quita el tirón sin agregar una librería a la primera mitad."
+        },
+        {
+          "en": "An orders list is fetched into Redux with a hand-written `loading`/`error`/`data` slice, plus a `useEffect` to refetch after every mutation. Replacing it with RTK Query deletes about 200 lines: caching, deduplication of concurrent requests, invalidation by tag and refetch-on-focus all come for free, because the data was never client state to begin with.",
+          "es": "Una lista de órdenes se trae a Redux con un slice de `loading`/`error`/`data` escrito a mano, más un `useEffect` para refrescar después de cada mutación. Reemplazarlo con RTK Query borra unas 200 líneas: el cacheo, la deduplicación de peticiones concurrentes, la invalidación por tag y el refetch al enfocar vienen gratis, porque esa data nunca fue estado de cliente."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each piece of state with where it should actually live.",
+              "es": "Conecta cada pedazo de estado con el lugar donde realmente debería vivir."
+            },
+            "left": [
+              {
+                "id": "orders",
+                "label": {
+                  "en": "The list of orders fetched from GET /api/orders",
+                  "es": "La lista de órdenes traída de GET /api/orders"
+                }
+              },
+              {
+                "id": "filter",
+                "label": {
+                  "en": "The currently selected filter tab, which users paste to each other as links",
+                  "es": "La pestaña de filtro seleccionada, que los usuarios se pasan como links"
+                }
+              },
+              {
+                "id": "draft",
+                "label": {
+                  "en": "The half-typed text in a comment box, used only by that box",
+                  "es": "El texto a medio escribir en una caja de comentarios, usado solo por esa caja"
+                }
+              },
+              {
+                "id": "theme",
+                "label": {
+                  "en": "The colour theme, read by dozens of components, changed twice a session",
+                  "es": "El tema de color, leído por decenas de componentes, cambiado dos veces por sesión"
+                }
+              },
+              {
+                "id": "interval",
+                "label": {
+                  "en": "The id returned by setInterval, so cleanup can clear it",
+                  "es": "El id que devuelve setInterval, para que la limpieza pueda cancelarlo"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "servercache",
+                "label": {
+                  "en": "Server-cache state — React Query / RTK Query",
+                  "es": "Estado de caché de servidor — React Query / RTK Query"
+                }
+              },
+              {
+                "id": "url",
+                "label": {
+                  "en": "URL state — search params, so it survives reload and the back button",
+                  "es": "Estado en la URL — search params, para que sobreviva al reload y al botón atrás"
+                }
+              },
+              {
+                "id": "local",
+                "label": {
+                  "en": "Local useState in that component",
+                  "es": "useState local en ese componente"
+                }
+              },
+              {
+                "id": "context",
+                "label": {
+                  "en": "Context — read widely, changes rarely",
+                  "es": "Context — se lee en todos lados, cambia poco"
+                }
+              },
+              {
+                "id": "ref",
+                "label": {
+                  "en": "useRef — the render output does not depend on it, so writing it must not re-render",
+                  "es": "useRef — la salida del render no depende de él, así que escribirlo no debe re-renderizar"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "orders": "servercache",
+              "filter": "url",
+              "draft": "local",
+              "theme": "context",
+              "interval": "ref"
+            }
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the decision ladder you walk before choosing where a new piece of state goes. Each question you answer 'no' to sends you to the next.",
+              "es": "Ordena la escalera de decisión que recorres antes de elegir dónde va un estado nuevo. Cada pregunta que respondes 'no' te manda a la siguiente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "server",
+                "label": {
+                  "en": "Does a server own the truth? → server-cache library, not client state",
+                  "es": "¿El servidor es dueño de la verdad? → librería de caché de servidor, no estado de cliente"
+                }
+              },
+              {
+                "id": "url",
+                "label": {
+                  "en": "Should it survive reload or be shareable by link? → the URL",
+                  "es": "¿Debe sobrevivir al reload o poder compartirse por link? → la URL"
+                }
+              },
+              {
+                "id": "render",
+                "label": {
+                  "en": "Does the UI need to re-render when it changes? If not → useRef",
+                  "es": "¿La UI necesita re-renderizarse cuando cambia? Si no → useRef"
+                }
+              },
+              {
+                "id": "local",
+                "label": {
+                  "en": "Is it used by exactly one component? → useState (or useReducer) right there",
+                  "es": "¿Lo usa exactamente un componente? → useState (o useReducer) ahí mismo"
+                }
+              },
+              {
+                "id": "lift",
+                "label": {
+                  "en": "Do a parent and a couple of children need it? → lift to the nearest common parent",
+                  "es": "¿Lo necesitan un padre y un par de hijos? → elevarlo al padre común más cercano"
+                }
+              },
+              {
+                "id": "global",
+                "label": {
+                  "en": "Is it read by a distant subtree? → Context if it changes rarely, a selector store if it changes often",
+                  "es": "¿Lo lee un subárbol lejano? → Context si cambia poco, un store con selectores si cambia seguido"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "server",
+              "url",
+              "render",
+              "local",
+              "lift",
+              "global"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A team moves `{ user, theme, cart }` into one React Context to \"avoid prop drilling\". Adding an item to the cart now re-renders the whole app. Why, and what is the right fix?",
+              "es": "Un equipo mueve `{ user, theme, cart }` a un solo React Context para \"evitar prop drilling\". Agregar un ítem al carrito ahora re-renderiza toda la app. ¿Por qué, y cuál es el arreglo correcto?"
+            },
+            "options": [
+              {
+                "en": "Context is inherently slow; replace it with Redux everywhere",
+                "es": "Context es intrínsecamente lento; reemplázalo con Redux en todos lados"
+              },
+              {
+                "en": "The provider is missing React.memo; wrapping it stops the propagation",
+                "es": "Al provider le falta React.memo; envolverlo detiene la propagación"
+              },
+              {
+                "en": "Context has no selector mechanism — every consumer re-renders when the provider's value changes, and the value is a new object each render. Split the rarely-changing values into their own context and move the frequently-changing cart to a store with selectors",
+                "es": "Context no tiene mecanismo de selectores — todo consumidor se re-renderiza cuando cambia el value del provider, y ese value es un objeto nuevo en cada render. Separa los valores que cambian poco en su propio context y mueve el carrito, que cambia seguido, a un store con selectores"
+              },
+              {
+                "en": "The cart should be stored in the URL so that context updates stop entirely",
+                "es": "El carrito debería guardarse en la URL para que las actualizaciones del context paren del todo"
+              }
+            ],
+            "explanation": {
+              "en": "A context consumer subscribes to the whole value, not to a field of it. When `cart` changes, the provider produces a new object, and every `useContext` in the tree re-renders — including components that only ever read `theme`. `React.memo` does not help: the context update bypasses props entirely. The fix is to split by change frequency, which is exactly the Context-versus-store distinction: rarely-changing values are a good fit for context, frequently-changing shared values need per-slice subscriptions.",
+              "es": "Un consumidor de context se suscribe al value completo, no a un campo suyo. Cuando cambia `cart`, el provider produce un objeto nuevo, y todo `useContext` del árbol se re-renderiza — incluidos los componentes que solo leen `theme`. `React.memo` no ayuda: la actualización del context se salta las props por completo. El arreglo es separar por frecuencia de cambio, que es exactamente la distinción entre Context y store: los valores que cambian poco encajan bien en context, los valores compartidos que cambian seguido necesitan suscripciones por porción."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "slug": "use-state-vs-use-reducer-and-refs",
+      "question": {
+        "en": "When do you reach for useReducer instead of useState, and when for a ref?",
+        "es": "¿Cuándo usas useReducer en lugar de useState, y cuándo un ref?"
+      },
+      "definition": {
+        "en": "These three hooks are not interchangeable styles. They answer different questions.\n\n**`useState`** — independent values that change on their own. One value, one setter. Perfect until two pieces of state must change *together*.\n\n**`useReducer`** — when the next state depends on the previous one **and** several fields move as a unit. The signal is not \"lots of state\", it is **coupling**: you find yourself calling three setters in a row, and any caller that forgets one leaves the UI in an impossible state.\n\n```jsx\n// Four useStates that must move together — every call site can get it wrong\nconst [data, setData] = useState(null);\nconst [loading, setLoading] = useState(false);\nconst [error, setError] = useState(null);\nconst [page, setPage] = useState(1);\n\n// One reducer: the impossible states are unrepresentable\nfunction reducer(state, action) {\n  switch (action.type) {\n    case \"fetch\":   return { ...state, loading: true, error: null };\n    case \"success\": return { ...state, loading: false, data: action.data };\n    case \"failure\": return { ...state, loading: false, error: action.error };\n    default: throw new Error(`unknown action ${action.type}`);\n  }\n}\nconst [state, dispatch] = useReducer(reducer, initialState);\n```\n\nTwo bonuses people miss: `dispatch` has a **stable identity** for the life of the component, so passing it down never invalidates a `useMemo` or `React.memo` the way a fresh callback does — often removing the need for `useCallback` entirely. And the reducer is a pure function, so it is unit-testable without rendering anything.\n\n**`useRef`** — a mutable box that **does not trigger a re-render when written**. Two distinct uses:\n1. A DOM handle: `<input ref={inputRef} />`, then `inputRef.current.focus()`.\n2. Any value the render output does not read: an interval id, the previous value of a prop, a `hasSubmitted` flag, the latest value of a callback for use inside an effect.\n\nThe rule that decides between state and ref: **if changing it should update the screen, it is state; if it should not, it is a ref.** A timer id in `useState` re-renders on every tick and displays nothing. A visible counter in a ref never updates the screen, and it looks like React is broken.\n\nOne more distinction, on updates. `setCount(count + 1)` reads a value captured at render time — call it three times in one handler and you increment by one. `setCount(c => c + 1)` receives the latest value and increments by three. Use the functional form whenever the next value depends on the previous one; it is also what removes a stale-closure bug inside `useEffect` without adding the value to the dependency array.\n\nFinally, `useSyncExternalStore` exists for a fourth case: subscribing to something outside React (a browser API, a non-React store) so React can read it consistently, including during concurrent rendering. `window.matchMedia` and `navigator.onLine` are the textbook uses.",
+        "es": "Estos tres hooks no son estilos intercambiables. Responden preguntas distintas.\n\n**`useState`** — valores independientes que cambian por su cuenta. Un valor, un setter. Perfecto hasta que dos pedazos de estado deben cambiar *juntos*.\n\n**`useReducer`** — cuando el siguiente estado depende del anterior **y** varios campos se mueven como una unidad. La señal no es \"mucho estado\", es **acoplamiento**: te encuentras llamando tres setters seguidos, y cualquier llamador que se olvide de uno deja la UI en un estado imposible.\n\n```jsx\n// Cuatro useState que deben moverse juntos — cada punto de llamada puede equivocarse\nconst [data, setData] = useState(null);\nconst [loading, setLoading] = useState(false);\nconst [error, setError] = useState(null);\nconst [page, setPage] = useState(1);\n\n// Un reducer: los estados imposibles no se pueden representar\nfunction reducer(state, action) {\n  switch (action.type) {\n    case \"fetch\":   return { ...state, loading: true, error: null };\n    case \"success\": return { ...state, loading: false, data: action.data };\n    case \"failure\": return { ...state, loading: false, error: action.error };\n    default: throw new Error(`unknown action ${action.type}`);\n  }\n}\nconst [state, dispatch] = useReducer(reducer, initialState);\n```\n\nDos ventajas que la gente pasa por alto: `dispatch` tiene **identidad estable** durante toda la vida del componente, así que pasarlo hacia abajo nunca invalida un `useMemo` o un `React.memo` como sí lo hace un callback nuevo — lo que a menudo elimina del todo la necesidad de `useCallback`. Y el reducer es una función pura, así que se puede testear unitariamente sin renderizar nada.\n\n**`useRef`** — una caja mutable que **no dispara un re-render al escribirse**. Dos usos distintos:\n1. Un handle al DOM: `<input ref={inputRef} />`, luego `inputRef.current.focus()`.\n2. Cualquier valor que la salida del render no lee: el id de un intervalo, el valor anterior de una prop, una bandera `hasSubmitted`, el valor más reciente de un callback para usarlo dentro de un efecto.\n\nLa regla que decide entre estado y ref: **si cambiarlo debe actualizar la pantalla, es estado; si no, es un ref.** El id de un timer en `useState` re-renderiza en cada tick y no muestra nada. Un contador visible en un ref nunca actualiza la pantalla, y parece que React está roto.\n\nUna distinción más, sobre las actualizaciones. `setCount(count + 1)` lee un valor capturado en tiempo de render — llámalo tres veces en un mismo handler e incrementas en uno. `setCount(c => c + 1)` recibe el valor más reciente e incrementa en tres. Usa la forma funcional siempre que el siguiente valor dependa del anterior; también es lo que quita un bug de closure vieja dentro de `useEffect` sin agregar el valor al array de dependencias.\n\nPor último, `useSyncExternalStore` existe para un cuarto caso: suscribirse a algo fuera de React (una API del navegador, un store no-React) para que React pueda leerlo de forma consistente, incluso durante renderizado concurrente. `window.matchMedia` y `navigator.onLine` son los usos de manual."
+      },
+      "examples": [
+        {
+          "en": "A wizard with `step`, `answers`, `isValid` and `isSubmitting` as four useStates: the 'go back' handler forgets to reset `isValid`, and step 2 shows a disabled Next button with no explanation. As a reducer, `{ type: 'back' }` is one transition defined in one place, and the bug cannot be written.",
+          "es": "Un asistente con `step`, `answers`, `isValid` e `isSubmitting` como cuatro useState: el handler de 'volver' se olvida de resetear `isValid`, y el paso 2 muestra un botón Siguiente deshabilitado sin explicación. Como reducer, `{ type: 'back' }` es una sola transición definida en un solo lugar, y el bug no se puede escribir."
+        },
+        {
+          "en": "`useEffect(() => { const id = setInterval(() => setSeconds(s => s + 1), 1000); return () => clearInterval(id); }, [])` — the interval id lives in a plain closure variable, not state, because nothing rendered depends on it. The counter uses the functional updater so the empty dependency array does not freeze `seconds` at its first-render value.",
+          "es": "`useEffect(() => { const id = setInterval(() => setSeconds(s => s + 1), 1000); return () => clearInterval(id); }, [])` — el id del intervalo vive en una variable de closure, no en estado, porque nada de lo renderizado depende de él. El contador usa el updater funcional para que el array de dependencias vacío no congele `seconds` en su valor del primer render."
+        },
+        {
+          "en": "A parent passes `dispatch` to 40 memoized rows. Because `dispatch` identity never changes, none of them re-render when the parent does — the same list with a `useCallback` handler re-renders all 40 the moment any dependency of that callback changes.",
+          "es": "Un padre pasa `dispatch` a 40 filas memoizadas. Como la identidad de `dispatch` nunca cambia, ninguna se re-renderiza cuando el padre lo hace — esa misma lista con un handler de `useCallback` re-renderiza las 40 en cuanto cambia cualquier dependencia de ese callback."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "This component holds four pieces of state that must always move together, and the `retry` handler already forgets to clear `error`, so a retry renders the spinner and the old error at the same time.\n\nRefactor it to a single `useReducer` so those impossible states cannot be represented. Define the reducer as a pure function outside the component.",
+              "es": "Este componente tiene cuatro pedazos de estado que siempre deben moverse juntos, y el handler `retry` ya se olvida de limpiar `error`, así que un reintento renderiza el spinner y el error viejo al mismo tiempo.\n\nRefactorízalo a un solo `useReducer` para que esos estados imposibles no se puedan representar. Define el reducer como una función pura fuera del componente."
+            },
+            "language": "javascript",
+            "starter_code": "import { useState } from \"react\";\n\nfunction OrderList({ fetchOrders }) {\n  const [data, setData] = useState(null);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState(null);\n  const [page, setPage] = useState(1);\n\n  async function load(nextPage) {\n    setLoading(true);\n    setPage(nextPage);\n    try {\n      const orders = await fetchOrders(nextPage);\n      setData(orders);\n      setLoading(false);\n    } catch (e) {\n      setError(e.message);\n      setLoading(false);\n    }\n  }\n\n  // BUG: does not clear the previous error, so the spinner and the old\n  // error render together on every retry.\n  function retry() {\n    setLoading(true);\n    load(page);\n  }\n\n  if (loading) return <Spinner />;\n  if (error) return <Error message={error} onRetry={retry} />;\n  return <List items={data} onPage={load} />;\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must define a pure reducer function outside the component handling at least the fetch/start, success and failure transitions, and use useReducer instead of the four useState calls. The 'fetch' transition must set loading true AND clear error in the same transition — that is the whole point, and it must be visible in the reducer rather than at the call sites. State updates must go through dispatch, not setters. Bonus: mentions or uses dispatch's stable identity (so no useCallback is needed when passing it down), notes the reducer is unit-testable without rendering, handles the page field in the transitions, throws or warns on an unknown action type, or models state as a discriminated status ('idle' | 'loading' | 'success' | 'error') rather than independent booleans.",
+              "es": "Debe definir una función reducer pura fuera del componente que maneje al menos las transiciones de inicio de fetch, éxito y fallo, y usar useReducer en lugar de los cuatro useState. La transición 'fetch' debe poner loading en true Y limpiar el error en la misma transición — ese es todo el punto, y debe verse en el reducer y no en los puntos de llamada. Las actualizaciones de estado deben pasar por dispatch, no por setters. Bonus: menciona o aprovecha la identidad estable de dispatch (así no hace falta useCallback al pasarlo hacia abajo), nota que el reducer es testeable unitariamente sin renderizar, maneja el campo page en las transiciones, lanza o avisa ante un tipo de acción desconocido, o modela el estado como un status discriminado ('idle' | 'loading' | 'success' | 'error') en vez de booleanos independientes."
+            },
+            "reference": "import { useReducer } from \"react\";\n\nconst initialState = { status: \"idle\", data: null, error: null, page: 1 };\n\n// Pure, testable without rendering anything.\nfunction reducer(state, action) {\n  switch (action.type) {\n    case \"fetch\":\n      // Clearing the error here is the fix: no call site can forget it.\n      return { ...state, status: \"loading\", error: null, page: action.page };\n    case \"success\":\n      return { ...state, status: \"success\", data: action.data };\n    case \"failure\":\n      return { ...state, status: \"error\", error: action.error };\n    default:\n      throw new Error(`unknown action: ${action.type}`);\n  }\n}\n\nfunction OrderList({ fetchOrders }) {\n  const [state, dispatch] = useReducer(reducer, initialState);\n\n  async function load(nextPage) {\n    dispatch({ type: \"fetch\", page: nextPage });\n    try {\n      dispatch({ type: \"success\", data: await fetchOrders(nextPage) });\n    } catch (e) {\n      dispatch({ type: \"failure\", error: e.message });\n    }\n  }\n\n  if (state.status === \"loading\") return <Spinner />;\n  if (state.status === \"error\")\n    return <Error message={state.error} onRetry={() => load(state.page)} />;\n  return <List items={state.data} onPage={load} />;\n}\n\n// A single status field also makes \"loading and error at once\" unrepresentable,\n// and dispatch has a stable identity, so passing it to memoized children never\n// invalidates their memoization the way a fresh useCallback would."
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these belongs in a `useRef` rather than `useState`?",
+              "es": "¿Cuál de estos va en un `useRef` y no en `useState`?"
+            },
+            "options": [
+              {
+                "en": "Whether a dropdown is currently open",
+                "es": "Si un dropdown está abierto en este momento"
+              },
+              {
+                "en": "The number of unread notifications shown in the header badge",
+                "es": "El número de notificaciones sin leer que se muestra en el badge del header"
+              },
+              {
+                "en": "The text currently typed into a controlled input",
+                "es": "El texto escrito actualmente en un input controlado"
+              },
+              {
+                "en": "The id returned by setTimeout, kept only so the cleanup function can clear it",
+                "es": "El id que devuelve setTimeout, guardado solo para que la función de limpieza pueda cancelarlo"
+              }
+            ],
+            "explanation": {
+              "en": "The test is whether the render output reads the value. The badge count, the dropdown's open flag and the input's text all appear in the JSX, so they must be state — writing them has to re-render. The timeout id is never rendered; it exists only so cleanup can cancel it. Putting it in state would cause a pointless re-render every time a timer is scheduled, and would be a bug waiting to happen if the component re-renders before the effect reads it.",
+              "es": "La prueba es si la salida del render lee el valor. El conteo del badge, la bandera de abierto del dropdown y el texto del input aparecen todos en el JSX, así que deben ser estado — escribirlos tiene que re-renderizar. El id del timeout nunca se renderiza; existe solo para que la limpieza pueda cancelarlo. Ponerlo en estado causaría un re-render inútil cada vez que se programa un timer, y sería un bug esperando a pasar si el componente se re-renderiza antes de que el efecto lo lea."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each hook with the symptom that tells you to reach for it.",
+              "es": "Conecta cada hook con el síntoma que te dice que debes usarlo."
+            },
+            "left": [
+              {
+                "id": "usestate",
+                "label": {
+                  "en": "useState",
+                  "es": "useState"
+                }
+              },
+              {
+                "id": "usereducer",
+                "label": {
+                  "en": "useReducer",
+                  "es": "useReducer"
+                }
+              },
+              {
+                "id": "useref",
+                "label": {
+                  "en": "useRef",
+                  "es": "useRef"
+                }
+              },
+              {
+                "id": "usesync",
+                "label": {
+                  "en": "useSyncExternalStore",
+                  "es": "useSyncExternalStore"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "single",
+                "label": {
+                  "en": "One independent value that changes on its own and is rendered",
+                  "es": "Un valor independiente que cambia por su cuenta y se renderiza"
+                }
+              },
+              {
+                "id": "coupled",
+                "label": {
+                  "en": "Three setters called in a row, and forgetting one leaves an impossible UI state",
+                  "es": "Tres setters llamados seguidos, y olvidar uno deja la UI en un estado imposible"
+                }
+              },
+              {
+                "id": "norender",
+                "label": {
+                  "en": "A value written often that must never cause a render — a timer id, a DOM node, a previous value",
+                  "es": "Un valor que se escribe seguido y que nunca debe causar un render — un id de timer, un nodo del DOM, un valor anterior"
+                }
+              },
+              {
+                "id": "external",
+                "label": {
+                  "en": "Reading something that lives outside React — matchMedia, navigator.onLine, a non-React store",
+                  "es": "Leer algo que vive fuera de React — matchMedia, navigator.onLine, un store no-React"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "usestate": "single",
+              "usereducer": "coupled",
+              "useref": "norender",
+              "usesync": "external"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "slug": "server-cache-state-and-url-state",
+      "question": {
+        "en": "Why is data from an API not really \"state\", and what do React Query / RTK Query change?",
+        "es": "¿Por qué los datos de una API no son realmente \"estado\", y qué cambian React Query / RTK Query?"
+      },
+      "definition": {
+        "en": "Client state is **owned** by the browser: nobody else can change it, and it is correct by construction. Server data is a **cache of somebody else's truth**. It has properties client state never has:\n\n- It can become **stale** while nothing in your app happens — another user edited the record.\n- It is **shared**: five components want the same list, and they should not trigger five requests.\n- It needs **loading, error and retry** semantics.\n- It needs **invalidation**: after a mutation, which cached entries are now wrong?\n\nWhen you put it in `useState` or a hand-rolled Redux slice, you are writing a cache — and you will reimplement, badly, request deduplication, refetch-on-focus, retry with backoff, garbage collection and invalidation. That is the argument, and it is why the amount of client state in a typical app is far smaller than teams assume.\n\nA server-cache library gives you, per query key:\n- **Deduplication** — five components mounting with the same key produce one request.\n- **Stale-while-revalidate** — cached data renders instantly, a refetch happens in the background, the UI updates when it lands.\n- **Declarative invalidation** — a mutation declares `invalidatesTags: ['Order']` and every subscribed query refetches. No `useEffect` chains.\n- **Lifecycle** — automatic refetch on window focus and reconnect, retry with backoff, and cache eviction when nothing is subscribed.\n\n```jsx\n// RTK Query: the hook is the cache entry\nconst { data, isLoading, isFetching, error } = useOrdersQuery(page);\nconst [createOrder] = useCreateOrderMutation();\n// createOrder has invalidatesTags: ['Order'] — the list refetches on its own\n```\n\nNote `isLoading` versus `isFetching`: `isLoading` is true only on the *first* load with no cached data (show a skeleton); `isFetching` is true for *any* in-flight request including a background revalidation (show a subtle indicator, never a skeleton — replacing good data with a spinner is the most common misuse).\n\n**URL state** is the other category people misfile. If it should survive a refresh, be shareable by link, or respond to the back button, it belongs in the URL — filters, pagination, the active tab, a selected id, a search term.\n\n```jsx\nconst [params, setParams] = useSearchParams();\nconst status = params.get(\"status\") ?? \"all\";\n// The URL is the state. No useState, no useEffect syncing it anywhere.\n```\n\nThe URL is the only state container that is free to persist, free to share, and integrates with browser history without any code. The tell that something belongs there: a `useEffect` that writes state to `localStorage` and reads it back on mount, or a support ticket that says \"the link you sent me doesn't show what you're seeing\".",
+        "es": "El estado de cliente es **propiedad** del navegador: nadie más puede cambiarlo, y es correcto por construcción. Los datos del servidor son un **caché de la verdad de otro**. Tienen propiedades que el estado de cliente nunca tiene:\n\n- Pueden quedar **viejos** sin que pase nada en tu app — otro usuario editó el registro.\n- Son **compartidos**: cinco componentes quieren la misma lista, y no deberían disparar cinco peticiones.\n- Necesitan semántica de **carga, error y reintento**.\n- Necesitan **invalidación**: después de una mutación, ¿qué entradas del caché quedaron mal?\n\nCuando lo pones en `useState` o en un slice de Redux hecho a mano, estás escribiendo un caché — y vas a reimplementar, mal, la deduplicación de peticiones, el refetch al enfocar, el reintento con backoff, la recolección de basura y la invalidación. Ese es el argumento, y es la razón por la que la cantidad de estado de cliente en una app típica es mucho menor de lo que los equipos suponen.\n\nUna librería de caché de servidor te da, por clave de consulta:\n- **Deduplicación** — cinco componentes montándose con la misma clave producen una petición.\n- **Stale-while-revalidate** — los datos cacheados se renderizan al instante, un refetch ocurre en segundo plano, la UI se actualiza cuando llega.\n- **Invalidación declarativa** — una mutación declara `invalidatesTags: ['Order']` y toda consulta suscrita se refresca. Sin cadenas de `useEffect`.\n- **Ciclo de vida** — refetch automático al enfocar la ventana y al reconectar, reintento con backoff, y desalojo del caché cuando nadie está suscrito.\n\n```jsx\n// RTK Query: el hook es la entrada del caché\nconst { data, isLoading, isFetching, error } = useOrdersQuery(page);\nconst [createOrder] = useCreateOrderMutation();\n// createOrder tiene invalidatesTags: ['Order'] — la lista se refresca sola\n```\n\nFíjate en `isLoading` contra `isFetching`: `isLoading` es true solo en la *primera* carga sin datos cacheados (muestra un esqueleto); `isFetching` es true para *cualquier* petición en vuelo, incluida una revalidación en segundo plano (muestra un indicador sutil, nunca un esqueleto — reemplazar datos buenos por un spinner es el mal uso más común).\n\n**El estado en la URL** es la otra categoría que la gente archiva mal. Si debe sobrevivir a un refresh, poder compartirse por link o responder al botón atrás, va en la URL — filtros, paginación, la pestaña activa, un id seleccionado, un término de búsqueda.\n\n```jsx\nconst [params, setParams] = useSearchParams();\nconst status = params.get(\"status\") ?? \"all\";\n// La URL es el estado. Sin useState, sin useEffect sincronizando nada.\n```\n\nLa URL es el único contenedor de estado que es gratis de persistir, gratis de compartir, y que se integra con el historial del navegador sin escribir código. La señal de que algo va ahí: un `useEffect` que escribe estado a `localStorage` y lo lee al montar, o un ticket de soporte que dice \"el link que me mandaste no muestra lo que estás viendo\"."
+      },
+      "examples": [
+        {
+          "en": "Two widgets on a dashboard both call `useUserQuery(42)`. Without a server-cache library that is two requests and two copies that can drift; with one it is a single request and a single cache entry both components subscribe to. Add a third widget and nothing changes.",
+          "es": "Dos widgets de un dashboard llaman ambos a `useUserQuery(42)`. Sin una librería de caché de servidor eso son dos peticiones y dos copias que pueden divergir; con una es una sola petición y una sola entrada de caché a la que ambos componentes se suscriben. Agrega un tercer widget y nada cambia."
+        },
+        {
+          "en": "A team copies the fetched order into local state so the edit form can modify it, then the list and the form disagree after a background refetch. The fix is to keep the server data as the cache's, hold only the *draft* in local state, and let the mutation invalidate the tag when it succeeds.",
+          "es": "Un equipo copia la orden traída del servidor a estado local para que el formulario de edición la modifique, y luego la lista y el formulario se contradicen tras un refetch en segundo plano. El arreglo es dejar los datos del servidor en el caché, guardar solo el *borrador* en estado local, y dejar que la mutación invalide el tag cuando tenga éxito."
+        },
+        {
+          "en": "A filter panel with five `useState` values and a `useEffect` writing them to localStorage: about 40 lines. As five search params it is zero lines of persistence code, works with the back button, and users can bookmark and share a filtered view — which was the actual feature request behind the localStorage code.",
+          "es": "Un panel de filtros con cinco valores en `useState` y un `useEffect` escribiéndolos a localStorage: unas 40 líneas. Como cinco search params son cero líneas de código de persistencia, funciona con el botón atrás, y los usuarios pueden guardar y compartir una vista filtrada — que era el pedido real detrás del código de localStorage."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A list uses RTK Query. On every background refetch the whole list is replaced by a skeleton and the page jumps. The code reads:\n\n```jsx\nconst { data, isFetching } = useOrdersQuery(page);\nif (isFetching) return <Skeleton />;\nreturn <List items={data} />;\n```\n\nWhat is wrong?",
+              "es": "Una lista usa RTK Query. En cada refetch en segundo plano toda la lista se reemplaza por un esqueleto y la página salta. El código dice:\n\n```jsx\nconst { data, isFetching } = useOrdersQuery(page);\nif (isFetching) return <Skeleton />;\nreturn <List items={data} />;\n```\n\n¿Qué está mal?"
+            },
+            "options": [
+              {
+                "en": "The list is missing a `key` prop, which is what causes the jump",
+                "es": "A la lista le falta una prop `key`, que es lo que causa el salto"
+              },
+              {
+                "en": "`data` is undefined during a refetch, so the skeleton is required",
+                "es": "`data` es undefined durante un refetch, así que el esqueleto es obligatorio"
+              },
+              {
+                "en": "`isFetching` is true for every request including background revalidation; `isLoading` is the one that is true only when there is no cached data yet. Render the cached list and show a subtle indicator while `isFetching`",
+                "es": "`isFetching` es true para toda petición, incluida la revalidación en segundo plano; `isLoading` es el que es true solo cuando todavía no hay datos cacheados. Renderiza la lista cacheada y muestra un indicador sutil mientras `isFetching`"
+              },
+              {
+                "en": "The query needs `refetchOnFocus: false` — background refetching should be turned off",
+                "es": "La consulta necesita `refetchOnFocus: false` — el refetch en segundo plano debería desactivarse"
+              }
+            ],
+            "explanation": {
+              "en": "The point of a stale-while-revalidate cache is that you keep showing the good data while fresh data is on its way. `isLoading` means \"first load, nothing cached\" — that is when a skeleton is right. `isFetching` means \"a request is in flight\", which includes every refetch on focus or after an invalidation, and `data` is still populated throughout. Turning off background refetching would trade a UI bug for stale data.",
+              "es": "El punto de un caché stale-while-revalidate es que sigues mostrando los datos buenos mientras vienen los frescos. `isLoading` significa \"primera carga, nada cacheado\" — ahí es donde el esqueleto es correcto. `isFetching` significa \"hay una petición en vuelo\", lo que incluye todo refetch al enfocar o tras una invalidación, y `data` sigue poblado todo ese tiempo. Apagar el refetch en segundo plano cambiaría un bug de UI por datos viejos."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does copying fetched server data into a Redux slice with `useEffect(() => { dispatch(setOrders(data)) }, [data])` cause bugs?",
+              "es": "¿Por qué copiar datos del servidor a un slice de Redux con `useEffect(() => { dispatch(setOrders(data)) }, [data])` causa bugs?"
+            },
+            "options": [
+              {
+                "en": "`useEffect` runs after paint, so the data always renders one frame late",
+                "es": "`useEffect` corre después del paint, así que los datos siempre se renderizan un frame tarde"
+              },
+              {
+                "en": "Redux cannot store arrays of objects without normalizing them first",
+                "es": "Redux no puede guardar arreglos de objetos sin normalizarlos primero"
+              },
+              {
+                "en": "Dispatching inside useEffect is forbidden in React 18's StrictMode",
+                "es": "Despachar dentro de useEffect está prohibido en el StrictMode de React 18"
+              },
+              {
+                "en": "You now have two sources of truth for the same data, and nothing keeps them in sync — the copy does not know when the cache revalidates, invalidates or evicts, so components reading the copy show data the cache already knows is wrong",
+                "es": "Ahora tienes dos fuentes de verdad para los mismos datos, y nada las mantiene sincronizadas — la copia no sabe cuándo el caché revalida, invalida o desaloja, así que los componentes que leen la copia muestran datos que el caché ya sabe que están mal"
+              }
+            ],
+            "explanation": {
+              "en": "Duplicating cache contents into another store recreates the exact problem the cache was solving. The copy is a snapshot: it misses background revalidation, tag invalidation after a mutation, and eviction. You then need effects to re-sync it, and those effects are where the stale-data bugs live. Keep server data in exactly one place — the cache — and let components subscribe to it directly. Redux is still the right home for genuine client state.",
+              "es": "Duplicar el contenido del caché en otro store recrea exactamente el problema que el caché resolvía. La copia es una foto: se pierde la revalidación en segundo plano, la invalidación por tag tras una mutación y el desalojo. Después necesitas efectos para re-sincronizarla, y en esos efectos es donde viven los bugs de datos viejos. Mantén los datos del servidor en un solo lugar — el caché — y deja que los componentes se suscriban directamente. Redux sigue siendo el lugar correcto para el estado de cliente genuino."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "A colleague says: \"the search box, the status filter, the sort order and the page number are all just UI state, so they go in useState.\" Users then complain that links they share always open the default view, and the back button leaves the page. What would you change, and what do you deliberately keep in useState?",
+              "es": "Un colega dice: \"la caja de búsqueda, el filtro de estado, el orden y el número de página son todos estado de UI, así que van en useState.\" Después los usuarios se quejan de que los links que comparten siempre abren la vista por defecto, y de que el botón atrás los saca de la página. ¿Qué cambiarías, y qué dejas deliberadamente en useState?"
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must move the status filter, sort order and page number into the URL (search params), and explain the criterion: state that should survive a reload, be shareable by link, or respond to the back button belongs in the URL. Must keep at least one thing in useState and justify it — the in-progress text of the search input is the expected answer, kept local and debounced before being written to the URL, so that every keystroke does not create a history entry. Bonus: mentions useSearchParams, replace vs push on history for rapidly-changing values, that this deletes any localStorage-syncing useEffect, that the URL then becomes the query key for the server-cache layer, and that the results list itself is server-cache state and belongs in neither useState nor the URL.",
+              "es": "Debe mover el filtro de estado, el orden y el número de página a la URL (search params), y explicar el criterio: el estado que debe sobrevivir a un reload, poder compartirse por link o responder al botón atrás va en la URL. Debe dejar al menos una cosa en useState y justificarlo — el texto en progreso del input de búsqueda es la respuesta esperada, mantenido local y con debounce antes de escribirse a la URL, para que cada tecla no cree una entrada de historial. Bonus: menciona useSearchParams, replace contra push en el historial para valores que cambian rápido, que esto borra cualquier useEffect que sincronice a localStorage, que la URL pasa a ser la clave de consulta de la capa de caché de servidor, y que la lista de resultados en sí es estado de caché de servidor y no va ni en useState ni en la URL."
+            },
+            "reference": "The status filter, sort order and page number all move to the URL as search params. The criterion is not \"is it UI state\" but \"should it survive a reload, be shareable by link, and respond to the back button\". All three should — that is exactly what the users are reporting. With `useSearchParams`, the URL becomes the state: no useState, and no useEffect syncing anything to localStorage.\n\nWhat I keep in useState is the in-progress text of the search input. Writing to the URL on every keystroke would create a history entry per character and make the back button useless in a new way. So the input's draft stays local, and the debounced value is pushed to the URL after ~300 ms. For the same reason, use `setSearchParams(next, { replace: true })` for rapidly-changing values so you replace the current history entry instead of stacking one per change, and push a new entry only for deliberate navigations like changing the page.\n\nOne consequence worth naming: once those parameters are in the URL, they are also the natural query key for the server-cache layer, so `useOrdersQuery({ status, sort, page })` re-runs and caches per distinct URL for free. And the results list itself is neither useState nor URL state — it is server-cache state, and it belongs in React Query / RTK Query."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "composition-patterns-to-avoid-prop-drilling",
+      "question": {
+        "en": "How do composition patterns remove prop drilling without adding re-renders?",
+        "es": "¿Cómo eliminan el prop drilling los patrones de composición sin agregar re-renders?"
+      },
+      "definition": {
+        "en": "Prop drilling is a prop passed through components that do not use it, only to reach one that does. The reflex is to reach for Context. Often the real answer is **composition**, and it is strictly better: no new subscription, no extra re-render, and the data flow stays visible.\n\n**The problem:**\n\n```jsx\n// user is threaded through three components that never read it\n<Page user={user}>\n  <Sidebar user={user}>\n    <Nav user={user}>\n      <Avatar user={user} />\n```\n\n**The composition fix — pass elements, not data:**\n\n```jsx\n<Page>\n  <Sidebar>\n    <Nav>\n      <Avatar user={user} />   {/* created where user already exists */}\n    </Nav>\n  </Sidebar>\n</Page>\n```\n\n`Page`, `Sidebar` and `Nav` now take `children` and know nothing about `user`. The drilling is gone without adding any shared state.\n\n**Why this also fixes re-renders — the part that matters in interviews.** `children` is an ordinary prop, and JSX creates those elements in the **parent** that owns `user`. When `Page` re-renders for its own reasons, the `children` prop it received is the *same element object* as before, so React bails out of re-rendering that subtree. Context cannot do this: a context update reaches consumers directly, skipping props entirely, so `React.memo` does not stop it.\n\nThat is the trade-off in one line: **composition passes elements down through props, so memoization works; context notifies consumers directly, so memoization does not apply.**\n\nRelated patterns worth naming:\n- **Slots** — several named element props (`<Layout header={...} sidebar={...} />`) when there is more than one hole to fill.\n- **Compound components** — `<Tabs><Tab/><TabPanel/></Tabs>`, where a small internal context carries only the active tab, not the whole state.\n- **Render props / children-as-function** — when the child needs a value the parent computes, but only that child needs it.\n- **Moving state down** — if state is used by one subtree, extract that subtree into its own component and put the state there. It is the mirror image of lifting state up, and it is under-used.\n\nAnd the rule that decides: **prop drilling of two levels is not a problem.** Adding a context provider to avoid passing one prop through two components makes the code harder to trace and easier to over-render. Reach for context when the tree is genuinely deep *and* the value changes rarely.",
+        "es": "El prop drilling es una prop que se pasa por componentes que no la usan, solo para llegar a uno que sí. El reflejo es recurrir a Context. A menudo la respuesta real es **composición**, y es estrictamente mejor: sin suscripción nueva, sin re-render extra, y el flujo de datos queda visible.\n\n**El problema:**\n\n```jsx\n// user se enhebra por tres componentes que nunca lo leen\n<Page user={user}>\n  <Sidebar user={user}>\n    <Nav user={user}>\n      <Avatar user={user} />\n```\n\n**El arreglo por composición — pasa elementos, no datos:**\n\n```jsx\n<Page>\n  <Sidebar>\n    <Nav>\n      <Avatar user={user} />   {/* creado donde user ya existe */}\n    </Nav>\n  </Sidebar>\n</Page>\n```\n\n`Page`, `Sidebar` y `Nav` ahora reciben `children` y no saben nada de `user`. El drilling desapareció sin agregar ningún estado compartido.\n\n**Por qué esto también arregla los re-renders — la parte que importa en entrevistas.** `children` es una prop común y corriente, y el JSX crea esos elementos en el **padre** que es dueño de `user`. Cuando `Page` se re-renderiza por sus propias razones, la prop `children` que recibió es el *mismo objeto elemento* que antes, así que React se salta el re-render de ese subárbol. Context no puede hacer esto: una actualización de context llega a los consumidores directamente, salteándose las props por completo, así que `React.memo` no la detiene.\n\nEse es el trade-off en una línea: **la composición pasa elementos hacia abajo por props, así que la memoización funciona; el context notifica a los consumidores directamente, así que la memoización no aplica.**\n\nPatrones relacionados que vale nombrar:\n- **Slots** — varias props de elemento con nombre (`<Layout header={...} sidebar={...} />`) cuando hay más de un hueco que llenar.\n- **Componentes compuestos** — `<Tabs><Tab/><TabPanel/></Tabs>`, donde un context interno pequeño carga solo la pestaña activa, no todo el estado.\n- **Render props / children como función** — cuando el hijo necesita un valor que calcula el padre, pero solo ese hijo lo necesita.\n- **Bajar el estado** — si un estado lo usa un solo subárbol, extrae ese subárbol a su propio componente y pon el estado ahí. Es la imagen espejo de elevar el estado, y está subutilizado.\n\nY la regla que decide: **hacer prop drilling de dos niveles no es un problema.** Agregar un context provider para evitar pasar una prop por dos componentes hace el código más difícil de rastrear y más fácil de sobre-renderizar. Recurre a context cuando el árbol sea genuinamente profundo *y* el valor cambie poco."
+      },
+      "examples": [
+        {
+          "en": "A `<Modal>` taking `title`, `bodyText`, `icon`, `primaryLabel`, `onPrimary`, `secondaryLabel` and `onSecondary` grows a new prop for every new dialog. As `<Modal><Modal.Header>…</Modal.Header><Modal.Body>…</Modal.Body></Modal>` it takes zero content props and every future dialog is expressible without touching Modal.",
+          "es": "Un `<Modal>` que recibe `title`, `bodyText`, `icon`, `primaryLabel`, `onPrimary`, `secondaryLabel` y `onSecondary` gana una prop nueva por cada diálogo nuevo. Como `<Modal><Modal.Header>…</Modal.Header><Modal.Body>…</Modal.Body></Modal>` recibe cero props de contenido y todo diálogo futuro se puede expresar sin tocar Modal."
+        },
+        {
+          "en": "A layout re-renders on every keystroke because a search input's state lives in the top-level component. Extracting `<SearchBox>` with the state inside it means the layout stops re-rendering entirely — moving state *down* solved what people usually attack with useMemo.",
+          "es": "Un layout se re-renderiza en cada tecla porque el estado de un input de búsqueda vive en el componente de más arriba. Extraer `<SearchBox>` con el estado adentro hace que el layout deje de re-renderizarse por completo — bajar el estado resolvió lo que la gente normalmente ataca con useMemo."
+        },
+        {
+          "en": "`<ThemeProvider>` wrapping the app with a value that changes twice a session is a good use of context. The same provider also carrying a live WebSocket message count is not: every message re-renders every consumer in the tree, including ones that only read the theme.",
+          "es": "Un `<ThemeProvider>` que envuelve la app con un value que cambia dos veces por sesión es un buen uso de context. Ese mismo provider llevando además un contador de mensajes de un WebSocket en vivo no lo es: cada mensaje re-renderiza a todos los consumidores del árbol, incluidos los que solo leen el tema."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "code",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "`user` is drilled through `Page`, `Sidebar` and `Nav`, none of which read it. Refactor using composition so only `Avatar` receives `user`, and the three intermediate components take `children` instead.\n\nDo **not** introduce a Context — explain in a comment why composition is preferable here.",
+              "es": "`user` se pasa a través de `Page`, `Sidebar` y `Nav`, y ninguno lo lee. Refactoriza usando composición para que solo `Avatar` reciba `user`, y los tres componentes intermedios reciban `children` en su lugar.\n\n**No** introduzcas un Context — explica en un comentario por qué la composición es preferible acá."
+            },
+            "language": "javascript",
+            "starter_code": "function App() {\n  const user = useCurrentUser();\n  return <Page user={user} />;\n}\n\nfunction Page({ user }) {\n  return (\n    <div className=\"page\">\n      <Sidebar user={user} />\n      <Main />\n    </div>\n  );\n}\n\nfunction Sidebar({ user }) {\n  return (\n    <aside>\n      <Nav user={user} />\n    </aside>\n  );\n}\n\nfunction Nav({ user }) {\n  return (\n    <nav>\n      <Avatar user={user} />\n    </nav>\n  );\n}\n\nfunction Avatar({ user }) {\n  return <img src={user.avatarUrl} alt={user.name} />;\n}"
+          },
+          "solution": {
+            "criteria": {
+              "en": "Page, Sidebar and Nav must each accept `children` and must no longer accept or forward a `user` prop. The `<Avatar user={user} />` element must be created in App, where `user` already exists, and nested through the children of the three components. Avatar itself keeps its `user` prop. The required comment must explain the re-render advantage: children is an ordinary prop, so the element object is created by the owner and stays referentially stable when the intermediate components re-render, letting React skip that subtree — whereas a context update reaches consumers directly and bypasses props, so memoization does not stop it. Bonus: mentions that two levels of drilling would not have justified any change, names related patterns (slots / named element props, compound components, moving state down), or notes that the data flow stays visible in App.",
+              "es": "Page, Sidebar y Nav deben aceptar cada uno `children` y ya no deben aceptar ni reenviar una prop `user`. El elemento `<Avatar user={user} />` debe crearse en App, donde `user` ya existe, y anidarse a través de los children de los tres componentes. Avatar conserva su prop `user`. El comentario pedido debe explicar la ventaja en re-renders: children es una prop común, así que el objeto elemento lo crea el dueño y se mantiene estable por referencia cuando los componentes intermedios se re-renderizan, dejando que React se salte ese subárbol — mientras que una actualización de context llega a los consumidores directamente y se saltea las props, así que la memoización no la detiene. Bonus: menciona que dos niveles de drilling no habrían justificado ningún cambio, nombra patrones relacionados (slots / props de elemento con nombre, componentes compuestos, bajar el estado), o nota que el flujo de datos queda visible en App."
+            },
+            "reference": "function App() {\n  const user = useCurrentUser();\n  // The Avatar element is created HERE, where `user` already exists, and\n  // travels down as an ordinary `children` prop.\n  return (\n    <Page>\n      <Sidebar>\n        <Nav>\n          <Avatar user={user} />\n        </Nav>\n      </Sidebar>\n    </Page>\n  );\n}\n\nfunction Page({ children }) {\n  return (\n    <div className=\"page\">\n      <aside>{children}</aside>\n      <Main />\n    </div>\n  );\n}\n\nfunction Sidebar({ children }) {\n  return <aside>{children}</aside>;\n}\n\nfunction Nav({ children }) {\n  return <nav>{children}</nav>;\n}\n\nfunction Avatar({ user }) {\n  return <img src={user.avatarUrl} alt={user.name} />;\n}\n\n// Why composition rather than a UserContext:\n//\n// `children` is an ordinary prop. The element objects are created by App, so\n// when Page, Sidebar or Nav re-render for their own reasons, the `children`\n// they received is the SAME element reference as before and React can bail out\n// of re-rendering that subtree. Memoization works because the value arrives\n// through props.\n//\n// A context update does not arrive through props at all — it notifies every\n// consumer directly, skipping the props diff, so React.memo on the intermediate\n// components would not stop the propagation. Context earns its cost when the\n// tree is genuinely deep AND the value changes rarely (theme, locale, session).\n// Here it is three levels and the drilling disappears for free."
+          }
+        },
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the escalation you actually follow when a prop is being threaded through components that do not use it.",
+              "es": "Ordena la escalada que realmente sigues cuando una prop se está enhebrando por componentes que no la usan."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "count",
+                "label": {
+                  "en": "Count the levels — two is just props, not a problem worth solving",
+                  "es": "Contar los niveles — dos son solo props, no un problema que valga resolver"
+                }
+              },
+              {
+                "id": "movedown",
+                "label": {
+                  "en": "Check whether the state can simply move down into the subtree that uses it",
+                  "es": "Ver si el estado puede simplemente bajar al subárbol que lo usa"
+                }
+              },
+              {
+                "id": "children",
+                "label": {
+                  "en": "Pass the element as children from the component that already owns the value",
+                  "es": "Pasar el elemento como children desde el componente que ya es dueño del valor"
+                }
+              },
+              {
+                "id": "slots",
+                "label": {
+                  "en": "If there are several holes to fill, use named element props (slots) or compound components",
+                  "es": "Si hay varios huecos que llenar, usar props de elemento con nombre (slots) o componentes compuestos"
+                }
+              },
+              {
+                "id": "context",
+                "label": {
+                  "en": "Only then add a Context — and only if the value changes rarely",
+                  "es": "Recién entonces agregar un Context — y solo si el valor cambia poco"
+                }
+              },
+              {
+                "id": "store",
+                "label": {
+                  "en": "If it also changes often and is read widely, use a store with selectors instead",
+                  "es": "Si además cambia seguido y se lee en muchos lados, usar un store con selectores en su lugar"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "count",
+              "movedown",
+              "children",
+              "slots",
+              "context",
+              "store"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why does passing a subtree as `children` avoid a re-render that a Context update would cause anyway?",
+              "es": "¿Por qué pasar un subárbol como `children` evita un re-render que una actualización de Context causaría igual?"
+            },
+            "options": [
+              {
+                "en": "React special-cases the `children` prop and never re-renders it",
+                "es": "React trata la prop `children` como un caso especial y nunca la re-renderiza"
+              },
+              {
+                "en": "Context providers always re-render their entire subtree by design, children or not",
+                "es": "Los context providers siempre re-renderizan todo su subárbol por diseño, haya children o no"
+              },
+              {
+                "en": "`children` elements are created by the owner component, so when an intermediate component re-renders the same element reference comes back in and React can skip that subtree — whereas a context update notifies consumers directly, bypassing props, so memoization cannot intercept it",
+                "es": "Los elementos de `children` los crea el componente dueño, así que cuando un componente intermedio se re-renderiza vuelve a entrar la misma referencia de elemento y React puede saltarse ese subárbol — mientras que una actualización de context notifica a los consumidores directamente, salteándose las props, así que la memoización no puede interceptarla"
+              },
+              {
+                "en": "`children` is rendered lazily and only evaluated when it becomes visible",
+                "es": "`children` se renderiza de forma perezosa y solo se evalúa cuando se vuelve visible"
+              }
+            ],
+            "explanation": {
+              "en": "There is no special case: `children` is just a prop holding element objects, and those objects were created by whichever component wrote the JSX. If that owner did not re-render, the reference is unchanged, so React's normal bail-out applies to the whole subtree. Context deliberately works differently — it exists to reach distant consumers without threading props, so it notifies them directly and `React.memo` in between is irrelevant. That asymmetry is exactly why composition is the cheaper tool when it fits.",
+              "es": "No hay ningún caso especial: `children` es solo una prop que contiene objetos elemento, y esos objetos los creó el componente que escribió el JSX. Si ese dueño no se re-renderizó, la referencia no cambió, así que el bail-out normal de React aplica a todo el subárbol. Context funciona distinto a propósito — existe para llegar a consumidores lejanos sin enhebrar props, así que los notifica directamente y un `React.memo` en el medio es irrelevante. Esa asimetría es justamente por qué la composición es la herramienta más barata cuando encaja."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
       "slug": "custom-hooks-design",
       "question": {
         "en": "How do you design a good custom hook, and what makes one production-quality?",
@@ -2114,6 +2763,72 @@
           "es": "Debe definir el mismatch: el primer render del cliente produjo una salida distinta al HTML del servidor, así que React advierte y puede descartar el HTML del servidor y re-renderizar en el cliente. Debe dar dos causas realistas — p. ej., valores de tiempo/aleatorios renderizados durante el render (Date.now, Math.random), formateo dependiente de locale/zona horaria, o ramificar según window/localStorage en el render inicial — y arreglar cada una: mover la lógica solo-cliente a useEffect (renderizando primero un placeholder seguro para el servidor), mantener el primer render del cliente determinista e idéntico al del servidor, o usar suppressHydrationWarning para texto inevitable como timestamps."
         },
         "reference": "A hydration mismatch means React's first client render didn't produce the same output as the server HTML it is adopting; React warns, and can throw away the server markup and re-render client-side, losing SSR's benefit. Cause 1: rendering non-deterministic values during render — e.g., a 'time ago' label from new Date() or an A/B variant from Math.random(). Fix: render a deterministic value (the server timestamp) and switch to the dynamic value inside useEffect, which runs only after hydration; for pure text like clocks, suppressHydrationWarning is acceptable. Cause 2: branching on client-only APIs during initial render — e.g., reading window.innerWidth or localStorage to pick a layout/theme. Fix: default to a server-safe branch on the first render and update state in useEffect once mounted (the standard useIsClient/mounted-flag pattern), accepting one post-hydration re-render."
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A dashboard's active filter is kept in `useState`. Users report that links they share always open the default view. Where does that state belong?",
+          "es": "El filtro activo de un dashboard se guarda en `useState`. Los usuarios reportan que los links que comparten siempre abren la vista por defecto. ¿Dónde va ese estado?"
+        },
+        "options": [
+          {
+            "en": "In a Context, so every component can read it",
+            "es": "En un Context, para que todo componente pueda leerlo"
+          },
+          {
+            "en": "In Redux, so it is globally available",
+            "es": "En Redux, para que esté disponible globalmente"
+          },
+          {
+            "en": "In the URL as a search param — it should survive a reload, be shareable by link and work with the back button",
+            "es": "En la URL como search param — debe sobrevivir al reload, poder compartirse por link y funcionar con el botón atrás"
+          },
+          {
+            "en": "In localStorage, synced with a useEffect",
+            "es": "En localStorage, sincronizado con un useEffect"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why does `React.memo` on an intermediate component fail to stop a re-render caused by a Context update, while it succeeds for a subtree passed as `children`?",
+          "es": "¿Por qué `React.memo` en un componente intermedio no logra detener un re-render causado por una actualización de Context, pero sí lo logra para un subárbol pasado como `children`?"
+        },
+        "options": [
+          {
+            "en": "Because a context update notifies consumers directly and bypasses the props diff, whereas `children` arrives as an ordinary prop whose element reference is unchanged when its owner did not re-render",
+            "es": "Porque una actualización de context notifica a los consumidores directamente y se saltea el diff de props, mientras que `children` llega como una prop común cuya referencia de elemento no cambia si su dueño no se re-renderizó"
+          },
+          {
+            "en": "Because React.memo only works on components with fewer than 10 props",
+            "es": "Porque React.memo solo funciona en componentes con menos de 10 props"
+          },
+          {
+            "en": "Because context values are always new objects, and children are always primitives",
+            "es": "Porque los values de context siempre son objetos nuevos, y los children siempre son primitivos"
+          },
+          {
+            "en": "Because React.memo is disabled inside a Provider subtree",
+            "es": "Porque React.memo se deshabilita dentro del subárbol de un Provider"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
       }
     }
   ]
