@@ -43,6 +43,7 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/courses/:slug" element={<CoursePage />} />
         <Route path="/courses/:slug/test" element={<TestPage />} />
+        <Route path="/courses/:slug/exams/:examSlug" element={<TestPage />} />
         <Route path="/lessons/:id" element={<LessonPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

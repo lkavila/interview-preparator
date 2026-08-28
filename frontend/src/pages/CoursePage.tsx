@@ -79,6 +79,54 @@ export default function CoursePage() {
         </div>
       )}
 
+      {course.exams.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">{t("practiceExams")}</h2>
+          <p className="mb-3 text-sm text-muted">{t("practiceExamsHint")}</p>
+          <ul className="space-y-2">
+            {course.exams.map((exam) => (
+              <li key={exam.slug}>
+                <Link
+                  to={`/courses/${course.slug}/exams/${exam.slug}`}
+                  className="card flex flex-col gap-3 p-4 transition-colors hover:border-accent sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="text-base font-medium">{pick(exam.title, i18n.language)}</p>
+                    <p className="mt-0.5 text-sm text-muted">
+                      {exam.question_count} {t("questionsLabel")}
+                      {exam.time_limit_minutes != null &&
+                        ` · ${exam.time_limit_minutes} ${t("minutes")}`}
+                      {` · ${t("passMark")}: ${Math.round(exam.pass_score)}%`}
+                    </p>
+                    {pick(exam.description, i18n.language) && (
+                      <p className="mt-1 text-sm text-muted">
+                        {pick(exam.description, i18n.language)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {exam.best_score != null && (
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          exam.best_score >= exam.pass_score
+                            ? "bg-success-soft text-success"
+                            : "bg-error-soft text-error"
+                        }`}
+                      >
+                        {t("bestScore")}: {Math.round(exam.best_score)}%
+                      </span>
+                    )}
+                    <span className="btn btn-primary">
+                      {exam.attempts > 0 ? t("retakeExam") : t("startExam")}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <AiExtraExercise courseSlug={course.slug} />
     </div>
   );

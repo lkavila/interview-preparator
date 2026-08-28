@@ -33,9 +33,22 @@ export interface LessonSummary {
   completed: boolean;
 }
 
+export interface CourseExam {
+  slug: string;
+  order_index: number;
+  title: Bilingual;
+  description: Bilingual;
+  question_count: number;
+  pass_score: number;
+  time_limit_minutes: number | null;
+  best_score: number | null;
+  attempts: number;
+}
+
 export interface CourseDetail extends CourseSummary {
   lessons: LessonSummary[];
   test_question_count: number;
+  exams: CourseExam[];
 }
 
 export type ExerciseType =
@@ -195,6 +208,7 @@ export interface TestResult {
   score: number;
   correct: number;
   total: number;
+  pass_score: number;
   results: TestQuestionResult[];
   new_badges: string[];
 }

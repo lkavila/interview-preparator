@@ -110,6 +110,26 @@ export const api = createApi({
     test: builder.query<TestQuestion[], string>({
       query: (slug) => `/courses/${slug}/test`,
     }),
+    exam: builder.query<TestQuestion[], { slug: string; examSlug: string }>({
+      query: ({ slug, examSlug }) => `/courses/${slug}/exams/${examSlug}`,
+    }),
+    submitExam: builder.mutation<
+      TestResult,
+      { slug: string; examSlug: string; answers: Record<number, Record<string, unknown>> }
+    >({
+      query: ({ slug, examSlug, answers }) => ({
+        url: `/courses/${slug}/exams/${examSlug}/attempt`,
+        method: "POST",
+        body: { answers },
+      }),
+      invalidatesTags: (_r, _e, { slug }) => [
+        { type: "Course", id: slug },
+        "Courses",
+        "Analytics",
+        "Badges",
+      ],
+      onQueryStarted: (_arg, { queryFulfilled }) => emitBadgesFrom(queryFulfilled),
+    }),
     submitTest: builder.mutation<
       TestResult,
       { slug: string; answers: Record<number, Record<string, unknown>> }
@@ -168,6 +188,8 @@ export const {
   useLazyRevealSolutionQuery,
   useTestQuery,
   useSubmitTestMutation,
+  useExamQuery,
+  useSubmitExamMutation,
   useStudyTodayQuery,
   useHeartbeatMutation,
   useAnalyticsQuery,
