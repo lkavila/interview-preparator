@@ -14,7 +14,8 @@ export function formatDuration(totalSeconds: number): string {
   return `${s}s`;
 }
 
-/** Minimal markdown renderer for lesson content (bold, code, lists, headings). */
+/** Minimal markdown renderer for lesson content (bold, code, lists, headings,
+ * and GFM-style tables). */
 export function renderMarkdown(md: string): string {
   const escapeHtml = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -31,7 +32,26 @@ export function renderMarkdown(md: string): string {
     const lines = escapeHtml(block).split("\n");
     let inList = false;
     let listTag = "ul";
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // A table is a pipe row followed by a |---|---| separator row. Anything
+      // else starting with a pipe is left alone and rendered as a paragraph.
+      if (isTableRow(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+        if (inList) {
+          html += `</${listTag}>`;
+          inList = false;
+        }
+        html += `<table><thead><tr>${cells(line).map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>`;
+        i += 2;
+        for (; i < lines.length && isTableRow(lines[i]); i++) {
+          html += `<tr>${cells(lines[i]).map((c) => `<td>${c}</td>`).join("")}</tr>`;
+        }
+        i--; // the for-loop's i++ will land on the first non-row line
+        html += "</tbody></table>";
+        continue;
+      }
+
       const olMatch = /^\s*\d+\.\s+(.*)/.exec(line);
       const ulMatch = /^\s*[-*]\s+(.*)/.exec(line);
       if (ulMatch || olMatch) {
@@ -68,5 +88,22 @@ export function renderMarkdown(md: string): string {
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  }
+
+  function isTableRow(s: string): boolean {
+    return /^\s*\|.*\|\s*$/.test(s);
+  }
+
+  function isTableSeparator(s: string): boolean {
+    return /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(s);
+  }
+
+  function cells(row: string): string[] {
+    return row
+      .trim()
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((c) => inline(c.trim()));
   }
 }
