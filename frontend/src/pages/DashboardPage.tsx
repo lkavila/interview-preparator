@@ -24,6 +24,7 @@ const ICONS: Record<string, string> = {
   braces:
     "M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1",
   users: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  gopher: "M8 4.5A3.5 3.5 0 0 1 11.5 8v1h1V8A3.5 3.5 0 0 1 16 4.5M4 12a8 8 0 0 1 16 0v3a8 8 0 0 1-16 0zM9 11h.01M15 11h.01M10.5 16h3",
 };
 
 export default function DashboardPage() {

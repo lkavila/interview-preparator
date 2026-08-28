@@ -10,6 +10,7 @@
     "verify:sql": "node scripts/verify-sql-exercises.mjs"
   },
   "dependencies": {
+    "@codemirror/lang-go": "^6.0.1",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/lang-sql": "^6.10.0",

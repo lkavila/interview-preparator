@@ -60,7 +60,7 @@ export interface ExerciseData {
   setup_sql?: string;
   verification_query?: string;
   hint?: Bilingual;
-  language?: "javascript" | "python" | "sql";
+  language?: "javascript" | "typescript" | "python" | "sql" | "go";
   starter_code?: string;
   explanation?: Bilingual;
 }
