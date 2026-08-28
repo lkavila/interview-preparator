@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import Course, Exercise, Lesson, TestQuestion
+from app.models import Course, CourseExam, Exercise, Lesson, TestQuestion
 from app.schemas import SeedCourse
 
 SEEDS_DIR = Path(__file__).resolve().parent.parent / "seeds" / "courses"
@@ -45,6 +45,39 @@ def load_seed_files() -> list[tuple[Path, SeedCourse]]:
         print("Seed validation FAILED: duplicate course slugs")
         sys.exit(1)
     return courses
+
+
+def _upsert_questions(db: Session, course: Course, exam_id: int | None, seed_questions: list) -> None:
+    """Sync one question set (the final test when exam_id is None, else an exam).
+
+    Updated in place when the count matches so attempt history keeps pointing at
+    the same rows; replaced wholesale otherwise."""
+    query = db.query(TestQuestion).filter(TestQuestion.course_id == course.id)
+    query = query.filter(
+        TestQuestion.exam_id.is_(None) if exam_id is None else TestQuestion.exam_id == exam_id
+    )
+    existing = query.order_by(TestQuestion.order_index).all()
+    if len(existing) == len(seed_questions):
+        for j, (q_model, q_seed) in enumerate(zip(existing, seed_questions)):
+            q_model.order_index = j
+            q_model.type = q_seed.type
+            q_model.data = q_seed.data
+            q_model.solution = q_seed.solution
+        return
+    for q_model in existing:
+        db.delete(q_model)
+    db.flush()
+    for j, q_seed in enumerate(seed_questions):
+        db.add(
+            TestQuestion(
+                course_id=course.id,
+                exam_id=exam_id,
+                order_index=j,
+                type=q_seed.type,
+                data=q_seed.data,
+                solution=q_seed.solution,
+            )
+        )
 
 
 def upsert_course(db: Session, seed: SeedCourse) -> None:
@@ -113,33 +146,31 @@ def upsert_course(db: Session, seed: SeedCourse) -> None:
         if lesson.slug not in seen_lesson_slugs and lesson.id is not None:
             db.delete(lesson)
 
-    # Test questions: update in place when counts match, otherwise replace
-    existing_q = (
-        db.query(TestQuestion)
-        .filter(TestQuestion.course_id == course.id)
-        .order_by(TestQuestion.order_index)
-        .all()
-    )
-    if len(existing_q) == len(seed.test):
-        for j, (q_model, q_seed) in enumerate(zip(existing_q, seed.test)):
-            q_model.order_index = j
-            q_model.type = q_seed.type
-            q_model.data = q_seed.data
-            q_model.solution = q_seed.solution
-    else:
-        for q_model in existing_q:
-            db.delete(q_model)
+    # Final test (exam_id IS NULL) and, if the course ships them, extra exams
+    _upsert_questions(db, course, None, seed.test)
+
+    seen_exam_slugs = set()
+    for i, seed_exam in enumerate(seed.exams):
+        seen_exam_slugs.add(seed_exam.slug)
+        exam = (
+            db.query(CourseExam)
+            .filter(CourseExam.course_id == course.id, CourseExam.slug == seed_exam.slug)
+            .one_or_none()
+        )
+        if exam is None:
+            exam = CourseExam(course_id=course.id, slug=seed_exam.slug)
+            db.add(exam)
+        exam.order_index = i
+        exam.title = seed_exam.title
+        exam.description = seed_exam.description
+        exam.pass_score = seed_exam.pass_score
+        exam.time_limit_minutes = seed_exam.time_limit_minutes
         db.flush()
-        for j, q_seed in enumerate(seed.test):
-            db.add(
-                TestQuestion(
-                    course_id=course.id,
-                    order_index=j,
-                    type=q_seed.type,
-                    data=q_seed.data,
-                    solution=q_seed.solution,
-                )
-            )
+        _upsert_questions(db, course, exam.id, seed_exam.questions)
+
+    for exam in list(course.exams):
+        if exam.slug not in seen_exam_slugs and exam.id is not None:
+            db.delete(exam)
 
 
 def main() -> None:
@@ -147,7 +178,12 @@ def main() -> None:
     courses = load_seed_files()
     total_lessons = sum(len(c.lessons) for _, c in courses)
     total_tests = sum(len(c.test) for _, c in courses)
-    print(f"Validated {len(courses)} courses, {total_lessons} lessons, {total_tests} test questions.")
+    total_exams = sum(len(c.exams) for _, c in courses)
+    total_exam_q = sum(len(e.questions) for _, c in courses for e in c.exams)
+    print(
+        f"Validated {len(courses)} courses, {total_lessons} lessons, {total_tests} test questions, "
+        f"{total_exams} extra exams ({total_exam_q} questions)."
+    )
     if check_only:
         print("Dry run (--check): nothing written.")
         return
@@ -156,7 +192,8 @@ def main() -> None:
     try:
         for path, seed in courses:
             upsert_course(db, seed)
-            print(f"  seeded {seed.slug} ({len(seed.lessons)} lessons) from {path.name}")
+            extra = f" + {len(seed.exams)} exams" if seed.exams else ""
+            print(f"  seeded {seed.slug} ({len(seed.lessons)} lessons{extra}) from {path.name}")
         db.commit()
         print("Done.")
     except Exception:

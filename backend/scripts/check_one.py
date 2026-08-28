@@ -18,6 +18,8 @@ for lesson in course.lessons:
                 mcq_correct[i] += 1
 
 print("VALID")
-print(f"lessons={len(course.lessons)} test={len(course.test)}")
+print(f"lessons={len(course.lessons)} test={len(course.test)} exams={len(course.exams)}")
+for exam in course.exams:
+    print(f"  exam {exam.slug}: {len(exam.questions)} questions, pass {exam.pass_score}%")
 print(f"exercises-per-lesson counts: {dict(counts)}")
 print(f"mcq correct-index distribution: {dict(sorted(mcq_correct.items()))}")

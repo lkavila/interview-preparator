@@ -13,8 +13,8 @@ use this when adding a course, so the untouched ones are not churned:
     python scripts/shuffle_mcq.py 05-post --lesson=window   # only those lessons
 
 --lesson= narrows to lessons whose slug contains the fragment, and skips the
-course test block, so newly added lessons can be shuffled without touching the
-rest of an existing course.
+course test block and practice exams, so newly added lessons can be shuffled
+without touching the rest of an existing course.
 """
 
 import json
@@ -33,10 +33,17 @@ POSITION_REF = re.compile(
 )
 
 
-def references_positions(data: dict) -> bool:
-    explanation = data.get("explanation") or {}
-    text = " ".join(str(v) for v in explanation.values()) if isinstance(explanation, dict) else str(explanation)
-    return bool(POSITION_REF.search(text))
+def references_positions(*sources: dict) -> bool:
+    """True when an explanation refers to an option by position, which reordering
+    would break. Lesson exercises keep it in data, exam questions in solution."""
+    text = []
+    for src in sources:
+        explanation = (src or {}).get("explanation") or {}
+        if isinstance(explanation, dict):
+            text.extend(str(v) for v in explanation.values())
+        else:
+            text.append(str(explanation))
+    return bool(POSITION_REF.search(" ".join(text)))
 
 
 def shuffle_mcq(data: dict, solution: dict, seed_key: str) -> bool:
@@ -45,7 +52,7 @@ def shuffle_mcq(data: dict, solution: dict, seed_key: str) -> bool:
     correct = solution.get("correct")
     if not options or not isinstance(correct, list) or len(options) < 2:
         return False
-    if references_positions(data):
+    if references_positions(data, solution):
         return False
     rng = random.Random(seed_key)
     perm = list(range(len(options)))
@@ -84,7 +91,7 @@ def main() -> None:
                     continue
                 for c in ex["solution"].get("correct", []):
                     before[c] += 1
-                if references_positions(ex["data"]):
+                if references_positions(ex["data"], ex["solution"]):
                     skipped += 1
                 elif shuffle_mcq(ex["data"], ex["solution"], f"{course['slug']}:{lesson['slug']}:{k}"):
                     changed += 1
@@ -97,12 +104,26 @@ def main() -> None:
                 continue
             for c in q["solution"].get("correct", []):
                 before[c] += 1
-            if references_positions(q["data"]):
+            if references_positions(q["data"], q["solution"]):
                 skipped += 1
             elif shuffle_mcq(q["data"], q["solution"], f"{course['slug']}:test:{k}"):
                 changed += 1
             for c in q["solution"].get("correct", []):
                 after[c] += 1
+
+        # Practice exams: courses can ship an `exams` array besides (or instead of) `test`.
+        for exam in [] if lessons_only else course.get("exams", []):
+            for k, q in enumerate(exam.get("questions", [])):
+                if q.get("type") != "multiple_choice":
+                    continue
+                for c in q["solution"].get("correct", []):
+                    before[c] += 1
+                if references_positions(q["data"], q["solution"]):
+                    skipped += 1
+                elif shuffle_mcq(q["data"], q["solution"], f"{course['slug']}:{exam['slug']}:{k}"):
+                    changed += 1
+                for c in q["solution"].get("correct", []):
+                    after[c] += 1
 
         if changed:
             path.write_text(json.dumps(course, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

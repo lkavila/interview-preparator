@@ -1,9 +1,12 @@
 {
-  "_readme": "Template for a new course. Copy to seeds/courses/<order>-<slug>.json and fill in. Every text is bilingual: {\"en\": ..., \"es\": ...}. Each lesson needs 2-4 exercises (3 recommended). Vary the correct index of multiple_choice answers (never always [0]). The test needs 10-15 questions (mostly multiple_choice). Run `python -m app.seed --check` to validate, then `python -m app.seed` to load.",
+  "_readme": "Template for a new course. Copy to seeds/courses/<order>-<slug>.json and fill in. Every text is bilingual: {\"en\": ..., \"es\": ...}. Each lesson needs 2-4 exercises (3 recommended). Vary the correct index of multiple_choice answers (never always [0]). The test needs 10-15 questions (mostly multiple_choice); a course may instead (or also) ship an `exams` array of named, timed practice exams — see the bottom of this file and seeds/courses/19-aws-saa-c03.json. Run `python -m app.seed --check` to validate, then `python -m app.seed` to load.",
   "slug": "my-course",
   "order": 99,
   "icon": "book",
-  "title": { "en": "My Course", "es": "Mi Curso" },
+  "title": {
+    "en": "My Course",
+    "es": "Mi Curso"
+  },
   "description": {
     "en": "One-line description of what this course covers.",
     "es": "Descripción de una línea de lo que cubre este curso."
@@ -30,17 +33,39 @@
           "type": "multiple_choice",
           "validation_mode": "static",
           "data": {
-            "prompt": { "en": "Which statement is true?", "es": "¿Qué afirmación es verdadera?" },
+            "prompt": {
+              "en": "Which statement is true?",
+              "es": "¿Qué afirmación es verdadera?"
+            },
             "options": [
-              { "en": "Option A", "es": "Opción A" },
-              { "en": "Option B", "es": "Opción B" },
-              { "en": "Option C", "es": "Opción C" },
-              { "en": "Option D", "es": "Opción D" }
+              {
+                "en": "Option A",
+                "es": "Opción A"
+              },
+              {
+                "en": "Option B",
+                "es": "Opción B"
+              },
+              {
+                "en": "Option C",
+                "es": "Opción C"
+              },
+              {
+                "en": "Option D",
+                "es": "Opción D"
+              }
             ],
             "multiple": false,
-            "explanation": { "en": "Why the answer is A.", "es": "Por qué la respuesta es A." }
+            "explanation": {
+              "en": "Why the answer is A.",
+              "es": "Por qué la respuesta es A."
+            }
           },
-          "solution": { "correct": [0] }
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
         },
         {
           "type": "open_text",
@@ -63,48 +88,136 @@
     },
     {
       "slug": "exercise-type-examples",
-      "question": { "en": "(All other exercise type shapes)", "es": "(Formas de los demás tipos)" },
-      "definition": { "en": "See exercises below.", "es": "Ver ejercicios abajo." },
-      "examples": [{ "en": "-", "es": "-" }],
+      "question": {
+        "en": "(All other exercise type shapes)",
+        "es": "(Formas de los demás tipos)"
+      },
+      "definition": {
+        "en": "See exercises below.",
+        "es": "Ver ejercicios abajo."
+      },
+      "examples": [
+        {
+          "en": "-",
+          "es": "-"
+        }
+      ],
       "exercises": [
         {
           "type": "matching",
           "validation_mode": "static",
           "data": {
-            "prompt": { "en": "Match each term with its definition.", "es": "Conecta cada término con su definición." },
+            "prompt": {
+              "en": "Match each term with its definition.",
+              "es": "Conecta cada término con su definición."
+            },
             "left": [
-              { "id": "a", "label": { "en": "Term A", "es": "Término A" } },
-              { "id": "b", "label": { "en": "Term B", "es": "Término B" } }
+              {
+                "id": "a",
+                "label": {
+                  "en": "Term A",
+                  "es": "Término A"
+                }
+              },
+              {
+                "id": "b",
+                "label": {
+                  "en": "Term B",
+                  "es": "Término B"
+                }
+              }
             ],
             "right": [
-              { "id": "1", "label": { "en": "Definition of A", "es": "Definición de A" } },
-              { "id": "2", "label": { "en": "Definition of B", "es": "Definición de B" } }
+              {
+                "id": "1",
+                "label": {
+                  "en": "Definition of A",
+                  "es": "Definición de A"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Definition of B",
+                  "es": "Definición de B"
+                }
+              }
             ]
           },
-          "solution": { "pairs": { "a": "1", "b": "2" } }
+          "solution": {
+            "pairs": {
+              "a": "1",
+              "b": "2"
+            }
+          }
         },
         {
           "type": "ordering",
           "validation_mode": "static",
           "data": {
-            "prompt": { "en": "Order the flow of a request.", "es": "Ordena el flujo de una petición." },
+            "prompt": {
+              "en": "Order the flow of a request.",
+              "es": "Ordena el flujo de una petición."
+            },
             "layout": "flow",
             "items": [
-              { "id": "client", "label": { "en": "Client", "es": "Cliente" } },
-              { "id": "lb", "label": { "en": "Load balancer", "es": "Balanceador de carga" } },
-              { "id": "api", "label": { "en": "API service", "es": "Servicio API" } },
-              { "id": "db", "label": { "en": "Database", "es": "Base de datos" } }
+              {
+                "id": "client",
+                "label": {
+                  "en": "Client",
+                  "es": "Cliente"
+                }
+              },
+              {
+                "id": "lb",
+                "label": {
+                  "en": "Load balancer",
+                  "es": "Balanceador de carga"
+                }
+              },
+              {
+                "id": "api",
+                "label": {
+                  "en": "API service",
+                  "es": "Servicio API"
+                }
+              },
+              {
+                "id": "db",
+                "label": {
+                  "en": "Database",
+                  "es": "Base de datos"
+                }
+              }
             ]
           },
-          "solution": { "order": ["client", "lb", "api", "db"] }
+          "solution": {
+            "order": [
+              "client",
+              "lb",
+              "api",
+              "db"
+            ]
+          }
         }
       ]
     },
     {
       "slug": "sql-and-table-examples",
-      "question": { "en": "(SQL / table_builder / code shapes)", "es": "(Formas de sql / table_builder / code)" },
-      "definition": { "en": "See exercises below.", "es": "Ver ejercicios abajo." },
-      "examples": [{ "en": "-", "es": "-" }],
+      "question": {
+        "en": "(SQL / table_builder / code shapes)",
+        "es": "(Formas de sql / table_builder / code)"
+      },
+      "definition": {
+        "en": "See exercises below.",
+        "es": "Ver ejercicios abajo."
+      },
+      "examples": [
+        {
+          "en": "-",
+          "es": "-"
+        }
+      ],
       "exercises": [
         {
           "type": "sql",
@@ -116,14 +229,29 @@
             },
             "setup_sql": "CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT); INSERT INTO users (name) VALUES ('ana'), ('bob');",
             "verification_query": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'users' ORDER BY ordinal_position;",
-            "hint": { "en": "ALTER TABLE users ADD COLUMN ...", "es": "ALTER TABLE users ADD COLUMN ..." }
+            "hint": {
+              "en": "ALTER TABLE users ADD COLUMN ...",
+              "es": "ALTER TABLE users ADD COLUMN ..."
+            }
           },
           "solution": {
             "ordered": true,
             "expected_rows": [
-              ["id", "integer", "NO"],
-              ["name", "text", "YES"],
-              ["email", "text", "NO"]
+              [
+                "id",
+                "integer",
+                "NO"
+              ],
+              [
+                "name",
+                "text",
+                "YES"
+              ],
+              [
+                "email",
+                "text",
+                "NO"
+              ]
             ]
           }
         },
@@ -135,13 +263,36 @@
               "en": "Design a `sessions` table: integer auto id, user reference, and an expiry timestamp.",
               "es": "Diseña una tabla `sessions`: id entero autoincremental, referencia al usuario y timestamp de expiración."
             },
-            "type_options": ["SERIAL", "INTEGER", "TEXT", "TIMESTAMPTZ", "BOOLEAN", "JSONB"]
+            "type_options": [
+              "SERIAL",
+              "INTEGER",
+              "TEXT",
+              "TIMESTAMPTZ",
+              "BOOLEAN",
+              "JSONB"
+            ]
           },
           "solution": {
             "columns": [
-              { "name": "id", "type": ["SERIAL", "INTEGER"] },
-              { "name": "user_id", "type": ["INTEGER"] },
-              { "name": "expires_at", "type": ["TIMESTAMPTZ"] }
+              {
+                "name": "id",
+                "type": [
+                  "SERIAL",
+                  "INTEGER"
+                ]
+              },
+              {
+                "name": "user_id",
+                "type": [
+                  "INTEGER"
+                ]
+              },
+              {
+                "name": "expires_at",
+                "type": [
+                  "TIMESTAMPTZ"
+                ]
+              }
             ],
             "allow_extra": false
           }
@@ -154,26 +305,106 @@
       "type": "multiple_choice",
       "validation_mode": "static",
       "data": {
-        "prompt": { "en": "Question 1?", "es": "¿Pregunta 1?" },
+        "prompt": {
+          "en": "Question 1?",
+          "es": "¿Pregunta 1?"
+        },
         "options": [
-          { "en": "A", "es": "A" },
-          { "en": "B", "es": "B" },
-          { "en": "C", "es": "C" },
-          { "en": "D", "es": "D" }
+          {
+            "en": "A",
+            "es": "A"
+          },
+          {
+            "en": "B",
+            "es": "B"
+          },
+          {
+            "en": "C",
+            "es": "C"
+          },
+          {
+            "en": "D",
+            "es": "D"
+          }
         ]
       },
-      "solution": { "correct": [1] }
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
     },
     {
       "type": "open_text",
       "validation_mode": "llm",
       "data": {
-        "prompt": { "en": "Explain...", "es": "Explica..." }
+        "prompt": {
+          "en": "Explain...",
+          "es": "Explica..."
+        }
       },
       "solution": {
-        "criteria": { "en": "Must mention...", "es": "Debe mencionar..." },
+        "criteria": {
+          "en": "Must mention...",
+          "es": "Debe mencionar..."
+        },
         "reference": "Model answer."
       }
+    }
+  ],
+  "exams": [
+    {
+      "_readme": "Optional. Each entry becomes its own timed exam on the course page, with its own length, pass mark and best-score tracking. Questions use the same shape as `test`, but put the explanation inside `solution` so it is only revealed after the exam is submitted.",
+      "slug": "practice-exam-1",
+      "title": {
+        "en": "Practice exam · 20 questions",
+        "es": "Examen de práctica · 20 preguntas"
+      },
+      "description": {
+        "en": "What this exam covers and how long it takes.",
+        "es": "Qué cubre este examen y cuánto dura."
+      },
+      "pass_score": 72,
+      "time_limit_minutes": 40,
+      "questions": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Scenario question 1?",
+              "es": "¿Pregunta de escenario 1?"
+            },
+            "options": [
+              {
+                "en": "A",
+                "es": "A"
+              },
+              {
+                "en": "B",
+                "es": "B"
+              },
+              {
+                "en": "C",
+                "es": "C"
+              },
+              {
+                "en": "D",
+                "es": "D"
+              }
+            ]
+          },
+          "solution": {
+            "correct": [
+              2
+            ],
+            "explanation": {
+              "en": "Why C is right and why the others fail a requirement.",
+              "es": "Por qué C es correcta y por qué las otras incumplen un requisito."
+            }
+          }
+        }
+      ]
     }
   ]
 }

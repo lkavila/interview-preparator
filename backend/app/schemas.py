@@ -127,9 +127,22 @@ class CourseSummary(BaseModel):
     best_test_score: float | None = None
 
 
+class ExamSummary(BaseModel):
+    slug: str
+    order_index: int
+    title: dict[str, Any]
+    description: dict[str, Any]
+    question_count: int
+    pass_score: float
+    time_limit_minutes: int | None = None
+    best_score: float | None = None
+    attempts: int = 0
+
+
 class CourseDetail(CourseSummary):
     lessons: list[LessonSummary]
     test_question_count: int
+    exams: list[ExamSummary] = []
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +190,7 @@ class TestResult(BaseModel):
     score: float
     correct: int
     total: int
+    pass_score: float = 70.0
     results: list[TestQuestionResult]
     new_badges: list[str] = []
 
@@ -382,6 +396,22 @@ class SeedTestQuestion(BaseModel):
                 raise ValueError("open_text test question needs solution.criteria")
 
 
+class SeedExam(BaseModel):
+    """An extra practice exam: its own name, length and pass mark."""
+
+    slug: str = Field(pattern=r"^[a-z0-9-]+$")
+    title: dict[str, Any]
+    description: dict[str, Any] = Field(default_factory=lambda: {"en": "", "es": ""})
+    pass_score: float = Field(default=70.0, ge=0, le=100)
+    time_limit_minutes: int | None = Field(default=None, gt=0)
+    questions: list[SeedTestQuestion] = Field(min_length=5)
+
+    @field_validator("title", "description")
+    @classmethod
+    def check_bilingual(cls, v: dict) -> dict:
+        return _require_bilingual(v, "exam field")
+
+
 class SeedCourse(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9-]+$")
     order: int
@@ -389,9 +419,20 @@ class SeedCourse(BaseModel):
     title: dict[str, Any]
     description: dict[str, Any]
     lessons: list[SeedLesson] = Field(min_length=1)
-    test: list[SeedTestQuestion] = Field(min_length=10, max_length=15)
+    # The classic final test. Optional only for courses that ship `exams` instead.
+    test: list[SeedTestQuestion] = Field(default_factory=list)
+    exams: list[SeedExam] = Field(default_factory=list)
 
     @field_validator("title", "description")
     @classmethod
     def check_bilingual(cls, v: dict) -> dict:
         return _require_bilingual(v, "course field")
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.test and not self.exams:
+            raise ValueError("a course needs a 'test' (10-15 questions) or at least one entry in 'exams'")
+        if self.test and not (10 <= len(self.test) <= 15):
+            raise ValueError(f"'test' must have 10-15 questions (got {len(self.test)})")
+        slugs = [e.slug for e in self.exams]
+        if len(slugs) != len(set(slugs)):
+            raise ValueError("duplicate exam slugs")

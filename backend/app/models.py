@@ -46,8 +46,12 @@ class Course(Base):
     lessons: Mapped[list["Lesson"]] = relationship(
         back_populates="course", cascade="all, delete-orphan", order_by="Lesson.order_index"
     )
+    # every question of the course; the classic final test is the subset with exam_id IS NULL
     test_questions: Mapped[list["TestQuestion"]] = relationship(
         back_populates="course", cascade="all, delete-orphan", order_by="TestQuestion.order_index"
+    )
+    exams: Mapped[list["CourseExam"]] = relationship(
+        back_populates="course", cascade="all, delete-orphan", order_by="CourseExam.order_index"
     )
 
 
@@ -82,17 +86,46 @@ class Exercise(Base):
     lesson: Mapped["Lesson"] = relationship(back_populates="exercises")
 
 
+class CourseExam(Base):
+    """A named practice exam inside a course (e.g. a 50-question mock exam).
+
+    Courses keep their classic final test as questions with ``exam_id IS NULL``;
+    any extra exam gets a row here and owns its own questions."""
+
+    __tablename__ = "course_exams"
+    __table_args__ = (UniqueConstraint("course_id", "slug", name="uq_exam_course_slug"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    slug: Mapped[str] = mapped_column(String(80))
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+    title: Mapped[dict] = mapped_column(JSONB)
+    description: Mapped[dict] = mapped_column(JSONB, default=dict)
+    pass_score: Mapped[float] = mapped_column(Float, default=70.0)  # 0..100
+    time_limit_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    course: Mapped["Course"] = relationship(back_populates="exams")
+    questions: Mapped[list["TestQuestion"]] = relationship(
+        back_populates="exam", cascade="all, delete-orphan", order_by="TestQuestion.order_index"
+    )
+
+
 class TestQuestion(Base):
     __tablename__ = "test_questions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    # NULL = the course's classic final test
+    exam_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_exams.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     type: Mapped[str] = mapped_column(String(30))  # multiple_choice | open_text
     data: Mapped[dict] = mapped_column(JSONB)
     solution: Mapped[dict] = mapped_column(JSONB)
 
     course: Mapped["Course"] = relationship(back_populates="test_questions")
+    exam: Mapped["CourseExam | None"] = relationship(back_populates="questions")
 
 
 class UserLessonProgress(Base):
@@ -124,6 +157,10 @@ class TestAttempt(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    # NULL = attempt on the course's classic final test
+    exam_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_exams.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     score: Mapped[float] = mapped_column(Float)  # 0..100
     total: Mapped[int] = mapped_column(Integer)
     correct: Mapped[int] = mapped_column(Integer)
