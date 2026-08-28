@@ -1,0 +1,1727 @@
+{
+  "slug": "behavioral-interview",
+  "order": 17,
+  "icon": "users",
+  "title": {
+    "en": "Interview Skills & Behavioral",
+    "es": "Habilidades de Entrevista y Conductuales"
+  },
+  "description": {
+    "en": "The half of the interview that is not code: STAR answers, narrating a system you designed, walking through an incident, disagreement, scope and compensation, and what to ask them.",
+    "es": "La mitad de la entrevista que no es código: respuestas STAR, narrar un sistema que diseñaste, recorrer un incidente, desacuerdos, alcance y compensación, y qué preguntarles a ellos."
+  },
+  "lessons": [
+    {
+      "slug": "the-star-method",
+      "question": {
+        "en": "What is the STAR method, and how do you keep an answer under three minutes?",
+        "es": "¿Qué es el método STAR y cómo mantienes una respuesta bajo tres minutos?"
+      },
+      "definition": {
+        "en": "Behavioral questions — \"tell me about a time when...\" — are scored against a rubric, not enjoyed as stories. STAR is the structure that makes your answer scoreable.\n\n- **Situation** — the context. *One sentence.* Where, when, what was at stake.\n- **Task** — what *you* were responsible for. *One sentence.* This is where you establish scope and ownership.\n- **Action** — what **you** decided and did, and why you chose it over the alternative. **This is roughly 60% of the answer and it is what they are grading.**\n- **Result** — what happened, with a number, plus what changed afterwards.\n\n**Where candidates lose the answer:**\n\n1. **Too much Situation.** Ninety seconds of background before anything you did. The interviewer is taking notes under \"Action\" and has nothing to write.\n2. **\"We\" instead of \"I\".** Team credit is generous, but the rubric is about *you*. Say \"the team decided X; I owned Y and argued for Z.\" Both accurate and scoreable.\n3. **No Result, or no number.** \"It went well\" is unfalsifiable. \"p99 dropped from 1.8 s to 240 ms and the on-call pages for that service went to zero\" is evidence.\n4. **No trade-off in the Action.** Describing what you built is a description. Describing what you *chose*, what you rejected, and why, is engineering judgement — which is the actual thing being measured.\n\n**Timing.** Aim for two to three minutes. Roughly: 15 seconds Situation, 15 Task, 90 Action, 30 Result. If it runs past four minutes you have lost the room; interviewers rarely interrupt, they just stop scoring.\n\n**Preparation that works.** Do not memorise answers per question — you will get a question you did not prepare. Instead prepare **five to seven stories** from your real experience, each with a number attached, covering: a hard technical problem, a conflict, a failure, a leadership or mentoring moment, an ambiguous problem you scoped yourself, and a delivery under pressure. Almost every behavioral question maps onto one of those. You then re-frame the same story to the question asked rather than inventing on the spot.\n\n**The follow-up you should expect.** Good interviewers probe: \"what would you do differently?\", \"what did the other person think?\", \"how did you know it worked?\". Prepare one layer deeper than the story itself — the second question is usually where the signal is.\n\nA useful self-test: if your story could be told by anyone else on that team without changing a word, it is not yet an answer about you.",
+        "es": "Las preguntas conductuales — \"cuéntame de una vez que...\" — se califican contra una rúbrica, no se disfrutan como historias. STAR es la estructura que hace tu respuesta calificable.\n\n- **Situación** — el contexto. *Una frase.* Dónde, cuándo, qué estaba en juego.\n- **Tarea** — de qué eras responsable *tú*. *Una frase.* Acá estableces alcance y propiedad.\n- **Acción** — qué decidiste e hiciste **tú**, y por qué lo elegiste sobre la alternativa. **Esto es aproximadamente el 60% de la respuesta y es lo que están calificando.**\n- **Resultado** — qué pasó, con un número, más qué cambió después.\n\n**Dónde se pierde la respuesta:**\n\n1. **Demasiada Situación.** Noventa segundos de contexto antes de nada que hayas hecho. El entrevistador está tomando notas bajo \"Acción\" y no tiene nada que escribir.\n2. **\"Nosotros\" en vez de \"yo\".** Dar crédito al equipo es generoso, pero la rúbrica es sobre *ti*. Di \"el equipo decidió X; yo era dueño de Y y argumenté por Z.\" Preciso y calificable a la vez.\n3. **Sin Resultado, o sin número.** \"Salió bien\" no se puede falsear. \"El p99 bajó de 1.8 s a 240 ms y las guardias de ese servicio quedaron en cero\" es evidencia.\n4. **Sin trade-off en la Acción.** Describir lo que construiste es una descripción. Describir lo que *elegiste*, lo que rechazaste, y por qué, es criterio de ingeniería — que es lo que realmente se está midiendo.\n\n**Tiempo.** Apunta a dos o tres minutos. Aproximadamente: 15 segundos de Situación, 15 de Tarea, 90 de Acción, 30 de Resultado. Si pasa de cuatro minutos perdiste la sala; los entrevistadores rara vez interrumpen, simplemente dejan de calificar.\n\n**Preparación que funciona.** No memorices respuestas por pregunta — te van a hacer una que no preparaste. En cambio prepara **cinco a siete historias** de tu experiencia real, cada una con un número asociado, cubriendo: un problema técnico difícil, un conflicto, un fracaso, un momento de liderazgo o mentoría, un problema ambiguo que acotaste tú, y una entrega bajo presión. Casi toda pregunta conductual mapea a una de esas. Después reencuadras la misma historia hacia la pregunta que te hicieron, en vez de inventar en el momento.\n\n**El seguimiento que debes esperar.** Los buenos entrevistadores hurgan: \"¿qué harías distinto?\", \"¿qué pensaba la otra persona?\", \"¿cómo supiste que funcionó?\". Prepárate una capa más profunda que la historia en sí — la segunda pregunta suele ser donde está la señal.\n\nUna autoevaluación útil: si tu historia la podría contar cualquier otro de ese equipo sin cambiar una palabra, todavía no es una respuesta sobre ti."
+      },
+      "examples": [
+        {
+          "en": "Weak Result: \"we fixed the performance issue and everyone was happy.\" Strong Result: \"checkout p99 went from 4.2 s to 380 ms, cart abandonment dropped 6 points over the next month, and I added a latency SLO with an alert so the regression could not come back silently.\" The second one gives the interviewer something to write down.",
+          "es": "Resultado débil: \"arreglamos el problema de rendimiento y todos quedaron contentos.\" Resultado fuerte: \"el p99 del checkout pasó de 4.2 s a 380 ms, el abandono de carrito bajó 6 puntos en el mes siguiente, y agregué un SLO de latencia con alerta para que la regresión no pudiera volver en silencio.\" El segundo le da al entrevistador algo que anotar."
+        },
+        {
+          "en": "A candidate spends two minutes describing their company's org structure and product before mentioning a single decision. The interviewer's rubric has one line for context and four for actions and judgement. The answer scores low despite the work being genuinely impressive.",
+          "es": "Un candidato pasa dos minutos describiendo la estructura organizacional y el producto de su empresa antes de mencionar una sola decisión. La rúbrica del entrevistador tiene una línea para contexto y cuatro para acciones y criterio. La respuesta puntúa bajo aunque el trabajo haya sido genuinamente impresionante."
+        },
+        {
+          "en": "The same story about a migration serves 'tell me about a technical challenge', 'tell me about a time you disagreed with someone', and 'tell me about something that did not go as planned' — by shifting which part of the Action you expand. That is why you prepare stories, not answers.",
+          "es": "La misma historia sobre una migración sirve para 'cuéntame de un desafío técnico', 'cuéntame de una vez que discrepaste con alguien' y 'cuéntame de algo que no salió como planeaste' — cambiando qué parte de la Acción expandes. Por eso preparas historias, no respuestas."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the parts of a STAR answer, and note the time budget for each.",
+              "es": "Ordena las partes de una respuesta STAR, y fíjate en el presupuesto de tiempo de cada una."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "s",
+                "label": {
+                  "en": "Situation — one sentence of context (~15 s)",
+                  "es": "Situación — una frase de contexto (~15 s)"
+                }
+              },
+              {
+                "id": "t",
+                "label": {
+                  "en": "Task — what you personally owned (~15 s)",
+                  "es": "Tarea — de qué eras responsable tú personalmente (~15 s)"
+                }
+              },
+              {
+                "id": "a",
+                "label": {
+                  "en": "Action — your decisions, the alternative you rejected, and why (~90 s)",
+                  "es": "Acción — tus decisiones, la alternativa que rechazaste, y por qué (~90 s)"
+                }
+              },
+              {
+                "id": "r",
+                "label": {
+                  "en": "Result — a number, plus what you changed so it would not recur (~30 s)",
+                  "es": "Resultado — un número, más qué cambiaste para que no se repitiera (~30 s)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "s",
+              "t",
+              "a",
+              "r"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these sentences belongs in the **Result**, not the Action?",
+              "es": "¿Cuál de estas frases va en el **Resultado**, no en la Acción?"
+            },
+            "options": [
+              {
+                "en": "\"p99 fell from 1.8 s to 240 ms, and I added an SLO alert so a regression would page us instead of being reported by a customer.\"",
+                "es": "\"El p99 cayó de 1.8 s a 240 ms, y agregué una alerta de SLO para que una regresión nos avisara a nosotros en vez de que la reportara un cliente.\""
+              },
+              {
+                "en": "\"I profiled the endpoint and found the N+1 query in the serializer.\"",
+                "es": "\"Perfilé el endpoint y encontré la consulta N+1 en el serializador.\""
+              },
+              {
+                "en": "\"I chose to add a covering index rather than a cache, because the data changed too often for a cache to stay warm.\"",
+                "es": "\"Elegí agregar un índice cubridor en vez de un caché, porque los datos cambiaban demasiado seguido para que el caché se mantuviera tibio.\""
+              },
+              {
+                "en": "\"The service was owned by three engineers and handled checkout traffic.\"",
+                "es": "\"El servicio lo mantenían tres ingenieros y manejaba el tráfico de checkout.\""
+              }
+            ],
+            "explanation": {
+              "en": "The Result is the measurable outcome plus what you changed so the problem could not silently return. Profiling the endpoint and choosing an index over a cache are both Actions — investigation, and a decision with a stated trade-off, which is the most valuable content in the whole answer. Describing who owned the service is Situation, and one sentence of it is plenty. A Result without a number is the most common weak point in an otherwise good answer.",
+              "es": "El Resultado es el desenlace medible más lo que cambiaste para que el problema no pudiera volver en silencio. Perfilar el endpoint y elegir un índice en vez de un caché son ambas Acciones — investigación, y una decisión con un trade-off enunciado, que es el contenido más valioso de toda la respuesta. Describir quién mantenía el servicio es Situación, y con una frase alcanza. Un Resultado sin número es el punto débil más común en una respuesta por lo demás buena."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Answer this in STAR format, from your own experience: **\"Tell me about a time you had to fix a performance problem under time pressure.\"**\n\nKeep Situation and Task to one sentence each, spend most of the answer on what you decided and why, and end with a measurable result.",
+              "es": "Responde esto en formato STAR, desde tu propia experiencia: **\"Cuéntame de una vez que tuviste que arreglar un problema de rendimiento bajo presión de tiempo.\"**\n\nMantén Situación y Tarea en una frase cada una, dedica la mayor parte de la respuesta a qué decidiste y por qué, y termina con un resultado medible."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must contain all four STAR parts, identifiable even if not labelled. Situation and Task must be brief — roughly one to two sentences each; a long context section is the main thing to flag. The Action must dominate the answer and must be written in the first person ('I decided', not only 'we'), and must include at least one explicit decision with a stated alternative that was rejected and the reason — describing only what was built, without a trade-off, is the key weakness to call out. The Result must include at least one concrete number or measurable outcome; 'it was much faster' is not sufficient. Bonus: mentions what was changed afterwards to prevent recurrence (an alert, an SLO, a test, a runbook), acknowledges what they would do differently, or shows how they diagnosed rather than guessed. If the answer is generic or hypothetical rather than a specific incident, say so — interviewers can tell, and vague answers score poorly.",
+              "es": "Debe contener las cuatro partes de STAR, identificables aunque no estén etiquetadas. Situación y Tarea deben ser breves — más o menos una o dos frases cada una; una sección de contexto larga es lo principal a señalar. La Acción debe dominar la respuesta y debe estar escrita en primera persona ('yo decidí', no solo 'nosotros'), y debe incluir al menos una decisión explícita con una alternativa enunciada que fue rechazada y la razón — describir solo lo que se construyó, sin un trade-off, es la debilidad clave a señalar. El Resultado debe incluir al menos un número concreto o un desenlace medible; 'quedó mucho más rápido' no alcanza. Bonus: menciona qué se cambió después para prevenir la recurrencia (una alerta, un SLO, un test, un runbook), reconoce qué haría distinto, o muestra que diagnosticó en vez de adivinar. Si la respuesta es genérica o hipotética en vez de un incidente específico, dilo — los entrevistadores lo notan, y las respuestas vagas puntúan mal."
+            },
+            "reference": "**Situation.** Two days before a Black Friday freeze, our checkout p99 crossed 4 seconds and support started forwarding complaints.\n\n**Task.** I owned the checkout service and had until end of day to either fix it or make the case for rolling back the previous week's release.\n\n**Action.** I started from data rather than a hypothesis: pg_stat_statements sorted by total execution time, not mean, because I wanted the query consuming the most database time rather than the slowest single one. The top entry was a 6 ms cart-lookup called about forty times per checkout — an N+1 introduced when the serializer started eager-loading line items individually.\n\nI had three options. Caching the lookup was fastest to write, but carts change on nearly every request, so the hit rate would have been poor and I would have added an invalidation bug under time pressure. Rewriting the serializer to batch-load was the correct long-term fix but touched code we were about to freeze. I chose a third option: a covering index on `(cart_id, product_id) INCLUDE (quantity, price)` so the existing query became an index-only scan, which was a one-line migration, reversible, and did not touch application code before a freeze. I filed the serializer rewrite as a follow-up for after Black Friday, because I wanted the risky change to happen when we could watch it.\n\nI verified with EXPLAIN (ANALYZE, BUFFERS) that the plan changed to an index-only scan with no heap fetches, then shipped it to one canary instance and watched p99 for twenty minutes before rolling it out.\n\n**Result.** Checkout p99 went from 4.2 s to 380 ms, and the database CPU dropped from 78% to 31%, which also gave us headroom for the traffic peak. I added a latency SLO with an alert on the checkout endpoint, so the next regression would page us instead of arriving through support. The serializer rewrite landed three weeks later, and in hindsight I should have added that alert months earlier — the problem had been growing for a while and nobody noticed until customers did."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "tell-me-about-a-system-you-designed",
+      "question": {
+        "en": "How do you narrate a system you designed?",
+        "es": "¿Cómo narras un sistema que diseñaste?"
+      },
+      "definition": {
+        "en": "This question is not asking what you built. It is asking **whether you can reason about a decision you made**, which means the interesting content is the constraints and the alternatives, not the architecture diagram.\n\nThe structure that works:\n\n1. **Context, in one or two sentences.** What the system does and who uses it. Resist the org chart.\n2. **Constraints, with numbers.** \"Roughly 8 000 writes per second at peak, 200 ms p99 budget, data could not leave the EU, and we were three engineers.\" Numbers convert a story into engineering. Team size and deadline are legitimate constraints and naming them shows you design for the organisation you have.\n3. **The options you considered.** At least two. This is the part most candidates skip entirely, and it is the difference between \"I built a thing\" and \"I made a decision.\"\n4. **The decision and the reason.** Which one you chose and which constraint decided it.\n5. **The trade-off you accepted.** Every design gives something up. Naming yours unprompted is the strongest single signal in the answer — it demonstrates you knew the cost at the time rather than discovering it later.\n6. **The outcome, and what you would change.** What actually happened in production, and what you now know that you did not then.\n\n**Two failure modes to avoid.**\n\n- **The tour.** Walking through every component in order. It fills the time and says nothing about judgement, because no component was ever in question.\n- **The flawless design.** A system with no downsides was not designed; it was described. Interviewers hear \"and it worked perfectly\" as either inexperience or a lack of candour, and they will probe until they find the seam.\n\n**Scoping honestly.** If you worked on part of a larger system, say so and describe your part in depth. \"I owned the ingestion path; the storage layer was another team's, and here is what our interface with them was\" is a strong answer. Claiming the whole system tends to collapse under two follow-up questions, and the recovery is worse than the honest framing would have been.\n\n**Have the numbers ready.** Throughput, latency, data volume, team size, timeline. If you genuinely do not remember, estimate out loud and label it: \"I don't recall exactly — order of ten thousand requests per second.\" That reads as calibrated. Silence, or a suspiciously round confident number, does not.",
+        "es": "Esta pregunta no está preguntando qué construiste. Está preguntando **si puedes razonar sobre una decisión que tomaste**, lo que significa que el contenido interesante son las restricciones y las alternativas, no el diagrama de arquitectura.\n\nLa estructura que funciona:\n\n1. **Contexto, en una o dos frases.** Qué hace el sistema y quién lo usa. Resiste el organigrama.\n2. **Restricciones, con números.** \"Unas 8 000 escrituras por segundo en el pico, un presupuesto de 200 ms de p99, los datos no podían salir de la UE, y éramos tres ingenieros.\" Los números convierten una historia en ingeniería. El tamaño del equipo y la fecha límite son restricciones legítimas, y nombrarlas muestra que diseñas para la organización que tienes.\n3. **Las opciones que consideraste.** Al menos dos. Esta es la parte que la mayoría de los candidatos se salta por completo, y es la diferencia entre \"construí una cosa\" y \"tomé una decisión\".\n4. **La decisión y la razón.** Cuál elegiste y qué restricción la decidió.\n5. **El trade-off que aceptaste.** Todo diseño resigna algo. Nombrar el tuyo sin que te lo pidan es la señal más fuerte de toda la respuesta — demuestra que conocías el costo en el momento, en vez de haberlo descubierto después.\n6. **El resultado, y qué cambiarías.** Qué pasó realmente en producción, y qué sabes ahora que no sabías entonces.\n\n**Dos modos de fallo a evitar.**\n\n- **El tour.** Recorrer cada componente en orden. Llena el tiempo y no dice nada sobre criterio, porque ningún componente estuvo nunca en cuestión.\n- **El diseño impecable.** Un sistema sin desventajas no fue diseñado; fue descrito. Los entrevistadores escuchan \"y funcionó perfecto\" como inexperiencia o falta de franqueza, y van a hurgar hasta encontrar la costura.\n\n**Acotar con honestidad.** Si trabajaste en parte de un sistema más grande, dilo y describe tu parte en profundidad. \"Yo era dueño del camino de ingesta; la capa de almacenamiento era de otro equipo, y esta era nuestra interfaz con ellos\" es una respuesta fuerte. Reclamar el sistema entero tiende a derrumbarse con dos preguntas de seguimiento, y la recuperación es peor de lo que habría sido el encuadre honesto.\n\n**Ten los números listos.** Throughput, latencia, volumen de datos, tamaño del equipo, plazos. Si genuinamente no recuerdas, estima en voz alta y etiquétalo: \"no lo recuerdo exacto — del orden de diez mil peticiones por segundo.\" Eso se lee como calibrado. El silencio, o un número redondo sospechosamente seguro, no."
+      },
+      "examples": [
+        {
+          "en": "\"We used Kafka\" is a component. \"We had two options: Kafka, or Postgres as a queue with SKIP LOCKED. At 8 000 events per second with a 7-day replay requirement, Postgres would have worked for throughput but not for replay, and we chose Kafka accepting that we now had a second system to operate with only three engineers\" is a decision.",
+          "es": "\"Usamos Kafka\" es un componente. \"Teníamos dos opciones: Kafka, o Postgres como cola con SKIP LOCKED. A 8 000 eventos por segundo con un requisito de replay de 7 días, Postgres habría alcanzado para el throughput pero no para el replay, y elegimos Kafka aceptando que ahora teníamos un segundo sistema que operar con solo tres ingenieros\" es una decisión."
+        },
+        {
+          "en": "A candidate describes a beautiful event-driven architecture and, when asked what they would change, says \"nothing\". The interviewer then asks how they debug a failed message across five services — and the answer is that they never solved it. Volunteering that limitation first would have scored far higher than being found out.",
+          "es": "Un candidato describe una arquitectura orientada a eventos preciosa y, cuando le preguntan qué cambiaría, dice \"nada\". El entrevistador entonces pregunta cómo debuggean un mensaje fallido a través de cinco servicios — y la respuesta es que nunca lo resolvieron. Ofrecer esa limitación primero habría puntuado mucho más alto que ser descubierto."
+        },
+        {
+          "en": "\"We chose the boring option: a single Postgres instance with a read replica, because we were two engineers and could not operate a distributed system on call. It would not have survived 10x, and we wrote down the specific metric that would trigger revisiting it\" is a stronger answer than an impressive architecture with no stated constraint.",
+          "es": "\"Elegimos la opción aburrida: una sola instancia de Postgres con una réplica de lectura, porque éramos dos ingenieros y no podíamos operar un sistema distribuido de guardia. No habría sobrevivido 10 veces la carga, y escribimos la métrica específica que dispararía revisarlo\" es una respuesta más fuerte que una arquitectura impresionante sin ninguna restricción enunciada."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the narration of a system you designed, so each part sets up the next.",
+              "es": "Ordena la narración de un sistema que diseñaste, para que cada parte prepare la siguiente."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "context",
+                "label": {
+                  "en": "Context: what the system does and who uses it, in one or two sentences",
+                  "es": "Contexto: qué hace el sistema y quién lo usa, en una o dos frases"
+                }
+              },
+              {
+                "id": "constraints",
+                "label": {
+                  "en": "Constraints, with numbers: throughput, latency budget, compliance, team size, deadline",
+                  "es": "Restricciones, con números: throughput, presupuesto de latencia, cumplimiento, tamaño del equipo, plazo"
+                }
+              },
+              {
+                "id": "options",
+                "label": {
+                  "en": "The options you considered — at least two, genuinely",
+                  "es": "Las opciones que consideraste — al menos dos, genuinamente"
+                }
+              },
+              {
+                "id": "decision",
+                "label": {
+                  "en": "The decision, and which constraint decided it",
+                  "es": "La decisión, y qué restricción la decidió"
+                }
+              },
+              {
+                "id": "tradeoff",
+                "label": {
+                  "en": "The trade-off you knowingly accepted",
+                  "es": "El trade-off que aceptaste a sabiendas"
+                }
+              },
+              {
+                "id": "outcome",
+                "label": {
+                  "en": "What happened in production, and what you would change now",
+                  "es": "Qué pasó en producción, y qué cambiarías ahora"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "context",
+              "constraints",
+              "options",
+              "decision",
+              "tradeoff",
+              "outcome"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Asked \"what would you change about that design?\", a candidate answers \"honestly, nothing — it worked really well\". Why does this hurt them?",
+              "es": "Ante \"¿qué cambiarías de ese diseño?\", un candidato responde \"honestamente, nada — funcionó muy bien\". ¿Por qué esto los perjudica?"
+            },
+            "options": [
+              {
+                "en": "Every real design trades something away, so 'nothing' reads as either not having understood the cost or not being candid about it — and the interviewer will keep probing until they find the seam anyway",
+                "es": "Todo diseño real resigna algo, así que 'nada' se lee como no haber entendido el costo o no estar siendo franco al respecto — y el entrevistador va a seguir hurgando hasta encontrar la costura de todos modos"
+              },
+              {
+                "en": "The question is a trick and should be deflected",
+                "es": "La pregunta es una trampa y hay que esquivarla"
+              },
+              {
+                "en": "It uses too few technical terms",
+                "es": "Usa muy pocos términos técnicos"
+              },
+              {
+                "en": "It sounds arrogant, and interviewers penalise confidence",
+                "es": "Suena arrogante, y los entrevistadores penalizan la confianza"
+              }
+            ],
+            "explanation": {
+              "en": "This question is explicitly an invitation to demonstrate judgement, and it is one of the easiest to score well on. Naming a real limitation — and, better, the metric that would have triggered revisiting it — shows you understood the cost at the time rather than discovering it afterwards. Answering 'nothing' forfeits that and invites the interviewer to find the weakness themselves, which is a much worse position to be in.",
+              "es": "Esta pregunta es explícitamente una invitación a demostrar criterio, y es de las más fáciles para puntuar bien. Nombrar una limitación real — y, mejor, la métrica que habría disparado revisarla — muestra que entendías el costo en el momento, en vez de haberlo descubierto después. Responder 'nada' renuncia a eso e invita al entrevistador a encontrar la debilidad por su cuenta, que es una posición mucho peor."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Describe a system or component you designed or significantly shaped. Include the constraints with numbers, at least two options you weighed, the decision and why, the trade-off you accepted, and what you would change today.",
+              "es": "Describe un sistema o componente que diseñaste o al que le diste forma de manera significativa. Incluye las restricciones con números, al menos dos opciones que sopesaste, la decisión y por qué, el trade-off que aceptaste, y qué cambiarías hoy."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must include quantified constraints — at least one real number such as throughput, latency budget, data volume, team size or deadline. Must present at least two genuine alternatives that were weighed, not a single path presented as inevitable; this is the most common omission and the most important thing to flag if missing. Must state which constraint decided the choice. Must name a trade-off the design accepted, unprompted. Must say what they would change today. Scope must be honest — if it was part of a larger system, that should be visible rather than the whole system implicitly claimed. Bonus: names the metric or threshold that would have triggered revisiting the decision, mentions the organisational constraint (team size, on-call capacity) as a legitimate design input, avoids a component-by-component tour, or shows the design was validated with real production numbers afterwards.",
+              "es": "Debe incluir restricciones cuantificadas — al menos un número real como throughput, presupuesto de latencia, volumen de datos, tamaño del equipo o plazo. Debe presentar al menos dos alternativas genuinas que se sopesaron, no un único camino presentado como inevitable; esta es la omisión más común y lo más importante a señalar si falta. Debe enunciar qué restricción decidió la elección. Debe nombrar un trade-off que el diseño aceptó, sin que se lo pidan. Debe decir qué cambiaría hoy. El alcance debe ser honesto — si fue parte de un sistema más grande, eso debe verse en vez de reclamar implícitamente el sistema entero. Bonus: nombra la métrica o umbral que habría disparado revisar la decisión, menciona la restricción organizacional (tamaño del equipo, capacidad de guardia) como una entrada legítima de diseño, evita un tour componente por componente, o muestra que el diseño se validó después con números reales de producción."
+            },
+            "reference": "**Context.** An ingestion path for advertising delivery events — impressions and clicks written by our edge servers, read later by billing and by the reporting dashboard. I owned the ingestion and storage side; the edge servers themselves were another team's.\n\n**Constraints.** Around 8 000 events per second at peak with roughly 4x that in short bursts, events had to survive a consumer outage for at least 7 days because billing reconciled weekly, the write path had a 20 ms budget so it could not block ad delivery, and we were three engineers who were also on call for everything else.\n\n**Options.** Two serious ones. Postgres as the queue, using a table with SKIP LOCKED for the consumers — simple, one system to operate, and at 8 000 writes per second entirely within what a single instance handles. Or Kafka, with consumers reading at their own pace.\n\n**Decision and reason.** The 7-day replay requirement decided it. Postgres could absorb the write rate comfortably, but retaining a week of events in a queue table meant either a very large hot table with constant vacuum pressure from the deletes, or building our own archival — and consumer lag would have been our problem to detect. Kafka gives retention and replay as a property rather than something to build. So: Kafka, with a thin producer on the write path that batched and never blocked.\n\n**Trade-off accepted.** We knowingly took on a second stateful system to operate with three people. That was the real cost, and it was not free: we had to learn partition rebalancing, consumer lag monitoring, and how to reason about ordering guarantees. We reduced the exposure by using a managed Kafka rather than running brokers ourselves, which is the part of the decision I am most confident was correct.\n\n**Outcome and what I would change.** It carried the load and survived a two-day consumer outage during a bad deploy, which was exactly the scenario the replay requirement existed for. What I would change: we partitioned by `campaign_id`, and a handful of very large campaigns produced badly skewed partitions — one consumer was doing several times the work of the others. Partitioning by event id with the campaign as a message key, and aggregating downstream, would have avoided that. I would also have written down, at design time, the specific consumer-lag threshold at which we would add partitions; we ended up discovering it during an incident instead."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "walking-through-a-production-incident",
+      "question": {
+        "en": "How do you walk an interviewer through a production incident?",
+        "es": "¿Cómo le narras un incidente de producción a un entrevistador?"
+      },
+      "definition": {
+        "en": "Interviewers ask this to learn two things: whether you **mitigate before you diagnose**, and whether you treat an incident as a systems problem or a people problem. Both are visible in how you order the story.\n\n**The order that shows the right instincts:**\n\n1. **Detect** — how did you find out? \"An alert fired on the checkout error-rate SLO\" is a much better opening than \"a customer emailed support\", and if it *was* the customer, say so — that gap is itself a finding worth naming.\n2. **Mitigate** — what you did to stop the bleeding, *before* understanding the cause. Roll back, fail over, disable the feature flag, shed load. **This is the step candidates most often skip, and skipping it is the single clearest negative signal**: it says you would keep a system broken while you satisfied your curiosity.\n3. **Diagnose** — now find the cause, with evidence. What you looked at, what you ruled out, and how.\n4. **Fix** — the real repair, deployed deliberately rather than at 3 a.m. under pressure.\n5. **Prevent** — the follow-up work: the alert that would have caught it sooner, the test, the guardrail, the runbook.\n\n**Blameless is not a slogan.** \"Someone pushed a bad migration\" describes a person. \"A migration that took an ACCESS EXCLUSIVE lock reached production because our review checklist did not cover lock levels, and staging had no traffic to reveal it\" describes a system that permitted the failure. The second version is what a senior engineer says, and it also happens to be more actionable.\n\n**Numbers that make it credible:** time to detect, time to mitigate, time to resolve, and the user impact — \"about 4% of checkouts failed for 12 minutes\". Say what you do not know, too. Precision about your uncertainty reads as trustworthy.\n\n**Vocabulary worth having:** *MTTD* (mean time to detect), *MTTR* (mean time to recover), *blast radius*, *blameless postmortem*, *action item with an owner and a date*. That last detail matters — a postmortem whose action items were never assigned is a document, not a fix, and saying so shows you have lived through the follow-through problem.\n\n**Expect the follow-up:** \"what would have caught this earlier?\" Have a real answer. The best ones are unglamorous: a missing alert, a staging environment with no realistic data, a runbook nobody had tested, a dashboard that showed averages instead of percentiles.",
+        "es": "Los entrevistadores preguntan esto para saber dos cosas: si **mitigas antes de diagnosticar**, y si tratas un incidente como un problema de sistemas o como un problema de personas. Ambas se ven en cómo ordenas la historia.\n\n**El orden que muestra los instintos correctos:**\n\n1. **Detectar** — ¿cómo te enteraste? \"Se disparó una alerta sobre el SLO de tasa de error del checkout\" es una apertura mucho mejor que \"un cliente le escribió a soporte\", y si *fue* el cliente, dilo — esa brecha es en sí un hallazgo que vale nombrar.\n2. **Mitigar** — qué hiciste para detener el sangrado, *antes* de entender la causa. Revertir, hacer failover, apagar el feature flag, descartar carga. **Este es el paso que los candidatos más se saltan, y saltárselo es la señal negativa más clara**: dice que dejarías un sistema roto mientras satisfaces tu curiosidad.\n3. **Diagnosticar** — ahora sí encontrar la causa, con evidencia. Qué miraste, qué descartaste, y cómo.\n4. **Arreglar** — la reparación real, desplegada deliberadamente en vez de a las 3 de la mañana bajo presión.\n5. **Prevenir** — el trabajo de seguimiento: la alerta que lo habría detectado antes, el test, la barrera, el runbook.\n\n**Blameless no es un eslogan.** \"Alguien subió una migración mala\" describe a una persona. \"Una migración que tomaba un lock ACCESS EXCLUSIVE llegó a producción porque nuestra checklist de revisión no cubría niveles de lock, y staging no tenía tráfico que lo revelara\" describe un sistema que permitió la falla. La segunda versión es la que dice un ingeniero senior, y además resulta ser más accionable.\n\n**Números que lo hacen creíble:** tiempo hasta detectar, hasta mitigar, hasta resolver, y el impacto en usuarios — \"alrededor del 4% de los checkouts falló durante 12 minutos\". Di también lo que no sabes. La precisión sobre tu incertidumbre se lee como confiable.\n\n**Vocabulario que conviene tener:** *MTTD* (tiempo medio hasta detectar), *MTTR* (tiempo medio hasta recuperar), *radio de impacto*, *postmortem sin culpables*, *acción con responsable y fecha*. Ese último detalle importa — un postmortem cuyas acciones nunca se asignaron es un documento, no un arreglo, y decirlo muestra que viviste el problema del seguimiento.\n\n**Espera el seguimiento:** \"¿qué lo habría detectado antes?\" Ten una respuesta real. Las mejores no son glamorosas: una alerta faltante, un entorno de staging sin datos realistas, un runbook que nadie había probado, un dashboard que mostraba promedios en vez de percentiles."
+      },
+      "examples": [
+        {
+          "en": "\"I saw the error rate climbing and spent forty minutes reading logs to understand it\" is the wrong instinct told out loud. \"I rolled back the deploy within four minutes, confirmed the error rate recovered, and then spent forty minutes on the logs\" is the same forty minutes, with users not affected during them.",
+          "es": "\"Vi la tasa de error subiendo y pasé cuarenta minutos leyendo logs para entenderlo\" es el instinto equivocado dicho en voz alta. \"Reverti el deploy en cuatro minutos, confirmé que la tasa de error se recuperó, y después pasé cuarenta minutos en los logs\" son los mismos cuarenta minutos, con los usuarios no afectados durante ellos."
+        },
+        {
+          "en": "An incident where the deploy was not the cause is worth more than one where it was: 'the rollback did not help, which told us the trigger was external — and it turned out a third-party API had silently started rate-limiting us' shows that you use mitigation as a diagnostic signal, not just a reflex.",
+          "es": "Un incidente donde el deploy no era la causa vale más que uno donde sí lo era: 'la reversión no ayudó, lo que nos dijo que el disparador era externo — y resultó que una API de terceros había empezado a limitarnos silenciosamente' muestra que usas la mitigación como señal diagnóstica, no solo como reflejo."
+        },
+        {
+          "en": "\"The postmortem produced six action items and we shipped two\" is a more credible answer than \"we fixed everything\", and it opens the more interesting conversation: which two, and why those. Interviewers who have run real postmortems recognise this immediately.",
+          "es": "\"El postmortem produjo seis acciones y entregamos dos\" es una respuesta más creíble que \"arreglamos todo\", y abre la conversación más interesante: cuáles dos, y por qué esas. Los entrevistadores que corrieron postmortems reales lo reconocen de inmediato."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the phases of an incident as you should narrate them — and as you should actually run one.",
+              "es": "Ordena las fases de un incidente como deberías narrarlas — y como deberías realmente manejarlo."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "detect",
+                "label": {
+                  "en": "Detect — how you found out, and how long that took",
+                  "es": "Detectar — cómo te enteraste, y cuánto tardó eso"
+                }
+              },
+              {
+                "id": "mitigate",
+                "label": {
+                  "en": "Mitigate — stop the user impact before understanding the cause",
+                  "es": "Mitigar — detener el impacto al usuario antes de entender la causa"
+                }
+              },
+              {
+                "id": "diagnose",
+                "label": {
+                  "en": "Diagnose — find the cause with evidence, now that nothing is on fire",
+                  "es": "Diagnosticar — encontrar la causa con evidencia, ahora que nada está en llamas"
+                }
+              },
+              {
+                "id": "fix",
+                "label": {
+                  "en": "Fix — deploy the real repair deliberately, not under pressure",
+                  "es": "Arreglar — desplegar la reparación real deliberadamente, no bajo presión"
+                }
+              },
+              {
+                "id": "prevent",
+                "label": {
+                  "en": "Prevent — the alert, test or guardrail, with an owner and a date",
+                  "es": "Prevenir — la alerta, el test o la barrera, con responsable y fecha"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "detect",
+              "mitigate",
+              "diagnose",
+              "fix",
+              "prevent"
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each incident term with what it actually measures or means.",
+              "es": "Conecta cada término de incidentes con lo que realmente mide o significa."
+            },
+            "left": [
+              {
+                "id": "mttd",
+                "label": {
+                  "en": "MTTD",
+                  "es": "MTTD"
+                }
+              },
+              {
+                "id": "mttr",
+                "label": {
+                  "en": "MTTR",
+                  "es": "MTTR"
+                }
+              },
+              {
+                "id": "blast",
+                "label": {
+                  "en": "Blast radius",
+                  "es": "Radio de impacto"
+                }
+              },
+              {
+                "id": "blameless",
+                "label": {
+                  "en": "Blameless postmortem",
+                  "es": "Postmortem sin culpables"
+                }
+              },
+              {
+                "id": "action",
+                "label": {
+                  "en": "Action item",
+                  "es": "Acción de seguimiento"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "detect",
+                "label": {
+                  "en": "How long it took to notice — usually the number a missing alert makes embarrassing",
+                  "es": "Cuánto se tardó en notarlo — normalmente el número que una alerta faltante vuelve vergonzoso"
+                }
+              },
+              {
+                "id": "recover",
+                "label": {
+                  "en": "How long from detection to service restored for users",
+                  "es": "Cuánto pasó desde la detección hasta que el servicio se restauró para los usuarios"
+                }
+              },
+              {
+                "id": "scope",
+                "label": {
+                  "en": "Who and how much was affected: which users, which regions, what fraction of requests",
+                  "es": "A quién y cuánto afectó: qué usuarios, qué regiones, qué fracción de las peticiones"
+                }
+              },
+              {
+                "id": "system",
+                "label": {
+                  "en": "A review that asks which system permitted the failure, not which person made the change",
+                  "es": "Una revisión que pregunta qué sistema permitió la falla, no qué persona hizo el cambio"
+                }
+              },
+              {
+                "id": "owner",
+                "label": {
+                  "en": "A follow-up with a named owner and a date — without both, the postmortem is a document, not a fix",
+                  "es": "Un seguimiento con responsable nombrado y fecha — sin ambos, el postmortem es un documento, no un arreglo"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "mttd": "detect",
+              "mttr": "recover",
+              "blast": "scope",
+              "blameless": "system",
+              "action": "owner"
+            }
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Walk me through a production incident you were involved in. Cover how you found out, what you did first, how you diagnosed it, and what changed afterwards — with times and impact where you can.",
+              "es": "Cuéntame un incidente de producción en el que estuviste involucrado. Cubre cómo te enteraste, qué hiciste primero, cómo lo diagnosticaste, y qué cambió después — con tiempos e impacto donde puedas."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must show mitigation before diagnosis — the answer should describe stopping user impact (rollback, failover, feature flag, load shedding) before investigating root cause. If diagnosis comes first with no mitigation, that is the primary thing to flag, because it is the clearest negative signal in this question. Must cover detection (including how, and ideally how long) and follow-up prevention work. Should include at least one number: time to detect, time to mitigate, or user impact. Framing must be blameless — describing the system or process that allowed the failure rather than naming a person's mistake; if it blames an individual, say so. Bonus: names a specific preventive action with an owner, admits what they still do not know, uses the fact that a mitigation did or did not work as diagnostic evidence, acknowledges that not all postmortem action items shipped, or identifies a detection gap (a customer reported it before monitoring did).",
+              "es": "Debe mostrar mitigación antes que diagnóstico — la respuesta debe describir detener el impacto al usuario (reversión, failover, feature flag, descarte de carga) antes de investigar la causa raíz. Si el diagnóstico viene primero sin mitigación, eso es lo principal a señalar, porque es la señal negativa más clara de esta pregunta. Debe cubrir la detección (incluyendo cómo, e idealmente cuánto tardó) y el trabajo preventivo de seguimiento. Debería incluir al menos un número: tiempo hasta detectar, hasta mitigar, o impacto en usuarios. El encuadre debe ser sin culpables — describiendo el sistema o proceso que permitió la falla en vez de nombrar el error de una persona; si culpa a un individuo, dilo. Bonus: nombra una acción preventiva específica con responsable, admite qué todavía no sabe, usa el hecho de que una mitigación funcionó o no como evidencia diagnóstica, reconoce que no todas las acciones del postmortem se entregaron, o identifica una brecha de detección (un cliente lo reportó antes que el monitoreo)."
+            },
+            "reference": "**Detect.** At 09:14 our checkout error-rate alert fired — the SLO burn-rate alert, not a threshold on raw errors, so it triggered about ninety seconds after the error rate started climbing. Worth noting: a customer had emailed support four minutes before that, which told us our detection was slower than it should have been for a user-facing path.\n\n**Mitigate.** We had deployed twenty minutes earlier, so the first action was to roll back — not because we knew it was the cause, but because it was the cheapest reversible action and the release was the most likely change. Rollback completed at 09:19 and the error rate did **not** recover. That was useful: it ruled out our code and pointed outward. So the second mitigation was to enable the degraded path we had built for exactly this, which serves checkout from cached pricing rather than calling the pricing service. Errors returned to baseline at 09:23, so about nine minutes of user impact, affecting roughly 4% of checkout attempts.\n\n**Diagnose.** With users unaffected, we looked properly. The pricing service was healthy and its own dashboards were green, but our client-side latency to it had gone from 30 ms to timeouts. Traces showed the requests never arriving. It turned out a network policy change in the cluster, applied that morning by a different team as part of an unrelated migration, had narrowed egress rules and was dropping a fraction of connections. Our retry logic then amplified it.\n\n**Fix.** The network policy was corrected the same afternoon, deliberately, with the owning team present — not by us at speed during the incident.\n\n**Prevent.** The blameless postmortem's finding was not \"someone changed a network policy\". It was that a change to shared cluster networking could reach production without any signal to the teams whose traffic crossed it, and that our client had no circuit breaker, so retries turned a partial failure into an outage. Four action items came out: a circuit breaker on the pricing client (mine, shipped that week), an alert on client-side dependency latency rather than only on our own error rate, a required notification for shared network policy changes, and realistic traffic in staging. We shipped the first two quickly; the third took a quarter because it needed another team's buy-in, and the fourth is honestly still not done.\n\nThe thing I would fix first if it happened again is detection: a customer noticed before our monitoring did, and that four-minute gap is the number I would most want to bring down."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "handling-disagreement-with-a-tech-lead",
+      "question": {
+        "en": "How do you answer \"tell me about a disagreement with your tech lead\"?",
+        "es": "¿Cómo respondes a \"cuéntame de un desacuerdo con tu tech lead\"?"
+      },
+      "definition": {
+        "en": "This question is a trap in both directions, and the trap is symmetric.\n\n**Answer too softly** — \"I don't really have disagreements, I just support the team's decision\" — and you read as someone with no technical opinions, or someone who will watch a bad decision ship without saying anything. Neither is what a senior hire looks like.\n\n**Answer too hard** — a story where you were right, they were wrong, and you won — and you read as difficult to work with. Interviewers are explicitly screening for this, because a technically strong engineer who cannot disagree well is a net negative on a team.\n\n**What they are actually testing:** can you hold a position, argue it with evidence, and then commit fully to a decision that went against you?\n\n**The structure that works:**\n\n1. **Frame it as a technical disagreement, not a personality one.** \"We disagreed on whether to introduce a message queue\" — not \"my lead was stubborn\".\n2. **Steelman their position.** State their reasoning as well as they would. This is the single strongest move available in this answer: it proves you actually understood the argument rather than talking past it.\n3. **Say what you did to resolve it.** The good answers are all about converting opinion into evidence — a prototype, a benchmark, a written doc, a small experiment, pulling in a third perspective.\n4. **Say what happened, honestly.** Sometimes you were right. Sometimes you were wrong — **and a story where you turned out to be wrong is often the stronger answer**, because it demonstrates you can update.\n5. **Disagree and commit.** If the decision went against you, say what you did next. \"I wrote down my concern in the design doc so it was on record, and then implemented their approach properly — not half-heartedly.\" Sabotage-by-compliance is a real failure mode and interviewers know it.\n6. **What you would do differently.** Usually: raise it earlier, or in writing, or with data instead of instinct.\n\n**The reframe that helps.** Escalating is not \"telling on someone\". If a decision is genuinely high-stakes and irreversible, involving more people is responsible, and saying so calmly is a mature signal — as long as you tried directly first.\n\n**Never do this:** disparage a named former colleague or manager. Even when justified, the interviewer only has your account, and the thing they are actually learning is how you talk about people who are not in the room.",
+        "es": "Esta pregunta es una trampa en ambas direcciones, y la trampa es simétrica.\n\n**Responder demasiado blando** — \"la verdad no tengo desacuerdos, simplemente apoyo la decisión del equipo\" — y te lees como alguien sin opiniones técnicas, o como alguien que va a ver una mala decisión salir a producción sin decir nada. Ninguna de las dos es lo que parece una contratación senior.\n\n**Responder demasiado duro** — una historia donde tú tenías razón, ellos estaban equivocados, y ganaste — y te lees como alguien difícil de trabajar. Los entrevistadores están filtrando esto explícitamente, porque un ingeniero técnicamente fuerte que no sabe discrepar bien es un negativo neto en un equipo.\n\n**Lo que realmente están evaluando:** ¿puedes sostener una posición, argumentarla con evidencia, y después comprometerte por completo con una decisión que fue en tu contra?\n\n**La estructura que funciona:**\n\n1. **Encuádralo como un desacuerdo técnico, no de personalidad.** \"No coincidíamos en si introducir una cola de mensajes\" — no \"mi lead era terco\".\n2. **Presenta su posición en su versión más fuerte.** Enuncia su razonamiento tan bien como lo haría esa persona. Esta es la movida más fuerte disponible en esta respuesta: prueba que realmente entendiste el argumento en vez de hablar por al lado.\n3. **Di qué hiciste para resolverlo.** Las buenas respuestas se tratan de convertir opinión en evidencia — un prototipo, un benchmark, un documento escrito, un experimento chico, traer una tercera perspectiva.\n4. **Di qué pasó, honestamente.** A veces tenías razón. A veces estabas equivocado — **y una historia donde resultaste estar equivocado suele ser la respuesta más fuerte**, porque demuestra que puedes actualizar tu posición.\n5. **Discrepa y comprométete.** Si la decisión fue en tu contra, di qué hiciste después. \"Dejé mi preocupación escrita en el documento de diseño para que quedara registrada, y después implementé su enfoque bien — no a medias.\" El sabotaje por cumplimiento es un modo de fallo real y los entrevistadores lo conocen.\n6. **Qué harías distinto.** Normalmente: plantearlo antes, o por escrito, o con datos en vez de intuición.\n\n**El reencuadre que ayuda.** Escalar no es \"acusar a alguien\". Si una decisión es genuinamente de alto riesgo e irreversible, involucrar a más gente es responsable, y decirlo con calma es una señal de madurez — siempre que lo hayas intentado directamente primero.\n\n**Nunca hagas esto:** hablar mal de un ex colega o jefe nombrado. Incluso cuando está justificado, el entrevistador solo tiene tu versión, y lo que realmente está aprendiendo es cómo hablas de gente que no está en la sala."
+      },
+      "examples": [
+        {
+          "en": "\"I thought we needed Kafka; my lead thought Postgres with SKIP LOCKED was enough. Their argument was that we were three people and every additional stateful system is on-call burden — which was a better argument than I gave it credit for. I built a small load test, it showed Postgres held our volume fine, and I was wrong about the throughput. We revisited it a year later when the replay requirement appeared, and by then the decision was easy.\" Strong: steelmanned, evidence-based, and the candidate was wrong.",
+          "es": "\"Yo pensaba que necesitábamos Kafka; mi lead pensaba que Postgres con SKIP LOCKED alcanzaba. Su argumento era que éramos tres personas y cada sistema con estado adicional es carga de guardia — que era un mejor argumento del que yo le reconocí. Armé una prueba de carga chica, mostró que Postgres aguantaba nuestro volumen sin problema, y yo estaba equivocado sobre el throughput. Lo revisamos un año después cuando apareció el requisito de replay, y para entonces la decisión fue fácil.\" Fuerte: presenta la mejor versión del otro, se basa en evidencia, y el candidato estaba equivocado."
+        },
+        {
+          "en": "\"He insisted on his approach even though it was obviously wrong, so eventually I just did it my way and it worked out.\" Every clause is a red flag: no steelman, no evidence, and going around the decision rather than through it. The technical outcome does not rescue it.",
+          "es": "\"Él insistía con su enfoque aunque obviamente estaba mal, así que al final lo hice a mi manera y salió bien.\" Cada cláusula es una señal de alarma: sin presentar la mejor versión del otro, sin evidencia, y esquivando la decisión en vez de atravesarla. El resultado técnico no lo rescata."
+        },
+        {
+          "en": "\"The decision went against me. I wrote my concern in the design doc — specifically that we would hit connection limits around 400 concurrent workers — and then implemented their design properly. Eight months later we hit it at about 380, and because the concern was written down we already knew what to do.\" Disagree-and-commit, and the written record made it useful rather than an I-told-you-so.",
+          "es": "\"La decisión fue en mi contra. Dejé mi preocupación escrita en el documento de diseño — específicamente que íbamos a topar con los límites de conexión alrededor de 400 workers concurrentes — y después implementé su diseño bien. Ocho meses más tarde topamos en unos 380, y como la preocupación estaba escrita ya sabíamos qué hacer.\" Discrepar y comprometerse, y el registro escrito lo volvió útil en vez de un te-lo-dije."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which of these answers is the strongest response to \"tell me about a disagreement with your tech lead\"?",
+              "es": "¿Cuál de estas respuestas es la más fuerte para \"cuéntame de un desacuerdo con tu tech lead\"?"
+            },
+            "options": [
+              {
+                "en": "\"They were being unreasonable, so I escalated to the engineering manager immediately.\"",
+                "es": "\"Estaban siendo poco razonables, así que escalé al gerente de ingeniería de inmediato.\""
+              },
+              {
+                "en": "\"I was right about the architecture and eventually they came around and we did it my way.\"",
+                "es": "\"Yo tenía razón sobre la arquitectura y al final cedieron e hicimos lo mío.\""
+              },
+              {
+                "en": "\"We disagreed on introducing a queue. Their argument was on-call burden for a three-person team, which was stronger than I first allowed. I built a load test, the data showed they were right, and I changed my position.\"",
+                "es": "\"No coincidíamos en introducir una cola. Su argumento era la carga de guardia para un equipo de tres, que era más fuerte de lo que le concedí al principio. Armé una prueba de carga, los datos mostraron que tenían razón, y cambié mi posición.\""
+              },
+              {
+                "en": "\"I don't really disagree with leads — I trust their judgement and get on with the work.\"",
+                "es": "\"La verdad no discrepo con los leads — confío en su criterio y sigo con el trabajo.\""
+              }
+            ],
+            "explanation": {
+              "en": "The queue answer does everything the question is testing: it frames the disagreement technically, states the other side's reasoning at its strongest, converts opinion into evidence with a load test, and ends with the candidate updating. Being wrong is not a weakness here — it is the proof that the process was real rather than a rhetorical setup. Never disagreeing shows no technical conviction, winning the argument shows no collaboration, and escalating straight to the manager skips trying directly.",
+              "es": "La respuesta sobre la cola hace todo lo que la pregunta evalúa: encuadra el desacuerdo técnicamente, enuncia el razonamiento del otro lado en su versión más fuerte, convierte la opinión en evidencia con una prueba de carga, y termina con el candidato actualizando su posición. Estar equivocado no es una debilidad acá — es la prueba de que el proceso fue real y no un montaje retórico. Nunca discrepar no muestra convicción técnica, ganar la discusión no muestra colaboración, y escalar directo al gerente se saltea intentarlo de forma directa."
+            }
+          },
+          "solution": {
+            "correct": [
+              2
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A decision goes against you after a fair discussion. Which follow-up action reads best to an interviewer?",
+              "es": "Una decisión va en tu contra después de una discusión justa. ¿Qué acción de seguimiento se lee mejor ante un entrevistador?"
+            },
+            "options": [
+              {
+                "en": "Implement it minimally so that when it fails the cause is obvious",
+                "es": "Implementarlo al mínimo para que cuando falle la causa sea obvia"
+              },
+              {
+                "en": "Implement it, but leave a comment in the code noting that you objected",
+                "es": "Implementarlo, pero dejar un comentario en el código señalando que objetaste"
+              },
+              {
+                "en": "Bring it up again in the next three team meetings until the decision is revisited",
+                "es": "Volver a plantearlo en las siguientes tres reuniones de equipo hasta que la decisión se revise"
+              },
+              {
+                "en": "Record the specific concern in the design doc — ideally with the metric that would prove it — and then implement their approach properly",
+                "es": "Registrar la preocupación específica en el documento de diseño — idealmente con la métrica que la probaría — y después implementar su enfoque bien"
+              }
+            ],
+            "explanation": {
+              "en": "Writing the concern down with a falsifiable trigger makes it useful rather than an I-told-you-so: when the metric is hit, the team already has a documented next step. Then implementing wholeheartedly is what disagree-and-commit means. The other three are all forms of not committing — passive-aggressive commentary, deliberate under-implementation (which is sabotage regardless of intent), and relitigating a settled decision, which erodes the team's ability to decide anything.",
+              "es": "Dejar la preocupación escrita con un disparador falseable la vuelve útil en vez de un te-lo-dije: cuando se alcanza la métrica, el equipo ya tiene un siguiente paso documentado. Después implementar de corazón es lo que significa discrepar y comprometerse. Las otras tres son formas de no comprometerse — comentario pasivo-agresivo, subimplementación deliberada (que es sabotaje sin importar la intención), y reabrir una decisión ya tomada, lo que erosiona la capacidad del equipo de decidir cualquier cosa."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Tell me about a technical disagreement you had with a lead or a senior colleague. State their position as strongly as you can, what you did to resolve it, what the outcome was, and what you did afterwards.",
+              "es": "Cuéntame de un desacuerdo técnico que tuviste con un lead o un colega senior. Enuncia su posición tan fuerte como puedas, qué hiciste para resolverlo, cuál fue el desenlace, y qué hiciste después."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must frame the disagreement as technical rather than about personality, and must not disparage the other person — if it characterises them negatively ('stubborn', 'unreasonable', 'did not understand'), flag that as the most damaging element. Must steelman the other position: state their reasoning in a way that makes it genuinely defensible, not a straw man. Must describe a concrete resolution mechanism that converts opinion into evidence — a prototype, benchmark, load test, written design doc, or a third opinion — rather than persuasion by seniority or persistence. Must state the outcome honestly; an answer where the candidate turned out to be wrong is a strong answer, not a weak one. If the decision went against them, must show disagree-and-commit: implementing the chosen approach properly, ideally with the concern recorded somewhere. Bonus: names a falsifiable trigger or metric written down at the time, says what they would do differently (raise it earlier, in writing, with data), or distinguishes reversible from irreversible decisions when discussing whether to escalate.",
+              "es": "Debe encuadrar el desacuerdo como técnico y no de personalidad, y no debe hablar mal de la otra persona — si la caracteriza negativamente ('terco', 'poco razonable', 'no entendía'), señala eso como el elemento más dañino. Debe presentar la mejor versión de la otra posición: enunciar su razonamiento de manera genuinamente defendible, no un hombre de paja. Debe describir un mecanismo concreto de resolución que convierta opinión en evidencia — un prototipo, benchmark, prueba de carga, documento de diseño escrito, o una tercera opinión — en vez de persuasión por antigüedad o insistencia. Debe enunciar el desenlace honestamente; una respuesta donde el candidato resultó estar equivocado es una respuesta fuerte, no débil. Si la decisión fue en su contra, debe mostrar discrepar y comprometerse: implementar el enfoque elegido bien, idealmente con la preocupación registrada en algún lado. Bonus: nombra un disparador o métrica falseable escrito en su momento, dice qué haría distinto (plantearlo antes, por escrito, con datos), o distingue decisiones reversibles de irreversibles al hablar de escalar."
+            },
+            "reference": "We disagreed about whether to introduce a message queue for our event ingestion. I wanted Kafka; my tech lead wanted to use Postgres with SKIP LOCKED and keep one system.\n\nTheir position, put at its strongest: we were three engineers carrying the on-call rota for everything we owned, and every additional stateful system is not just an operational cost but a **compounding** one — a new failure mode, a new set of dashboards, a new thing to be paged about at 3 a.m., and a new thing every future hire has to learn. Their view was that our write volume was well within what a single Postgres instance handles, so I was proposing to pay a permanent operational cost to solve a problem we did not yet have. That is a genuinely good argument, and I did not give it enough weight at first because I was reasoning about the technology rather than about the team.\n\nRather than keep arguing from opinion, I built a small load test that replayed a day of production events through a Postgres queue table at peak rate. It held our volume comfortably — throughput was never the constraint I had assumed it was. So I was wrong on the technical claim I had been leading with, and I said so in the thread where we had been discussing it.\n\nWhat I did keep was a narrower version of the concern: retention. Our load test showed throughput was fine but did not address that billing might later need to replay a week of events, which would mean a very large hot queue table. I wrote that in the design doc as an explicit trigger — if a replay requirement longer than 48 hours appeared, we should revisit. Then I implemented the Postgres approach properly, not as a placeholder.\n\nAbout a year later billing did need weekly reconciliation with replay, and because the concern was written down with a trigger, the conversation took ten minutes instead of restarting from scratch. We moved to Kafka then, with the volume and requirements actually known.\n\nWhat I would do differently: I led with the technology instead of with the requirement. If I had opened with \"what are our retention and replay needs?\" we would have reached the same place faster, and I would not have spent a week arguing a throughput point that turned out to be wrong."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "structuring-a-system-design-answer",
+      "question": {
+        "en": "How do you structure a system-design answer under time pressure?",
+        "es": "¿Cómo estructuras una respuesta de diseño de sistemas bajo presión de tiempo?"
+      },
+      "definition": {
+        "en": "A system-design interview is 45 minutes for a problem that would take a team a quarter. You are not being asked to solve it. You are being asked to **show a process** that would eventually solve it, and the most common failure is not a lack of knowledge — it is going deep on one component and never covering the rest.\n\n**The order, with rough time budgets:**\n\n1. **Clarify (5 min).** Ask before you draw. Who uses it? What are the core use cases — pick two or three, explicitly out-scoping the rest? Read-heavy or write-heavy? How fresh must data be? What is the latency target? Any compliance constraint? **Write the agreed scope down where the interviewer can see it.** Candidates who start drawing immediately almost always design the wrong system.\n2. **Estimate (5 min).** Users, requests per second, read/write ratio, storage per year, bandwidth. Say your assumptions out loud and keep the arithmetic crude — \"1 million daily actives, 10 actions each, so 10 million a day, call it 120 per second average, 600 at peak\". The numbers are what tell you whether this is one database or a hundred, and skipping them means every later decision is unjustified.\n3. **API and data model (5-10 min).** The three or four endpoints, then the entities and their relationships. This is where you decide relational versus document, and the estimates above should decide it rather than preference.\n4. **High-level design (10 min).** Boxes and arrows: clients, load balancer, services, database, cache, queue. Keep it simple enough that you can still explain the whole request path in one breath.\n5. **Identify the bottleneck (10 min).** Say which component fails first as load grows, then scale *that one*. This is the part that most separates candidates. Prematurely sharding everything shows pattern-matching; naming the actual constraint shows reasoning.\n6. **Trade-offs and failure modes (5 min).** What happens when the cache dies, the queue backs up, a region goes down? What did you give up? What would you monitor?\n\n**Behaviours that score:**\n- **Think out loud.** Silence is unscoreable. \"I'm choosing X because Y; the alternative is Z, which I'm rejecting because...\" is the entire signal.\n- **Start simple, then scale.** A design that begins as one service and one database and grows under pressure is far better than one that begins with twelve microservices. Justify each addition with a number.\n- **Take the hint.** \"What happens if that region goes down?\" is not curiosity — it is the interviewer steering you to the part of the rubric they still need to fill.\n- **Manage the clock yourself.** \"I've spent a while on storage — shall I move to the read path?\" reads as senior.\n\n**The most common failure by far** is spending 30 minutes perfecting the data model and never discussing scaling, caching or failure. Half-covering six areas beats fully covering one, because the rubric has boxes for all six.",
+        "es": "Una entrevista de diseño de sistemas son 45 minutos para un problema que a un equipo le tomaría un trimestre. No te están pidiendo resolverlo. Te están pidiendo **mostrar un proceso** que eventualmente lo resolvería, y el fallo más común no es falta de conocimiento — es profundizar en un componente y nunca cubrir el resto.\n\n**El orden, con presupuestos de tiempo aproximados:**\n\n1. **Aclarar (5 min).** Pregunta antes de dibujar. ¿Quién lo usa? ¿Cuáles son los casos de uso centrales — elige dos o tres, dejando el resto explícitamente fuera de alcance? ¿Pesado en lecturas o en escrituras? ¿Qué tan frescos deben estar los datos? ¿Cuál es el objetivo de latencia? ¿Alguna restricción de cumplimiento? **Escribe el alcance acordado donde el entrevistador pueda verlo.** Los candidatos que empiezan a dibujar de inmediato casi siempre diseñan el sistema equivocado.\n2. **Estimar (5 min).** Usuarios, peticiones por segundo, proporción lectura/escritura, almacenamiento por año, ancho de banda. Di tus supuestos en voz alta y mantén la aritmética burda — \"1 millón de activos diarios, 10 acciones cada uno, o sea 10 millones al día, digamos 120 por segundo en promedio, 600 en el pico\". Los números son lo que te dice si esto es una base de datos o cien, y saltárselos hace que toda decisión posterior quede injustificada.\n3. **API y modelo de datos (5-10 min).** Los tres o cuatro endpoints, luego las entidades y sus relaciones. Acá decides relacional contra documental, y las estimaciones de arriba deberían decidirlo en vez de la preferencia.\n4. **Diseño de alto nivel (10 min).** Cajas y flechas: clientes, balanceador, servicios, base de datos, caché, cola. Mantenlo suficientemente simple como para poder explicar todo el camino de una petición de una sola respiración.\n5. **Identificar el cuello de botella (10 min).** Di qué componente falla primero al crecer la carga, y escala *ese*. Esta es la parte que más separa a los candidatos. Fragmentar todo prematuramente muestra reconocimiento de patrones; nombrar la restricción real muestra razonamiento.\n6. **Trade-offs y modos de fallo (5 min).** ¿Qué pasa cuando muere la caché, se acumula la cola, se cae una región? ¿Qué resignaste? ¿Qué monitorearías?\n\n**Comportamientos que puntúan:**\n- **Piensa en voz alta.** El silencio no se puede calificar. \"Elijo X porque Y; la alternativa es Z, que descarto porque...\" es toda la señal.\n- **Empieza simple y después escala.** Un diseño que empieza como un servicio y una base de datos y crece bajo presión es mucho mejor que uno que empieza con doce microservicios. Justifica cada agregado con un número.\n- **Toma la pista.** \"¿Qué pasa si se cae esa región?\" no es curiosidad — es el entrevistador dirigiéndote a la parte de la rúbrica que todavía necesita llenar.\n- **Maneja el reloj tú mismo.** \"Llevo un rato en almacenamiento — ¿paso al camino de lectura?\" se lee como senior.\n\n**El fallo más común por lejos** es pasar 30 minutos perfeccionando el modelo de datos y nunca discutir escalado, caché o fallos. Cubrir a medias seis áreas le gana a cubrir una completa, porque la rúbrica tiene casillas para las seis."
+      },
+      "examples": [
+        {
+          "en": "Asked to design a URL shortener, a candidate spends 25 minutes on the hash function and collision handling. It is genuinely interesting and completely misjudged: the rubric also has boxes for read scaling, caching, analytics and failure modes, all of which now score zero.",
+          "es": "Ante el pedido de diseñar un acortador de URLs, un candidato pasa 25 minutos en la función de hash y el manejo de colisiones. Es genuinamente interesante y está completamente mal calibrado: la rúbrica también tiene casillas para escalado de lecturas, caché, analítica y modos de fallo, y todas ahora puntúan cero."
+        },
+        {
+          "en": "\"100 million URLs a year at ~500 bytes each is about 50 GB — that fits on one machine, so I do not need sharding for storage. The read volume is what will force horizontal scaling, so let me design for that instead.\" Two minutes of arithmetic just eliminated an entire wrong branch of the design, out loud.",
+          "es": "\"100 millones de URLs al año a ~500 bytes cada una son unos 50 GB — eso entra en una sola máquina, así que no necesito sharding para almacenamiento. El volumen de lecturas es lo que va a forzar el escalado horizontal, así que diseñemos para eso.\" Dos minutos de aritmética acaban de eliminar una rama entera equivocada del diseño, en voz alta."
+        },
+        {
+          "en": "An interviewer asks \"and what if the cache goes down?\" for the second time. That is not idle curiosity; it is the third attempt to get the candidate onto the resilience section of the rubric. Answering it directly, and then continuing into failure modes generally, recovers the whole section.",
+          "es": "Un entrevistador pregunta \"¿y qué pasa si se cae la caché?\" por segunda vez. Eso no es curiosidad ociosa; es el tercer intento de llevar al candidato a la sección de resiliencia de la rúbrica. Responderla directamente, y después continuar hacia los modos de fallo en general, recupera la sección entera."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the phases of a 45-minute system-design answer.",
+              "es": "Ordena las fases de una respuesta de diseño de sistemas de 45 minutos."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "clarify",
+                "label": {
+                  "en": "Clarify requirements and agree the scope out loud (~5 min)",
+                  "es": "Aclarar requisitos y acordar el alcance en voz alta (~5 min)"
+                }
+              },
+              {
+                "id": "estimate",
+                "label": {
+                  "en": "Estimate scale: users, rps, read/write ratio, storage (~5 min)",
+                  "es": "Estimar la escala: usuarios, rps, proporción lectura/escritura, almacenamiento (~5 min)"
+                }
+              },
+              {
+                "id": "api",
+                "label": {
+                  "en": "Define the API and the data model (~5-10 min)",
+                  "es": "Definir la API y el modelo de datos (~5-10 min)"
+                }
+              },
+              {
+                "id": "highlevel",
+                "label": {
+                  "en": "Draw the high-level design: the boxes and the request path (~10 min)",
+                  "es": "Dibujar el diseño de alto nivel: las cajas y el camino de la petición (~10 min)"
+                }
+              },
+              {
+                "id": "bottleneck",
+                "label": {
+                  "en": "Name the bottleneck and scale that one component (~10 min)",
+                  "es": "Nombrar el cuello de botella y escalar ese componente (~10 min)"
+                }
+              },
+              {
+                "id": "tradeoffs",
+                "label": {
+                  "en": "Trade-offs, failure modes and what you would monitor (~5 min)",
+                  "es": "Trade-offs, modos de fallo y qué monitorearías (~5 min)"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "clarify",
+              "estimate",
+              "api",
+              "highlevel",
+              "bottleneck",
+              "tradeoffs"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "What is the most common way strong engineers fail a system-design interview?",
+              "es": "¿Cuál es la forma más común en que buenos ingenieros fallan una entrevista de diseño de sistemas?"
+            },
+            "options": [
+              {
+                "en": "Going deep on one component they find interesting and never covering scaling, caching or failure modes — the rubric has boxes for all of them, and half-covering six beats fully covering one",
+                "es": "Profundizar en un componente que les parece interesante y nunca cubrir escalado, caché ni modos de fallo — la rúbrica tiene casillas para todos, y cubrir a medias seis le gana a cubrir uno completo"
+              },
+              {
+                "en": "Drawing the diagram in the wrong order",
+                "es": "Dibujar el diagrama en el orden equivocado"
+              },
+              {
+                "en": "Asking too many clarifying questions at the start",
+                "es": "Hacer demasiadas preguntas aclaratorias al principio"
+              },
+              {
+                "en": "Not knowing enough specific technologies by name",
+                "es": "No conocer suficientes tecnologías específicas por nombre"
+              }
+            ],
+            "explanation": {
+              "en": "Depth on one area is not the failure by itself — the failure is the opportunity cost. Forty-five minutes is a budget, and the score is spread across requirements, estimation, data model, architecture, scaling and failure handling. A candidate who spends half the time on a hash function leaves several sections blank. Clarifying questions at the start are actively good; they are the first thing being scored.",
+              "es": "La profundidad en un área no es el fallo en sí — el fallo es el costo de oportunidad. Cuarenta y cinco minutos son un presupuesto, y el puntaje se reparte entre requisitos, estimación, modelo de datos, arquitectura, escalado y manejo de fallos. Un candidato que pasa la mitad del tiempo en una función de hash deja varias secciones en blanco. Las preguntas aclaratorias al principio son activamente buenas; son lo primero que se califica."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You have 45 minutes: **design a URL shortener**. Write the first five minutes of your answer — the clarifying questions you would ask, the scope you would agree, and your back-of-the-envelope estimates with the assumptions stated.\n\nDo not design the system yet. Just show the opening.",
+              "es": "Tienes 45 minutos: **diseña un acortador de URLs**. Escribe los primeros cinco minutos de tu respuesta — las preguntas aclaratorias que harías, el alcance que acordarías, y tus estimaciones aproximadas con los supuestos enunciados.\n\nTodavía no diseñes el sistema. Solo muestra la apertura."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must actually ask clarifying questions rather than jumping into a design — if it starts drawing architecture, that is the main thing to flag, since the prompt explicitly asked only for the opening. Questions should cover the read/write ratio (a URL shortener is extremely read-heavy, and noticing that is the key insight), expected scale, whether custom aliases are needed, link expiry, whether analytics are in scope, and latency expectations. Must state an explicit scope, ideally including something deliberately out of scope. Must produce numeric estimates with assumptions stated out loud, and the arithmetic should be crude and rounded rather than precise. Crucially, the estimates should be used to draw at least one conclusion that constrains the design — most importantly that total storage is small enough to fit on one machine, so sharding for storage is unnecessary and reads are the real scaling problem. Bonus: computes the required key length from the URL count (e.g. base62 characters), notes the read:write ratio explicitly as a number, distinguishes average from peak load, or explicitly says the estimates will be revisited if assumptions are wrong.",
+              "es": "Debe realmente hacer preguntas aclaratorias en vez de saltar al diseño — si empieza a dibujar arquitectura, eso es lo principal a señalar, ya que el enunciado pedía explícitamente solo la apertura. Las preguntas deberían cubrir la proporción lectura/escritura (un acortador de URLs es extremadamente pesado en lecturas, y notarlo es la clave), la escala esperada, si se necesitan alias personalizados, la expiración de links, si la analítica está en alcance, y las expectativas de latencia. Debe enunciar un alcance explícito, idealmente incluyendo algo deliberadamente fuera de alcance. Debe producir estimaciones numéricas con los supuestos enunciados en voz alta, y la aritmética debe ser burda y redondeada en vez de precisa. Fundamentalmente, las estimaciones deben usarse para sacar al menos una conclusión que restrinja el diseño — sobre todo que el almacenamiento total es lo bastante chico como para entrar en una máquina, así que fragmentar por almacenamiento es innecesario y las lecturas son el verdadero problema de escala. Bonus: calcula el largo de clave necesario a partir del conteo de URLs (por ejemplo caracteres en base62), nota la proporción lectura:escritura explícitamente como número, distingue carga promedio de pico, o dice explícitamente que revisará las estimaciones si los supuestos están mal."
+            },
+            "reference": "**Clarifying questions.** Before I draw anything I want six answers.\n\nFirst, the read-to-write ratio — I expect a shortener to be overwhelmingly read-heavy, and if that is true it changes the entire design, so I want to confirm it rather than assume. Second, scale: how many new URLs per day, and how many redirects? Third, do users need custom aliases like `/black-friday`, or is a generated key enough? That decides whether I need uniqueness checks on a user-supplied namespace. Fourth, do links expire, or are they permanent? Permanent links mean storage grows forever and never shrinks. Fifth, do we need click analytics, and if so, real-time or batched? That is potentially a bigger system than the shortener itself. Sixth, what is the latency target on a redirect, and does it need to be global?\n\n**Scope I would propose.** In scope: create a short URL, redirect a short URL, optional custom alias. Out of scope for this session: user accounts, real-time analytics dashboards, and abuse/spam detection — I would flag that last one as a real requirement in production that I am setting aside for time, so it is on the record that I did not forget it rather than that I did not think of it.\n\n**Estimates, assuming answers of 100 million new URLs per year and a 100:1 read ratio.**\n\nWrites: 100M per year is roughly 3 per second on average. Call it 30 per second at peak with a 10x factor. That is nothing — a single database handles it.\n\nReads: at 100:1, about 300 per second average, 3 000 at peak. That is the number that will actually drive the design.\n\nStorage: 100M URLs a year, and let me be generous at 500 bytes per record including the original URL, the key, timestamps and metadata. That is 50 GB per year, so 250 GB over five years. **That fits comfortably on a single machine.** So I do not need sharding for storage capacity — which eliminates a whole branch I might otherwise have spent time on. If storage is not the constraint and writes are trivial, the design problem is read throughput and redirect latency, and that points at caching and read replicas rather than at partitioning.\n\nKey space: to encode 100M URLs a year for several years I need on the order of 10^9 keys. Base62 gives 62^6 ≈ 5.6 x 10^10, so **6 characters is plenty** with a lot of headroom, and 7 if we want decades of margin.\n\nBandwidth: 3 000 redirects per second at ~500 bytes is around 1.5 MB/s. Not a constraint.\n\nI would state all of those assumptions to the interviewer and say that if the real numbers are two orders of magnitude higher, the storage conclusion changes and I would revisit it. Then I would move on to the API and data model."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "talking-about-failure-and-tradeoffs",
+      "question": {
+        "en": "How do you talk about something you got wrong?",
+        "es": "¿Cómo hablas de algo que hiciste mal?"
+      },
+      "definition": {
+        "en": "\"Tell me about a time you failed\" is one of the highest-signal questions in the interview, and one of the most commonly wasted. The interviewer is checking three things: **do you have accurate self-assessment, do you take ownership without collapsing, and did you actually change something?**\n\n**The three answers that score zero:**\n\n1. **The humblebrag.** \"I care too much about quality, so I sometimes over-engineer.\" Everyone recognises this instantly. It reads as evasion, and it wastes the question.\n2. **The externalised failure.** \"The project failed because requirements kept changing and the other team missed their deadline.\" Even if entirely true, you have described a failure that taught you nothing, because nothing in it was yours.\n3. **The catastrophe with no recovery.** Dwelling on how bad it was without ever getting to what you learned. Ownership without a next step is not maturity; it is just an unpleasant story.\n\n**The structure that works:**\n\n1. **A real failure with real consequences.** An outage, a missed deadline, a project cancelled, a design that had to be rebuilt. Small enough to be honest about, big enough to be worth a question.\n2. **Your specific contribution to it.** Not \"we\". \"I decided X\", \"I did not check Y\", \"I assumed Z without verifying it.\"\n3. **What you now believe you missed.** The interesting part is usually not the mistake itself but the *reasoning error* underneath: you optimised for the wrong thing, you trusted an assumption you could have tested cheaply, you did not ask a question because you did not want to look uninformed.\n4. **What changed afterwards — concretely.** Not \"I learned to communicate better\", which is unfalsifiable. \"I now write a one-page design doc for anything taking more than a week, specifically so the assumptions are visible to someone other than me.\"\n5. **Evidence the change stuck.** A later situation where you did it differently. This is what separates a lesson from a sentence.\n\n**Calibrate the size.** A failure that cost the company nothing reads as evasion. A failure that got someone fired is uncomfortable and hard to steer. The sweet spot: something that visibly cost time, money or trust, that you owned, and that you fixed forward.\n\n**On trade-offs generally.** The same instinct applies beyond failure questions. Volunteering the downside of your own choices — before you are asked — is the single most reliable seniority signal available. \"We chose the boring option and accepted that it would not survive 10x\" tells the interviewer you knew the cost at the time. Discovering the cost only when asked tells them you did not.",
+        "es": "\"Cuéntame de una vez que fallaste\" es una de las preguntas de mayor señal de la entrevista, y una de las más desperdiciadas. El entrevistador está verificando tres cosas: **¿tienes autoevaluación precisa, asumes responsabilidad sin derrumbarte, y realmente cambiaste algo?**\n\n**Las tres respuestas que puntúan cero:**\n\n1. **El falso defecto.** \"Me importa demasiado la calidad, así que a veces sobre-diseño.\" Todos lo reconocen al instante. Se lee como evasión, y desperdicia la pregunta.\n2. **El fracaso externalizado.** \"El proyecto falló porque los requisitos cambiaban todo el tiempo y el otro equipo no llegó a su fecha.\" Incluso si es enteramente cierto, describiste un fracaso que no te enseñó nada, porque nada en él era tuyo.\n3. **La catástrofe sin recuperación.** Detenerse en lo malo que fue sin llegar nunca a lo que aprendiste. Responsabilidad sin un siguiente paso no es madurez; es solo una historia desagradable.\n\n**La estructura que funciona:**\n\n1. **Un fracaso real con consecuencias reales.** Una caída, una fecha incumplida, un proyecto cancelado, un diseño que hubo que rehacer. Suficientemente chico para ser honesto, suficientemente grande para merecer una pregunta.\n2. **Tu contribución específica.** No \"nosotros\". \"Yo decidí X\", \"yo no verifiqué Y\", \"yo supuse Z sin comprobarlo.\"\n3. **Qué crees ahora que se te escapó.** La parte interesante normalmente no es el error en sí sino el *error de razonamiento* debajo: optimizaste por lo equivocado, confiaste en un supuesto que podías haber probado barato, no hiciste una pregunta porque no querías parecer desinformado.\n4. **Qué cambió después — concretamente.** No \"aprendí a comunicarme mejor\", que no se puede falsear. \"Ahora escribo un documento de diseño de una página para cualquier cosa que tome más de una semana, específicamente para que los supuestos sean visibles para alguien que no sea yo.\"\n5. **Evidencia de que el cambio se sostuvo.** Una situación posterior donde lo hiciste distinto. Esto es lo que separa una lección de una frase.\n\n**Calibra el tamaño.** Un fracaso que no le costó nada a la empresa se lee como evasión. Un fracaso que hizo que despidieran a alguien es incómodo y difícil de conducir. El punto justo: algo que visiblemente costó tiempo, dinero o confianza, que asumiste, y que arreglaste hacia adelante.\n\n**Sobre los trade-offs en general.** El mismo instinto aplica más allá de las preguntas de fracaso. Ofrecer la desventaja de tus propias decisiones — antes de que te la pregunten — es la señal de seniority más confiable disponible. \"Elegimos la opción aburrida y aceptamos que no sobreviviría a 10 veces la carga\" le dice al entrevistador que conocías el costo en el momento. Descubrir el costo solo cuando te preguntan le dice que no."
+      },
+      "examples": [
+        {
+          "en": "\"I shipped a migration that locked a table for eleven minutes during business hours. The mistake was not the SQL — it was that I tested it on a staging database with 2 000 rows and production had 40 million, and I knew that and ran it anyway because I was confident. What changed: we added row counts to the migration review template, and I now run every migration against a production-sized restore first.\" Specific mistake, specific reasoning error, specific durable change.",
+          "es": "\"Envié una migración que bloqueó una tabla once minutos en horario laboral. El error no fue el SQL — fue que la probé en una base de staging con 2 000 filas y producción tenía 40 millones, y yo lo sabía y la corrí igual porque estaba confiado. Qué cambió: agregamos el conteo de filas a la plantilla de revisión de migraciones, y ahora corro cada migración contra una restauración del tamaño de producción primero.\" Error específico, error de razonamiento específico, cambio duradero específico."
+        },
+        {
+          "en": "\"My weakness is that I'm a perfectionist\" is heard several times a week by every interviewer. It is not that it is untrue; it is that it answers a different question than the one asked, and the interviewer now has to spend their remaining time getting a real answer.",
+          "es": "\"Mi debilidad es que soy perfeccionista\" lo escucha varias veces por semana todo entrevistador. No es que sea falso; es que responde una pregunta distinta a la que hicieron, y ahora el entrevistador tiene que gastar el tiempo que le queda en conseguir una respuesta real."
+        },
+        {
+          "en": "\"I spent six weeks building a configurable rules engine because I was sure the requirements would keep changing. They changed twice, both times in ways the engine did not support, and we deleted it. I had optimised for flexibility I imagined instead of asking the product manager which parts were actually likely to move.\" The reasoning error, not the code, is the answer.",
+          "es": "\"Pasé seis semanas construyendo un motor de reglas configurable porque estaba seguro de que los requisitos iban a seguir cambiando. Cambiaron dos veces, ambas de formas que el motor no soportaba, y lo borramos. Había optimizado por una flexibilidad que imaginé en vez de preguntarle al product manager qué partes era probable que se movieran de verdad.\" El error de razonamiento, no el código, es la respuesta."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Which answer to \"tell me about a time you failed\" is strongest?",
+              "es": "¿Cuál respuesta a \"cuéntame de una vez que fallaste\" es la más fuerte?"
+            },
+            "options": [
+              {
+                "en": "\"We missed the deadline because the requirements kept changing and another team was late with their API.\"",
+                "es": "\"No llegamos a la fecha porque los requisitos cambiaban todo el tiempo y otro equipo se atrasó con su API.\""
+              },
+              {
+                "en": "\"Early in my career I once made a small typo in a config file, but I caught it before it reached production.\"",
+                "es": "\"Al principio de mi carrera una vez tuve un typo chico en un archivo de configuración, pero lo detecté antes de que llegara a producción.\""
+              },
+              {
+                "en": "\"I take on too much because I want the team to succeed, so occasionally I burn out.\"",
+                "es": "\"Tomo demasiado trabajo porque quiero que el equipo tenga éxito, así que a veces me quemo.\""
+              },
+              {
+                "en": "\"I ran a migration tested only against a 2 000-row staging database against a 40-million-row production table and locked it for eleven minutes. The error was trusting an assumption I could have checked in five minutes. We added row counts to the migration checklist and I now test against a production-sized restore.\"",
+                "es": "\"Corrí una migración probada solo contra una base de staging de 2 000 filas contra una tabla de producción de 40 millones y la bloqueé once minutos. El error fue confiar en un supuesto que podía haber verificado en cinco minutos. Agregamos el conteo de filas a la checklist de migraciones y ahora pruebo contra una restauración del tamaño de producción.\""
+              }
+            ],
+            "explanation": {
+              "en": "The migration answer names a real failure with a real cost, takes personal ownership, identifies the reasoning error beneath the mistake — trusting an unverified assumption — and describes a concrete, durable change to the process rather than a vague resolution to be more careful. Caring too much about quality is a humblebrag; blaming changing requirements and another team externalises the failure so nothing could have been learned; and a typo that never reached production is calibrated so small that it reads as avoidance.",
+              "es": "La respuesta de la migración nombra un fracaso real con un costo real, asume responsabilidad personal, identifica el error de razonamiento debajo del error — confiar en un supuesto no verificado — y describe un cambio concreto y duradero al proceso en vez de una resolución vaga de ser más cuidadoso. Que te importe demasiado la calidad es un falso defecto; culpar a los requisitos cambiantes y a otro equipo externaliza el fracaso así que no se pudo aprender nada; y un typo que nunca llegó a producción está calibrado tan chico que se lee como evasión."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each failure-answer pattern with why it scores badly.",
+              "es": "Conecta cada patrón de respuesta sobre fracasos con por qué puntúa mal."
+            },
+            "left": [
+              {
+                "id": "humblebrag",
+                "label": {
+                  "en": "\"I care too much about quality\"",
+                  "es": "\"Me importa demasiado la calidad\""
+                }
+              },
+              {
+                "id": "external",
+                "label": {
+                  "en": "\"Requirements changed and the other team was late\"",
+                  "es": "\"Los requisitos cambiaron y el otro equipo se atrasó\""
+                }
+              },
+              {
+                "id": "tiny",
+                "label": {
+                  "en": "\"I once had a typo, but I caught it\"",
+                  "es": "\"Una vez tuve un typo, pero lo detecté\""
+                }
+              },
+              {
+                "id": "vague",
+                "label": {
+                  "en": "\"I learned to communicate better\"",
+                  "es": "\"Aprendí a comunicarme mejor\""
+                }
+              },
+              {
+                "id": "spiral",
+                "label": {
+                  "en": "Five minutes on how bad it was, no lesson",
+                  "es": "Cinco minutos sobre lo malo que fue, sin ninguna lección"
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "evasion",
+                "label": {
+                  "en": "A strength dressed as a weakness — recognised instantly as avoiding the question",
+                  "es": "Una fortaleza disfrazada de debilidad — reconocido al instante como evadir la pregunta"
+                }
+              },
+              {
+                "id": "noown",
+                "label": {
+                  "en": "No ownership, so nothing could have been learned from it",
+                  "es": "Sin responsabilidad asumida, así que no se pudo aprender nada"
+                }
+              },
+              {
+                "id": "nostakes",
+                "label": {
+                  "en": "No real consequence, so it does not demonstrate judgement under actual cost",
+                  "es": "Sin consecuencia real, así que no demuestra criterio bajo un costo verdadero"
+                }
+              },
+              {
+                "id": "unfalsifiable",
+                "label": {
+                  "en": "A lesson with no observable change — nothing the interviewer could verify or picture",
+                  "es": "Una lección sin cambio observable — nada que el entrevistador pueda verificar o imaginar"
+                }
+              },
+              {
+                "id": "norecovery",
+                "label": {
+                  "en": "Ownership without a next step reads as being stuck, not as maturity",
+                  "es": "Responsabilidad sin un siguiente paso se lee como estar atascado, no como madurez"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "humblebrag": "evasion",
+              "external": "noown",
+              "tiny": "nostakes",
+              "vague": "unfalsifiable",
+              "spiral": "norecovery"
+            }
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Tell me about a technical decision or project that went badly, where you were part of the cause. Name the reasoning error underneath the mistake, and the concrete thing that changed afterwards.",
+              "es": "Cuéntame de una decisión técnica o un proyecto que salió mal, donde tú fuiste parte de la causa. Nombra el error de razonamiento debajo del error, y la cosa concreta que cambió después."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must describe a real failure with a real consequence — time lost, money, an outage, a rebuild, damaged trust. Flag it if the failure is trivially small (reads as evasion) or if it is a disguised strength ('I care too much', 'I work too hard'). Must take first-person ownership: the candidate's own decision or omission must be identifiable, not attributed to changing requirements, another team, or bad luck. Must identify the reasoning error beneath the surface mistake — why they made the wrong call at the time, e.g. an unverified assumption, optimising for the wrong thing, not asking a question — rather than only describing what went wrong mechanically. Must state a concrete, observable change afterwards; 'I learned to communicate better' is unfalsifiable and should be flagged as too vague. Bonus: gives evidence the change persisted in a later situation, quantifies the cost, distinguishes what they knew at the time from what they know now (avoiding hindsight bias), or notes a systemic fix rather than only a personal resolution.",
+              "es": "Debe describir un fracaso real con una consecuencia real — tiempo perdido, dinero, una caída, una reconstrucción, confianza dañada. Señálalo si el fracaso es trivialmente chico (se lee como evasión) o si es una fortaleza disfrazada ('me importa demasiado', 'trabajo demasiado'). Debe asumir responsabilidad en primera persona: la decisión u omisión propia del candidato debe ser identificable, no atribuida a requisitos cambiantes, a otro equipo, o a la mala suerte. Debe identificar el error de razonamiento debajo del error superficial — por qué tomó la decisión equivocada en su momento, por ejemplo un supuesto no verificado, optimizar por lo equivocado, no hacer una pregunta — en vez de solo describir mecánicamente qué salió mal. Debe enunciar un cambio concreto y observable posterior; 'aprendí a comunicarme mejor' no se puede falsear y debe señalarse como demasiado vago. Bonus: da evidencia de que el cambio persistió en una situación posterior, cuantifica el costo, distingue lo que sabía entonces de lo que sabe ahora (evitando el sesgo retrospectivo), o nota un arreglo sistémico y no solo una resolución personal."
+            },
+            "reference": "I spent six weeks building a configurable rules engine for campaign targeting, and we deleted it four months later.\n\nThe context: product had changed the targeting logic twice in the previous quarter, and I concluded it would keep changing. So instead of implementing the current rules, I built a small DSL and an evaluator so that future rule changes would be configuration rather than code. It was, in isolation, decent engineering — tested, documented, and it worked.\n\nMy contribution to the failure is straightforward. I decided this alone, in a design I did not write down, and I did not ask the product manager which parts of the targeting logic were actually likely to move. When the requirements did change, both changes needed things the DSL could not express — one needed a lookup against a new data source, the other needed a time window with timezone handling. Both would have been an afternoon in plain code. In the engine they were structural changes to the language. We reverted to hardcoded rules and deleted about 3 000 lines.\n\nThe reasoning error underneath was not \"I over-engineered\". It was that **I predicted the direction of change from the fact of change.** Things had changed twice, so I built for flexibility — but I never checked *which axis* they were likely to change along, and that was one Slack message away. I optimised for a kind of variability I had invented, and the cost was six weeks plus four months of everyone routing around an abstraction that did not fit.\n\nWhat changed concretely: I now write a one-page design doc for anything longer than about a week, and it has a required section listing the assumptions the design depends on. The point is not the document — it is that writing the assumption \"targeting rules will change in ways expressible as boolean predicates\" makes it visible to someone who can say \"actually, the next change is a new data source\". That has since caught two similar mistakes for me before they cost anything, including one where I was about to build a plugin system for a service that turned out to need exactly one plugin, ever.\n\nWhat I would add in hindsight: I should have shipped the hardcoded version first and let the second change tell me whether an abstraction was warranted. Waiting for the third instance of a pattern before abstracting is a rule I had heard and had not internalised until this."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "salary-scope-and-level-conversations",
+      "question": {
+        "en": "How do you handle compensation, scope and level questions?",
+        "es": "¿Cómo manejas las preguntas de compensación, alcance y nivel?"
+      },
+      "definition": {
+        "en": "These are negotiation conversations wearing interview clothes. The main skill is not aggression; it is **not anchoring yourself below where you would have landed**.\n\n**\"What are your salary expectations?\", asked early.** Answering with a number first is almost always worse for you: if you name below their band, they will not correct you upward. Reasonable deflections, in escalating firmness:\n\n1. \"I'd rather understand the scope of the role first — what's the band for this level?\" Many companies publish bands or are required by law to share one on request.\n2. \"I'm looking for a package competitive for a senior backend role in this market. What range did you have budgeted?\"\n3. If genuinely pushed for a number, give a **range whose bottom you would actually accept**, informed by real data (levels.fyi, Glassdoor, local salary surveys, people you know), and say it is dependent on the total package.\n\nAnd never give your current salary as an anchor. In many jurisdictions asking is illegal; where it is not, it still anchors your offer to your past employer's budget rather than this role's value.\n\n**Level and scope questions.** \"What level do you see yourself at?\" is asking whether your self-assessment matches evidence. Answer in terms of **scope of ownership**, not years:\n- *Mid*: owns features reliably, needs a defined problem.\n- *Senior*: owns a system or a service end to end, takes ambiguous problems and returns scoped ones, is a multiplier through review and mentoring.\n- *Staff+*: owns problems that cross teams, and the work is often influence, standards and technical direction rather than code.\n\nSaying \"I've been operating at senior scope — I own the ingestion service end to end and lead its on-call — and I'd want the title to reflect that\" is concrete and checkable. \"I have eight years of experience\" is not an argument.\n\n**Levelling down.** If they offer a level below what you targeted, ask a specific question rather than accepting or refusing: \"What would you need to see to level someone at senior here?\" It is legitimate information, sometimes reveals a genuine gap you can address, and occasionally surfaces that the interview simply did not cover the evidence you have.\n\n**Evaluating the offer.** Base, bonus, equity (and what it is actually worth: what fraction of the company, what stage, what preference stack, what the vesting cliff is), pension, remote policy, on-call expectations and its compensation, learning budget. On-call is the most systematically underweighted item — a role paying 10% more with a one-in-three rota is often a worse offer.\n\n**Tone.** Collaborative, not adversarial: \"I'm excited about this role and I want to make the numbers work.\" Companies expect negotiation and almost never rescind for a polite counter. The most common mistake is not asking at all.\n\n**When you have a competing offer,** mention it factually with the number, never as a threat. \"I have another offer at X; I'd prefer this role and I'm hoping we can get closer.\" That is the sentence.",
+        "es": "Estas son conversaciones de negociación vestidas de entrevista. La habilidad principal no es la agresividad; es **no anclarte por debajo de donde habrías caído**.\n\n**\"¿Cuáles son tus expectativas salariales?\", preguntado temprano.** Responder con un número primero casi siempre es peor para ti: si nombras por debajo de su banda, no te van a corregir hacia arriba. Evasivas razonables, en firmeza creciente:\n\n1. \"Prefiero entender primero el alcance del rol — ¿cuál es la banda para este nivel?\" Muchas empresas publican bandas o están obligadas por ley a compartirlas si se les pide.\n2. \"Busco un paquete competitivo para un rol de backend senior en este mercado. ¿Qué rango tenían presupuestado?\"\n3. Si genuinamente insisten por un número, da un **rango cuyo piso realmente aceptarías**, informado por datos reales (levels.fyi, Glassdoor, encuestas salariales locales, gente que conozcas), y di que depende del paquete total.\n\nY nunca des tu salario actual como ancla. En muchas jurisdicciones preguntarlo es ilegal; donde no lo es, igual ancla tu oferta al presupuesto de tu empleador anterior en vez de al valor de este rol.\n\n**Preguntas de nivel y alcance.** \"¿En qué nivel te ves?\" está preguntando si tu autoevaluación coincide con la evidencia. Responde en términos de **alcance de propiedad**, no de años:\n- *Mid*: es dueño de funcionalidades de forma confiable, necesita un problema definido.\n- *Senior*: es dueño de un sistema o un servicio de punta a punta, toma problemas ambiguos y devuelve problemas acotados, es un multiplicador vía revisión y mentoría.\n- *Staff+*: es dueño de problemas que cruzan equipos, y el trabajo suele ser influencia, estándares y dirección técnica más que código.\n\nDecir \"vengo operando en alcance senior — soy dueño del servicio de ingesta de punta a punta y lidero su guardia — y querría que el título lo refleje\" es concreto y verificable. \"Tengo ocho años de experiencia\" no es un argumento.\n\n**Si te bajan de nivel.** Si ofrecen un nivel por debajo del que apuntabas, haz una pregunta específica en vez de aceptar o rechazar: \"¿Qué necesitarían ver para ubicar a alguien como senior acá?\" Es información legítima, a veces revela una brecha real que puedes atender, y ocasionalmente saca a la luz que la entrevista simplemente no cubrió la evidencia que tienes.\n\n**Evaluar la oferta.** Base, bono, equity (y cuánto vale realmente: qué fracción de la empresa, qué etapa, qué estructura de preferencias, cuál es el cliff de vesting), jubilación, política de remoto, expectativas de guardia y su compensación, presupuesto de aprendizaje. La guardia es el ítem más sistemáticamente subvalorado — un rol que paga 10% más con una rotación de uno de cada tres suele ser una peor oferta.\n\n**Tono.** Colaborativo, no adversarial: \"Me entusiasma este rol y quiero que los números funcionen.\" Las empresas esperan negociación y casi nunca retiran una oferta por una contrapropuesta cortés. El error más común es no pedir nada.\n\n**Cuando tienes una oferta competidora,** menciónala con el número y de forma factual, nunca como amenaza. \"Tengo otra oferta en X; preferiría este rol y espero que podamos acercarnos.\" Esa es la frase."
+      },
+      "examples": [
+        {
+          "en": "A candidate asked for expectations in the first call says \"around 70\", because that is 10% above their current salary. The band for the role was 85-105. Nobody corrects them upward, and the offer arrives at 74 — a permanent loss anchored by one sentence in a screening call.",
+          "es": "A un candidato le preguntan sus expectativas en la primera llamada y dice \"unos 70\", porque es 10% arriba de su salario actual. La banda del rol era 85-105. Nadie lo corrige hacia arriba, y la oferta llega en 74 — una pérdida permanente anclada por una frase en una llamada de filtro."
+        },
+        {
+          "en": "\"I have eight years of experience so I should be senior\" invites the interviewer to disagree. \"I own the payments service end to end, I'm the primary on-call for it, and I mentored two engineers through their first quarter — that's the scope I want the level to reflect\" gives them something to verify instead of something to dispute.",
+          "es": "\"Tengo ocho años de experiencia así que debería ser senior\" invita al entrevistador a discrepar. \"Soy dueño del servicio de pagos de punta a punta, soy el primer contacto de guardia, y mentoreé a dos ingenieros en su primer trimestre — ese es el alcance que quiero que el nivel refleje\" les da algo que verificar en vez de algo que disputar."
+        },
+        {
+          "en": "Two offers: one 12% higher base with a one-in-three on-call rota and no compensation for it, one lower with one-in-eight and a day off after a bad night. The second is very often the better offer, and on-call load is the item candidates most reliably forget to ask about before signing.",
+          "es": "Dos ofertas: una con 12% más de base con una rotación de guardia de uno de cada tres y sin compensación por ella, otra más baja con uno de cada ocho y un día libre después de una mala noche. La segunda muy a menudo es la mejor oferta, y la carga de guardia es el ítem que los candidatos más consistentemente se olvidan de preguntar antes de firmar."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "A recruiter asks for your salary expectations in the first screening call. What is the best response?",
+              "es": "Un reclutador te pregunta tus expectativas salariales en la primera llamada de filtro. ¿Cuál es la mejor respuesta?"
+            },
+            "options": [
+              {
+                "en": "Give your current salary plus 10%, so the request seems reasonable",
+                "es": "Dar tu salario actual más 10%, para que el pedido parezca razonable"
+              },
+              {
+                "en": "Name the highest number you can say without laughing, to anchor high",
+                "es": "Nombrar el número más alto que puedas decir sin reírte, para anclar alto"
+              },
+              {
+                "en": "Refuse to discuss compensation until a written offer exists",
+                "es": "Negarse a hablar de compensación hasta que exista una oferta escrita"
+              },
+              {
+                "en": "\"I'd like to understand the scope of the role first — what range is budgeted for this level?\", and give a researched range only if genuinely pushed",
+                "es": "\"Me gustaría entender primero el alcance del rol — ¿qué rango tienen presupuestado para este nivel?\", y dar un rango investigado solo si insisten de verdad"
+              }
+            ],
+            "explanation": {
+              "en": "Whoever names a number first sets the anchor, and if you anchor below their band nobody will correct you upward. Asking for the budgeted range is standard, expected, and in many places legally required to be answered. Anchoring to your current salary ties this offer to your previous employer's budget rather than this role's value. Refusing entirely wastes everyone's time if the bands genuinely do not overlap, and an absurd number ends the conversation.",
+              "es": "Quien nombra un número primero fija el ancla, y si te anclas por debajo de su banda nadie te va a corregir hacia arriba. Pedir el rango presupuestado es estándar, esperado, y en muchos lugares hay obligación legal de responderlo. Anclarte a tu salario actual ata esta oferta al presupuesto de tu empleador anterior en vez de al valor de este rol. Negarse por completo hace perder tiempo a todos si las bandas genuinamente no se superponen, y un número absurdo termina la conversación."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You are offered a level below the one you targeted. What is the most useful thing to say?",
+              "es": "Te ofrecen un nivel por debajo del que apuntabas. ¿Qué es lo más útil que puedes decir?"
+            },
+            "options": [
+              {
+                "en": "\"What would you need to see to level someone as senior here?\" — it is real information, may reveal a gap you can address, and sometimes surfaces evidence the interview never asked about",
+                "es": "\"¿Qué necesitarían ver para ubicar a alguien como senior acá?\" — es información real, puede revelar una brecha que puedes atender, y a veces saca a la luz evidencia que la entrevista nunca preguntó"
+              },
+              {
+                "en": "Decline immediately — a lower level is not negotiable",
+                "es": "Rechazar de inmediato — un nivel más bajo no es negociable"
+              },
+              {
+                "en": "Accept it and plan to argue for a promotion in six months",
+                "es": "Aceptarlo y planear pelear un ascenso en seis meses"
+              },
+              {
+                "en": "Ask for the higher salary band while accepting the lower title",
+                "es": "Pedir la banda salarial más alta aceptando el título más bajo"
+              }
+            ],
+            "explanation": {
+              "en": "The question converts a verdict into a conversation, and it is genuinely informative in both directions. Sometimes the answer names a real gap, which tells you what to work on whether or not you take the job. Sometimes it reveals that the interview loop never probed the evidence you had — which is a fair thing to then supply. Accepting quietly plus a private promotion plan is how people end up under-levelled for years, since starting level strongly influences later trajectory.",
+              "es": "La pregunta convierte un veredicto en una conversación, y es genuinamente informativa en ambas direcciones. A veces la respuesta nombra una brecha real, lo que te dice en qué trabajar tomes o no el trabajo. A veces revela que el proceso nunca indagó en la evidencia que tenías — que es justo aportar entonces. Aceptar en silencio más un plan privado de ascenso es como la gente termina sub-nivelada por años, ya que el nivel inicial influye fuertemente en la trayectoria posterior."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "You receive an offer 15% below your target. You want the job. Write what you would actually say — in an email or a call — to negotiate.",
+              "es": "Recibes una oferta 15% por debajo de tu objetivo. Quieres el trabajo. Escribe lo que realmente dirías — en un correo o una llamada — para negociar."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must be collaborative rather than adversarial in tone, and must express genuine interest in the role — negotiating from enthusiasm is both more effective and more honest than negotiating from leverage alone. Must make a specific, concrete ask rather than a vague 'is there flexibility'; naming a number is the point. Should justify the number with something external: market data, scope of the role, a competing offer stated factually, or the specific value the candidate brings. Should consider the total package, not base alone — equity, signing bonus, on-call compensation, remote policy, learning budget, or an early review are all legitimate levers when base is capped. Must not contain a threat or an ultimatum, and must not cite the candidate's current salary as justification. Bonus: proposes an alternative if base is genuinely fixed (a signing bonus, a six-month review with defined criteria), asks a question rather than only stating a demand, keeps it short, or acknowledges the recruiter's constraints.",
+              "es": "Debe tener un tono colaborativo y no adversarial, y debe expresar interés genuino en el rol — negociar desde el entusiasmo es a la vez más efectivo y más honesto que negociar solo desde la palanca. Debe hacer un pedido específico y concreto en vez de un vago '¿hay flexibilidad?'; nombrar un número es el punto. Debería justificar el número con algo externo: datos de mercado, el alcance del rol, una oferta competidora enunciada de forma factual, o el valor específico que aporta el candidato. Debería considerar el paquete total, no solo la base — equity, bono de firma, compensación de guardia, política de remoto, presupuesto de aprendizaje, o una revisión temprana son todas palancas legítimas cuando la base está topada. No debe contener una amenaza ni un ultimátum, y no debe citar el salario actual del candidato como justificación. Bonus: propone una alternativa si la base está genuinamente fija (un bono de firma, una revisión a los seis meses con criterios definidos), hace una pregunta en vez de solo enunciar una exigencia, es breve, o reconoce las restricciones del reclutador."
+            },
+            "reference": "Subject: Re: Offer — Senior Backend Engineer\n\nHi Marta,\n\nThank you for the offer — I'm genuinely excited about this one. The conversation with the platform team convinced me this is the kind of problem I want to be working on, and I'd like to find a way to make it work.\n\nOn compensation: the base is coming in at 85, and based on my research for senior backend roles in this market with this scope — owning a service end to end and being primary on-call for it — I've been targeting 98. I also have an offer in hand at 96, though I'd genuinely prefer this role.\n\nWould you be able to get to 95 on base? If the band is firm at this level, I'm open to other ways of closing the gap — a signing bonus, additional equity, or a documented six-month review with agreed criteria for moving to the next band would all work for me.\n\nOne more thing I'd like to understand before deciding: what does the on-call rota look like for this team, and is there compensation or time off associated with it? That genuinely factors into how I compare the two offers.\n\nHappy to jump on a call if that's easier.\n\nBest,\nAlex\n\n---\n\nWhy it is written this way: it opens with real enthusiasm rather than leverage, so the recruiter is working *with* the candidate rather than defending a position. It names a specific number instead of asking whether there is flexibility, which is the single most common way candidates leave money on the table. The competing offer appears as a fact, not a threat, and is immediately followed by a stated preference for this role. It offers alternative levers in case base is genuinely capped, which makes it easy to say yes to something. And it asks about on-call — the item most systematically forgotten before signing, and one that can matter more than the 10% under discussion. Nowhere does it mention the candidate's current salary, which would anchor this offer to a previous employer's budget rather than to this role's value."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "questions-to-ask-the-interviewer",
+      "question": {
+        "en": "What should you ask them, and what does each question reveal?",
+        "es": "¿Qué deberías preguntarles a ellos, y qué revela cada pregunta?"
+      },
+      "definition": {
+        "en": "\"Do you have any questions for us?\" is not a formality. It is the last five minutes and it is still being scored — and it is also the only part of the process where **you** are evaluating **them**, which most candidates forget entirely.\n\n**Questions that reveal how the team actually works:**\n- *\"Walk me through what happened with the last production incident.\"* The single highest-information question available. You learn whether they have monitoring, whether postmortems are blameless, whether follow-up work actually ships, and how they talk about mistakes — all from one answer.\n- *\"How does code get from a laptop to production? How long does that take?\"* Reveals CI/CD maturity, test culture, review process, and release fear.\n- *\"What is on-call like? How often, and what happened the last time someone was paged at night?\"* The specific version is the useful one; \"we have on-call\" tells you nothing.\n- *\"What does the team spend time on that it wishes it did not?\"* Surfaces toil, tech debt and process pain that no one volunteers.\n\n**Questions that reveal the role's reality:**\n- *\"What would the first ninety days look like, and what would success look like at the end of them?\"* If they cannot answer concretely, the role may not be well defined — which is a genuine risk.\n- *\"Why is this position open?\"* Growth, backfill, or churn are three very different situations.\n- *\"What is the biggest technical decision the team is facing right now?\"* You get a real problem to reason about, and it often turns into the best conversation of the interview.\n\n**Questions that reveal growth and stability:**\n- *\"How are promotions decided here, and can you tell me about someone who was promoted recently?\"* The second half is what makes it useful.\n- *\"What is the tenure of the team? Has anyone left recently, and why?\"*\n- *\"How does the team decide what to work on?\"*\n\n**Ask the right person.** An engineer can answer about on-call, code review and the last incident. A hiring manager can answer about roadmap, team growth and promotion. A recruiter can answer about process and compensation bands. Asking a recruiter about deployment frequency wastes your best question.\n\n**Avoid:** anything answerable from the careers page; \"what does a typical day look like\" (generic, generic answer); and — early on — questions that are only about what you receive (holiday, remote days, perks) before any about the work itself. Those are legitimate and you should absolutely ask them, but at offer stage.\n\n**Listen to the answer, not just the fact that you asked.** Hesitation on \"why is this position open\" or a vague answer on the last incident is real data. And prepare more questions than you need — several will be answered during the conversation, and having nothing left is a bad final impression.",
+        "es": "\"¿Tienes alguna pregunta para nosotros?\" no es una formalidad. Son los últimos cinco minutos y se siguen calificando — y es además la única parte del proceso donde **tú** los evalúas a **ellos**, algo que la mayoría de los candidatos olvida por completo.\n\n**Preguntas que revelan cómo funciona el equipo de verdad:**\n- *\"Cuéntame qué pasó en el último incidente de producción.\"* La pregunta de mayor información disponible. Aprendes si tienen monitoreo, si los postmortems son sin culpables, si el trabajo de seguimiento realmente se entrega, y cómo hablan de los errores — todo de una sola respuesta.\n- *\"¿Cómo llega el código de una laptop a producción? ¿Cuánto tarda eso?\"* Revela madurez de CI/CD, cultura de tests, proceso de revisión, y miedo a desplegar.\n- *\"¿Cómo es la guardia? ¿Con qué frecuencia, y qué pasó la última vez que alguien recibió una alerta de noche?\"* La versión específica es la útil; \"tenemos guardia\" no te dice nada.\n- *\"¿En qué gasta tiempo el equipo que preferiría no gastar?\"* Saca a la luz trabajo repetitivo, deuda técnica y dolores de proceso que nadie ofrece por su cuenta.\n\n**Preguntas que revelan la realidad del rol:**\n- *\"¿Cómo serían los primeros noventa días, y cómo se vería el éxito al final de ellos?\"* Si no pueden responder concretamente, el rol puede no estar bien definido — que es un riesgo genuino.\n- *\"¿Por qué está abierta esta posición?\"* Crecimiento, reemplazo o rotación son tres situaciones muy distintas.\n- *\"¿Cuál es la decisión técnica más grande que el equipo está enfrentando ahora?\"* Obtienes un problema real sobre el que razonar, y a menudo se convierte en la mejor conversación de la entrevista.\n\n**Preguntas que revelan crecimiento y estabilidad:**\n- *\"¿Cómo se deciden los ascensos acá, y me pueden contar de alguien que ascendió recientemente?\"* La segunda mitad es lo que la vuelve útil.\n- *\"¿Cuál es la antigüedad del equipo? ¿Se fue alguien recientemente, y por qué?\"*\n- *\"¿Cómo decide el equipo en qué trabajar?\"*\n\n**Pregúntale a la persona correcta.** Un ingeniero puede responder sobre guardia, revisión de código y el último incidente. Un hiring manager puede responder sobre roadmap, crecimiento del equipo y ascensos. Un reclutador puede responder sobre el proceso y las bandas de compensación. Preguntarle a un reclutador por la frecuencia de despliegue desperdicia tu mejor pregunta.\n\n**Evita:** cualquier cosa contestable desde la página de empleos; \"¿cómo es un día típico?\" (genérica, respuesta genérica); y — temprano en el proceso — preguntas que son solo sobre lo que recibes (vacaciones, días de remoto, beneficios) antes de cualquiera sobre el trabajo en sí. Son legítimas y absolutamente debes preguntarlas, pero en la etapa de oferta.\n\n**Escucha la respuesta, no solo el hecho de haber preguntado.** Una vacilación ante \"¿por qué está abierta esta posición?\" o una respuesta vaga sobre el último incidente son datos reales. Y prepara más preguntas de las que necesitas — varias se van a responder durante la conversación, y quedarte sin ninguna es una mala impresión final."
+      },
+      "examples": [
+        {
+          "en": "\"Tell me about the last production incident\" gets an answer like: \"a config change took down search for 20 minutes, we found it through customer reports, and the postmortem action items are still open.\" That single answer told the candidate there is no alerting on a user-facing path and postmortem follow-through is weak — information no careers page contains.",
+          "es": "\"Cuéntame del último incidente de producción\" obtiene una respuesta como: \"un cambio de configuración tiró la búsqueda 20 minutos, nos enteramos por reportes de clientes, y las acciones del postmortem siguen abiertas.\" Esa sola respuesta le dijo al candidato que no hay alertas en un camino de cara al usuario y que el seguimiento de postmortems es débil — información que ninguna página de empleos contiene."
+        },
+        {
+          "en": "\"How long from merge to production?\" answered as \"we release every two weeks and it's a bit of a process\" versus \"about twelve minutes, and anyone can deploy\" describes two entirely different jobs, whatever the job description said.",
+          "es": "\"¿Cuánto pasa de un merge a producción?\" respondido como \"lanzamos cada dos semanas y es un poco un proceso\" contra \"unos doce minutos, y cualquiera puede desplegar\" describe dos trabajos completamente distintos, diga lo que diga la descripción del puesto."
+        },
+        {
+          "en": "Asked \"why is this position open?\", an interviewer hesitates and says \"the last person moved on\". Following up gently — \"how long were they in the role?\" — is entirely fair, and \"about five months\" is a data point worth having before signing.",
+          "es": "Ante \"¿por qué está abierta esta posición?\", un entrevistador vacila y dice \"la última persona siguió su camino\". Repreguntar con suavidad — \"¿cuánto tiempo estuvo en el rol?\" — es completamente justo, y \"unos cinco meses\" es un dato que conviene tener antes de firmar."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "matching",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Match each question with what it actually reveals.",
+              "es": "Conecta cada pregunta con lo que realmente revela."
+            },
+            "left": [
+              {
+                "id": "incident",
+                "label": {
+                  "en": "\"Walk me through the last production incident.\"",
+                  "es": "\"Cuéntame del último incidente de producción.\""
+                }
+              },
+              {
+                "id": "deploy",
+                "label": {
+                  "en": "\"How long from merge to production, and who can deploy?\"",
+                  "es": "\"¿Cuánto pasa de un merge a producción, y quién puede desplegar?\""
+                }
+              },
+              {
+                "id": "open",
+                "label": {
+                  "en": "\"Why is this position open?\"",
+                  "es": "\"¿Por qué está abierta esta posición?\""
+                }
+              },
+              {
+                "id": "promo",
+                "label": {
+                  "en": "\"Can you tell me about someone promoted here recently?\"",
+                  "es": "\"¿Me pueden contar de alguien que ascendió acá recientemente?\""
+                }
+              },
+              {
+                "id": "toil",
+                "label": {
+                  "en": "\"What does the team spend time on that it wishes it did not?\"",
+                  "es": "\"¿En qué gasta tiempo el equipo que preferiría no gastar?\""
+                }
+              }
+            ],
+            "right": [
+              {
+                "id": "culture",
+                "label": {
+                  "en": "Monitoring maturity, whether postmortems are blameless, and whether follow-up work actually ships",
+                  "es": "Madurez del monitoreo, si los postmortems son sin culpables, y si el trabajo de seguimiento realmente se entrega"
+                }
+              },
+              {
+                "id": "cicd",
+                "label": {
+                  "en": "CI/CD maturity, test culture and how much fear surrounds a release",
+                  "es": "Madurez de CI/CD, cultura de tests, y cuánto miedo rodea a un release"
+                }
+              },
+              {
+                "id": "churn",
+                "label": {
+                  "en": "Growth, backfill or churn — three very different situations to be walking into",
+                  "es": "Crecimiento, reemplazo o rotación — tres situaciones muy distintas en las que estarías entrando"
+                }
+              },
+              {
+                "id": "career",
+                "label": {
+                  "en": "Whether the promotion process is real and exercised, or only documented",
+                  "es": "Si el proceso de ascensos es real y se ejerce, o solo está documentado"
+                }
+              },
+              {
+                "id": "debt",
+                "label": {
+                  "en": "Toil, tech debt and process pain that nobody volunteers unprompted",
+                  "es": "Trabajo repetitivo, deuda técnica y dolores de proceso que nadie ofrece sin que se lo pregunten"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "pairs": {
+              "incident": "culture",
+              "deploy": "cicd",
+              "open": "churn",
+              "promo": "career",
+              "toil": "debt"
+            }
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "You have five minutes with a senior engineer on the team. Which question makes the best use of it?",
+              "es": "Tienes cinco minutos con un ingeniero senior del equipo. ¿Qué pregunta aprovecha mejor ese tiempo?"
+            },
+            "options": [
+              {
+                "en": "\"How many people work in engineering?\"",
+                "es": "\"¿Cuánta gente trabaja en ingeniería?\""
+              },
+              {
+                "en": "\"What is the company's remote work policy?\"",
+                "es": "\"¿Cuál es la política de trabajo remoto de la empresa?\""
+              },
+              {
+                "en": "\"What does a typical day look like?\"",
+                "es": "\"¿Cómo es un día típico?\""
+              },
+              {
+                "en": "\"Walk me through what happened with the last production incident — how you found out, and what changed afterwards.\"",
+                "es": "\"Cuéntame qué pasó en el último incidente de producción — cómo se enteraron, y qué cambió después.\""
+              }
+            ],
+            "explanation": {
+              "en": "The incident question is high-information and only an engineer can answer it properly: in one answer you learn about monitoring, incident process, blame culture and whether follow-up work actually gets prioritised. Remote policy and headcount are recruiter questions or answerable from the careers page — asking them here wastes your scarcest access. 'A typical day' is generic enough that it reliably produces a generic answer.",
+              "es": "La pregunta del incidente es de alta información y solo un ingeniero puede responderla bien: en una respuesta aprendes sobre monitoreo, proceso de incidentes, cultura de culpa, y si el trabajo de seguimiento realmente se prioriza. La política de remoto y la cantidad de gente son preguntas para el reclutador o contestables desde la página de empleos — hacerlas acá desperdicia tu acceso más escaso. 'Un día típico' es tan genérica que produce confiablemente una respuesta genérica."
+            }
+          },
+          "solution": {
+            "correct": [
+              3
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write the three questions you would ask a senior engineer on the team you would be joining, and for each one, say what you would learn from the answer — including what a *bad* answer would look like.",
+              "es": "Escribe las tres preguntas que le harías a un ingeniero senior del equipo al que te unirías, y para cada una, di qué aprenderías de la respuesta — incluyendo cómo se vería una *mala* respuesta."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must give exactly three questions, each appropriate for an engineer rather than a recruiter or HR — questions about remote policy, holiday, headcount or compensation bands are misdirected here and should be flagged. Each question must be paired with a stated rationale for what it reveals, and crucially with what a bad answer would look like; omitting the bad-answer half is the most likely gap and should be called out, since it is what turns asking into evaluating. Questions should be specific and concrete rather than generic ('what's a typical day', 'what's the culture like' produce generic answers). Strong choices include the last production incident, merge-to-production time and who can deploy, on-call reality, what the team wishes it did not spend time on, the biggest current technical decision, or why the position is open. Bonus: notes that the candidate is evaluating the company too, mentions listening to hesitation or vagueness as data, prepares more questions than needed because some get answered during the conversation, or explains how a specific bad answer would change their decision.",
+              "es": "Debe dar exactamente tres preguntas, cada una apropiada para un ingeniero y no para un reclutador o RRHH — preguntas sobre política de remoto, vacaciones, cantidad de gente o bandas de compensación están mal dirigidas acá y deben señalarse. Cada pregunta debe ir acompañada de una justificación de qué revela, y fundamentalmente de cómo se vería una mala respuesta; omitir la mitad de la mala respuesta es la brecha más probable y debe señalarse, ya que es lo que convierte el preguntar en evaluar. Las preguntas deben ser específicas y concretas en vez de genéricas ('cómo es un día típico', 'cómo es la cultura' producen respuestas genéricas). Buenas elecciones incluyen el último incidente de producción, el tiempo de merge a producción y quién puede desplegar, la realidad de la guardia, en qué preferiría el equipo no gastar tiempo, la decisión técnica más grande actual, o por qué está abierta la posición. Bonus: nota que el candidato también está evaluando a la empresa, menciona escuchar la vacilación o la vaguedad como dato, prepara más preguntas de las necesarias porque algunas se responden en la conversación, o explica cómo una mala respuesta concreta cambiaría su decisión."
+            },
+            "reference": "**1. \"Walk me through the last production incident — how did you find out, and what changed afterwards?\"**\n\nWhat I learn: whether they have real alerting on user-facing paths, whether postmortems are blameless, and — the part most teams fail — whether the action items actually shipped. It is the highest-information question I can ask an engineer, because it is a concrete story rather than a description of how they would like to work.\n\nA bad answer: \"a customer emailed support, and honestly the postmortem doc is still open from March.\" That tells me detection depends on users and that follow-up work loses to feature work. Also bad in a different way: \"we don't really have incidents\" — either they are not looking, or I am about to be the person who discovers that.\n\n**2. \"How long does it take for a merged pull request to reach production, and who is allowed to deploy?\"**\n\nWhat I learn: CI/CD maturity, test confidence, and how much fear surrounds a release. Deploy frequency is the best single proxy for engineering health I know, because a team that deploys many times a day has necessarily solved testing, review, rollback and observability.\n\nA bad answer: \"we release every two weeks and the release manager coordinates it.\" Not disqualifying, but it means slow feedback loops and large risky batches, and I would want to know whether they see that as a problem they are working on or as simply how things are. The worse version is \"it depends — sometimes a release takes a few days if something goes wrong\", which suggests deploys are not reliably reversible.\n\n**3. \"What does the team spend time on that it wishes it did not?\"**\n\nWhat I learn: the toil, the tech debt, and the process pain that nobody volunteers in an interview. It is deliberately phrased to give permission to complain, and the honesty of the answer is itself a signal about how safe it is to say critical things on this team.\n\nA bad answer: \"nothing really, things run pretty smoothly.\" Every team has toil. Either they are not being candid with me, or they have stopped noticing — and both mean I will find out after I join. A *good* bad answer, which I would actually be encouraged by, is a specific complaint plus what they are doing about it: \"flaky tests eat a day a week, and we've got a working group on it that's halved it since January.\"\n\nI would prepare five or six of these rather than three, because two or three usually get answered during the conversation. And I would pay as much attention to hesitation as to content — if \"why is this position open\" produces a pause, that pause is the answer."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "the-30-second-self-introduction",
+      "question": {
+        "en": "How do you open with \"tell me about yourself\"?",
+        "es": "¿Cómo abres con \"cuéntame de ti\"?"
+      },
+      "definition": {
+        "en": "It is the first question in almost every interview, it is entirely predictable, and it is the one most people improvise. It sets the frame for the next forty-five minutes: a good answer makes the interviewer ask about the thing you want to talk about.\n\n**The structure: Now → Then → Why here.** Ninety seconds, not five minutes.\n\n1. **Now (20 s).** What you do currently, with scope. \"I'm a backend engineer at a fintech, where I own the payments ingestion service — about 8 000 events a second — and I'm primary on-call for it.\" Scope and a number, immediately.\n2. **Then (40 s).** The path that led here, told as a **trajectory, not a resume**. Two or three moves, each with a reason. \"I started in full-stack at an agency, moved to backend because I found the data modelling problems more interesting, and over the last three years I've specialised in high-throughput systems.\" Skip jobs that do not serve the story — they can read the CV.\n3. **Why here (20 s).** Something specific about *this* role or company. \"I'm interested in this role because you're solving the same ingestion problems at a scale I haven't worked at, and the engineering blog post about your migration off Kafka was the most honest thing I've read about that trade-off.\" Generic enthusiasm is worse than none — it signals you are running the same script at five companies.\n4. **Optionally, hand them a thread.** End with a hook you would like to be asked about: \"...and most recently I've been working on getting our p99 under 200 ms, which turned out to be mostly a connection pooling problem.\" Interviewers frequently follow the last thing you said.\n\n**What to leave out:** where you were born, your degree unless it is recent or relevant, hobbies unless they connect, and a chronological walk through every job since 2014. The chronological retelling is the single most common version and the least effective, because it forces the interviewer to work out what matters.\n\n**Calibrate to the interviewer.** With a recruiter, lean on scope, motivation and trajectory. With an engineer, get to the technical specifics faster. With a hiring manager, emphasise ownership and impact.\n\n**Practise it out loud, once or twice, not twenty times.** It should sound prepared but not recited — a memorised paragraph delivered at speed is worse than a slightly rough answer with real content in it. And time it: most people's first attempt runs to three or four minutes, which spends a tenth of the interview before any question has been asked.",
+        "es": "Es la primera pregunta de casi toda entrevista, es completamente predecible, y es la que la mayoría improvisa. Fija el marco para los siguientes cuarenta y cinco minutos: una buena respuesta hace que el entrevistador pregunte por lo que tú quieres hablar.\n\n**La estructura: Ahora → Antes → Por qué acá.** Noventa segundos, no cinco minutos.\n\n1. **Ahora (20 s).** Qué haces actualmente, con alcance. \"Soy ingeniero backend en una fintech, donde soy dueño del servicio de ingesta de pagos — unos 8 000 eventos por segundo — y soy el primer contacto de guardia.\" Alcance y un número, de inmediato.\n2. **Antes (40 s).** El camino que te trajo acá, contado como una **trayectoria, no un currículum**. Dos o tres movimientos, cada uno con una razón. \"Empecé en full-stack en una agencia, me moví a backend porque los problemas de modelado de datos me parecían más interesantes, y en los últimos tres años me especialicé en sistemas de alto throughput.\" Salta los trabajos que no sirven a la historia — pueden leer el CV.\n3. **Por qué acá (20 s).** Algo específico de *este* rol o empresa. \"Me interesa este rol porque están resolviendo los mismos problemas de ingesta a una escala en la que no trabajé, y el post del blog de ingeniería sobre su migración fuera de Kafka fue lo más honesto que leí sobre ese trade-off.\" El entusiasmo genérico es peor que ninguno — señala que estás corriendo el mismo guion en cinco empresas.\n4. **Opcionalmente, dales un hilo.** Termina con un gancho sobre el que te gustaría que te preguntaran: \"...y últimamente estuve trabajando en bajar nuestro p99 de 200 ms, que resultó ser mayormente un problema de pooling de conexiones.\" Los entrevistadores frecuentemente siguen lo último que dijiste.\n\n**Qué dejar afuera:** dónde naciste, tu título salvo que sea reciente o relevante, hobbies salvo que conecten, y un recorrido cronológico por cada trabajo desde 2014. El recuento cronológico es la versión más común y la menos efectiva, porque obliga al entrevistador a deducir qué importa.\n\n**Calibra según el entrevistador.** Con un reclutador, apóyate en alcance, motivación y trayectoria. Con un ingeniero, llega a lo técnico más rápido. Con un hiring manager, enfatiza propiedad e impacto.\n\n**Practícala en voz alta, una o dos veces, no veinte.** Debe sonar preparada pero no recitada — un párrafo memorizado dicho a toda velocidad es peor que una respuesta un poco áspera con contenido real. Y tómale el tiempo: el primer intento de la mayoría se va a tres o cuatro minutos, lo que gasta una décima parte de la entrevista antes de que se haya hecho ninguna pregunta."
+      },
+      "examples": [
+        {
+          "en": "\"I graduated in 2016, then I was at company A for two years doing mostly frontend, then company B where I did some backend and some DevOps, then company C...\" — four minutes in, the interviewer has no idea what this person is good at or wants. The chronology is available on the CV; the trajectory is not.",
+          "es": "\"Me recibí en 2016, después estuve en la empresa A dos años haciendo mayormente frontend, después en la empresa B donde hice algo de backend y algo de DevOps, después en la empresa C...\" — a los cuatro minutos, el entrevistador no tiene idea en qué es bueno ni qué quiere esta persona. La cronología está en el CV; la trayectoria no."
+        },
+        {
+          "en": "Ending with \"...and most recently I've been working on getting our p99 under 200 ms, which turned out to be a connection pooling problem rather than a query problem\" reliably produces \"tell me about that\" as the next question — which is a conversation the candidate chose and is prepared for.",
+          "es": "Terminar con \"...y últimamente estuve trabajando en bajar nuestro p99 de 200 ms, que resultó ser un problema de pooling de conexiones y no de consultas\" produce confiablemente \"cuéntame de eso\" como siguiente pregunta — que es una conversación que el candidato eligió y para la que está preparado."
+        },
+        {
+          "en": "\"I'm excited about your company's mission and culture of innovation\" is indistinguishable from what every other candidate said, and interviewers hear it as a template. \"Your post about moving off Kafka matched a decision we got wrong last year\" cannot have been said by anyone who did not do the reading.",
+          "es": "\"Me entusiasma la misión de su empresa y su cultura de innovación\" es indistinguible de lo que dijo cualquier otro candidato, y los entrevistadores lo escuchan como una plantilla. \"Su post sobre migrar fuera de Kafka coincide con una decisión que nosotros hicimos mal el año pasado\" no lo pudo haber dicho nadie que no hiciera la lectura."
+        }
+      ],
+      "exercises": [
+        {
+          "type": "ordering",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Order the parts of a 90-second self-introduction.",
+              "es": "Ordena las partes de una presentación personal de 90 segundos."
+            },
+            "layout": "flow",
+            "items": [
+              {
+                "id": "now",
+                "label": {
+                  "en": "Now — what you do today, with scope and a number (~20 s)",
+                  "es": "Ahora — qué haces hoy, con alcance y un número (~20 s)"
+                }
+              },
+              {
+                "id": "then",
+                "label": {
+                  "en": "Then — the trajectory that led here, two or three moves with reasons (~40 s)",
+                  "es": "Antes — la trayectoria que te trajo acá, dos o tres movimientos con razones (~40 s)"
+                }
+              },
+              {
+                "id": "why",
+                "label": {
+                  "en": "Why here — something specific to this role or company (~20 s)",
+                  "es": "Por qué acá — algo específico de este rol o empresa (~20 s)"
+                }
+              },
+              {
+                "id": "hook",
+                "label": {
+                  "en": "A hook — the thing you would like to be asked about next",
+                  "es": "Un gancho — aquello sobre lo que te gustaría que preguntaran después"
+                }
+              }
+            ]
+          },
+          "solution": {
+            "order": [
+              "now",
+              "then",
+              "why",
+              "hook"
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "validation_mode": "static",
+          "data": {
+            "prompt": {
+              "en": "Why is a chronological walk through every job since graduation a weak answer to \"tell me about yourself\"?",
+              "es": "¿Por qué un recorrido cronológico por cada trabajo desde el egreso es una respuesta débil a \"cuéntame de ti\"?"
+            },
+            "options": [
+              {
+                "en": "It repeats what is already on the CV, takes several minutes, and makes the interviewer work out what matters instead of telling them — you have spent your opening without shaping the conversation",
+                "es": "Repite lo que ya está en el CV, toma varios minutos, y obliga al entrevistador a deducir qué importa en vez de decírselo — gastaste tu apertura sin darle forma a la conversación"
+              },
+              {
+                "en": "Interviewers are not allowed to ask about employment history",
+                "es": "Los entrevistadores no tienen permitido preguntar por el historial laboral"
+              },
+              {
+                "en": "Chronological order is harder for people to follow than reverse order",
+                "es": "El orden cronológico es más difícil de seguir que el orden inverso"
+              },
+              {
+                "en": "It signals a lack of loyalty if you have changed jobs",
+                "es": "Señala falta de lealtad si cambiaste de trabajo"
+              }
+            ],
+            "explanation": {
+              "en": "The opening question is the one moment where you control the frame, and a resume recital gives that away. The interviewer already has the dates; what they cannot get from the CV is the trajectory — why each move happened and what you have converged on. A structured Now/Then/Why-here answer ending with a hook makes it likely the next question is one you chose.",
+              "es": "La pregunta de apertura es el único momento donde controlas el marco, y recitar el currículum lo regala. El entrevistador ya tiene las fechas; lo que no puede sacar del CV es la trayectoria — por qué ocurrió cada movimiento y hacia dónde convergiste. Una respuesta estructurada de Ahora/Antes/Por-qué-acá terminada con un gancho hace probable que la siguiente pregunta sea una que elegiste tú."
+            }
+          },
+          "solution": {
+            "correct": [
+              0
+            ]
+          }
+        },
+        {
+          "type": "open_text",
+          "validation_mode": "llm",
+          "data": {
+            "prompt": {
+              "en": "Write your own 90-second answer to \"tell me about yourself\", for a senior backend role you would actually want. Use Now → Then → Why here, and end with a hook you would like to be asked about.",
+              "es": "Escribe tu propia respuesta de 90 segundos a \"cuéntame de ti\", para un rol senior de backend que realmente quisieras. Usa Ahora → Antes → Por qué acá, y termina con un gancho sobre el que te gustaría que preguntaran."
+            }
+          },
+          "solution": {
+            "criteria": {
+              "en": "Must follow the Now → Then → Why here structure and be roughly 90 seconds of speech — if it reads as three or four minutes, flag the length, since running long is the most common failure. 'Now' should state current scope concretely, ideally with a number or a named system rather than a job title alone. 'Then' must be a trajectory with reasons for the moves, not a chronological list of employers; a resume recital is the key weakness to call out. 'Why here' must be specific to a role or company — generic enthusiasm about 'mission' or 'culture of innovation' should be flagged as interchangeable with every other candidate's answer. Should end with a hook: a concrete recent piece of work the candidate would like to be asked about. Bonus: leaves out irrelevant biography (birthplace, unrelated degree, full job history), calibrates the technical depth to the audience, or picks a hook that sets up a story they are genuinely prepared to tell in STAR form.",
+              "es": "Debe seguir la estructura Ahora → Antes → Por qué acá y ser aproximadamente 90 segundos de habla — si se lee como tres o cuatro minutos, señala el largo, ya que excederse es el fallo más común. 'Ahora' debe enunciar el alcance actual de forma concreta, idealmente con un número o un sistema nombrado y no solo un título de puesto. 'Antes' debe ser una trayectoria con razones para los movimientos, no una lista cronológica de empleadores; recitar el currículum es la debilidad clave a señalar. 'Por qué acá' debe ser específico de un rol o empresa — el entusiasmo genérico sobre la 'misión' o la 'cultura de innovación' debe señalarse como intercambiable con la respuesta de cualquier otro candidato. Debería terminar con un gancho: un trabajo reciente concreto sobre el que al candidato le gustaría que preguntaran. Bonus: deja afuera biografía irrelevante (lugar de nacimiento, título no relacionado, historial laboral completo), calibra la profundidad técnica a la audiencia, o elige un gancho que prepare una historia que genuinamente puede contar en formato STAR."
+            },
+            "reference": "**Now.** I'm a backend engineer at a payments company, where I own our event ingestion service end to end — it handles around 8 000 events a second at peak, and I'm the primary on-call for it. Day to day that's a mix of Python and Postgres, with a fair amount of time in query plans and capacity planning.\n\n**Then.** I started in full-stack at an agency, which was a good way to see a lot of codebases quickly but meant I was always shallow. I moved to a product company specifically to go deeper on the backend, because the problems I kept finding interesting were the data modelling ones rather than the interface ones. Over the last three years that's narrowed further into high-throughput systems — I've spent most of my time on the write path, on the database side of latency, and on the operational reality of running something that cannot go down during business hours.\n\n**Why here.** I'm interested in this role because you're solving the same ingestion problems an order of magnitude above where I've worked, and because of the engineering blog post about moving off Kafka — it's the most honest write-up of that trade-off I've read, including the parts where it did not work out. We made close to the opposite decision last year and I'd like to work somewhere that writes that kind of thing down.\n\n**Hook.** The thing I've spent most of this quarter on is getting our p99 under 200 ms, which I assumed would be a query optimisation problem and turned out to be almost entirely connection pooling — I'd be happy to go into that if it's useful.\n\n---\n\nWhy it is shaped this way: the first sentence gives scope and a number, so the interviewer immediately knows what level of problem I work on. The middle is a trajectory with *reasons* — full-stack to backend because of the kind of problem, backend to high-throughput because of where that led — rather than a list of employers with dates, which are already on the CV. The 'why here' cites something specific enough that I could not have said it to another company. And the hook hands them a thread I want to be pulled, which is the p99 story I have prepared in STAR form."
+          }
+        }
+      ]
+    }
+  ],
+  "test": [
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "In a STAR answer, which part should take roughly 60% of the time?",
+          "es": "En una respuesta STAR, ¿qué parte debería tomar aproximadamente el 60% del tiempo?"
+        },
+        "options": [
+          {
+            "en": "Result",
+            "es": "Resultado"
+          },
+          {
+            "en": "Situation — the interviewer needs full context to judge the story",
+            "es": "Situación — el entrevistador necesita el contexto completo para juzgar la historia"
+          },
+          {
+            "en": "Action — your decisions, the alternatives you rejected, and why",
+            "es": "Acción — tus decisiones, las alternativas que rechazaste, y por qué"
+          },
+          {
+            "en": "Task",
+            "es": "Tarea"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the clearest negative signal when a candidate walks through a production incident?",
+          "es": "¿Cuál es la señal negativa más clara cuando un candidato narra un incidente de producción?"
+        },
+        "options": [
+          {
+            "en": "Mentioning that the postmortem produced action items",
+            "es": "Mencionar que el postmortem produjo acciones de seguimiento"
+          },
+          {
+            "en": "Saying the incident was detected by an alert",
+            "es": "Decir que el incidente se detectó por una alerta"
+          },
+          {
+            "en": "Not knowing the exact root cause",
+            "es": "No saber la causa raíz exacta"
+          },
+          {
+            "en": "Diagnosing the cause before doing anything to stop the user impact — mitigation should come first",
+            "es": "Diagnosticar la causa antes de hacer algo para detener el impacto al usuario — la mitigación va primero"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Asked \"what would you change about that design?\", why is \"nothing, it worked well\" a weak answer?",
+          "es": "Ante \"¿qué cambiarías de ese diseño?\", ¿por qué \"nada, funcionó bien\" es una respuesta débil?"
+        },
+        "options": [
+          {
+            "en": "It sounds arrogant and interviewers penalise confidence",
+            "es": "Suena arrogante y los entrevistadores penalizan la confianza"
+          },
+          {
+            "en": "The question is a trick and should be deflected",
+            "es": "La pregunta es una trampa y debe esquivarse"
+          },
+          {
+            "en": "Every real design trades something away, so it reads as not having understood the cost — and the interviewer will probe until they find the weakness themselves",
+            "es": "Todo diseño real resigna algo, así que se lee como no haber entendido el costo — y el entrevistador va a hurgar hasta encontrar la debilidad por su cuenta"
+          },
+          {
+            "en": "It is too short an answer",
+            "es": "Es una respuesta demasiado corta"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A recruiter asks your salary expectations in the first call. What is the best move?",
+          "es": "Un reclutador te pregunta tus expectativas salariales en la primera llamada. ¿Cuál es la mejor movida?"
+        },
+        "options": [
+          {
+            "en": "Refuse to discuss it until a written offer exists",
+            "es": "Negarse a hablarlo hasta que exista una oferta escrita"
+          },
+          {
+            "en": "Give your current salary plus 10%",
+            "es": "Dar tu salario actual más 10%"
+          },
+          {
+            "en": "Name the highest number you can, to anchor high",
+            "es": "Nombrar el número más alto que puedas, para anclar alto"
+          },
+          {
+            "en": "Ask what range is budgeted for the level, and give a researched range only if genuinely pushed",
+            "es": "Preguntar qué rango tienen presupuestado para el nivel, y dar un rango investigado solo si insisten de verdad"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          3
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which is the strongest way to argue for a senior level?",
+          "es": "¿Cuál es la forma más fuerte de argumentar por un nivel senior?"
+        },
+        "options": [
+          {
+            "en": "\"I know more technologies than most candidates you'll see.\"",
+            "es": "\"Conozco más tecnologías que la mayoría de los candidatos que van a ver.\""
+          },
+          {
+            "en": "\"My last title was Senior Engineer.\"",
+            "es": "\"Mi último título era Ingeniero Senior.\""
+          },
+          {
+            "en": "\"I own the ingestion service end to end, I'm primary on-call for it, and I mentored two engineers through their first quarter.\"",
+            "es": "\"Soy dueño del servicio de ingesta de punta a punta, soy el primer contacto de guardia, y mentoreé a dos ingenieros en su primer trimestre.\""
+          },
+          {
+            "en": "\"I have eight years of experience.\"",
+            "es": "\"Tengo ocho años de experiencia.\""
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "How should you spend the first five minutes of a 45-minute system-design interview?",
+          "es": "¿Cómo deberías gastar los primeros cinco minutos de una entrevista de diseño de sistemas de 45 minutos?"
+        },
+        "options": [
+          {
+            "en": "Listing every technology you would consider using",
+            "es": "Listando cada tecnología que considerarías usar"
+          },
+          {
+            "en": "Drawing the high-level architecture so there is something concrete to discuss",
+            "es": "Dibujando la arquitectura de alto nivel para tener algo concreto que discutir"
+          },
+          {
+            "en": "Asking clarifying questions and agreeing the scope out loud, before drawing anything",
+            "es": "Haciendo preguntas aclaratorias y acordando el alcance en voz alta, antes de dibujar nada"
+          },
+          {
+            "en": "Designing the database schema, since everything depends on it",
+            "es": "Diseñando el esquema de la base de datos, ya que todo depende de él"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          2
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "What is the most common way strong engineers fail a system-design interview?",
+          "es": "¿Cuál es la forma más común en que buenos ingenieros fallan una entrevista de diseño de sistemas?"
+        },
+        "options": [
+          {
+            "en": "Asking too many clarifying questions",
+            "es": "Hacer demasiadas preguntas aclaratorias"
+          },
+          {
+            "en": "Going deep on one component and never covering scaling, caching or failure modes — half-covering six areas beats fully covering one",
+            "es": "Profundizar en un componente y nunca cubrir escalado, caché ni modos de fallo — cubrir a medias seis áreas le gana a cubrir una completa"
+          },
+          {
+            "en": "Estimating scale with rounded rather than precise numbers",
+            "es": "Estimar la escala con números redondeados en vez de precisos"
+          },
+          {
+            "en": "Not naming enough specific technologies",
+            "es": "No nombrar suficientes tecnologías específicas"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "A decision goes against you after a fair technical discussion. What reads best?",
+          "es": "Una decisión va en tu contra después de una discusión técnica justa. ¿Qué se lee mejor?"
+        },
+        "options": [
+          {
+            "en": "Record the concern with a falsifiable trigger in the design doc, then implement their approach properly",
+            "es": "Registrar la preocupación con un disparador falseable en el documento de diseño, y después implementar su enfoque bien"
+          },
+          {
+            "en": "Raise it again in each of the next few team meetings",
+            "es": "Volver a plantearlo en cada una de las siguientes reuniones de equipo"
+          },
+          {
+            "en": "Escalate to the engineering manager",
+            "es": "Escalar al gerente de ingeniería"
+          },
+          {
+            "en": "Implement it minimally so the failure is obvious when it comes",
+            "es": "Implementarlo al mínimo para que la falla sea obvia cuando llegue"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Which answer to \"tell me about a time you failed\" scores worst?",
+          "es": "¿Cuál respuesta a \"cuéntame de una vez que fallaste\" puntúa peor?"
+        },
+        "options": [
+          {
+            "en": "A migration that locked a production table, with the reasoning error named and a process change afterwards",
+            "es": "Una migración que bloqueó una tabla de producción, con el error de razonamiento nombrado y un cambio de proceso después"
+          },
+          {
+            "en": "\"The project failed because requirements kept changing and another team missed their deadline.\"",
+            "es": "\"El proyecto falló porque los requisitos cambiaban y otro equipo no llegó a su fecha.\""
+          },
+          {
+            "en": "A missed deadline they owned, with the estimate error explained",
+            "es": "Una fecha incumplida que asumieron, con el error de estimación explicado"
+          },
+          {
+            "en": "An over-engineered abstraction that had to be deleted, with what they would do differently",
+            "es": "Una abstracción sobre-diseñada que hubo que borrar, con qué harían distinto"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "You have five minutes with an engineer from the team. Which question is the best use of it?",
+          "es": "Tienes cinco minutos con un ingeniero del equipo. ¿Qué pregunta lo aprovecha mejor?"
+        },
+        "options": [
+          {
+            "en": "\"Walk me through the last production incident — how you found out and what changed afterwards.\"",
+            "es": "\"Cuéntame del último incidente de producción — cómo se enteraron y qué cambió después.\""
+          },
+          {
+            "en": "\"What does a typical day look like?\"",
+            "es": "\"¿Cómo es un día típico?\""
+          },
+          {
+            "en": "\"What is the remote work policy?\"",
+            "es": "\"¿Cuál es la política de trabajo remoto?\""
+          },
+          {
+            "en": "\"How many people work in engineering?\"",
+            "es": "\"¿Cuánta gente trabaja en ingeniería?\""
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          0
+        ]
+      }
+    },
+    {
+      "type": "multiple_choice",
+      "validation_mode": "static",
+      "data": {
+        "prompt": {
+          "en": "Why is a chronological walk through every job a weak answer to \"tell me about yourself\"?",
+          "es": "¿Por qué un recorrido cronológico por cada trabajo es una respuesta débil a \"cuéntame de ti\"?"
+        },
+        "options": [
+          {
+            "en": "Interviewers are not permitted to consider employment history",
+            "es": "Los entrevistadores no tienen permitido considerar el historial laboral"
+          },
+          {
+            "en": "It repeats the CV, runs long, and makes the interviewer work out what matters instead of you shaping the conversation",
+            "es": "Repite el CV, se hace largo, y obliga al entrevistador a deducir qué importa en vez de que tú le des forma a la conversación"
+          },
+          {
+            "en": "It is better to start with your education",
+            "es": "Es mejor empezar por tu formación"
+          },
+          {
+            "en": "It suggests you change jobs too often",
+            "es": "Sugiere que cambias de trabajo demasiado seguido"
+          }
+        ]
+      },
+      "solution": {
+        "correct": [
+          1
+        ]
+      }
+    },
+    {
+      "type": "open_text",
+      "validation_mode": "llm",
+      "data": {
+        "prompt": {
+          "en": "An interviewer asks: \"tell me about a time you disagreed with a technical decision and lost.\" Explain what a strong answer contains, and what the interviewer is actually assessing.",
+          "es": "Un entrevistador pregunta: \"cuéntame de una vez que discrepaste con una decisión técnica y perdiste.\" Explica qué contiene una respuesta fuerte, y qué está evaluando realmente el entrevistador."
+        }
+      },
+      "solution": {
+        "criteria": {
+          "en": "Must identify that the interviewer is assessing two things simultaneously: whether the candidate holds and argues technical positions with evidence, and whether they can commit fully to a decision that went against them (disagree and commit). Must say a strong answer frames the disagreement technically rather than as a personality conflict, steelmans the other side's reasoning, describes converting opinion into evidence (a prototype, benchmark, load test, written doc, or third opinion) rather than persuasion by seniority, and states honestly what happened. Must cover what the candidate did after losing: implementing the chosen approach properly rather than half-heartedly, ideally with the concern recorded somewhere. Should note that disparaging the other person is disqualifying, and that an answer where the candidate turned out to be wrong is often stronger because it shows they can update. Bonus: mentions recording a falsifiable trigger so the concern becomes useful rather than an I-told-you-so, notes that sabotage-by-compliance is a real failure mode interviewers screen for, or distinguishes reversible from irreversible decisions when discussing escalation.",
+          "es": "Debe identificar que el entrevistador evalúa dos cosas a la vez: si el candidato sostiene y argumenta posiciones técnicas con evidencia, y si puede comprometerse por completo con una decisión que fue en su contra (discrepar y comprometerse). Debe decir que una respuesta fuerte encuadra el desacuerdo técnicamente y no como conflicto de personalidad, presenta la mejor versión del razonamiento del otro lado, describe convertir opinión en evidencia (un prototipo, benchmark, prueba de carga, documento escrito, o una tercera opinión) en vez de persuasión por antigüedad, y enuncia honestamente qué pasó. Debe cubrir qué hizo el candidato después de perder: implementar el enfoque elegido bien y no a medias, idealmente con la preocupación registrada en algún lado. Debería notar que hablar mal de la otra persona es descalificante, y que una respuesta donde el candidato resultó estar equivocado suele ser más fuerte porque muestra que puede actualizar su posición. Bonus: menciona registrar un disparador falseable para que la preocupación sea útil en vez de un te-lo-dije, nota que el sabotaje por cumplimiento es un modo de fallo real que los entrevistadores filtran, o distingue decisiones reversibles de irreversibles al hablar de escalar."
+        },
+        "reference": "The interviewer is assessing two things at once, and they are in tension — which is why the question is useful.\n\nThe first is whether you have technical conviction: do you form positions, and do you argue for them with something better than preference? A candidate who says they never disagree reads as either having no opinions or being willing to watch a bad decision ship silently. Neither is what a senior hire looks like.\n\nThe second is whether you can lose well. A technically strong engineer who cannot commit to a decision that went against them is a net negative on a team, because every settled question stays open. The phrase 'and lost' in the question is deliberate: they want to see disagree-and-commit specifically.\n\nA strong answer contains five things.\n\nIt frames the disagreement as technical, not personal — 'we disagreed about whether to introduce a queue', not 'my lead was stubborn'. Disparaging a named former colleague is close to disqualifying, because the interviewer only has your account and what they are actually learning is how you talk about people who are not in the room.\n\nIt steelmans the other position: states their reasoning as well as they would have. This is the strongest single move available, because it proves you understood the argument rather than talked past it. If their argument was 'we are three people and every stateful system is on-call burden', say that, and say it as a good argument.\n\nIt describes how you tried to resolve it, and the good answers all involve converting opinion into evidence — a prototype, a load test, a written design doc, a third perspective. Not persuasion by persistence or seniority.\n\nIt states the outcome honestly. And notably, an answer where you turned out to be *wrong* is often stronger than one where you were right, because updating on evidence is exactly the behaviour being screened for.\n\nFinally, it says what you did next. The good version is: record the concern somewhere durable — ideally with a falsifiable trigger, like 'this breaks down past about 400 concurrent workers' — and then implement their approach properly. The trigger is what turns the concern into something useful later rather than an I-told-you-so. The bad versions are all forms of not committing: implementing it minimally so the failure is obvious, leaving passive-aggressive comments in the code, or relitigating the decision in the next three team meetings. Interviewers know sabotage-by-compliance is a real failure mode and they are listening for it.\n\nA good closing beat is what you would do differently — usually raising it earlier, in writing, or with data instead of instinct."
+      }
+    }
+  ]
+}
