@@ -138,7 +138,8 @@ class LessonComponent(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     lesson_id: Mapped[int] = mapped_column(ForeignKey("lessons.id", ondelete="CASCADE"), index=True)
-    # quiz_card | interview_question_card | fun_fact_carousel | concept_diagram | image_gallery | badge_progress
+    # quiz_card | interview_question_card | fun_fact_carousel | concept_diagram | image_gallery
+    # | sql_playground | badge_progress
     component_type: Mapped[str] = mapped_column(String(40))
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)

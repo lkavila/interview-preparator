@@ -7,6 +7,7 @@ import ImageGallery from "./ImageGallery";
 import InterviewQuestionCard from "./InterviewQuestionCard";
 import QuizCard from "./QuizCard";
 import { CardSkeleton } from "./Skeleton";
+import SqlPlayground from "./SqlPlayground";
 
 interface LessonComponentsProps {
   lessonId: number;
@@ -28,6 +29,7 @@ function renderComponent(
 
   if (type === "concept_diagram") return <ConceptDiagram config={component.config} />;
   if (type === "image_gallery") return <ImageGallery images={component.config.images ?? []} />;
+  if (type === "sql_playground") return <SqlPlayground config={component.config} />;
 
   // enrichment-driven components
   if (enrichmentLoading) return <CardSkeleton lines={4} />;
@@ -73,7 +75,7 @@ export default function LessonComponents({ lessonId, components }: LessonCompone
   return (
     <div className="space-y-4">
       {enrichmentLoading && (
-        <p className="text-center text-[12.5px] text-muted" aria-live="polite">
+        <p className="text-center text-xs text-muted" aria-live="polite">
           {t("enrichmentLoading")}
         </p>
       )}

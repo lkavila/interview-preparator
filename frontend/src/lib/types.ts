@@ -84,7 +84,8 @@ export type LessonComponentType =
   | "interview_question_card"
   | "fun_fact_carousel"
   | "concept_diagram"
-  | "image_gallery";
+  | "image_gallery"
+  | "sql_playground";
 
 export interface GalleryImage {
   src: string;
@@ -92,6 +93,11 @@ export interface GalleryImage {
   author: string;
   license: string;
   source_url: string;
+}
+
+export interface PlaygroundSample {
+  label: Bilingual;
+  sql: string;
 }
 
 export interface LessonComponentConfig {
@@ -102,6 +108,13 @@ export interface LessonComponentConfig {
   code?: string;
   caption?: Bilingual;
   chart?: { type: "bar" | "line"; data: { name: string; value: number }[]; label?: Bilingual };
+  /** sql_playground */
+  schema_sql?: string;
+  title?: Bilingual;
+  intro?: Bilingual;
+  initial_query?: string;
+  samples?: PlaygroundSample[];
+  max_rows?: number;
 }
 
 export interface LessonComponent {
