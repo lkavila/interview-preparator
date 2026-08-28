@@ -1,0 +1,17 @@
+{
+  "_readme": "Known-correct solutions for every `sql` exercise, used ONLY by frontend/scripts/verify-sql-exercises.mjs. Never loaded by seed.py and never served to the browser (ExerciseOut returns data verbatim, so a solution placed inside the course JSON would be readable in devtools). Key: <course-slug>/<lesson-slug>/<exercise index within that lesson>. Run `npm run verify:sql` in frontend/ after adding an sql exercise — a missing key is a failure, not a skip.",
+  "postgresql/what-is-a-btree-index/0": "CREATE INDEX idx_products_name ON products (name);",
+  "postgresql/index-types-in-postgres/2": "CREATE INDEX idx_jobs_pending ON jobs (created_at) WHERE status = 'pending';",
+  "postgresql/seq-scan-vs-index-scan/0": "CREATE INDEX idx_events_user_id ON events (user_id);",
+  "postgresql/how-the-planner-chooses-a-plan/0": "ANALYZE visits;",
+  "postgresql/join-algorithms-nested-loop-hash-merge/0": "CREATE INDEX idx_orders_customer ON orders (customer_id);",
+  "postgresql/window-functions-basics/0": "CREATE VIEW top_sale_per_region AS SELECT region, amount FROM (SELECT region, amount, ROW_NUMBER() OVER (PARTITION BY region ORDER BY amount DESC) AS rn FROM sales) t WHERE rn = 1;",
+  "postgresql/window-functions-basics/1": "CREATE VIEW ranked_scores AS SELECT player, RANK() OVER (ORDER BY score DESC) AS rk, DENSE_RANK() OVER (ORDER BY score DESC) AS dr FROM scores;",
+  "postgresql/window-frames-and-lag-lead/0": "CREATE VIEW running_sales AS SELECT region, month, SUM(amount) OVER (PARTITION BY region ORDER BY month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running FROM sales;",
+  "postgresql/window-frames-and-lag-lead/1": "CREATE VIEW sales_delta AS SELECT region, month, amount - LAG(amount, 1, 0) OVER (PARTITION BY region ORDER BY month) AS delta FROM sales;",
+  "postgresql/composite-indexes/0": "CREATE INDEX idx_orders_customer_created ON orders (customer_id, created_at);",
+  "postgresql/transactions-and-acid/0": "BEGIN; UPDATE accounts SET balance = balance - 30 WHERE owner = 'alice'; UPDATE accounts SET balance = balance + 30 WHERE owner = 'bob'; COMMIT;",
+  "postgresql/altering-tables-safely/0": "ALTER TABLE employees ADD COLUMN department TEXT NOT NULL DEFAULT 'general';",
+  "postgresql/joins-and-aggregations/0": "CREATE VIEW top_customers AS SELECT c.name, COUNT(o.id) AS order_count, SUM(o.amount) AS total FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.name;",
+  "database-selection/debugging-slow-queries-in-postgres/0": "CREATE INDEX idx_sessions_token ON sessions (token);"
+}

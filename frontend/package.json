@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:sql": "node scripts/verify-sql-exercises.mjs"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
