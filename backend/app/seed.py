@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import Course, CourseExam, Exercise, Lesson, TestQuestion
+from app.models import Course, CourseExam, ExamSession, Exercise, Lesson, TestQuestion
 from app.schemas import SeedCourse
 
 SEEDS_DIR = Path(__file__).resolve().parent.parent / "seeds" / "courses"
@@ -61,11 +61,31 @@ def _upsert_questions(db: Session, course: Course, exam_id: int | None, seed_que
         for j, (q_model, q_seed) in enumerate(zip(existing, seed_questions)):
             q_model.order_index = j
             q_model.type = q_seed.type
+            q_model.category = q_seed.category
             q_model.data = q_seed.data
             q_model.solution = q_seed.solution
+            q_model.svg_content = q_seed.svg_content
         return
+    # Replacing the rows orphans any attempt still holding their ids, so those
+    # sessions are dropped here and the candidate is given a fresh draw instead
+    # of an exam that cannot be graded.
     for q_model in existing:
         db.delete(q_model)
+    open_sessions = (
+        db.query(ExamSession)
+        .filter(
+            ExamSession.course_id == course.id,
+            ExamSession.exam_id.is_(None) if exam_id is None else ExamSession.exam_id == exam_id,
+            ExamSession.submitted_at.is_(None),
+        )
+        .all()
+    )
+    for session in open_sessions:
+        db.delete(session)
+    if open_sessions:
+        print(
+            f"    dropped {len(open_sessions)} in-flight session(s) whose questions were replaced"
+        )
     db.flush()
     for j, q_seed in enumerate(seed_questions):
         db.add(
@@ -74,8 +94,10 @@ def _upsert_questions(db: Session, course: Course, exam_id: int | None, seed_que
                 exam_id=exam_id,
                 order_index=j,
                 type=q_seed.type,
+                category=q_seed.category,
                 data=q_seed.data,
                 solution=q_seed.solution,
+                svg_content=q_seed.svg_content,
             )
         )
 
@@ -165,6 +187,7 @@ def upsert_course(db: Session, seed: SeedCourse) -> None:
         exam.description = seed_exam.description
         exam.pass_score = seed_exam.pass_score
         exam.time_limit_minutes = seed_exam.time_limit_minutes
+        exam.sampling = seed_exam.sampling
         db.flush()
         _upsert_questions(db, course, exam.id, seed_exam.questions)
 
@@ -184,6 +207,14 @@ def main() -> None:
         f"Validated {len(courses)} courses, {total_lessons} lessons, {total_tests} test questions, "
         f"{total_exams} extra exams ({total_exam_q} questions)."
     )
+    for _, course in courses:
+        for exam in course.exams:
+            thin = exam.thin_categories()
+            if thin:
+                print(
+                    f"  warning: {course.slug}/{exam.slug} draws {sorted(thin)} from a bank "
+                    "smaller than the quota — attempts will serve what is available."
+                )
     if check_only:
         print("Dry run (--check): nothing written.")
         return

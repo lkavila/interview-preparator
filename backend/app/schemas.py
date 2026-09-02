@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime
 from typing import Any, Literal
 
@@ -132,11 +133,15 @@ class ExamSummary(BaseModel):
     order_index: int
     title: dict[str, Any]
     description: dict[str, Any]
+    # For a sampled exam this is the size of the draw, not the size of the bank.
     question_count: int
     pass_score: float
     time_limit_minutes: int | None = None
     best_score: float | None = None
     attempts: int = 0
+    # Set only on question-bank exams: the per-category quotas and the pool size.
+    sampling: dict[str, int] | None = None
+    bank_size: int | None = None
 
 
 class CourseDetail(CourseSummary):
@@ -170,13 +175,18 @@ class TestQuestionOut(BaseModel):
     id: int
     order_index: int
     type: str
+    category: str | None = None
     data: dict[str, Any]
+    svg_content: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 class TestSubmission(BaseModel):
     answers: dict[int, dict[str, Any]]  # question_id -> answer payload
+    # Present for timed exams started through /start; omitted by the untimed
+    # flows, which keep grading the exam's full question set.
+    session_token: str | None = None
 
 
 class TestQuestionResult(BaseModel):
@@ -193,6 +203,21 @@ class TestResult(BaseModel):
     pass_score: float = 70.0
     results: list[TestQuestionResult]
     new_badges: list[str] = []
+    # Submitted past the deadline: graded and stored, but it does not count.
+    timed_out: bool = False
+
+
+class ExamSessionOut(BaseModel):
+    """A started timed attempt: the questions drawn and the server's deadline."""
+
+    session_token: str
+    # The client syncs its countdown to these instead of trusting its own clock.
+    server_time: datetime
+    expires_at: datetime
+    seconds_remaining: int
+    time_limit_minutes: int | None = None
+    pass_score: float = 70.0
+    questions: list[TestQuestionOut]
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +303,32 @@ EXERCISE_TYPES = {
 def _require_bilingual(value: dict, where: str) -> dict:
     if not isinstance(value, dict) or "en" not in value or "es" not in value:
         raise ValueError(f"{where}: expected bilingual object with 'en' and 'es' keys")
+    return value
+
+
+QUESTION_CATEGORIES = ("VERBAL", "NUMERIC", "LOGIC")
+
+# Figures are first-party content, but they end up in the DOM, so the dangerous
+# constructs are rejected at authoring time — the cheapest place to catch them.
+# The client sanitises again on the way in.
+_SVG_FORBIDDEN = (
+    (re.compile(r"<\s*script", re.I), "<script> is not allowed in svg_content"),
+    (re.compile(r"<\s*foreignObject", re.I), "<foreignObject> is not allowed in svg_content"),
+    (re.compile(r"\son\w+\s*=", re.I), "inline event handlers are not allowed in svg_content"),
+    (re.compile(r"javascript\s*:", re.I), "javascript: URLs are not allowed in svg_content"),
+    (re.compile(r"(href|src)\s*=\s*[\"']\s*(https?:)?//", re.I),
+     "external references are not allowed in svg_content"),
+)
+
+
+def _check_svg(value: str) -> str:
+    if "<svg" not in value.lower():
+        raise ValueError("svg_content must contain an <svg> root element")
+    if "viewBox" not in value:
+        raise ValueError("svg_content needs a viewBox so the figure scales on mobile")
+    for pattern, message in _SVG_FORBIDDEN:
+        if pattern.search(value):
+            raise ValueError(message)
     return value
 
 
@@ -373,8 +424,16 @@ class SeedLesson(BaseModel):
 class SeedTestQuestion(BaseModel):
     type: Literal["multiple_choice", "open_text"]
     validation_mode: Literal["static", "llm"] = "static"
+    # Required on the questions of a sampled exam; ignored elsewhere.
+    category: Literal["VERBAL", "NUMERIC", "LOGIC"] | None = None
     data: dict[str, Any]
     solution: dict[str, Any]
+    svg_content: str | None = None
+
+    @field_validator("svg_content")
+    @classmethod
+    def check_svg(cls, v: str | None) -> str | None:
+        return None if v is None else _check_svg(v)
 
     def model_post_init(self, __context: Any) -> None:
         _require_bilingual(self.data.get("prompt", {}), "test question prompt")
@@ -397,19 +456,69 @@ class SeedTestQuestion(BaseModel):
 
 
 class SeedExam(BaseModel):
-    """An extra practice exam: its own name, length and pass mark."""
+    """An extra practice exam: its own name, length and pass mark.
+
+    With ``sampling`` set, ``questions`` is a bank and each attempt draws a
+    fresh balanced subset from it instead of serving every question."""
 
     slug: str = Field(pattern=r"^[a-z0-9-]+$")
     title: dict[str, Any]
     description: dict[str, Any] = Field(default_factory=lambda: {"en": "", "es": ""})
     pass_score: float = Field(default=70.0, ge=0, le=100)
     time_limit_minutes: int | None = Field(default=None, gt=0)
+    # {"VERBAL": 15, "NUMERIC": 20, "LOGIC": 15} — omit for a fixed exam.
+    sampling: dict[str, int] | None = None
     questions: list[SeedTestQuestion] = Field(min_length=5)
 
     @field_validator("title", "description")
     @classmethod
     def check_bilingual(cls, v: dict) -> dict:
         return _require_bilingual(v, "exam field")
+
+    @field_validator("sampling")
+    @classmethod
+    def check_sampling(cls, v: dict[str, int] | None) -> dict[str, int] | None:
+        if v is None:
+            return None
+        if not v:
+            raise ValueError("exam sampling must name at least one category")
+        for category, quota in v.items():
+            if category not in QUESTION_CATEGORIES:
+                raise ValueError(
+                    f"unknown sampling category '{category}'. Supported: {list(QUESTION_CATEGORIES)}"
+                )
+            if not isinstance(quota, int) or quota <= 0:
+                raise ValueError(f"sampling quota for '{category}' must be a positive integer")
+        return v
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.sampling is None:
+            return
+        missing = [i for i, q in enumerate(self.questions) if q.category is None]
+        if missing:
+            raise ValueError(
+                f"exam '{self.slug}' samples its bank, so every question needs a "
+                f"'category' (missing at indexes {missing[:5]})"
+            )
+        present = {q.category for q in self.questions}
+        unknown = sorted(set(self.sampling) - present)
+        if unknown:
+            raise ValueError(
+                f"exam '{self.slug}' samples categories not present in its bank: {unknown}"
+            )
+
+    def thin_categories(self) -> list[str]:
+        """Categories whose bank is smaller than the quota asked of it.
+
+        Reported as a warning rather than an error so a bank can grow in
+        batches; at runtime the draw falls back to what is available."""
+        if not self.sampling:
+            return []
+        counts: dict[str, int] = {}
+        for q in self.questions:
+            if q.category is not None:
+                counts[q.category] = counts.get(q.category, 0) + 1
+        return [c for c, quota in self.sampling.items() if counts.get(c, 0) < quota]
 
 
 class SeedCourse(BaseModel):
