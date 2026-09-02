@@ -7,6 +7,7 @@ import type {
   CourseDetail,
   CourseSummary,
   Enrichment,
+  ExamSessionResponse,
   GeneratedExercise,
   Lesson,
   SolutionReveal,
@@ -113,14 +114,31 @@ export const api = createApi({
     exam: builder.query<TestQuestion[], { slug: string; examSlug: string }>({
       query: ({ slug, examSlug }) => `/courses/${slug}/exams/${examSlug}`,
     }),
+    // Opens a server-clocked attempt: it draws the questions and owns the
+    // deadline, so it is a mutation even though it reads content.
+    startExam: builder.mutation<ExamSessionResponse, { slug: string; examSlug: string }>({
+      query: ({ slug, examSlug }) => ({
+        url: `/courses/${slug}/exams/${examSlug}/start`,
+        method: "POST",
+      }),
+    }),
+    // Re-serves an in-flight attempt after a reload; the clock keeps running.
+    examSession: builder.query<ExamSessionResponse, { slug: string; token: string }>({
+      query: ({ slug, token }) => `/courses/${slug}/exams/sessions/${token}`,
+    }),
     submitExam: builder.mutation<
       TestResult,
-      { slug: string; examSlug: string; answers: Record<number, Record<string, unknown>> }
+      {
+        slug: string;
+        examSlug: string;
+        answers: Record<number, Record<string, unknown>>;
+        sessionToken?: string;
+      }
     >({
-      query: ({ slug, examSlug, answers }) => ({
+      query: ({ slug, examSlug, answers, sessionToken }) => ({
         url: `/courses/${slug}/exams/${examSlug}/attempt`,
         method: "POST",
-        body: { answers },
+        body: { answers, session_token: sessionToken ?? null },
       }),
       invalidatesTags: (_r, _e, { slug }) => [
         { type: "Course", id: slug },
@@ -189,6 +207,8 @@ export const {
   useTestQuery,
   useSubmitTestMutation,
   useExamQuery,
+  useStartExamMutation,
+  useLazyExamSessionQuery,
   useSubmitExamMutation,
   useStudyTodayQuery,
   useHeartbeatMutation,

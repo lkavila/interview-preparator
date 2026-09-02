@@ -14,6 +14,14 @@ export function formatDuration(totalSeconds: number): string {
   return `${s}s`;
 }
 
+/** Countdown clock as MM:SS, floored at zero. */
+export function formatClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
 /** Minimal markdown renderer for lesson content (bold, code, lists, headings,
  * and GFM-style tables). */
 export function renderMarkdown(md: string): string {

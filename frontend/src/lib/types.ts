@@ -38,11 +38,15 @@ export interface CourseExam {
   order_index: number;
   title: Bilingual;
   description: Bilingual;
+  /** For a sampled exam this is the size of the draw, not of the bank. */
   question_count: number;
   pass_score: number;
   time_limit_minutes: number | null;
   best_score: number | null;
   attempts: number;
+  /** Per-category quotas; non-null only on question-bank exams. */
+  sampling: Record<string, number> | null;
+  bank_size: number | null;
 }
 
 export interface CourseDetail extends CourseSummary {
@@ -76,6 +80,8 @@ export interface ExerciseData {
   language?: "javascript" | "typescript" | "python" | "sql" | "go";
   starter_code?: string;
   explanation?: Bilingual;
+  /** Inline figure for lesson exercises (exam questions use the column). */
+  svg_content?: string;
 }
 
 export interface Exercise {
@@ -190,11 +196,16 @@ export interface SolutionReveal {
   source: "llm" | "reference";
 }
 
+export type QuestionCategory = "VERBAL" | "NUMERIC" | "LOGIC";
+
 export interface TestQuestion {
   id: number;
   order_index: number;
   type: "multiple_choice" | "open_text";
+  /** Set on question-bank exams so results can be broken down by topic. */
+  category: QuestionCategory | null;
   data: ExerciseData;
+  svg_content: string | null;
 }
 
 export interface TestQuestionResult {
@@ -211,6 +222,29 @@ export interface TestResult {
   pass_score: number;
   results: TestQuestionResult[];
   new_badges: string[];
+  /** Submitted past the server deadline: graded, but it does not count. */
+  timed_out: boolean;
+}
+
+/** A started timed attempt, as returned by /start and /sessions/{token}. */
+export interface ExamSessionResponse {
+  session_token: string;
+  /** ISO timestamps. The client syncs its countdown to these, not to its own clock. */
+  server_time: string;
+  expires_at: string;
+  seconds_remaining: number;
+  time_limit_minutes: number | null;
+  pass_score: number;
+  questions: TestQuestion[];
+}
+
+export interface ExamSessionState {
+  token: string;
+  questions: TestQuestion[];
+  /** Epoch ms of the deadline, already corrected for client clock skew. */
+  deadline: number;
+  passScore: number;
+  timeLimitMinutes: number | null;
 }
 
 export interface StudyDay {
