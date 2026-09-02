@@ -98,6 +98,14 @@ export default function CoursePage() {
                         ` · ${exam.time_limit_minutes} ${t("minutes")}`}
                       {` · ${t("passMark")}: ${Math.round(exam.pass_score)}%`}
                     </p>
+                    {exam.bank_size != null && (
+                      <p className="mt-0.5 text-2xs text-muted">
+                        {t("sampledFromBank", {
+                          count: exam.question_count,
+                          bank: exam.bank_size,
+                        })}
+                      </p>
+                    )}
                     {pick(exam.description, i18n.language) && (
                       <p className="mt-1 text-sm text-muted">
                         {pick(exam.description, i18n.language)}

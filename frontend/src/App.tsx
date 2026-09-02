@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CoursePage from "./pages/CoursePage";
 import DashboardPage from "./pages/DashboardPage";
+import ExamRoute from "./pages/ExamRoute";
 import LessonPage from "./pages/LessonPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -43,7 +44,7 @@ export default function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/courses/:slug" element={<CoursePage />} />
         <Route path="/courses/:slug/test" element={<TestPage />} />
-        <Route path="/courses/:slug/exams/:examSlug" element={<TestPage />} />
+        <Route path="/courses/:slug/exams/:examSlug" element={<ExamRoute />} />
         <Route path="/lessons/:id" element={<LessonPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

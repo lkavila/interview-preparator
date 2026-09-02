@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
+import QuestionFigure from "../components/exam/QuestionFigure";
 import MultipleChoice from "../components/exercises/MultipleChoice";
-import { pick, renderMarkdown } from "../lib/lang";
+import { formatClock, pick, renderMarkdown } from "../lib/lang";
 import type { Bilingual, TestResult } from "../lib/types";
 import {
   useCourseQuery,
@@ -11,13 +12,6 @@ import {
   useSubmitTestMutation,
   useTestQuery,
 } from "../store/api";
-
-function formatClock(seconds: number): string {
-  const s = Math.max(0, seconds);
-  const mm = String(Math.floor(s / 60)).padStart(2, "0");
-  const ss = String(s % 60).padStart(2, "0");
-  return `${mm}:${ss}`;
-}
 
 export default function TestPage() {
   const { slug, examSlug } = useParams<{ slug: string; examSlug?: string }>();
@@ -180,6 +174,7 @@ export default function TestPage() {
                 className="prose-content mb-4 text-base"
                 dangerouslySetInnerHTML={{ __html: renderMarkdown(pick(q.data.prompt, lang)) }}
               />
+              <QuestionFigure svg={q.svg_content ?? q.data.svg_content} />
               {q.type === "multiple_choice" ? (
                 <MultipleChoice
                   options={q.data.options ?? []}
