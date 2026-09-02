@@ -4,11 +4,15 @@ A digital course platform to prepare for software engineering interviews. Full-s
 
 ## Features
 
-- 19 seeded courses covering CS fundamentals, distributed systems, PostgreSQL, Redis, message brokers, Kubernetes, AWS, Python/Django, networking, observability, React, Node.js, TypeScript, Go, database selection, behavioural interviews and the AWS Solutions Architect Associate (SAA-C03) certification.
+- 20 seeded courses covering CS fundamentals, distributed systems, PostgreSQL, Redis, message brokers, Kubernetes, AWS, Python/Django, networking, observability, React, Node.js, TypeScript, Go, database selection, behavioural interviews, the AWS Solutions Architect Associate (SAA-C03) certification and Wonderlic test preparation.
 - Each lesson answers a real interview question: short definition, real-world examples and 3 interactive exercises.
 - Exercise types: multiple choice, matching (connect concepts), ordering/flow building, table builder, real SQL (executed in-browser with PGlite), code writing and open answers validated by a local LLM.
 - Final test per course (10-15 questions, mostly multiple choice).
 - Optional practice exams per course: several named, timed mock exams with their own length and pass mark (the AWS SAA-C03 course ships six, from 10 to 50 questions, 165 questions in total), with the explanation of each answer revealed on submit.
+- Question-bank exams: an exam can declare `sampling` and draw a fresh, category-balanced subset from a larger bank on every attempt, so it stays repeatable (the Wonderlic mock draws 50 of 249, balanced 15 verbal / 20 numeric / 15 logic, so two attempts in a row share only about a fifth of their questions).
+- Server-side exam clock: timed exams are started through `/start`, which records the deadline and the exact questions served. Reloading resumes the same attempt without refunding time, and a submission past the deadline (plus a 5-second grace for latency) is still graded but flagged `timed_out` and excluded from best scores and badges.
+- Questions can carry an inline SVG figure (`svg_content`) for spatial reasoning; figures are validated when seeded and sanitised again against an allow-list before rendering. The Wonderlic bank ships thirteen figure families, including corner matching on a folded cube (derived from an actual folding model, not drawn by eye), trend graphs, piece assembly and four figure-sequence types: a rotating sector, a square travelling a route through a grid, a matrix whose third column is the first two overlaid, and a shape gaining a nested copy each step.
+- Questions may have several correct answers (`data.multiple` with several indexes in `solution.correct`), which the exam UI renders as checkboxes — the real Wonderlic asks things like "which THREE of these words mean the same".
 - User accounts (JWT) with progress tracking, per-day study timer and analytics (strengths/weaknesses by topic).
 - Bilingual UI and content (English/Spanish), dark/light theme with CSS variable tokens + Tailwind.
 - AI tutor and answer validation powered by Ollama (`qwen3-vl:8b-instruct` by default).
@@ -100,6 +104,14 @@ Content is 100% data-driven. To add a course you only add a JSON file — no cod
 ```
 
    A course needs either a `test` (10-15 questions) or at least one exam. Exams are served by `GET /api/courses/{slug}/exams`, `GET /api/courses/{slug}/exams/{exam_slug}` and `POST /api/courses/{slug}/exams/{exam_slug}/attempt`, and scores are tracked per exam.
+
+   To turn an exam into a **question bank**, add `sampling` and give every question a `category`:
+
+```json
+"sampling": { "VERBAL": 15, "NUMERIC": 20, "LOGIC": 15 }
+```
+
+   Each attempt then draws that many questions per category at random, and the UI switches to one question at a time with a server-kept clock (`POST .../start`, resumable via `GET .../exams/sessions/{token}`). A category whose bank is thinner than its quota serves what it has and the seeder prints a warning, so a bank can grow in batches. Spatial questions may add `"svg_content": "<svg viewBox=...>...</svg>"` — use `currentColor` for strokes so the figure works in both themes, and no scripts, event handlers or external references (the seeder rejects them).
 
 5. Run the seeder (idempotent — safe to re-run, upserts by slug):
 
