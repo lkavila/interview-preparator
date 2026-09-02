@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.models import (
     Course,
-    CourseExam,
     Lesson,
     LessonComponent,
     TestAttempt,
@@ -15,7 +14,6 @@ from app.models import (
 )
 from app.schemas import (
     CourseDetail,
-    ExamSummary,
     CourseSummary,
     EnrichmentResponse,
     ExerciseOut,
@@ -23,6 +21,7 @@ from app.schemas import (
     LessonOut,
     LessonSummary,
 )
+from app.api.tests import exam_summaries
 from app.security import get_current_user
 from app.services import badge_service, enrichment_service
 
@@ -32,51 +31,6 @@ router = APIRouter(prefix="/api", tags=["courses"])
 def _completed_lesson_ids(db: Session, user_id: int) -> set[int]:
     rows = db.query(UserLessonProgress.lesson_id).filter(UserLessonProgress.user_id == user_id).all()
     return {r[0] for r in rows}
-
-
-def _course_exams(db: Session, course: Course, user: User) -> list[ExamSummary]:
-    """Practice exams of a course with the user's best score on each."""
-    exams = (
-        db.query(CourseExam)
-        .filter(CourseExam.course_id == course.id)
-        .order_by(CourseExam.order_index)
-        .all()
-    )
-    if not exams:
-        return []
-    counts = dict(
-        db.query(TestQuestion.exam_id, func.count(TestQuestion.id))
-        .filter(TestQuestion.course_id == course.id, TestQuestion.exam_id.isnot(None))
-        .group_by(TestQuestion.exam_id)
-        .all()
-    )
-    stats = {
-        exam_id: (best, attempts)
-        for exam_id, best, attempts in db.query(
-            TestAttempt.exam_id, func.max(TestAttempt.score), func.count(TestAttempt.id)
-        )
-        .filter(
-            TestAttempt.user_id == user.id,
-            TestAttempt.course_id == course.id,
-            TestAttempt.exam_id.isnot(None),
-        )
-        .group_by(TestAttempt.exam_id)
-        .all()
-    }
-    return [
-        ExamSummary(
-            slug=e.slug,
-            order_index=e.order_index,
-            title=e.title,
-            description=e.description or {},
-            question_count=counts.get(e.id, 0),
-            pass_score=e.pass_score,
-            time_limit_minutes=e.time_limit_minutes,
-            best_score=stats.get(e.id, (None, 0))[0],
-            attempts=stats.get(e.id, (None, 0))[1],
-        )
-        for e in exams
-    ]
 
 
 @router.get("/courses", response_model=list[CourseSummary])
@@ -133,7 +87,7 @@ def course_detail(slug: str, user: User = Depends(get_current_user), db: Session
         .scalar()
         or 0
     )
-    exams = _course_exams(db, course, user)
+    exams = exam_summaries(db, course, user)
 
     return CourseDetail(
         id=course.id,
