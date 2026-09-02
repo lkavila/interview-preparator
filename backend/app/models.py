@@ -6,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -103,6 +104,9 @@ class CourseExam(Base):
     description: Mapped[dict] = mapped_column(JSONB, default=dict)
     pass_score: Mapped[float] = mapped_column(Float, default=70.0)  # 0..100
     time_limit_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # {"VERBAL": 15, ...} turns `questions` into a bank the attempt is sampled
+    # from; NULL keeps the classic behaviour of serving every question in order.
+    sampling: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     course: Mapped["Course"] = relationship(back_populates="exams")
     questions: Mapped[list["TestQuestion"]] = relationship(
@@ -112,6 +116,7 @@ class CourseExam(Base):
 
 class TestQuestion(Base):
     __tablename__ = "test_questions"
+    __table_args__ = (Index("ix_test_questions_exam_category", "exam_id", "category"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
@@ -121,8 +126,13 @@ class TestQuestion(Base):
     )
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     type: Mapped[str] = mapped_column(String(30))  # multiple_choice | open_text
+    # Topic tag used to balance a sampled attempt (VERBAL | NUMERIC | LOGIC).
+    # NULL on the courses that serve a fixed question set.
+    category: Mapped[str | None] = mapped_column(String(20), nullable=True)
     data: Mapped[dict] = mapped_column(JSONB)
     solution: Mapped[dict] = mapped_column(JSONB)
+    # Inline figure for spatial-reasoning questions, sanitised before rendering.
+    svg_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     course: Mapped["Course"] = relationship(back_populates="test_questions")
     exam: Mapped["CourseExam | None"] = relationship(back_populates="questions")
@@ -165,7 +175,32 @@ class TestAttempt(Base):
     total: Mapped[int] = mapped_column(Integer)
     correct: Mapped[int] = mapped_column(Integer)
     answers: Mapped[dict] = mapped_column(JSONB)  # {question_id: {answer, correct}}
+    # Submitted past the server deadline: graded and stored, but excluded from
+    # best scores and badges.
+    timed_out: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExamSession(Base):
+    """Server-side clock for one timed attempt.
+
+    The session owns both the deadline and the exact questions that were served,
+    so a client can neither extend its own time nor swap in easier questions."""
+
+    __tablename__ = "exam_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    # NULL = a session on the course's classic final test
+    exam_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_exams.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    question_ids: Mapped[list] = mapped_column(JSONB)  # sampled ids, in served order
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class LessonComponent(Base):
